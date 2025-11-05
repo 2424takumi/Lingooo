@@ -71,9 +71,9 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   ]) as Promise<T>;
 }
 
-async function tryGenerateAiSuggestions(query: string): Promise<SuggestionItem[] | null> {
+async function tryGenerateAiSuggestions(query: string, targetLanguage: string = 'en'): Promise<SuggestionItem[] | null> {
   try {
-    const suggestions = await withTimeout(generateSuggestions(query), SUGGESTION_TIMEOUT_MS);
+    const suggestions = await withTimeout(generateSuggestions(query, targetLanguage), SUGGESTION_TIMEOUT_MS);
 
     // 配列チェック（念のため）
     if (!Array.isArray(suggestions) || suggestions.length === 0) {
@@ -81,7 +81,7 @@ async function tryGenerateAiSuggestions(query: string): Promise<SuggestionItem[]
       return null;
     }
 
-    logger.info(`[tryGenerateAiSuggestions] Received ${suggestions.length} suggestions`);
+    logger.info(`[tryGenerateAiSuggestions] Received ${suggestions.length} ${targetLanguage} suggestions`);
     return suggestions.slice(0, 10);
   } catch (error) {
     logger.error('AI生成エラー、モックデータにフォールバック:', error);
@@ -90,12 +90,13 @@ async function tryGenerateAiSuggestions(query: string): Promise<SuggestionItem[]
 }
 
 /**
- * 日本語→英語候補検索
+ * 日本語→ターゲット言語候補検索
  *
  * @param query - 日本語の検索クエリ
+ * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
  * @returns 候補のリスト
  */
-export async function searchJaToEn(query: string): Promise<SuggestionResponse> {
+export async function searchJaToEn(query: string, targetLanguage: string = 'en'): Promise<SuggestionResponse> {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
     return {
@@ -114,7 +115,7 @@ export async function searchJaToEn(query: string): Promise<SuggestionResponse> {
     };
   }
 
-  const aiPromise = tryGenerateAiSuggestions(trimmedQuery);
+  const aiPromise = tryGenerateAiSuggestions(trimmedQuery, targetLanguage);
 
   if (mockItems.length === 0) {
     const aiItems = await aiPromise;
@@ -151,16 +152,17 @@ export async function searchJaToEn(query: string): Promise<SuggestionResponse> {
 }
 
 /**
- * 英語単語の詳細取得
+ * ターゲット言語の単語詳細取得
  *
- * @param word - 英語の単語
+ * @param word - 検索する単語
+ * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
  * @returns 単語の詳細情報
  */
-export async function getWordDetail(word: string): Promise<WordDetailResponse> {
+export async function getWordDetail(word: string, targetLanguage: string = 'en'): Promise<WordDetailResponse> {
   // AI生成を使用（Gemini API設定済みの場合）
   if (await isGeminiConfigured()) {
     try {
-      const detail = await generateWordDetail(word);
+      const detail = await generateWordDetail(word, targetLanguage);
       return detail;
     } catch (error) {
       logger.error('AI生成エラー、モックデータにフォールバック:', error);
@@ -168,7 +170,7 @@ export async function getWordDetail(word: string): Promise<WordDetailResponse> {
     }
   }
 
-  // フォールバック: モックデータを使用
+  // フォールバック: モックデータを使用（英語のみ）
   await new Promise(resolve => setTimeout(resolve, 300));
 
   const enDetails = mockDictionary.en_details as Record<string, WordDetailResponse>;
@@ -185,20 +187,22 @@ export async function getWordDetail(word: string): Promise<WordDetailResponse> {
 }
 
 /**
- * 英語単語の詳細取得（ストリーミング版 - 2段階超高速）
+ * ターゲット言語の単語詳細取得（ストリーミング版 - 2段階超高速）
  *
  * ステージ1: 基本情報を0.2~0.3秒で表示
  * ステージ2: 詳細情報を2.5秒で追加
  *
- * @param word - 英語の単語
+ * @param word - 検索する単語
+ * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
  * @param onProgress - 進捗コールバック（0-100、部分データ付き）
  * @returns 単語の詳細情報
  */
 export async function getWordDetailStream(
   word: string,
+  targetLanguage: string = 'en',
   onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void
 ): Promise<WordDetailResponse> {
-  logger.info('[Search API] getWordDetailStream (2-stage) called for:', word);
+  logger.info(`[Search API] getWordDetailStream (2-stage) called for: ${word} (${targetLanguage})`);
 
   // AI生成を使用（Gemini API設定済みの場合）
   try {
@@ -208,7 +212,7 @@ export async function getWordDetailStream(
     if (isConfigured) {
       try {
         logger.info('[Search API] Calling generateWordDetailTwoStage');
-        const detail = await generateWordDetailTwoStage(word, onProgress);
+        const detail = await generateWordDetailTwoStage(word, targetLanguage, onProgress);
         logger.info('[Search API] generateWordDetailTwoStage succeeded');
         return detail;
       } catch (error) {
@@ -223,7 +227,7 @@ export async function getWordDetailStream(
         }
 
         // エラー時は通常版にフォールバック
-        return getWordDetail(word);
+        return getWordDetail(word, targetLanguage);
       }
     }
   } catch (configError) {
@@ -232,7 +236,7 @@ export async function getWordDetailStream(
 
   // APIキーなしの場合は通常版を使用
   logger.info('[Search API] Using mock data');
-  return getWordDetail(word);
+  return getWordDetail(word, targetLanguage);
 }
 
 /**
