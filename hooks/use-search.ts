@@ -10,7 +10,7 @@ import {
   detectLang,
   normalizeQuery,
   validateSearchInput,
-  resolveMixedLanguage,
+  resolveLanguageCode,
 } from '@/services/utils/language-detect';
 import { searchJaToEn, getWordDetail } from '@/services/api/search';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
@@ -45,15 +45,17 @@ export function useSearch() {
 
       // 3. 言語判定
       const detectedLang = detectLang(normalizedQuery);
-      const resolvedLang = resolveMixedLanguage(detectedLang);
 
-      // 4. 検索分岐（母語判定）
-      if (resolvedLang === nativeLanguage.code) {
+      // 4. 言語コードに変換（アルファベットの場合はタブで選択中の言語を使用）
+      const targetLang = resolveLanguageCode(detectedLang, currentLanguage.code);
+
+      // 5. 検索分岐（母語判定）
+      if (targetLang === nativeLanguage.code) {
         // 母語検索 → SearchPage（選択中の学習言語への翻訳）
         await searchAndNavigateToJp(normalizedQuery);
       } else {
         // 非母語検索 → WordDetailPage（検出された言語の辞書検索）
-        await searchAndNavigateToWord(normalizedQuery, resolvedLang);
+        await searchAndNavigateToWord(normalizedQuery, targetLang);
       }
       return true;
     } catch (err) {

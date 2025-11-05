@@ -5,53 +5,58 @@
  * 仕様: docs/lingooo_search_spec.md セクション2.2参照
  */
 
-export type Language = 'ja' | 'en' | 'mixed';
+export type Language = 'ja' | 'zh' | 'alphabet' | 'mixed';
 
 /**
- * テキストの言語を判定
+ * テキストの言語を判定（多言語対応版）
  *
  * @param text - 判定対象のテキスト
- * @returns 'ja' (日本語) | 'en' (英語) | 'mixed' (混在)
+ * @returns 'ja' (日本語) | 'zh' (中国語) | 'alphabet' (アルファベット) | 'mixed' (混在)
  *
  * @example
- * detectLang('勉強') // => 'ja'
- * detectLang('study') // => 'en'
- * detectLang('study 勉強') // => 'mixed'
+ * detectLang('こんにちは') // => 'ja'
+ * detectLang('你好') // => 'zh'
+ * detectLang('hello') // => 'alphabet'
+ * detectLang('hola') // => 'alphabet'
  */
 export function detectLang(text: string): Language {
   if (!text || text.trim().length === 0) {
-    return 'en'; // デフォルトは英語
+    return 'alphabet'; // デフォルト
   }
 
   const trimmedText = text.trim();
 
-  // 日本語文字の正規表現
   // ひらがな: \u3040-\u309F
   // カタカナ: \u30A0-\u30FF
+  const hiraganaKatakanaRegex = /[\u3040-\u309F\u30A0-\u30FF]/;
+
   // 漢字: \u4E00-\u9FAF
-  const japaneseRegex = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
+  const kanjiRegex = /[\u4E00-\u9FAF]/;
 
-  // 英語文字のみの正規表現（スペース、ハイフン、アポストロフィを許可）
-  const englishOnlyRegex = /^[a-zA-Z\s'\-]+$/;
+  // アルファベット（スペース、ハイフン、アポストロフィを許可）
+  const alphabetRegex = /^[a-zA-Z\s'\-]+$/;
 
-  const hasJapanese = japaneseRegex.test(trimmedText);
-  const isEnglishOnly = englishOnlyRegex.test(trimmedText);
+  const hasHiraganaKatakana = hiraganaKatakanaRegex.test(trimmedText);
+  const hasKanji = kanjiRegex.test(trimmedText);
+  const isAlphabetOnly = alphabetRegex.test(trimmedText);
 
-  if (hasJapanese && !isEnglishOnly) {
+  // ひらがな/カタカナを含む → 日本語
+  if (hasHiraganaKatakana) {
     return 'ja';
   }
 
-  if (isEnglishOnly && !hasJapanese) {
-    return 'en';
+  // 漢字のみ → 中国語（日本語のひらがな/カタカナを含まない）
+  if (hasKanji && !hasHiraganaKatakana) {
+    return 'zh';
   }
 
-  // 日本語と英語が混在している場合
-  if (hasJapanese && /[a-zA-Z]/.test(trimmedText)) {
-    return 'mixed';
+  // アルファベットのみ → 言語不明（英語/スペイン語/ポルトガル語等）
+  if (isAlphabetOnly) {
+    return 'alphabet';
   }
 
-  // どちらでもない場合（数字のみ、記号のみなど）
-  return 'en'; // デフォルト
+  // 混在の場合
+  return 'mixed';
 }
 
 /**
@@ -108,17 +113,26 @@ export function validateSearchInput(text: string): { valid: boolean; error?: str
 }
 
 /**
- * 混在入力の処理方針を決定
+ * 検出された言語タイプから実際の言語コードを決定
  *
- * 仕様: 日本語を含む場合は日本語検索として扱う
+ * @param detectedLang - detectLangの結果
+ * @param currentLanguageCode - 現在選択中の言語コード（アルファベットの場合のフォールバック）
+ * @returns ISO 639-1言語コード ('ja', 'zh', 'en', 'es', 'pt'等)
  *
- * @param lang - detectLangの結果
- * @returns 'ja' | 'en'
+ * @example
+ * resolveLanguageCode('ja', 'en') // => 'ja'
+ * resolveLanguageCode('zh', 'en') // => 'zh'
+ * resolveLanguageCode('alphabet', 'es') // => 'es'（タブで選択中の言語）
  */
-export function resolveMixedLanguage(lang: Language): 'ja' | 'en' {
-  if (lang === 'mixed') {
-    // 混在の場合は日本語検索として扱う
+export function resolveLanguageCode(detectedLang: Language, currentLanguageCode: string): string {
+  if (detectedLang === 'ja') {
     return 'ja';
   }
-  return lang;
+
+  if (detectedLang === 'zh') {
+    return 'zh';
+  }
+
+  // alphabet or mixed → 選択中の言語を使う
+  return currentLanguageCode;
 }
