@@ -46,8 +46,10 @@ export function useSearch() {
       // 3. 言語判定
       const detectedLang = detectLang(normalizedQuery);
 
-      // 4. 言語コードに変換（アルファベットの場合はタブで選択中の言語を使用）
-      const targetLang = resolveLanguageCode(detectedLang, currentLanguage.code);
+      // 4. 言語コードに変換
+      // - 漢字のみ: 中国語タブなら中国語、それ以外は母語
+      // - アルファベット: タブで選択中の言語
+      const targetLang = resolveLanguageCode(detectedLang, currentLanguage.code, nativeLanguage.code);
 
       // 5. 検索分岐（母語判定）
       if (targetLang === nativeLanguage.code) {

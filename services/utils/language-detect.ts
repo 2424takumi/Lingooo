@@ -5,17 +5,18 @@
  * 仕様: docs/lingooo_search_spec.md セクション2.2参照
  */
 
-export type Language = 'ja' | 'zh' | 'alphabet' | 'mixed';
+export type Language = 'ja' | 'kanji-only' | 'alphabet' | 'mixed';
 
 /**
  * テキストの言語を判定（多言語対応版）
  *
  * @param text - 判定対象のテキスト
- * @returns 'ja' (日本語) | 'zh' (中国語) | 'alphabet' (アルファベット) | 'mixed' (混在)
+ * @returns 'ja' (日本語) | 'kanji-only' (漢字のみ) | 'alphabet' (アルファベット) | 'mixed' (混在)
  *
  * @example
- * detectLang('こんにちは') // => 'ja'
- * detectLang('你好') // => 'zh'
+ * detectLang('こんにちは') // => 'ja'（ひらがな含む）
+ * detectLang('法律') // => 'kanji-only'（日本語か中国語か不明）
+ * detectLang('你好') // => 'kanji-only'（日本語か中国語か不明）
  * detectLang('hello') // => 'alphabet'
  * detectLang('hola') // => 'alphabet'
  */
@@ -40,14 +41,14 @@ export function detectLang(text: string): Language {
   const hasKanji = kanjiRegex.test(trimmedText);
   const isAlphabetOnly = alphabetRegex.test(trimmedText);
 
-  // ひらがな/カタカナを含む → 日本語
+  // ひらがな/カタカナを含む → 日本語として確定
   if (hasHiraganaKatakana) {
     return 'ja';
   }
 
-  // 漢字のみ → 中国語（日本語のひらがな/カタカナを含まない）
+  // 漢字のみ → 日本語か中国語か不明（タブや母語で判定）
   if (hasKanji && !hasHiraganaKatakana) {
-    return 'zh';
+    return 'kanji-only';
   }
 
   // アルファベットのみ → 言語不明（英語/スペイン語/ポルトガル語等）
@@ -116,21 +117,34 @@ export function validateSearchInput(text: string): { valid: boolean; error?: str
  * 検出された言語タイプから実際の言語コードを決定
  *
  * @param detectedLang - detectLangの結果
- * @param currentLanguageCode - 現在選択中の言語コード（アルファベットの場合のフォールバック）
+ * @param currentLanguageCode - 現在選択中の言語コード
+ * @param nativeLanguageCode - 母語の言語コード
  * @returns ISO 639-1言語コード ('ja', 'zh', 'en', 'es', 'pt'等)
  *
  * @example
- * resolveLanguageCode('ja', 'en') // => 'ja'
- * resolveLanguageCode('zh', 'en') // => 'zh'
- * resolveLanguageCode('alphabet', 'es') // => 'es'（タブで選択中の言語）
+ * resolveLanguageCode('ja', 'en', 'ja') // => 'ja'
+ * resolveLanguageCode('kanji-only', 'zh', 'ja') // => 'zh'（中国語タブ選択中）
+ * resolveLanguageCode('kanji-only', 'en', 'ja') // => 'ja'（母語を使用）
+ * resolveLanguageCode('alphabet', 'es', 'ja') // => 'es'（タブで選択中の言語）
  */
-export function resolveLanguageCode(detectedLang: Language, currentLanguageCode: string): string {
+export function resolveLanguageCode(
+  detectedLang: Language,
+  currentLanguageCode: string,
+  nativeLanguageCode: string = 'ja'
+): string {
+  // 日本語として確定（ひらがな/カタカナを含む）
   if (detectedLang === 'ja') {
     return 'ja';
   }
 
-  if (detectedLang === 'zh') {
-    return 'zh';
+  // 漢字のみ → タブ選択を優先、なければ母語
+  if (detectedLang === 'kanji-only') {
+    // 中国語タブ選択中 → 中国語辞書
+    if (currentLanguageCode === 'zh') {
+      return 'zh';
+    }
+    // それ以外 → 母語（日本語）として扱う
+    return nativeLanguageCode;
   }
 
   // alphabet or mixed → 選択中の言語を使う
