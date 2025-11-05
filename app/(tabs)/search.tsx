@@ -50,18 +50,21 @@ export default function SearchScreen() {
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>(initialResults);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    setSuggestions(initialResults);
-  }, [initialResults]);
-
-  // 即座に画面遷移した場合（resultsパラメータがない）はAPI呼び出し
+  // queryが変わったら即座にsuggestionsをクリア
   useEffect(() => {
     if (!query) {
+      setSuggestions([]);
       return;
     }
 
-    // パラメータからresultsが渡されている場合はスキップ
+    // 新しいqueryの場合は、前の結果をクリア
+    setSuggestions([]);
+    setIsLoading(true);
+
+    // initialResultsがある場合はそれを使う
     if (initialResults.length > 0) {
+      setSuggestions(initialResults);
+      setIsLoading(false);
       return;
     }
 
@@ -70,13 +73,13 @@ export default function SearchScreen() {
     if (cached && cached.length > 0) {
       logger.debug('[Search] Using cached suggestions');
       setSuggestions(cached);
+      setIsLoading(false);
       return;
     }
 
     // API呼び出し
     const fetchSuggestions = async () => {
       try {
-        setIsLoading(true);
         logger.info('[Search] Fetching suggestions for:', query);
         const result = await searchJaToEn(query);
         logger.info('[Search] Received suggestions:', result.items.length);
@@ -89,7 +92,7 @@ export default function SearchScreen() {
     };
 
     fetchSuggestions();
-  }, [query, initialResults]);
+  }, [query, initialResults.length]); // initialResults.lengthで変更を検知
 
   // サブスクリプション（キャッシュ更新を受信）
   useEffect(() => {
@@ -97,9 +100,14 @@ export default function SearchScreen() {
       return;
     }
 
+    const currentQuery = query; // クロージャで現在のクエリを保持
+
     const unsubscribe = subscribeSuggestions(query, (items) => {
-      logger.debug('[Search] Received updated suggestions from subscription');
-      setSuggestions(items);
+      // 現在表示中のクエリと一致する場合のみ更新
+      if (currentQuery === query) {
+        logger.debug('[Search] Received updated suggestions from subscription');
+        setSuggestions(items);
+      }
     });
 
     return unsubscribe;
