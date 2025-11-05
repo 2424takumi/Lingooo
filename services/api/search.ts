@@ -74,6 +74,18 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 async function tryGenerateAiSuggestions(query: string): Promise<SuggestionItem[] | null> {
   try {
     const suggestions = await withTimeout(generateSuggestions(query), SUGGESTION_TIMEOUT_MS);
+
+    // 配列チェック
+    if (!Array.isArray(suggestions)) {
+      logger.warn('[tryGenerateAiSuggestions] Response is not an array:', suggestions);
+      return null;
+    }
+
+    if (suggestions.length === 0) {
+      logger.warn('[tryGenerateAiSuggestions] Empty array returned');
+      return null;
+    }
+
     return suggestions.slice(0, 10);
   } catch (error) {
     logger.error('AI生成エラー、モックデータにフォールバック:', error);
