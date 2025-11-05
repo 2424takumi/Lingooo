@@ -187,6 +187,25 @@ export function ShimmerExamples() {
   );
 }
 
+/**
+ * サジェストカード用のシマー（日本語検索結果）
+ */
+export function ShimmerSuggestions() {
+  return (
+    <View style={styles.suggestionsShimmer}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <View key={i} style={styles.suggestionCard}>
+          <View style={styles.suggestionHeader}>
+            <Shimmer width={80} height={24} borderRadius={8} />
+            <Shimmer width={50} height={20} borderRadius={10} />
+          </View>
+          <Shimmer width="75%" height={16} style={styles.suggestionText} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#EFEFEF',
@@ -254,5 +273,24 @@ const styles = StyleSheet.create({
   },
   shimmerItem: {
     marginBottom: 4,
+  },
+  suggestionsShimmer: {
+    gap: 12,
+  },
+  suggestionCard: {
+    backgroundColor: '#FAFCFB',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+  },
+  suggestionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  suggestionText: {
+    marginTop: 4,
   },
 });

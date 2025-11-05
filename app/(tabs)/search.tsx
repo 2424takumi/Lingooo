@@ -8,11 +8,12 @@ import { ExampleGroup } from '@/components/ui/example-group';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { WordCard } from '@/components/ui/word-card';
 import { ChatSection } from '@/components/ui/chat-section';
+import { ShimmerSuggestions } from '@/components/ui/shimmer';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { getCachedSuggestions, subscribeSuggestions } from '@/services/cache/suggestion-cache';
 import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
-import { getWordDetailStream } from '@/services/api/search';
+import { getWordDetailStream, searchJaToEn } from '@/services/api/search';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
 import type { SuggestionItem } from '@/types/search';
@@ -47,22 +48,57 @@ export default function SearchScreen() {
   }, [resultsParam]);
 
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>(initialResults);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setSuggestions(initialResults);
   }, [initialResults]);
 
+  // 即座に画面遷移した場合（resultsパラメータがない）はAPI呼び出し
   useEffect(() => {
     if (!query) {
       return;
     }
 
+    // パラメータからresultsが渡されている場合はスキップ
+    if (initialResults.length > 0) {
+      return;
+    }
+
+    // キャッシュチェック
     const cached = getCachedSuggestions(query);
     if (cached && cached.length > 0) {
+      logger.debug('[Search] Using cached suggestions');
       setSuggestions(cached);
+      return;
+    }
+
+    // API呼び出し
+    const fetchSuggestions = async () => {
+      try {
+        setIsLoading(true);
+        logger.info('[Search] Fetching suggestions for:', query);
+        const result = await searchJaToEn(query);
+        logger.info('[Search] Received suggestions:', result.items.length);
+        setSuggestions(result.items);
+      } catch (error) {
+        logger.error('[Search] Failed to fetch suggestions:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, [query, initialResults]);
+
+  // サブスクリプション（キャッシュ更新を受信）
+  useEffect(() => {
+    if (!query) {
+      return;
     }
 
     const unsubscribe = subscribeSuggestions(query, (items) => {
+      logger.debug('[Search] Received updated suggestions from subscription');
       setSuggestions(items);
     });
 
@@ -153,7 +189,9 @@ export default function SearchScreen() {
 
           {/* Word Cards */}
           <View style={styles.searchResultView}>
-            {suggestions.length > 0 ? (
+            {isLoading && suggestions.length === 0 ? (
+              <ShimmerSuggestions />
+            ) : suggestions.length > 0 ? (
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}

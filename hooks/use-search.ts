@@ -64,23 +64,16 @@ export function useSearch() {
   };
 
   /**
-   * 日本語検索して候補ページに遷移
+   * 日本語検索して候補ページに遷移（即座に遷移、ページ上でストリーミング表示）
    */
   const searchAndNavigateToJp = async (query: string) => {
-    const result = await searchJaToEn(query);
-
-    if (result.items.length === 0) {
-      const errorMsg = `「${query}」に該当する単語が見つかりませんでした`;
-      setError(errorMsg);
-      throw new Error(errorMsg);
-    }
-
-    // JpSearchPageに遷移
+    // データ取得を待たずに即座にページ遷移
+    // ページ上でAPI呼び出しとストリーミング表示が開始される
     router.push({
       pathname: '/(tabs)/search',
       params: {
         query,
-        results: JSON.stringify(result.items),
+        // resultsパラメータなし = ページ上でAPI呼び出し
       },
     });
   };
