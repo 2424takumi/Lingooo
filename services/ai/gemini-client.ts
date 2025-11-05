@@ -298,15 +298,45 @@ export async function generateJSONProgressive<T>(
 
     // ポーリング開始
     let lastProgress = 0;
-    const POLLING_INTERVAL = 200; // 200ms
+    let lastPartialData: Partial<T> | null = null;
+    const POLLING_INTERVAL = 500; // 500ms - レート制限を回避
+    const MAX_RETRIES = 3; // 404エラー時の最大リトライ回数
+    let notFoundRetries = 0;
 
     while (true) {
       await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
 
       const statusResponse = await fetch(getApiUrl(`/task/${taskId}`));
       if (!statusResponse.ok) {
-        throw new Error('Failed to fetch task status');
+        logger.error(`[GeminiClient] Task status fetch failed: ${statusResponse.status} ${statusResponse.statusText}`);
+
+        // タスクが見つからない場合は、既に完了している可能性がある
+        if (statusResponse.status === 404 && lastProgress >= 75 && lastPartialData) {
+          notFoundRetries++;
+          logger.warn(`[GeminiClient] Task not found (${notFoundRetries}/${MAX_RETRIES}), last progress: ${lastProgress}`);
+
+          // 数回リトライしても見つからない場合は、最後のデータを返す
+          if (notFoundRetries >= MAX_RETRIES) {
+            logger.info('[GeminiClient] Returning last partial data as completed');
+            onProgress(100, lastPartialData);
+            return lastPartialData as T;
+          }
+          // リトライを続ける
+          continue;
+        }
+
+        // レート制限の場合は少し待ってリトライ
+        if (statusResponse.status === 429) {
+          logger.warn('[GeminiClient] Rate limit hit, waiting 1 second...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        throw new Error(`Failed to fetch task status: ${statusResponse.status}`);
       }
+
+      // タスクが見つかったらリトライカウントをリセット
+      notFoundRetries = 0;
 
       const task = await statusResponse.json();
       logger.debug('[GeminiClient] Task status:', {
@@ -319,6 +349,10 @@ export async function generateJSONProgressive<T>(
         logger.info('[GeminiClient] Progress update:', task.progress);
         onProgress(task.progress, task.partialData);
         lastProgress = task.progress;
+        // 部分データを保存
+        if (task.partialData) {
+          lastPartialData = task.partialData;
+        }
       }
 
       // 完了

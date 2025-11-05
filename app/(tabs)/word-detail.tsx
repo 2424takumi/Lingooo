@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -9,6 +9,7 @@ import { DefinitionList } from '@/components/ui/definition-list';
 import { WordMetaMetrics } from '@/components/ui/word-meta-metrics';
 import { ExampleCard } from '@/components/ui/example-card';
 import { ChatSection } from '@/components/ui/chat-section';
+import { ShimmerHeader, ShimmerDefinitions, ShimmerMetrics, ShimmerExamples } from '@/components/ui/shimmer';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { getWordDetailStream } from '@/services/api/search';
@@ -250,13 +251,7 @@ export default function WordDetailScreen() {
             </View>
           ) : isLoading ? (
             <View style={styles.headerContainer}>
-              <View style={styles.skeletonHeader}>
-                <ActivityIndicator size="large" color="#00AA69" />
-                <Text style={styles.loadingText}>単語情報を生成中...</Text>
-                {loadingProgress > 0 && (
-                  <Text style={styles.progressText}>{loadingProgress}%</Text>
-                )}
-              </View>
+              <ShimmerHeader />
             </View>
           ) : null}
 
@@ -269,10 +264,7 @@ export default function WordDetailScreen() {
             </View>
           ) : wordData?.headword && isLoading ? (
             <View style={styles.definitionsContainer}>
-              <View style={styles.skeletonBox}>
-                <ActivityIndicator size="small" color="#00AA69" />
-                <Text style={styles.loadingSubText}>意味を生成中...</Text>
-              </View>
+              <ShimmerDefinitions />
             </View>
           ) : null}
 
@@ -287,10 +279,7 @@ export default function WordDetailScreen() {
             </View>
           ) : wordData?.senses && isLoading ? (
             <View style={styles.metricsContainer}>
-              <View style={styles.skeletonBox}>
-                <ActivityIndicator size="small" color="#00AA69" />
-                <Text style={styles.loadingSubText}>メトリクスを生成中...</Text>
-              </View>
+              <ShimmerMetrics />
             </View>
           ) : null}
 
@@ -311,26 +300,10 @@ export default function WordDetailScreen() {
           ) : wordData?.metrics && isLoading ? (
             <View style={styles.examplesSection}>
               <Text style={styles.sectionTitle}>例文</Text>
-              <View style={styles.skeletonBox}>
-                <ActivityIndicator size="small" color="#00AA69" />
-                <Text style={styles.loadingSubText}>例文を生成中...</Text>
-              </View>
+              <ShimmerExamples />
             </View>
           ) : null}
 
-          {/* 全体の進捗表示 */}
-          {isLoading && loadingProgress > 0 && (
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${loadingProgress}%` }
-                  ]}
-                />
-              </View>
-            </View>
-          )}
         </View>
       </ScrollView>
 
@@ -401,45 +374,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  loadingText: {
-    fontSize: 16,
-    color: '#686868',
-  },
-  progressContainer: {
-    width: '80%',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 12,
-  },
-  progressBar: {
-    width: '100%',
-    height: 8,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#00AA69',
-    borderRadius: 4,
-  },
-  progressText: {
-    fontSize: 14,
-    color: '#686868',
-    fontWeight: '600',
-  },
-  streamingIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingVertical: 16,
-    marginTop: 12,
-  },
-  streamingText: {
-    fontSize: 14,
-    color: '#686868',
-  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -462,24 +396,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  skeletonHeader: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 32,
-    gap: 12,
-  },
-  skeletonBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(0, 170, 105, 0.05)',
-    borderRadius: 12,
-    gap: 8,
-  },
-  loadingSubText: {
-    fontSize: 14,
-    color: '#686868',
   },
 });

@@ -19,9 +19,9 @@ export interface ModelConfig {
 export function selectModel(): ModelConfig {
   return {
     provider: 'gemini',
-    model: 'gemini-2.0-flash-exp',
-    maxTokens: 1200,
-    temperature: 0.3,
+    model: 'gemini-2.5-flash-lite', // 最高速: Flash-Liteは最速で最もコスト効率が良い
+    maxTokens: 1024, // 最適化: 実際の出力サイズに合わせて削減
+    temperature: 0.1, // 最適化: より速く、より一貫性のある出力
   };
 }
 
@@ -29,5 +29,5 @@ export function selectModel(): ModelConfig {
  * モデルの表示名を取得
  */
 export function getModelDisplayName(config: ModelConfig): string {
-  return 'Gemini Flash 2.0 Exp';
+  return 'Gemini Flash 2.5 Lite';
 }
