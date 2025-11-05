@@ -25,18 +25,11 @@ export function Shimmer({
 
   useEffect(() => {
     const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(animatedValue, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(animatedValue, {
-          toValue: 0,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-      ])
+      Animated.timing(animatedValue, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      })
     );
 
     animation.start();
@@ -46,7 +39,7 @@ export function Shimmer({
 
   const translateX = animatedValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [-350, 350],
+    outputRange: [-500, 500],
   });
 
   return (
@@ -66,7 +59,15 @@ export function Shimmer({
         ]}
       >
         <LinearGradient
-          colors={['#E8E8E8', '#F5F5F5', '#E8E8E8']}
+          colors={[
+            'rgba(239, 239, 239, 0)',
+            'rgba(255, 255, 255, 0.3)',
+            'rgba(255, 255, 255, 0.7)',
+            'rgba(255, 255, 255, 1)',
+            'rgba(255, 255, 255, 0.7)',
+            'rgba(255, 255, 255, 0.3)',
+            'rgba(239, 239, 239, 0)',
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradient}
@@ -108,6 +109,14 @@ export function ShimmerDefinitions() {
       <View style={styles.definitionItem}>
         <Shimmer width={8} height={8} borderRadius={4} style={styles.bullet} />
         <Shimmer width="75%" height={20} />
+      </View>
+      <View style={styles.definitionItem}>
+        <Shimmer width={8} height={8} borderRadius={4} style={styles.bullet} />
+        <Shimmer width="82%" height={20} />
+      </View>
+      <View style={styles.definitionItem}>
+        <Shimmer width={8} height={8} borderRadius={4} style={styles.bullet} />
+        <Shimmer width="78%" height={20} />
       </View>
     </View>
   );
@@ -169,13 +178,18 @@ export function ShimmerExamples() {
         <Shimmer width="82%" height={18} style={styles.exampleLine} />
         <Shimmer width="78%" height={14} />
       </View>
+      <View style={styles.exampleCard}>
+        <Shimmer width="88%" height={18} style={styles.exampleLine} />
+        <Shimmer width="86%" height={18} style={styles.exampleLine} />
+        <Shimmer width="72%" height={14} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#E8E8E8',
+    backgroundColor: '#EFEFEF',
     overflow: 'hidden',
   },
   shimmer: {
@@ -184,7 +198,7 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
-    width: 350,
+    width: 500,
   },
   headerShimmer: {
     alignItems: 'center',

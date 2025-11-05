@@ -262,7 +262,7 @@ export default function WordDetailScreen() {
                 definitions={wordData.senses.map(s => s.glossShort)}
               />
             </View>
-          ) : wordData?.headword && isLoading ? (
+          ) : isLoading ? (
             <View style={styles.definitionsContainer}>
               <ShimmerDefinitions />
             </View>
@@ -277,7 +277,7 @@ export default function WordDetailScreen() {
                 nuance={wordData.metrics.nuance}
               />
             </View>
-          ) : wordData?.senses && isLoading ? (
+          ) : isLoading ? (
             <View style={styles.metricsContainer}>
               <ShimmerMetrics />
             </View>
@@ -297,7 +297,7 @@ export default function WordDetailScreen() {
                 ))}
               </View>
             </View>
-          ) : wordData?.metrics && isLoading ? (
+          ) : isLoading ? (
             <View style={styles.examplesSection}>
               <Text style={styles.sectionTitle}>例文</Text>
               <ShimmerExamples />
