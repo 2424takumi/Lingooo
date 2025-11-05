@@ -10,6 +10,7 @@ import { ChatSection } from '@/components/ui/chat-section';
 import { ShimmerSuggestions } from '@/components/ui/shimmer';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { getCachedSuggestions, subscribeSuggestions } from '@/services/cache/suggestion-cache';
 import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { getWordDetailStream, searchJaToEn } from '@/services/api/search';
@@ -21,6 +22,7 @@ export default function SearchScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { currentLanguage } = useLearningLanguages();
 
   const query = typeof params.query === 'string' ? params.query : '';
   const resultsParam = typeof params.results === 'string' ? params.results : '[]';
@@ -68,8 +70,8 @@ export default function SearchScreen() {
     // API呼び出し
     const fetchSuggestions = async () => {
       try {
-        logger.info('[Search] Fetching suggestions for:', query);
-        const result = await searchJaToEn(query);
+        logger.info(`[Search] Fetching ${currentLanguage.code} suggestions for:`, query);
+        const result = await searchJaToEn(query, currentLanguage.code);
         logger.info('[Search] Received suggestions:', result.items.length);
         setSuggestions(result.items);
       } catch (error) {
@@ -80,7 +82,7 @@ export default function SearchScreen() {
     };
 
     fetchSuggestions();
-  }, [query, initialResults.length]); // initialResults.lengthで変更を検知
+  }, [query, initialResults.length, currentLanguage.code]); // currentLanguage.codeも監視
 
   // サブスクリプション（キャッシュ更新を受信）
   useEffect(() => {
@@ -153,12 +155,13 @@ export default function SearchScreen() {
   };
 
   const handleWordCardPress = (item: SuggestionItem) => {
-    prefetchWordDetail(item.lemma, () => getWordDetailStream(item.lemma));
+    prefetchWordDetail(item.lemma, () => getWordDetailStream(item.lemma, currentLanguage.code));
 
     router.push({
       pathname: '/(tabs)/word-detail',
       params: {
         word: item.lemma,
+        targetLanguage: currentLanguage.code, // 言語コードを渡す
         fromPage: 'search',
         searchQuery: query,
         searchResults: JSON.stringify(suggestions),

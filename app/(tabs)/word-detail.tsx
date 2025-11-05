@@ -30,6 +30,7 @@ export default function WordDetailScreen() {
 
   // パラメータから単語を取得
   const word = params.word as string || '';
+  const targetLanguage = (params.targetLanguage as string) || 'en'; // 学習言語コード
   const dataParam = params.data as string;
   const fromPage = params.fromPage as string;
   const searchQuery = params.searchQuery as string;
@@ -117,7 +118,7 @@ export default function WordDetailScreen() {
           logger.debug('[WordDetail] Starting STREAMING API call');
           let data;
           try {
-            data = await getWordDetailStream(word, (progress, partialData) => {
+            data = await getWordDetailStream(word, targetLanguage, (progress, partialData) => {
               logger.debug(`[WordDetail] Progress: ${progress}%`, {
                 hasPartialData: !!partialData,
                 sections: partialData ? Object.keys(partialData) : []
@@ -155,7 +156,7 @@ export default function WordDetailScreen() {
     };
 
     loadWordData();
-  }, [word, dataParam]);
+  }, [word, dataParam, targetLanguage]);
 
   const handleBackPress = () => {
     // searchページから来た場合は、searchページに戻る
@@ -185,9 +186,26 @@ export default function WordDetailScreen() {
         return;
       }
 
+      // 言語コードから音声言語コードへのマッピング
+      const languageMap: Record<string, string> = {
+        en: 'en-US',
+        es: 'es-ES',
+        pt: 'pt-BR',
+        zh: 'zh-CN',
+        fr: 'fr-FR',
+        de: 'de-DE',
+        ko: 'ko-KR',
+        it: 'it-IT',
+        ru: 'ru-RU',
+        ar: 'ar-SA',
+        hi: 'hi-IN',
+      };
+
+      const speechLanguage = languageMap[targetLanguage] || 'en-US';
+
       // 単語を発音
       Speech.speak(wordData.headword.lemma, {
-        language: 'en-US',
+        language: speechLanguage,
         pitch: 1.0,
         rate: 0.75, // 少しゆっくり発音
       });
