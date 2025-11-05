@@ -1,0 +1,299 @@
+{
+  "ja_to_en": {
+    "勉強": [
+      {
+        "lemma": "study",
+        "pos": ["noun", "verb"],
+        "shortSenseJa": "学ぶ・研究する",
+        "confidence": 0.92
+      },
+      {
+        "lemma": "learn",
+        "pos": ["verb"],
+        "shortSenseJa": "学ぶ・習得する",
+        "confidence": 0.85
+      }
+    ],
+    "研究": [
+      {
+        "lemma": "research",
+        "pos": ["noun", "verb"],
+        "shortSenseJa": "研究・調査",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "study",
+        "pos": ["noun", "verb"],
+        "shortSenseJa": "研究・学習",
+        "confidence": 0.88
+      }
+    ],
+    "学習": [
+      {
+        "lemma": "learning",
+        "pos": ["noun"],
+        "shortSenseJa": "学習・習得",
+        "confidence": 0.9
+      },
+      {
+        "lemma": "study",
+        "pos": ["noun", "verb"],
+        "shortSenseJa": "学習・勉強",
+        "confidence": 0.87
+      }
+    ],
+    "本": [
+      {
+        "lemma": "book",
+        "pos": ["noun"],
+        "shortSenseJa": "本・書籍",
+        "confidence": 0.98
+      }
+    ],
+    "読む": [
+      {
+        "lemma": "read",
+        "pos": ["verb"],
+        "shortSenseJa": "読む",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "en_details": {
+    "study": {
+      "headword": {
+        "lemma": "study",
+        "lang": "en",
+        "pos": ["noun", "verb"]
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "glossShort": "研究・学習すること"
+        },
+        {
+          "id": "v1",
+          "glossShort": "学ぶ・研究する"
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "He studies English every morning before work.",
+          "textDst": "彼は仕事の前に毎朝英語を勉強しています。"
+        },
+        {
+          "textSrc": "She is studying for the exam.",
+          "textDst": "彼女は試験勉強をしています。"
+        }
+      ],
+      "collocations": [
+        { "phrase": "study hard" },
+        { "phrase": "study abroad" },
+        { "phrase": "case study" }
+      ],
+      "hint": {
+        "text": "studyは過程に焦点、learnは結果に焦点を当てます。"
+      },
+      "metrics": {
+        "frequency": 85,
+        "difficulty": 30,
+        "nuance": 50
+      }
+    },
+    "learn": {
+      "headword": {
+        "lemma": "learn",
+        "lang": "en",
+        "pos": ["verb"]
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "glossShort": "学ぶ・習得する"
+        },
+        {
+          "id": "v2",
+          "glossShort": "知る・分かる"
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I learned Japanese in college.",
+          "textDst": "私は大学で日本語を学びました。"
+        },
+        {
+          "textSrc": "Children learn quickly.",
+          "textDst": "子供たちは早く学びます。"
+        }
+      ],
+      "collocations": [
+        { "phrase": "learn from" },
+        { "phrase": "learn by doing" },
+        { "phrase": "learn the hard way" }
+      ],
+      "hint": {
+        "text": "learnは結果（習得）に焦点。studyは過程に焦点を当てます。"
+      },
+      "metrics": {
+        "frequency": 90,
+        "difficulty": 25,
+        "nuance": 50
+      }
+    },
+    "research": {
+      "headword": {
+        "lemma": "research",
+        "lang": "en",
+        "pos": ["noun", "verb"]
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "glossShort": "研究・調査"
+        },
+        {
+          "id": "v1",
+          "glossShort": "研究する・調査する"
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "She is doing research on climate change.",
+          "textDst": "彼女は気候変動について研究しています。"
+        },
+        {
+          "textSrc": "The research was published in a journal.",
+          "textDst": "その研究は学術誌に掲載されました。"
+        }
+      ],
+      "collocations": [
+        { "phrase": "do research" },
+        { "phrase": "research paper" },
+        { "phrase": "research team" }
+      ],
+      "hint": {
+        "text": "researchは学術的・体系的な研究を指します。"
+      },
+      "metrics": {
+        "frequency": 75,
+        "difficulty": 45,
+        "nuance": 70
+      }
+    },
+    "book": {
+      "headword": {
+        "lemma": "book",
+        "lang": "en",
+        "pos": ["noun", "verb"]
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "glossShort": "本・書籍"
+        },
+        {
+          "id": "v1",
+          "glossShort": "予約する"
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I read three books last month.",
+          "textDst": "私は先月3冊の本を読みました。"
+        },
+        {
+          "textSrc": "I need to book a hotel for my trip.",
+          "textDst": "旅行のためにホテルを予約する必要があります。"
+        }
+      ],
+      "collocations": [
+        { "phrase": "read a book" },
+        { "phrase": "book a flight" },
+        { "phrase": "textbook" }
+      ],
+      "metrics": {
+        "frequency": 95,
+        "difficulty": 10,
+        "nuance": 50
+      }
+    },
+    "read": {
+      "headword": {
+        "lemma": "read",
+        "lang": "en",
+        "pos": ["verb"]
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "glossShort": "読む"
+        },
+        {
+          "id": "v2",
+          "glossShort": "解釈する・理解する"
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I read the newspaper every day.",
+          "textDst": "私は毎日新聞を読みます。"
+        },
+        {
+          "textSrc": "Can you read this kanji?",
+          "textDst": "この漢字を読めますか？"
+        }
+      ],
+      "collocations": [
+        { "phrase": "read aloud" },
+        { "phrase": "read between the lines" },
+        { "phrase": "well-read" }
+      ],
+      "metrics": {
+        "frequency": 98,
+        "difficulty": 15,
+        "nuance": 50
+      }
+    },
+    "insect": {
+      "headword": {
+        "lemma": "insect",
+        "lang": "en",
+        "pos": ["noun"]
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "glossShort": "昆虫"
+        },
+        {
+          "id": "n2",
+          "glossShort": "虫"
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Bees and butterflies are insects.",
+          "textDst": "ミツバチと蝶は昆虫です。"
+        },
+        {
+          "textSrc": "Many insects are attracted to light.",
+          "textDst": "多くの昆虫は光に引き寄せられます。"
+        },
+        {
+          "textSrc": "Some insects can be harmful to crops.",
+          "textDst": "一部の昆虫は作物に有害です。"
+        }
+      ],
+      "collocations": [
+        { "phrase": "insect repellent" },
+        { "phrase": "insect bite" },
+        { "phrase": "flying insect" }
+      ],
+      "metrics": {
+        "frequency": 65,
+        "difficulty": 35,
+        "nuance": 50
+      }
+    }
+  }
+}

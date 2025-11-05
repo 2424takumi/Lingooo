@@ -16,6 +16,14 @@ export const Colors = {
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
+    // Lingooo app colors
+    primary: '#00AA69',
+    pageBackground: '#F1F9F1',
+    searchBackground: '#E5F3E8',
+    headerBackground: '#FAFCFB',
+    inputBackground: '#FFFFFF',
+    textPlaceholder: '#ACACAC',
+    buttonGray: '#686868',
   },
   dark: {
     text: '#ECEDEE',
@@ -24,6 +32,14 @@ export const Colors = {
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
+    // Lingooo app colors
+    primary: '#00AA69',
+    pageBackground: '#1A1F1A',
+    searchBackground: '#2A3F2E',
+    headerBackground: '#2A2D2A',
+    inputBackground: '#3A3D3A',
+    textPlaceholder: '#8C8C8C',
+    buttonGray: '#686868',
   },
 };
 

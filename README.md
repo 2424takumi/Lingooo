@@ -48,3 +48,17 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+  ---
+  📝 次回の起動方法
+
+  今後、アプリを使うときは：
+
+  1. バックエンドサーバーを起動（ターミナルで）
+  cd /Users/a2424/Documents/Lingooo/lingooo-backend
+  npm run dev
+  2. フロントエンドアプリを起動（別のターミナルで）
+  cd /Users/a2424/Documents/Lingooo/lingooo-mobile
+  npm start
+
+  両方を起動してから使ってください！
