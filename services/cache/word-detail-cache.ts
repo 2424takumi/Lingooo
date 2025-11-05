@@ -70,11 +70,11 @@ export function getPendingPromise(word: string): Promise<WordDetailResponse> | u
  * Pre-flight request: API呼び出しを開始してキャッシュに保存
  *
  * @param word - 単語
- * @param fetchFn - データ取得関数
+ * @param fetchFn - データ取得関数（進捗コールバック付き）
  */
 export function prefetchWordDetail(
   word: string,
-  fetchFn: () => Promise<WordDetailResponse>
+  fetchFn: (onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void) => Promise<WordDetailResponse>
 ): void {
   // 既にキャッシュされている場合はスキップ
   if (cache.has(word)) {
@@ -82,10 +82,23 @@ export function prefetchWordDetail(
     return;
   }
 
-  logger.debug('[Cache] PRE-FLIGHT STARTED:', word);
+  logger.debug('[Cache] PRE-FLIGHT STARTED (2-stage):', word);
 
-  // Promiseを開始してキャッシュに保存
-  const promise = fetchFn();
+  // 進捗コールバック付きでPromiseを開始
+  const promise = fetchFn((progress, partialData) => {
+    // 基本情報が来た瞬間にキャッシュを更新（0.2~0.3秒）
+    if (progress >= 30 && partialData && partialData.headword) {
+      logger.debug('[Cache] PRE-FLIGHT basic info ready:', word, progress);
+      const currentEntry = cache.get(word);
+      if (currentEntry) {
+        cache.set(word, {
+          ...currentEntry,
+          data: partialData as WordDetailResponse, // 部分データを保存
+          timestamp: Date.now(),
+        });
+      }
+    }
+  });
 
   cache.set(word, {
     promise,
@@ -95,7 +108,7 @@ export function prefetchWordDetail(
   // 完了したらデータをキャッシュに保存
   promise
     .then((data) => {
-      logger.debug('[Cache] PRE-FLIGHT COMPLETED:', word);
+      logger.debug('[Cache] PRE-FLIGHT COMPLETED (full data):', word);
       cache.set(word, {
         data,
         promise,

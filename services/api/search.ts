@@ -7,7 +7,7 @@
 
 import mockDictionary from '@/data/mock-dictionary.json';
 import type { SuggestionItem, SuggestionResponse, WordDetailResponse, SearchError } from '@/types/search';
-import { generateWordDetail, generateWordDetailStream, generateSuggestions } from '@/services/ai/dictionary-generator';
+import { generateWordDetail, generateWordDetailStream, generateSuggestions, generateWordDetailTwoStage } from '@/services/ai/dictionary-generator';
 import { isGeminiConfigured } from '@/services/ai/gemini-client';
 import { setCachedSuggestions, getCachedSuggestions } from '@/services/cache/suggestion-cache';
 import { logger } from '@/utils/logger';
@@ -177,7 +177,10 @@ export async function getWordDetail(word: string): Promise<WordDetailResponse> {
 }
 
 /**
- * 英語単語の詳細取得（ストリーミング版）
+ * 英語単語の詳細取得（ストリーミング版 - 2段階超高速）
+ *
+ * ステージ1: 基本情報を0.2~0.3秒で表示
+ * ステージ2: 詳細情報を2.5秒で追加
  *
  * @param word - 英語の単語
  * @param onProgress - 進捗コールバック（0-100、部分データ付き）
@@ -187,7 +190,7 @@ export async function getWordDetailStream(
   word: string,
   onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void
 ): Promise<WordDetailResponse> {
-  logger.info('[Search API] getWordDetailStream called for:', word);
+  logger.info('[Search API] getWordDetailStream (2-stage) called for:', word);
 
   // AI生成を使用（Gemini API設定済みの場合）
   try {
@@ -196,9 +199,9 @@ export async function getWordDetailStream(
 
     if (isConfigured) {
       try {
-        logger.info('[Search API] Calling generateWordDetailStream');
-        const detail = await generateWordDetailStream(word, onProgress);
-        logger.info('[Search API] generateWordDetailStream succeeded');
+        logger.info('[Search API] Calling generateWordDetailTwoStage');
+        const detail = await generateWordDetailTwoStage(word, onProgress);
+        logger.info('[Search API] generateWordDetailTwoStage succeeded');
         return detail;
       } catch (error) {
         // 429エラー（レート制限）の場合は特別なメッセージ

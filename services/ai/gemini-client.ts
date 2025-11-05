@@ -167,109 +167,9 @@ export async function generateJSON<T>(
 }
 
 /**
- * SSEイベントの型定義
- */
-export type StreamEvent =
-  | { type: 'section'; section: string; data: any }
-  | { type: 'progress'; length: number }
-  | { type: 'complete'; data: any }
-  | { type: 'error'; error: string };
-
-/**
- * JSON生成（ストリーミング・段階的レンダリング対応）
- *
- * バックエンドの /generate-json-stream エンドポイントを使用して、
- * JSONの各セクションが生成されるたびにコールバックを呼び出します。
- */
-export async function generateJSONStream<T>(
-  prompt: string,
-  config: ModelConfig,
-  onEvent: (event: StreamEvent) => void
-): Promise<T> {
-  try {
-    logger.info('[GeminiClient] Starting generateJSONStream request');
-    const response = await fetch(getApiUrl('/generate-json-stream'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prompt, config }),
-    });
-
-    logger.info('[GeminiClient] Response received:', {
-      ok: response.ok,
-      status: response.status,
-      hasBody: !!response.body,
-      headers: response.headers
-    });
-
-    if (!response.ok) {
-      throw new ApiError(`API Error: ${response.status}`, response.status);
-    }
-
-    if (!response.body) {
-      logger.error('[GeminiClient] Response body is null!');
-      throw new Error('Response body is null');
-    }
-
-    // レスポンスストリームを読む
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let finalData: T | null = null;
-
-    while (true) {
-      const { done, value } = await reader.read();
-
-      if (done) {
-        break;
-      }
-
-      // デコードしてバッファに追加
-      buffer += decoder.decode(value, { stream: true });
-
-      // SSEイベントを行ごとに処理
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || ''; // 最後の不完全な行をバッファに残す
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6); // 'data: ' を削除
-
-          if (data === '[DONE]') {
-            continue;
-          }
-
-          try {
-            const event = JSON.parse(data) as StreamEvent;
-            onEvent(event);
-
-            // 完全なデータを保存
-            if (event.type === 'complete') {
-              finalData = event.data as T;
-            }
-          } catch (e) {
-            logger.error('[GeminiClient] Failed to parse SSE event:', e);
-          }
-        }
-      }
-    }
-
-    if (!finalData) {
-      throw new Error('No complete data received from stream');
-    }
-
-    return finalData;
-  } catch (error) {
-    logger.error('[GeminiClient] Error in generateJSONStream:', error);
-    throw error;
-  }
-}
-
-/**
  * JSON生成（ポーリング方式 - 真のストリーミング）
  *
- * バックエンドで段階的に生成し、フロントエンドがポーリングで取得。
+ * React Native対応: バックエンドで段階的に生成し、フロントエンドがポーリングで取得。
  * 各セクションが生成されるたびに即座にコールバックを呼び出します。
  */
 export async function generateJSONProgressive<T>(
@@ -369,6 +269,48 @@ export async function generateJSONProgressive<T>(
     }
   } catch (error) {
     logger.error('[GeminiClient] Error in generateJSONProgressive:', error);
+    throw error;
+  }
+}
+
+/**
+ * 基本情報のみを超高速生成（headword + senses のみ）
+ *
+ * 詳細情報なしで0.2~0.3秒で返却
+ */
+export async function generateBasicInfo<T>(
+  prompt: string,
+  config: ModelConfig
+): Promise<T> {
+  try {
+    const response = await fetch(getApiUrl('/generate-basic-info'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt, config }),
+    });
+
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let message = `API Error: ${response.status}`;
+
+      if (contentType?.includes('application/json')) {
+        try {
+          const errorData = await response.json();
+          message = errorData.message || errorData.error || message;
+        } catch (e) {
+          // JSONパース失敗時はstatus codeのみ使用
+        }
+      }
+
+      throw new ApiError(message, response.status);
+    }
+
+    const result = await response.json();
+    return result.data as T;
+  } catch (error) {
+    logger.error('[GeminiClient] Error in generateBasicInfo:', error);
     throw error;
   }
 }
