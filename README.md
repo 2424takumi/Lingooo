@@ -1,64 +1,142 @@
-# Welcome to your Expo app 👋
+# Lingooo - AI-Powered Language Learning App 📚
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+AI辞書機能とチャット機能を備えた、革新的な言語学習アプリです。
 
-## Get started
+## 🏗️ プロジェクト構造（モノレポ）
 
-1. Install dependencies
+```
+Lingooo/
+├── backend/          # Express + Gemini APIバックエンド
+│   ├── src/
+│   │   ├── routes/   # API エンドポイント
+│   │   ├── utils/    # ユーティリティ
+│   │   └── prompts/  # AIプロンプト
+│   └── package.json
+├── app/              # React Native (Expo) フロントエンド
+├── components/       # UIコンポーネント
+├── services/         # APIクライアント、キャッシュ
+├── contexts/         # React Context
+├── hooks/            # カスタムフック
+├── types/            # TypeScript型定義
+├── data/             # モックデータ
+└── docs/             # ドキュメント
+```
 
+## ✨ 主な機能
+
+### 1. AI辞書（プログレッシブストリーミング）
+- **真のプログレッシブレンダリング**: 単語情報を段階的に生成・表示
+  - 25% → headword（基本情報）
+  - 50% → senses（意味）
+  - 75% → metrics（頻度・難易度）
+  - 100% → examples（例文）
+- **即座のページ遷移**: データ生成を待たずにページ遷移
+- **自動リトライ**: レート制限時の指数バックオフ
+- **スケルトンローダー**: セクションごとのロード表示
+
+### 2. コンテキスト対応チャット
+- 単語の詳細を理解した上での質問応答
+- フォローアップ質問の自動生成
+- ストリーミング応答表示
+
+### 3. その他
+- 日本語→英語検索（提案機能）
+- キャッシュ機構（高速な再表示）
+- モックデータフォールバック
+
+## 🚀 セットアップ
+
+### 1. バックエンド
+
+```bash
+cd backend
+npm install
+
+# 環境変数を設定
+cp .env.example .env
+# .envにGEMINI_API_KEYを追加
+
+# サーバー起動
+npm run dev
+```
+
+バックエンドは `http://localhost:3000` で起動します。
+
+### 2. フロントエンド
+
+```bash
+# ルートディレクトリで
+npm install
+
+# 環境変数を設定（オプション）
+cp .env.example .env
+# デフォルトでlocalhost:3000に接続
+
+# アプリ起動
+npx expo start
+```
+
+## 📝 使い方
+
+### 起動順序
+1. **バックエンドを起動**（ターミナル1）
    ```bash
-   npm install
+   cd backend && npm run dev
    ```
 
-2. Start the app
-
+2. **フロントエンドを起動**（ターミナル2）
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. Expo Goアプリまたはシミュレーターでアプリを開く
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+### API設定
+Gemini APIキーは `backend/.env` に設定してください：
+```
+GEMINI_API_KEY=your_api_key_here
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+詳細は `docs/setup-gemini-api.md` を参照。
 
-## Learn more
+## 🛠️ 技術スタック
 
-To learn more about developing your project with Expo, look at the following resources:
+### フロントエンド
+- **React Native** (Expo)
+- **TypeScript**
+- **Expo Router** (ファイルベースルーティング)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### バックエンド
+- **Node.js** + **Express**
+- **Google Gemini API**
+- **TypeScript**
 
-## Join the community
+### 主要な技術的実装
+- **プログレッシブストリーミング**: ポーリング方式で段階的データ取得
+- **タスクベースの非同期処理**: メモリストアでタスク管理
+- **自動リトライロジック**: 指数バックオフでレート制限対応
 
-Join our community of developers creating universal apps.
+## 📚 ドキュメント
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+詳細なドキュメントは `docs/` ディレクトリを参照：
+- `docs/ai-dictionary-design.md` - AI辞書の設計
+- `docs/chat-feature-spec.md` - チャット機能の仕様
+- `docs/setup-gemini-api.md` - APIセットアップガイド
 
-  ---
-  📝 次回の起動方法
+## 🤝 開発
 
-  今後、アプリを使うときは：
+### プロジェクト規約
+- コミットメッセージは英語で記述
+- TypeScriptの型定義は厳密に
+- UIコンポーネントは `components/ui/` に配置
 
-  1. バックエンドサーバーを起動（ターミナルで）
-  cd /Users/a2424/Documents/Lingooo/lingooo-backend
-  npm run dev
-  2. フロントエンドアプリを起動（別のターミナルで）
-  cd /Users/a2424/Documents/Lingooo/lingooo-mobile
-  npm start
+### デバッグ
+```bash
+# ログを確認
+# フロントエンド: Expo Goアプリのコンソール
+# バックエンド: ターミナルのnpmログ
+```
 
-  両方を起動してから使ってください！
+---
+
+Built with ❤️ using [Claude Code](https://claude.com/claude-code)
