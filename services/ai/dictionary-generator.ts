@@ -98,14 +98,19 @@ export async function generateSuggestions(
 
 関連性の高い順にソート。confidenceは最も関連性が高いものを1.0とする。`;
 
-  const suggestions = await generateJSON<Array<{
-    lemma: string;
-    pos: string[];
-    shortSenseJa: string;
-    confidence: number;
-  }>>(prompt, modelConfig);
+  const result = await generateJSON<any>(prompt, modelConfig);
 
-  return suggestions;
+  // バックエンドが配列の最初の要素を取り出している場合があるので、配列に変換
+  if (Array.isArray(result)) {
+    return result;
+  } else if (result && typeof result === 'object') {
+    // 単一オブジェクトが返された場合は配列にラップ
+    logger.warn('[generateSuggestions] Single object returned, wrapping in array');
+    return [result];
+  } else {
+    logger.error('[generateSuggestions] Unexpected result type:', typeof result);
+    return [];
+  }
 }
 
 /**
