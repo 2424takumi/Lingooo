@@ -190,7 +190,13 @@ export default function SearchScreen() {
           {/* Word Cards */}
           <View style={styles.searchResultView}>
             {isLoading && suggestions.length === 0 ? (
-              <ShimmerSuggestions />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.wordCardList}
+              >
+                <ShimmerSuggestions />
+              </ScrollView>
             ) : suggestions.length > 0 ? (
               <ScrollView
                 horizontal

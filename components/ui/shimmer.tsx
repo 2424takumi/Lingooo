@@ -189,17 +189,30 @@ export function ShimmerExamples() {
 
 /**
  * サジェストカード用のシマー（日本語検索結果）
+ * WordCardの構造に完全に一致
  */
 export function ShimmerSuggestions() {
   return (
     <View style={styles.suggestionsShimmer}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <View key={i} style={styles.suggestionCard}>
-          <View style={styles.suggestionHeader}>
-            <Shimmer width={80} height={24} borderRadius={8} />
-            <Shimmer width={50} height={20} borderRadius={10} />
+        <View key={i} style={styles.wordCardShimmer}>
+          {/* 単語名 */}
+          <Shimmer width={100} height={28} borderRadius={4} />
+
+          {/* 品詞タグ */}
+          <View style={styles.posTagsShimmer}>
+            <Shimmer width={50} height={17} borderRadius={3} />
+            <Shimmer width={45} height={17} borderRadius={3} />
           </View>
-          <Shimmer width="75%" height={16} style={styles.suggestionText} />
+
+          {/* 定義リスト */}
+          <View style={styles.definitionListShimmer}>
+            <Shimmer width="90%" height={14} borderRadius={4} />
+            <Shimmer width="85%" height={14} borderRadius={4} />
+          </View>
+
+          {/* 説明文 */}
+          <Shimmer width="80%" height={14} borderRadius={4} style={styles.descriptionShimmer} />
         </View>
       ))}
     </View>
@@ -275,22 +288,25 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   suggestionsShimmer: {
+    flexDirection: 'row',
     gap: 12,
+    paddingRight: 16,
   },
-  suggestionCard: {
+  wordCardShimmer: {
     backgroundColor: '#FAFCFB',
     borderWidth: 1,
     borderColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
+    borderRadius: 8,
+    width: 150,
+    height: 189,
+    padding: 12,
+    paddingHorizontal: 14,
+    gap: 8,
   },
-  suggestionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  definitionListShimmer: {
+    gap: 4,
   },
-  suggestionText: {
-    marginTop: 4,
+  descriptionShimmer: {
+    marginTop: 'auto',
   },
 });
