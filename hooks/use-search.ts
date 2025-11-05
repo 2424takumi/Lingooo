@@ -13,10 +13,12 @@ import {
   resolveMixedLanguage,
 } from '@/services/utils/language-detect';
 import { searchJaToEn, getWordDetail } from '@/services/api/search';
+import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import type { SearchError } from '@/types/search';
 
 export function useSearch() {
   const router = useRouter();
+  const { currentLanguage } = useLearningLanguages();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,11 +49,11 @@ export function useSearch() {
 
       // 4. 検索分岐
       if (resolvedLang === 'ja') {
-        // 日本語検索 → JpSearchPage
+        // 日本語検索 → SearchPage（タブで選択された言語で翻訳）
         await searchAndNavigateToJp(normalizedQuery);
       } else {
-        // 英語検索 → WordDetailPage
-        await searchAndNavigateToEn(normalizedQuery);
+        // 単語検索 → WordDetailPage（タブで選択された言語の単語として扱う）
+        await searchAndNavigateToWord(normalizedQuery, currentLanguage.code);
       }
       return true;
     } catch (err) {
@@ -79,15 +81,19 @@ export function useSearch() {
   };
 
   /**
-   * 英語検索して詳細ページに遷移（即座に遷移、ページ上でストリーミング生成）
+   * 単語検索して詳細ページに遷移（即座に遷移、ページ上でストリーミング生成）
+   *
+   * @param word - 検索する単語
+   * @param targetLanguage - ターゲット言語コード（タブで選択された言語）
    */
-  const searchAndNavigateToEn = async (word: string) => {
+  const searchAndNavigateToWord = async (word: string, targetLanguage: string) => {
     // データ取得を待たずに即座にページ遷移
     // ページ上でストリーミング生成が開始される
     router.push({
       pathname: '/(tabs)/word-detail',
       params: {
         word,
+        targetLanguage, // タブで選択された言語を渡す
         // dataパラメータなし = ページ上でAPI呼び出し
       },
     });
