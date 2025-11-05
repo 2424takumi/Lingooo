@@ -4,7 +4,7 @@
  * Gemini APIを使用して単語の詳細情報を生成
  */
 
-import { generateJSON, generateTextStream, generateJSONProgressive, generateBasicInfo } from './gemini-client';
+import { generateJSON, generateTextStream, generateJSONProgressive, generateBasicInfo, generateSuggestionsArray } from './gemini-client';
 import { selectModel } from './model-selector';
 import type { WordDetailResponse } from '@/types/search';
 import { logger } from '@/utils/logger';
@@ -82,33 +82,48 @@ export async function generateWordDetail(
 }
 
 /**
- * 日本語から英単語を提案
+ * 日本語から英単語を提案（複数候補）
  *
  * @param japaneseQuery - 日本語クエリ
- * @returns 提案される英単語のリスト
+ * @returns 提案される英単語のリスト（3-5個）
  */
 export async function generateSuggestions(
   japaneseQuery: string
 ): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number }>> {
   const modelConfig = selectModel();
 
-  const prompt = `日本語"${japaneseQuery}"に対応する英単語を最大5個、以下のJSON配列構造で生成：
+  const prompt = `日本語"${japaneseQuery}"に対応する英単語を3~5個、以下のJSON配列構造で生成：
 
-[{"lemma": "英単語", "pos": ["品詞（英語）"], "shortSenseJa": "簡潔な日本語の意味", "confidence": 関連性スコア0-1}]
+[
+  {"lemma": "英単語1", "pos": ["品詞（英語）"], "shortSenseJa": "簡潔な日本語の意味（10文字以内）", "confidence": 関連性スコア0-1},
+  {"lemma": "英単語2", "pos": ["品詞"], "shortSenseJa": "意味2", "confidence": スコア},
+  {"lemma": "英単語3", "pos": ["品詞"], "shortSenseJa": "意味3", "confidence": スコア}
+]
 
-関連性の高い順にソート。confidenceは最も関連性が高いものを1.0とする。`;
+要件:
+- 必ず3個以上の候補を返すこと
+- 文脈やニュアンスの違いを考慮した候補を選ぶこと
+  例: "あいさつ" → greeting（一般的）, salutation（正式）, hello（カジュアル）, regards（書面）
+- 関連性の高い順にソート
+- confidenceは最も関連性が高いものを1.0とする`;
 
-  const result = await generateJSON<any>(prompt, modelConfig);
+  try {
+    const result = await generateSuggestionsArray<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number }>(prompt, modelConfig);
 
-  // バックエンドが配列の最初の要素を取り出している場合があるので、配列に変換
-  if (Array.isArray(result)) {
+    if (!Array.isArray(result)) {
+      logger.error('[generateSuggestions] Result is not array:', typeof result);
+      return [];
+    }
+
+    if (result.length === 0) {
+      logger.warn('[generateSuggestions] Empty array returned');
+      return [];
+    }
+
+    logger.info(`[generateSuggestions] Received ${result.length} suggestions for "${japaneseQuery}"`);
     return result;
-  } else if (result && typeof result === 'object') {
-    // 単一オブジェクトが返された場合は配列にラップ
-    logger.warn('[generateSuggestions] Single object returned, wrapping in array');
-    return [result];
-  } else {
-    logger.error('[generateSuggestions] Unexpected result type:', typeof result);
+  } catch (error) {
+    logger.error('[generateSuggestions] Error:', error);
     return [];
   }
 }

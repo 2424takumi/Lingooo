@@ -1,7 +1,9 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
 import type { QAPair } from '@/types/chat';
+import { TypingIndicator } from './typing-indicator';
 
 interface QACardProps {
   pair: QAPair;
@@ -19,6 +21,35 @@ export function QACard({ pair, onRetry }: QACardProps) {
   const primaryColor = useThemeColor({}, 'primary');
 
   const showRetry = pair.status === 'error' && typeof onRetry === 'function';
+
+  // アニメーション: テキストが上から徐々に表示される（初回のみ）
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-10)).current;
+  const hasAnimatedRef = useRef(false);
+
+  useEffect(() => {
+    if (pair.a && !hasAnimatedRef.current) {
+      // 初回表示時のみアニメーション
+      hasAnimatedRef.current = true;
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else if (pair.status === 'completed' && !hasAnimatedRef.current) {
+      // 完了時は即座に表示
+      fadeAnim.setValue(1);
+      slideAnim.setValue(0);
+      hasAnimatedRef.current = true;
+    }
+  }, [pair.a, pair.status, fadeAnim, slideAnim]);
 
   return (
     <View
@@ -39,14 +70,16 @@ export function QACard({ pair, onRetry }: QACardProps) {
         {pair.status === 'pending' ? (
           <View style={styles.pendingContainer}>
             {pair.a ? (
-              <Text style={[styles.answerText, { color: answerTextColor }]}>{pair.a}</Text>
+              <Animated.View
+                style={{
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }],
+                }}
+              >
+                <Text style={[styles.answerText, { color: answerTextColor }]}>{pair.a}</Text>
+              </Animated.View>
             ) : null}
-            <View style={styles.loadingRow}>
-              <ActivityIndicator color={primaryColor} size="small" />
-              <Text style={[styles.loadingText, { color: loadingColor }]}>
-                回答を生成しています...
-              </Text>
-            </View>
+            <TypingIndicator color="#2E7D32" dotSize={6} />
           </View>
         ) : (
           <Text style={[styles.answerText, { color: answerTextColor }]}>
@@ -97,15 +130,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '400',
-  },
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
-  },
-  loadingText: {
-    fontSize: 12,
   },
   errorText: {
     fontSize: 12,

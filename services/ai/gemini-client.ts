@@ -316,6 +316,56 @@ export async function generateBasicInfo<T>(
 }
 
 /**
+ * サジェスト生成（複数候補を配列で返す）
+ *
+ * 日本語→英語のサジェスト専用。
+ * 複数の候補を配列で返すため、専用エンドポイントを使用。
+ */
+export async function generateSuggestionsArray<T>(
+  prompt: string,
+  config: ModelConfig
+): Promise<T[]> {
+  try {
+    const response = await fetch(getApiUrl('/generate-suggestions'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt, config }),
+    });
+
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let message = `API Error: ${response.status}`;
+
+      if (contentType?.includes('application/json')) {
+        try {
+          const errorData = await response.json();
+          message = errorData.message || errorData.error || message;
+        } catch (e) {
+          // JSONパース失敗時はstatus codeのみ使用
+        }
+      }
+
+      throw new ApiError(message, response.status);
+    }
+
+    const result = await response.json();
+
+    // 必ず配列を返す
+    if (!Array.isArray(result.data)) {
+      logger.warn('[GeminiClient] generateSuggestionsArray: result.data is not array, wrapping');
+      return [result.data] as T[];
+    }
+
+    return result.data as T[];
+  } catch (error) {
+    logger.error('[GeminiClient] Error in generateSuggestionsArray:', error);
+    throw error;
+  }
+}
+
+/**
  * バックエンドでAPIキーが設定されているかチェック
  */
 export async function isGeminiConfigured(): Promise<boolean> {

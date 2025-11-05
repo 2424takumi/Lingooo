@@ -88,6 +88,7 @@ export function ChatSection({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasManuallyClosedWithContent, setHasManuallyClosedWithContent] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const prevQAPairsLengthRef = useRef(qaPairs.length);
 
   useEffect(() => {
@@ -98,6 +99,16 @@ export function ChatSection({
     }
     prevQAPairsLengthRef.current = qaPairs.length;
   }, [qaPairs.length, isOpen]);
+
+  // 自動スクロール: 新しいメッセージやストリーミング中
+  useEffect(() => {
+    if (isOpen && qaPairs.length > 0) {
+      // 少し遅延を入れてレンダリングを待つ
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: false });
+      }, 50);
+    }
+  }, [qaPairs, isStreaming, isOpen]);
 
   const handleSubmit = async (text: string) => {
     if (!text.trim() || !onSend) {
@@ -150,7 +161,17 @@ export function ChatSection({
   return (
     <View style={[styles.container, isOpen && styles.containerOpen]}>
       {isOpen && (
-        <ScrollView style={styles.chatMessages} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.chatMessages}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => {
+            // コンテンツサイズが変更されたら自動的に下にスクロール（ストリーミング中は即座に）
+            if (isStreaming || qaPairs.some(pair => pair.status === 'pending')) {
+              scrollViewRef.current?.scrollToEnd({ animated: false });
+            }
+          }}
+        >
           {qaPairs.length > 0 ? (
             <View style={styles.qaCardList}>
               <QACardList pairs={qaPairs} onRetry={onRetryQuestion} />
