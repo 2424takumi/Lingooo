@@ -72,8 +72,11 @@ export default function WordDetailScreen() {
   useEffect(() => {
     const loadWordData = async () => {
       try {
+        // wordが変わった瞬間に前のデータをクリア
+        setWordData(null);
         setIsLoading(true);
         setLoadingProgress(0);
+        setError(null);
 
         // パラメータでデータが渡されている場合はそれを使用
         if (dataParam) {
