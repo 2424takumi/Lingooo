@@ -15,6 +15,8 @@ export interface SuggestionItem {
   shortSenseJa: string;
   /** 信頼度スコア (0.0-1.0) */
   confidence: number;
+  /** 使い分けガイド（この単語の使い方や特徴を簡潔に説明） */
+  usageHint?: string;
 }
 
 /**

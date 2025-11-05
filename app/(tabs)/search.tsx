@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { ThemedView } from '@/components/themed-view';
-import { ExampleGroup } from '@/components/ui/example-group';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { WordCard } from '@/components/ui/word-card';
 import { ChatSection } from '@/components/ui/chat-section';
@@ -17,17 +16,6 @@ import { getWordDetailStream, searchJaToEn } from '@/services/api/search';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
 import type { SuggestionItem } from '@/types/search';
-
-const examples = [
-  {
-    english: 'He studies English every morning before work.',
-    japanese: '彼は仕事の前に毎朝英語を勉強しています。',
-  },
-  {
-    english: 'He studies English every morning before work.',
-    japanese: '彼は仕事の前に毎朝英語を勉強しています。',
-  },
-];
 
 export default function SearchScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
@@ -222,7 +210,7 @@ export default function SearchScreen() {
                       word={item.lemma}
                       posTags={item.pos}
                       definitions={[item.shortSenseJa]}
-                      description={`信頼度: ${Math.round(item.confidence * 100)}%`}
+                      description={item.usageHint || `信頼度: ${Math.round(item.confidence * 100)}%`}
                     />
                   </Pressable>
                 ))}
@@ -234,17 +222,6 @@ export default function SearchScreen() {
                 </Text>
               </View>
             )}
-
-            {/* Examples */}
-            <View style={styles.exampleList}>
-              {examples.map((example, index) => (
-                <ExampleGroup
-                  key={index}
-                  english={example.english}
-                  japanese={example.japanese}
-                />
-              ))}
-            </View>
           </View>
         </View>
       </ScrollView>
@@ -290,10 +267,6 @@ const styles = StyleSheet.create({
   },
   wordCardPressable: {
     minWidth: 150,
-  },
-  exampleList: {
-    gap: 18,
-    paddingLeft: 0,
   },
   chatContainerFixed: {
     position: 'absolute',
