@@ -13,8 +13,8 @@ const suggestionCache = new Map<string, CacheEntry>();
 const listeners = new Map<string, Set<SuggestionListener>>();
 const CACHE_TTL = 5 * 60 * 1000;
 
-function toKey(query: string): string {
-  return normalizeQuery(query);
+function toKey(query: string, languageCode: string = 'en'): string {
+  return `${normalizeQuery(query)}:${languageCode}`;
 }
 
 function cleanup() {
@@ -27,15 +27,15 @@ function cleanup() {
   }
 }
 
-export function getCachedSuggestions(query: string): SuggestionItem[] | undefined {
+export function getCachedSuggestions(query: string, languageCode: string = 'en'): SuggestionItem[] | undefined {
   cleanup();
-  const key = toKey(query);
+  const key = toKey(query, languageCode);
   const entry = suggestionCache.get(key);
   return entry?.items;
 }
 
-export function setCachedSuggestions(query: string, items: SuggestionItem[]): void {
-  const key = toKey(query);
+export function setCachedSuggestions(query: string, items: SuggestionItem[], languageCode: string = 'en'): void {
+  const key = toKey(query, languageCode);
   suggestionCache.set(key, {
     items,
     timestamp: Date.now(),
@@ -55,8 +55,8 @@ export function setCachedSuggestions(query: string, items: SuggestionItem[]): vo
   }
 }
 
-export function subscribeSuggestions(query: string, listener: SuggestionListener): () => void {
-  const key = toKey(query);
+export function subscribeSuggestions(query: string, listener: SuggestionListener, languageCode: string = 'en'): () => void {
+  const key = toKey(query, languageCode);
   const current = listeners.get(key) ?? new Set<SuggestionListener>();
   current.add(listener);
   listeners.set(key, current);

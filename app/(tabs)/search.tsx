@@ -59,7 +59,7 @@ export default function SearchScreen() {
     }
 
     // キャッシュチェック
-    const cached = getCachedSuggestions(query);
+    const cached = getCachedSuggestions(query, currentLanguage.code);
     if (cached && cached.length > 0) {
       logger.debug('[Search] Using cached suggestions');
       setSuggestions(cached);
@@ -98,10 +98,10 @@ export default function SearchScreen() {
         logger.debug('[Search] Received updated suggestions from subscription');
         setSuggestions(items);
       }
-    });
+    }, currentLanguage.code);
 
     return unsubscribe;
-  }, [query]);
+  }, [query, currentLanguage.code]);
 
   const chatContext = useMemo(
     () => ({

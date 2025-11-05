@@ -7,7 +7,7 @@
 
 import mockDictionary from '@/data/mock-dictionary.json';
 import type { SuggestionItem, SuggestionResponse, WordDetailResponse, SearchError } from '@/types/search';
-import { generateWordDetail, generateWordDetailStream, generateSuggestions, generateWordDetailTwoStage } from '@/services/ai/dictionary-generator';
+import { generateWordDetail, generateWordDetailStream, generateSuggestions, generateWordDetailTwoStage, generateSuggestionsFast, addUsageHints } from '@/services/ai/dictionary-generator';
 import { isGeminiConfigured } from '@/services/ai/gemini-client';
 import { setCachedSuggestions, getCachedSuggestions } from '@/services/cache/suggestion-cache';
 import { logger } from '@/utils/logger';
@@ -71,26 +71,74 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   ]) as Promise<T>;
 }
 
-async function tryGenerateAiSuggestions(query: string, targetLanguage: string = 'en'): Promise<SuggestionItem[] | null> {
+/**
+ * AI候補生成（2段階高速版）
+ *
+ * ステージ1: 基本情報のみを0.5~1秒で取得
+ * ステージ2: usageHintを追加（バックグラウンド）
+ */
+async function tryGenerateAiSuggestionsTwoStage(
+  query: string,
+  targetLanguage: string = 'en'
+): Promise<{ basic: SuggestionItem[]; enhancePromise: Promise<void> } | null> {
   try {
-    const suggestions = await withTimeout(generateSuggestions(query, targetLanguage), SUGGESTION_TIMEOUT_MS);
+    // ステージ1: 基本情報を高速取得（0.5~1秒）
+    logger.info('[tryGenerateAiSuggestionsTwoStage] Stage 1: Fetching basic info');
+    const basicSuggestions = await withTimeout(
+      generateSuggestionsFast(query, targetLanguage),
+      SUGGESTION_TIMEOUT_MS
+    );
 
-    // 配列チェック（念のため）
-    if (!Array.isArray(suggestions) || suggestions.length === 0) {
-      logger.warn('[tryGenerateAiSuggestions] No suggestions returned');
+    if (!Array.isArray(basicSuggestions) || basicSuggestions.length === 0) {
+      logger.warn('[tryGenerateAiSuggestionsTwoStage] No suggestions returned');
       return null;
     }
 
-    logger.info(`[tryGenerateAiSuggestions] Received ${suggestions.length} ${targetLanguage} suggestions`);
-    return suggestions.slice(0, 10);
+    logger.info(`[tryGenerateAiSuggestionsTwoStage] Stage 1 complete: ${basicSuggestions.length} ${targetLanguage} suggestions`);
+
+    // 基本情報を返す用のアイテム（usageHintなし）
+    const basicItems: SuggestionItem[] = basicSuggestions.slice(0, 10).map(item => ({
+      lemma: item.lemma,
+      pos: item.pos,
+      shortSenseJa: item.shortSenseJa,
+      confidence: item.confidence,
+    }));
+
+    // ステージ2: usageHintをバックグラウンドで追加
+    const enhancePromise = (async () => {
+      try {
+        logger.info('[tryGenerateAiSuggestionsTwoStage] Stage 2: Fetching usage hints');
+        const lemmas = basicItems.map(item => item.lemma);
+        const hints = await addUsageHints(lemmas, query);
+
+        // ヒントをマージ
+        const hintMap = new Map(hints.map(h => [h.lemma, h.usageHint]));
+        const enhancedItems = basicItems.map(item => ({
+          ...item,
+          usageHint: hintMap.get(item.lemma) || undefined,
+        }));
+
+        // キャッシュを更新
+        setCachedSuggestions(query, enhancedItems, targetLanguage);
+        logger.info('[tryGenerateAiSuggestionsTwoStage] Stage 2 complete: hints added');
+      } catch (error) {
+        logger.error('[tryGenerateAiSuggestionsTwoStage] Stage 2 failed:', error);
+        // ヒント追加に失敗してもbasicは既に表示されているので問題なし
+      }
+    })();
+
+    return { basic: basicItems, enhancePromise };
   } catch (error) {
-    logger.error('AI生成エラー、モックデータにフォールバック:', error);
+    logger.error('[tryGenerateAiSuggestionsTwoStage] Stage 1 failed:', error);
     return null;
   }
 }
 
 /**
- * 日本語→ターゲット言語候補検索
+ * 日本語→ターゲット言語候補検索（2段階高速版）
+ *
+ * ステージ1: 基本情報を0.5~1秒で返却
+ * ステージ2: usageHintをバックグラウンドで追加
  *
  * @param query - 日本語の検索クエリ
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
@@ -103,48 +151,41 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en')
       items: [],
     };
   }
-  const mockItems = findMockSuggestions(trimmedQuery);
 
-  if (mockItems.length > 0) {
-    setCachedSuggestions(trimmedQuery, mockItems);
-  }
-
+  // Gemini未設定の場合はモックデータのみ
   if (!(await isGeminiConfigured())) {
+    const mockItems = findMockSuggestions(trimmedQuery);
+    if (mockItems.length > 0) {
+      setCachedSuggestions(trimmedQuery, mockItems, targetLanguage);
+    }
     return {
       items: mockItems,
     };
   }
 
-  const aiPromise = tryGenerateAiSuggestions(trimmedQuery, targetLanguage);
+  // 2段階生成を開始
+  logger.info(`[searchJaToEn] Starting 2-stage generation for: ${trimmedQuery} (${targetLanguage})`);
+  const result = await tryGenerateAiSuggestionsTwoStage(trimmedQuery, targetLanguage);
 
-  if (mockItems.length === 0) {
-    const aiItems = await aiPromise;
+  if (result && result.basic.length > 0) {
+    // ステージ1: 基本情報を即座に返す & キャッシュ
+    setCachedSuggestions(trimmedQuery, result.basic, targetLanguage);
+    logger.info('[searchJaToEn] Returning basic suggestions immediately');
 
-    if (aiItems && aiItems.length > 0) {
-      setCachedSuggestions(trimmedQuery, aiItems);
-      return {
-        items: aiItems,
-      };
-    }
+    // ステージ2はバックグラウンドで実行（キャッシュ更新時にUIが自動更新される）
+    // enhancePromiseは内部でsetCachedSuggestionsを呼ぶ
 
     return {
-      items: [],
+      items: result.basic,
     };
   }
 
-  aiPromise
-    .then((aiItems) => {
-      if (!aiItems || aiItems.length === 0) {
-        return;
-      }
-
-      const existing = getCachedSuggestions(trimmedQuery) ?? mockItems;
-      const merged = mergeSuggestions(aiItems, existing);
-      setCachedSuggestions(trimmedQuery, merged);
-    })
-    .catch(() => {
-      // 例外は tryGenerateAiSuggestions 内でログ済み
-    });
+  // AI生成失敗時はモックデータにフォールバック
+  logger.warn('[searchJaToEn] AI generation failed, falling back to mock data');
+  const mockItems = findMockSuggestions(trimmedQuery);
+  if (mockItems.length > 0) {
+    setCachedSuggestions(trimmedQuery, mockItems, targetLanguage);
+  }
 
   return {
     items: mockItems,
