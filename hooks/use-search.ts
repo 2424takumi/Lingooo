@@ -18,7 +18,7 @@ import type { SearchError } from '@/types/search';
 
 export function useSearch() {
   const router = useRouter();
-  const { currentLanguage } = useLearningLanguages();
+  const { currentLanguage, nativeLanguage } = useLearningLanguages();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,13 +47,13 @@ export function useSearch() {
       const detectedLang = detectLang(normalizedQuery);
       const resolvedLang = resolveMixedLanguage(detectedLang);
 
-      // 4. 検索分岐
-      if (resolvedLang === 'ja') {
-        // 日本語検索 → SearchPage（タブで選択された言語で翻訳）
+      // 4. 検索分岐（母語判定）
+      if (resolvedLang === nativeLanguage.code) {
+        // 母語検索 → SearchPage（選択中の学習言語への翻訳）
         await searchAndNavigateToJp(normalizedQuery);
       } else {
-        // 単語検索 → WordDetailPage（タブで選択された言語の単語として扱う）
-        await searchAndNavigateToWord(normalizedQuery, currentLanguage.code);
+        // 非母語検索 → WordDetailPage（検出された言語の辞書検索）
+        await searchAndNavigateToWord(normalizedQuery, resolvedLang);
       }
       return true;
     } catch (err) {

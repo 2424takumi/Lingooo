@@ -12,15 +12,18 @@ import { logger } from '@/utils/logger';
 const LEARNING_LANGUAGES_KEY = '@lingooo_learning_languages';
 const DEFAULT_LANGUAGE_KEY = '@lingooo_default_language';
 const CURRENT_LANGUAGE_KEY = '@lingooo_current_language';
+const NATIVE_LANGUAGE_KEY = '@lingooo_native_language';
 
 interface LearningLanguagesContextType {
   learningLanguages: Language[];
   defaultLanguage: Language;
   currentLanguage: Language;
+  nativeLanguage: Language;
   addLearningLanguage: (languageId: string) => Promise<void>;
   removeLearningLanguage: (languageId: string) => Promise<void>;
   setDefaultLanguage: (languageId: string) => Promise<void>;
   setCurrentLanguage: (languageId: string) => Promise<void>;
+  setNativeLanguage: (languageId: string) => Promise<void>;
   isLearning: (languageId: string) => boolean;
 }
 
@@ -41,6 +44,9 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
   );
   const [currentLanguage, setCurrentLanguageState] = useState<Language>(
     AVAILABLE_LANGUAGES[0]
+  );
+  const [nativeLanguage, setNativeLanguageState] = useState<Language>(
+    AVAILABLE_LANGUAGES[1] // デフォルトは日本語
   );
 
   // 初期化
@@ -77,6 +83,15 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
         const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === savedCurrentId);
         if (language) {
           setCurrentLanguageState(language);
+        }
+      }
+
+      // 母語を読み込み
+      const savedNativeId = await AsyncStorage.getItem(NATIVE_LANGUAGE_KEY);
+      if (savedNativeId) {
+        const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === savedNativeId);
+        if (language) {
+          setNativeLanguageState(language);
         }
       }
     } catch (error) {
@@ -153,6 +168,19 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     }
   };
 
+  const setNativeLanguage = async (languageId: string) => {
+    const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === languageId);
+    if (!language) return;
+
+    setNativeLanguageState(language);
+
+    try {
+      await AsyncStorage.setItem(NATIVE_LANGUAGE_KEY, languageId);
+    } catch (error) {
+      logger.error('Failed to save native language:', error);
+    }
+  };
+
   const isLearning = (languageId: string): boolean => {
     return learningLanguages.some((lang) => lang.id === languageId);
   };
@@ -163,10 +191,12 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
         learningLanguages,
         defaultLanguage,
         currentLanguage,
+        nativeLanguage,
         addLearningLanguage,
         removeLearningLanguage,
         setDefaultLanguage,
         setCurrentLanguage,
+        setNativeLanguage,
         isLearning,
       }}
     >
