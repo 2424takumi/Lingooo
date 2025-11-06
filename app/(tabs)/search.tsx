@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -40,23 +40,16 @@ export default function SearchScreen() {
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>(initialResults);
   const [isLoading, setIsLoading] = useState(false);
 
-  // queryが変わったら即座にsuggestionsをクリア
+  // queryまたは言語が変わったら再検索
   useEffect(() => {
     if (!query) {
       setSuggestions([]);
       return;
     }
 
-    // 新しいqueryの場合は、前の結果をクリア
+    // 新しいqueryまたは言語の場合は、前の結果をクリア
     setSuggestions([]);
     setIsLoading(true);
-
-    // initialResultsがある場合はそれを使う
-    if (initialResults.length > 0) {
-      setSuggestions(initialResults);
-      setIsLoading(false);
-      return;
-    }
 
     // キャッシュチェック
     const cached = getCachedSuggestions(query, currentLanguage.code);
@@ -82,7 +75,7 @@ export default function SearchScreen() {
     };
 
     fetchSuggestions();
-  }, [query, initialResults.length, currentLanguage.code]); // currentLanguage.codeも監視
+  }, [query, currentLanguage.code]); // currentLanguage.codeも監視
 
   // サブスクリプション（キャッシュ更新を受信）
   useEffect(() => {
@@ -173,8 +166,13 @@ export default function SearchScreen() {
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
       <StatusBar style="auto" />
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.content}>
           {/* Header */}
           <View style={styles.headerContainer}>
             <UnifiedHeaderBar
@@ -189,19 +187,11 @@ export default function SearchScreen() {
           {/* Word Cards */}
           <View style={styles.searchResultView}>
             {isLoading && suggestions.length === 0 ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.wordCardList}
-              >
+              <View style={styles.wordCardList}>
                 <ShimmerSuggestions />
-              </ScrollView>
+              </View>
             ) : suggestions.length > 0 ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.wordCardList}
-              >
+              <View style={styles.wordCardList}>
                 {suggestions.map((item, index) => (
                   <Pressable
                     key={`${item.lemma}-${index}`}
@@ -213,11 +203,11 @@ export default function SearchScreen() {
                       word={item.lemma}
                       posTags={item.pos}
                       definitions={[item.shortSenseJa]}
-                      description={item.usageHint || `信頼度: ${Math.round(item.confidence * 100)}%`}
+                      description={item.usageHint || ''}
                     />
                   </Pressable>
                 ))}
-              </ScrollView>
+              </View>
             ) : (
               <View style={styles.noResultsContainer}>
                 <Text style={styles.noResultsText}>
@@ -226,22 +216,29 @@ export default function SearchScreen() {
               </View>
             )}
           </View>
-        </View>
+          </View>
+        </TouchableWithoutFeedback>
       </ScrollView>
 
       {/* Chat Section - Fixed at bottom */}
-      <View pointerEvents="box-none" style={styles.chatContainerFixed}>
-        <ChatSection
-          placeholder="この単語について質問をする..."
-          qaPairs={qaPairs}
-          followUps={followUps}
-          isStreaming={isChatStreaming}
-          error={qaPairs.length === 0 ? chatError : null}
-          onSend={handleChatSubmit}
-          onQuickQuestion={sendQuickQuestion}
-          onRetryQuestion={handleQACardRetry}
-        />
-      </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={0}
+      >
+        <View pointerEvents="box-none" style={styles.chatContainerFixed}>
+          <ChatSection
+            placeholder="この単語について質問をする..."
+            qaPairs={qaPairs}
+            followUps={followUps}
+            isStreaming={isChatStreaming}
+            error={qaPairs.length === 0 ? chatError : null}
+            onSend={handleChatSubmit}
+            onQuickQuestion={sendQuickQuestion}
+            onRetryQuestion={handleQACardRetry}
+          />
+        </View>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -266,19 +263,21 @@ const styles = StyleSheet.create({
   },
   wordCardList: {
     gap: 12,
-    paddingRight: 16,
   },
   wordCardPressable: {
-    minWidth: 150,
+    width: '100%',
   },
-  chatContainerFixed: {
+  keyboardAvoidingView: {
     position: 'absolute',
     top: 141,
     bottom: 0,
     left: 0,
     right: 0,
+  },
+  chatContainerFixed: {
+    flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 26,
     justifyContent: 'flex-end',
   },
   noResultsContainer: {

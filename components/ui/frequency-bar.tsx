@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  Easing,
 } from 'react-native-reanimated';
 
 interface FrequencyBarProps {
@@ -14,6 +15,7 @@ interface FrequencyBarProps {
   rightLabel?: string;
   centerLabel?: string;
   type?: 'frequency' | 'difficulty' | 'nuance';
+  delay?: number; // Animation delay in ms
 }
 
 export function FrequencyBar({
@@ -23,17 +25,29 @@ export function FrequencyBar({
   rightLabel,
   centerLabel,
   type = 'frequency',
+  delay = 0,
 }: FrequencyBarProps) {
   const animatedWidth = useSharedValue(0);
 
   useEffect(() => {
-    // Animate from 0 to value when component mounts
-    animatedWidth.value = withTiming(value, { duration: 1000 });
-  }, [value]);
+    // Animate from 0 to value when component mounts with delay
+    setTimeout(() => {
+      animatedWidth.value = withTiming(value, {
+        duration: 900,
+        easing: Easing.out(Easing.quad), // Ease-out quad for smooth deceleration
+      });
+    }, delay);
+  }, [value, delay]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
       width: `${animatedWidth.value}%`,
+    };
+  });
+
+  const animatedDotStyle = useAnimatedStyle(() => {
+    return {
+      left: `${animatedWidth.value}%`,
     };
   });
 
@@ -47,15 +61,17 @@ export function FrequencyBar({
 
       <View style={styles.barContainer}>
         <View style={styles.barBackground}>
-          <Animated.View
-            style={[
-              styles.barFill,
-              animatedStyle,
-              { backgroundColor: type === 'difficulty' ? '#00AA69' : '#00AA69' },
-            ]}
-          />
+          {!isNuance && (
+            <Animated.View
+              style={[
+                styles.barFill,
+                animatedStyle,
+                { backgroundColor: type === 'difficulty' ? '#00AA69' : '#00AA69' },
+              ]}
+            />
+          )}
           {isNuance && (
-            <View style={[styles.nuanceIndicator, { left: `${value}%` }]} />
+            <Animated.View style={[styles.nuanceIndicator, animatedDotStyle]} />
           )}
         </View>
       </View>
@@ -90,21 +106,22 @@ const styles = StyleSheet.create({
     height: 10,
     backgroundColor: '#E0E0E0',
     borderRadius: 5,
-    overflow: 'hidden',
     position: 'relative',
   },
   barFill: {
     height: '100%',
     borderRadius: 5,
+    overflow: 'hidden',
   },
   nuanceIndicator: {
     position: 'absolute',
     top: -1,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: '#00AA69',
-    transform: [{ translateX: -5 }],
+    transform: [{ translateX: -6 }],
+    zIndex: 10,
   },
   labelRow: {
     flexDirection: 'row',

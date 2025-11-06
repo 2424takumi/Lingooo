@@ -18,8 +18,8 @@ export function LanguageTag({ label, selected = true, onPress }: LanguageTagProp
 
 const styles = StyleSheet.create({
   container: {
-    height: 24,
-    paddingHorizontal: 16,
+    height: 28,
+    paddingHorizontal: 18,
     borderRadius: 8,
     backgroundColor: '#E0E0E0',
     justifyContent: 'center',
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#00AA69',
   },
   text: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: '#666666',
     textAlign: 'center',

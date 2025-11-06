@@ -366,6 +366,155 @@ export async function generateSuggestionsArray<T>(
 }
 
 /**
+ * 高速サジェスト生成（基本情報のみ）
+ *
+ * usageHintを含まない、lemma/pos/shortSenseJaのみの高速版
+ */
+export async function generateSuggestionsArrayFast<T>(
+  prompt: string,
+  config: ModelConfig
+): Promise<T[]> {
+  try {
+    logger.info('[GeminiClient] Starting fast suggestions generation');
+    const response = await fetch(getApiUrl('/generate-suggestions-fast'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt, config }),
+    });
+
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let message = `API Error: ${response.status}`;
+
+      if (contentType?.includes('application/json')) {
+        try {
+          const errorData = await response.json();
+          message = errorData.message || errorData.error || message;
+        } catch (e) {
+          // JSONパース失敗時はstatus codeのみ使用
+        }
+      }
+
+      throw new ApiError(message, response.status);
+    }
+
+    const result = await response.json();
+
+    if (!Array.isArray(result.data)) {
+      logger.warn('[GeminiClient] Fast suggestions: result.data is not array, wrapping');
+      return [result.data] as T[];
+    }
+
+    logger.info('[GeminiClient] Fast suggestions completed:', result.data.length);
+    return result.data as T[];
+  } catch (error) {
+    logger.error('[GeminiClient] Error in generateSuggestionsArrayFast:', error);
+    throw error;
+  }
+}
+
+/**
+ * 単一単語のUsageHintを生成（並列実行用）
+ *
+ * @param lemma - 単語
+ * @param japaneseQuery - 元の日本語クエリ
+ */
+export async function generateUsageHint(
+  lemma: string,
+  japaneseQuery: string
+): Promise<{ lemma: string; usageHint: string }> {
+  try {
+    logger.info(`[GeminiClient] Starting usage hint generation for: ${lemma}`);
+    const response = await fetch(getApiUrl('/generate-usage-hint'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ lemma, japaneseQuery }),
+    });
+
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let message = `API Error: ${response.status}`;
+
+      if (contentType?.includes('application/json')) {
+        try {
+          const errorData = await response.json();
+          message = errorData.message || errorData.error || message;
+        } catch (e) {
+          // JSONパース失敗時はstatus codeのみ使用
+        }
+      }
+
+      throw new ApiError(message, response.status);
+    }
+
+    const result = await response.json();
+    logger.info(`[GeminiClient] Usage hint generated for: ${lemma}`, result.data);
+    logger.info(`[GeminiClient] Hint content: "${result.data?.usageHint}"`);
+    return result.data;
+  } catch (error) {
+    logger.error(`[GeminiClient] Error in generateUsageHint for ${lemma}:`, error);
+    // エラー時は空のヒントを返す
+    return { lemma, usageHint: '' };
+  }
+}
+
+/**
+ * UsageHintsをバッチ生成（非推奨）
+ *
+ * @param lemmas - 英単語のリスト
+ * @param japaneseQuery - 元の日本語クエリ
+ * @deprecated generateUsageHint を並列実行してください
+ */
+export async function generateUsageHints(
+  lemmas: string[],
+  japaneseQuery: string
+): Promise<Array<{ lemma: string; usageHint: string }>> {
+  try {
+    logger.info('[GeminiClient] Starting usage hints generation for:', lemmas);
+    const response = await fetch(getApiUrl('/generate-usage-hints'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ lemmas, japaneseQuery }),
+    });
+
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let message = `API Error: ${response.status}`;
+
+      if (contentType?.includes('application/json')) {
+        try {
+          const errorData = await response.json();
+          message = errorData.message || errorData.error || message;
+        } catch (e) {
+          // JSONパース失敗時はstatus codeのみ使用
+        }
+      }
+
+      throw new ApiError(message, response.status);
+    }
+
+    const result = await response.json();
+
+    if (!Array.isArray(result.data)) {
+      logger.warn('[GeminiClient] Usage hints: result.data is not array, wrapping');
+      return [result.data];
+    }
+
+    logger.info('[GeminiClient] Usage hints completed:', result.data.length);
+    return result.data;
+  } catch (error) {
+    logger.error('[GeminiClient] Error in generateUsageHints:', error);
+    throw error;
+  }
+}
+
+/**
  * バックエンドでAPIキーが設定されているかチェック
  */
 export async function isGeminiConfigured(): Promise<boolean> {

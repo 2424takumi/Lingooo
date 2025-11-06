@@ -116,6 +116,7 @@ export function ChatSection({
     }
     try {
       setIsSubmitting(true);
+      setIsOpen(true); // 送信時に開く
       await onSend(text.trim());
       setInputText('');
     } finally {
@@ -231,7 +232,6 @@ export function ChatSection({
             value={inputText}
             onChangeText={setInputText}
             onFocus={() => {
-              setIsOpen(true);
               setIsInputFocused(true);
             }}
             editable={!isStreaming}
@@ -266,22 +266,24 @@ export function ChatSection({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#E5F3E8',
+    backgroundColor: '#DCF0E1',
     borderRadius: 18,
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingTop: 10,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
     overflow: 'hidden',
-    height: 118,
+    height: 116,
   },
   containerOpen: {
     height: '100%',
+    paddingBottom: 10, // 横の余白とバランスを取る
   },
   chatMessages: {
     flexGrow: 0,
-    flexShrink: 0,
+    flexShrink: 1,
     maxHeight: 512,
-    marginBottom: 16,
+    marginBottom: 0,
+    minHeight: 0,
   },
   qaCardList: {
     gap: 20,
@@ -292,15 +294,22 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     flexShrink: 0,
+    marginTop: 4,
+    paddingTop: 0,
   },
   questionScrollView: {
     flexGrow: 0,
     flexShrink: 0,
     marginBottom: 0,
+    marginTop: 0,
+    paddingBottom: 0,
+    paddingTop: 0,
+    height: 32, // 質問タグの高さを固定
   },
   questionList: {
     gap: 8,
     paddingVertical: 0,
+    paddingHorizontal: 0,
   },
   inputContainer: {
     flexGrow: 0,
@@ -314,7 +323,8 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     paddingVertical: 9,
     height: 52,
-    marginTop: 12,
+    marginTop: 10,
+    marginBottom: 0,
   },
   input: {
     flex: 1,
@@ -335,7 +345,9 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   emptyState: {
-    paddingVertical: 12,
+    paddingVertical: 0,
+    paddingTop: 4,
+    paddingBottom: 4,
     gap: 6,
   },
   emptyStateTitle: {

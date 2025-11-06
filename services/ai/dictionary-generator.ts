@@ -5,7 +5,7 @@
  * 多言語対応
  */
 
-import { generateJSON, generateTextStream, generateJSONProgressive, generateBasicInfo, generateSuggestionsArray } from './gemini-client';
+import { generateJSON, generateTextStream, generateJSONProgressive, generateBasicInfo, generateSuggestionsArray, generateSuggestionsArrayFast, generateUsageHint, generateUsageHints } from './gemini-client';
 import { selectModel } from './model-selector';
 import { createBasicInfoPrompt, createDictionaryPrompt, createSuggestionsPrompt } from './prompt-generator';
 import type { WordDetailResponse } from '@/types/search';
@@ -72,6 +72,118 @@ export async function generateSuggestions(
     return result;
   } catch (error) {
     logger.error('[generateSuggestions] Error:', error);
+    return [];
+  }
+}
+
+/**
+ * 日本語からターゲット言語の単語を提案（高速版・基本情報のみ）
+ *
+ * usageHintを含まず、0.5-1秒で返却
+ *
+ * @param japaneseQuery - 日本語クエリ
+ * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @returns 提案される単語のリスト（基本情報のみ）
+ */
+export async function generateSuggestionsFast(
+  japaneseQuery: string,
+  targetLanguage: string = 'en'
+): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number }>> {
+  const modelConfig = selectModel();
+
+  // 基本情報のみのプロンプト（usageHintなし）
+  const prompt = `日本語"${japaneseQuery}"に対応する${targetLanguage === 'en' ? '英' : targetLanguage}単語を3~5個、以下のJSON配列構造で生成：
+
+[
+  {"lemma": "単語1", "pos": ["品詞"], "shortSenseJa": "簡潔な意味（10文字以内）", "confidence": 関連性スコア0-1},
+  {"lemma": "単語2", "pos": ["品詞"], "shortSenseJa": "意味2", "confidence": スコア}
+]
+
+要件:
+- 必ず3個以上の候補を返すこと
+- 関連性の高い順にソート
+- confidenceは最も関連性が高いものを1.0とする`;
+
+  try {
+    const result = await generateSuggestionsArrayFast<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number }>(prompt, modelConfig);
+
+    if (!Array.isArray(result)) {
+      logger.error('[generateSuggestionsFast] Result is not array:', typeof result);
+      return [];
+    }
+
+    if (result.length === 0) {
+      logger.warn('[generateSuggestionsFast] Empty array returned');
+      return [];
+    }
+
+    logger.info(`[generateSuggestionsFast] Received ${result.length} ${targetLanguage} suggestions (fast) for "${japaneseQuery}"`);
+    return result;
+  } catch (error) {
+    logger.error('[generateSuggestionsFast] Error:', error);
+    return [];
+  }
+}
+
+/**
+ * 既存の候補にusageHintを追加（並列生成・高速版）
+ *
+ * 各単語を並列で生成し、完成次第コールバックを呼ぶ
+ *
+ * @param lemmas - 単語のリスト
+ * @param japaneseQuery - 元の日本語クエリ
+ * @param onHintGenerated - 各ヒント生成完了時のコールバック
+ * @returns 全てのusageHintの配列
+ */
+export async function addUsageHintsParallel(
+  lemmas: string[],
+  japaneseQuery: string,
+  onHintGenerated?: (hint: { lemma: string; usageHint: string }) => void
+): Promise<Array<{ lemma: string; usageHint: string }>> {
+  try {
+    logger.info(`[addUsageHintsParallel] Starting parallel generation for: ${lemmas.join(', ')}`);
+
+    // 各単語を並列で生成
+    const hintPromises = lemmas.map(async (lemma) => {
+      const hint = await generateUsageHint(lemma, japaneseQuery);
+
+      // 完成次第コールバックを呼ぶ
+      if (onHintGenerated) {
+        onHintGenerated(hint);
+      }
+
+      return hint;
+    });
+
+    // 全て完了するまで待つ
+    const hints = await Promise.all(hintPromises);
+    logger.info(`[addUsageHintsParallel] All hints generated: ${hints.length}`);
+    return hints;
+  } catch (error) {
+    logger.error('[addUsageHintsParallel] Error:', error);
+    return [];
+  }
+}
+
+/**
+ * 既存の候補にusageHintを追加（バッチ生成）
+ *
+ * @param lemmas - 英単語のリスト
+ * @param japaneseQuery - 元の日本語クエリ
+ * @returns usageHintの配列
+ * @deprecated addUsageHintsParallel を使用してください
+ */
+export async function addUsageHints(
+  lemmas: string[],
+  japaneseQuery: string
+): Promise<Array<{ lemma: string; usageHint: string }>> {
+  try {
+    logger.info(`[addUsageHints] Generating hints for: ${lemmas.join(', ')}`);
+    const hints = await generateUsageHints(lemmas, japaneseQuery);
+    logger.info(`[addUsageHints] Received ${hints.length} hints`);
+    return hints;
+  } catch (error) {
+    logger.error('[addUsageHints] Error:', error);
     return [];
   }
 }

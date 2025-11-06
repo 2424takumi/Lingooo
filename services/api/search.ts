@@ -7,7 +7,7 @@
 
 import mockDictionary from '@/data/mock-dictionary.json';
 import type { SuggestionItem, SuggestionResponse, WordDetailResponse, SearchError } from '@/types/search';
-import { generateWordDetail, generateWordDetailStream, generateSuggestions, generateWordDetailTwoStage, generateSuggestionsFast, addUsageHints } from '@/services/ai/dictionary-generator';
+import { generateWordDetail, generateWordDetailStream, generateSuggestions, generateWordDetailTwoStage, generateSuggestionsFast, addUsageHintsParallel } from '@/services/ai/dictionary-generator';
 import { isGeminiConfigured } from '@/services/ai/gemini-client';
 import { setCachedSuggestions, getCachedSuggestions } from '@/services/cache/suggestion-cache';
 import { logger } from '@/utils/logger';
@@ -104,23 +104,24 @@ async function tryGenerateAiSuggestionsTwoStage(
       confidence: item.confidence,
     }));
 
-    // ステージ2: usageHintをバックグラウンドで追加
+    // ステージ2: usageHintを並列でバックグラウンド追加
     const enhancePromise = (async () => {
       try {
-        logger.info('[tryGenerateAiSuggestionsTwoStage] Stage 2: Fetching usage hints');
+        logger.info('[tryGenerateAiSuggestionsTwoStage] Stage 2: Fetching usage hints in parallel');
         const lemmas = basicItems.map(item => item.lemma);
-        const hints = await addUsageHints(lemmas, query);
 
-        // ヒントをマージ
-        const hintMap = new Map(hints.map(h => [h.lemma, h.usageHint]));
-        const enhancedItems = basicItems.map(item => ({
-          ...item,
-          usageHint: hintMap.get(item.lemma) || undefined,
-        }));
+        // 並列生成：各ヒントが完成次第、キャッシュを更新
+        await addUsageHintsParallel(lemmas, query, (hint) => {
+          // 1つのヒントが完成したら即座にキャッシュ更新
+          const currentItems = getCachedSuggestions(query, targetLanguage) || basicItems;
+          const updatedItems = currentItems.map(item =>
+            item.lemma === hint.lemma ? { ...item, usageHint: hint.usageHint } : item
+          );
+          setCachedSuggestions(query, updatedItems, targetLanguage);
+          logger.info(`[tryGenerateAiSuggestionsTwoStage] Hint added for: ${hint.lemma}`);
+        });
 
-        // キャッシュを更新
-        setCachedSuggestions(query, enhancedItems, targetLanguage);
-        logger.info('[tryGenerateAiSuggestionsTwoStage] Stage 2 complete: hints added');
+        logger.info('[tryGenerateAiSuggestionsTwoStage] Stage 2 complete: all hints added');
       } catch (error) {
         logger.error('[tryGenerateAiSuggestionsTwoStage] Stage 2 failed:', error);
         // ヒント追加に失敗してもbasicは既に表示されているので問題なし
@@ -163,8 +164,8 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en')
     };
   }
 
-  // 2段階生成を開始
-  logger.info(`[searchJaToEn] Starting 2-stage generation for: ${trimmedQuery} (${targetLanguage})`);
+  // 2段階生成（並列版）を開始
+  logger.info(`[searchJaToEn] Starting 2-stage parallel generation for: ${trimmedQuery} (${targetLanguage})`);
   const result = await tryGenerateAiSuggestionsTwoStage(trimmedQuery, targetLanguage);
 
   if (result && result.basic.length > 0) {
@@ -172,8 +173,8 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en')
     setCachedSuggestions(trimmedQuery, result.basic, targetLanguage);
     logger.info('[searchJaToEn] Returning basic suggestions immediately');
 
-    // ステージ2はバックグラウンドで実行（キャッシュ更新時にUIが自動更新される）
-    // enhancePromiseは内部でsetCachedSuggestionsを呼ぶ
+    // ステージ2はバックグラウンドで並列実行（各ヒント完成次第キャッシュ更新）
+    // enhancePromiseは内部で個別にsetCachedSuggestionsを呼ぶ
 
     return {
       items: result.basic,

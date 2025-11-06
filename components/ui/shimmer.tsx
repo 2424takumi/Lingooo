@@ -27,7 +27,7 @@ export function Shimmer({
     const animation = Animated.loop(
       Animated.timing(animatedValue, {
         toValue: 1,
-        duration: 200,
+        duration: 1800,
         useNativeDriver: true,
       })
     );
@@ -288,17 +288,16 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   suggestionsShimmer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 12,
-    paddingRight: 16,
   },
   wordCardShimmer: {
     backgroundColor: '#FAFCFB',
     borderWidth: 1,
     borderColor: '#FFFFFF',
     borderRadius: 8,
-    width: 150,
-    height: 189,
+    width: '100%',
+    minHeight: 120,
     padding: 12,
     paddingHorizontal: 14,
     gap: 8,

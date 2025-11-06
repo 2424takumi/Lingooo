@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { PosTag } from './pos-tag';
+import { Shimmer } from './shimmer';
 
 interface WordCardProps {
   word: string;
@@ -27,7 +28,15 @@ export function WordCard({ word, posTags, definitions, description }: WordCardPr
         ))}
       </View>
 
-      <Text style={styles.description}>{description}</Text>
+      {description ? (
+        <Text style={styles.description}>{description}</Text>
+      ) : (
+        <View style={styles.descriptionShimmerContainer}>
+          <Shimmer width="90%" height={14} borderRadius={4} style={styles.descriptionShimmer} />
+          <Shimmer width="85%" height={14} borderRadius={4} style={styles.descriptionShimmer} />
+          <Shimmer width="80%" height={14} borderRadius={4} />
+        </View>
+      )}
     </View>
   );
 }
@@ -38,8 +47,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FFFFFF',
     borderRadius: 8,
-    width: 150,
-    height: 189,
+    width: '100%',
+    minHeight: 120,
     padding: 12,
     paddingHorizontal: 14,
     gap: 8,
@@ -69,5 +78,13 @@ const styles = StyleSheet.create({
     color: '#000000',
     lineHeight: 16,
     flex: 1,
+  },
+  descriptionShimmerContainer: {
+    flex: 1,
+    gap: 4,
+    justifyContent: 'flex-start',
+  },
+  descriptionShimmer: {
+    marginBottom: 4,
   },
 });

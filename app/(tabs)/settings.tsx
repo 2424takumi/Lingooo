@@ -25,7 +25,7 @@ function ChevronRightIcon({ size = 24, color = '#686868' }: { size?: number; col
 
 export default function SettingsScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
-  const { learningLanguages, defaultLanguage } = useLearningLanguages();
+  const { learningLanguages, defaultLanguage, nativeLanguage } = useLearningLanguages();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [autoPlayAudio, setAutoPlayAudio] = useState(false);
@@ -79,6 +79,17 @@ export default function SettingsScreen() {
           {/* Learning Settings */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>学習設定</Text>
+
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={() => router.push('/native-language-select')}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>母語</Text>
+                <Text style={styles.settingDescription}>{nativeLanguage.name}</Text>
+              </View>
+              <ChevronRightIcon />
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.settingItem}

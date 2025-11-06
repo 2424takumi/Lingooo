@@ -1,8 +1,9 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { DefinitionList } from '@/components/ui/definition-list';
@@ -69,6 +70,28 @@ export default function WordDetailScreen() {
     () => toQAPairs(chatMessages, { fallbackError: chatError }),
     [chatMessages, chatError]
   );
+
+  // オーディオモードを設定（サイレントモードでも音声再生を可能に）
+  useEffect(() => {
+    const configureAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true, // iOSのサイレントモードでも再生
+          staysActiveInBackground: false,
+          shouldDuckAndroid: true,
+          // Playbackカテゴリを使用（YouTubeと同じ）
+          allowsRecordingIOS: false,
+          interruptionModeIOS: 1, // DoNotMix
+          interruptionModeAndroid: 1, // DoNotMix
+        });
+        logger.info('[Audio] Audio mode configured successfully');
+      } catch (error) {
+        logger.error('[Audio] Failed to configure audio mode:', error);
+      }
+    };
+
+    configureAudio();
+  }, []);
 
   useEffect(() => {
     const loadWordData = async () => {
@@ -176,12 +199,35 @@ export default function WordDetailScreen() {
   };
 
   const handlePronouncePress = async () => {
-    if (!wordData?.headword) return;
+    if (!wordData?.headword) {
+      logger.warn('[Pronounce] No headword data');
+      return;
+    }
 
     try {
+      logger.info('[Pronounce] Starting pronunciation for:', wordData.headword.lemma);
+
+      // オーディオモードを再確認（念のため）
+      try {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          shouldDuckAndroid: true,
+          allowsRecordingIOS: false,
+          interruptionModeIOS: 1, // DoNotMix
+          interruptionModeAndroid: 1, // DoNotMix
+        });
+        logger.info('[Pronounce] Audio mode reconfigured');
+      } catch (audioError) {
+        logger.warn('[Pronounce] Failed to reconfigure audio mode:', audioError);
+      }
+
       // 現在の音声を停止
       const isSpeaking = await Speech.isSpeakingAsync();
+      logger.info('[Pronounce] Is currently speaking:', isSpeaking);
+
       if (isSpeaking) {
+        logger.info('[Pronounce] Stopping current speech');
         await Speech.stop();
         return;
       }
@@ -202,15 +248,27 @@ export default function WordDetailScreen() {
       };
 
       const speechLanguage = languageMap[targetLanguage] || 'en-US';
+      logger.info('[Pronounce] Using language:', speechLanguage, 'for target:', targetLanguage);
 
       // 単語を発音
       Speech.speak(wordData.headword.lemma, {
         language: speechLanguage,
         pitch: 1.0,
         rate: 0.75, // 少しゆっくり発音
+        onStart: () => {
+          logger.info('[Pronounce] Speech started');
+        },
+        onDone: () => {
+          logger.info('[Pronounce] Speech completed');
+        },
+        onError: (error) => {
+          logger.error('[Pronounce] Speech error:', error);
+        },
       });
+
+      logger.info('[Pronounce] Speech.speak() called successfully');
     } catch (error) {
-      logger.error('Failed to pronounce word:', error);
+      logger.error('[Pronounce] Failed to pronounce word:', error);
     }
   };
 
@@ -329,18 +387,24 @@ export default function WordDetailScreen() {
       </ScrollView>
 
       {/* Chat Section - Fixed at bottom */}
-      <View pointerEvents="box-none" style={styles.chatContainerFixed}>
-        <ChatSection
-          placeholder="この単語について質問をする..."
-          qaPairs={qaPairs}
-          followUps={followUps}
-          isStreaming={isChatStreaming}
-          error={qaPairs.length === 0 ? chatError : null}
-          onSend={handleChatSubmit}
-          onQuickQuestion={handleQuestionPress}
-          onRetryQuestion={handleQACardRetry}
-        />
-      </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={0}
+      >
+        <View pointerEvents="box-none" style={styles.chatContainerFixed}>
+          <ChatSection
+            placeholder="この単語について質問をする..."
+            qaPairs={qaPairs}
+            followUps={followUps}
+            isStreaming={isChatStreaming}
+            error={qaPairs.length === 0 ? chatError : null}
+            onSend={handleChatSubmit}
+            onQuickQuestion={handleQuestionPress}
+            onRetryQuestion={handleQACardRetry}
+          />
+        </View>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -380,13 +444,17 @@ const styles = StyleSheet.create({
   examplesList: {
     gap: 12,
   },
-  chatContainerFixed: {
+  keyboardAvoidingView: {
     position: 'absolute',
+    top: 180,
     bottom: 0,
     left: 0,
     right: 0,
+  },
+  chatContainerFixed: {
+    flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 50,
+    paddingBottom: 26,
     justifyContent: 'flex-end',
   },
   loadingContainer: {

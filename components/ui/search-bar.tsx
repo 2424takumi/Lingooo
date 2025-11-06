@@ -50,20 +50,22 @@ export function SearchBar({
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.languageTabList}
-      >
-        {learningLanguages.map((language) => (
-          <LanguageTag
-            key={language.id}
-            label={language.name}
-            selected={currentLanguage.id === language.id}
-            onPress={() => handleLanguageSelect(language.id)}
-          />
-        ))}
-      </ScrollView>
+      <View style={styles.languageTabContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.languageTabList}
+        >
+          {learningLanguages.map((language) => (
+            <LanguageTag
+              key={language.id}
+              label={language.name}
+              selected={currentLanguage.id === language.id}
+              onPress={() => handleLanguageSelect(language.id)}
+            />
+          ))}
+        </ScrollView>
+      </View>
       <View style={styles.searchInputContainer}>
         <TextInput
           style={styles.input}
@@ -83,20 +85,27 @@ export function SearchBar({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#E5F3E8',
+    backgroundColor: '#DCF0E1',
     borderRadius: 18,
-    padding: 8,
-    gap: 12,
-    height: 102,
-    justifyContent: 'space-between',
+    paddingTop: 10,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+    height: 116,
+  },
+  languageTabContainer: {
+    flexGrow: 0,
+    flexShrink: 0,
+    height: 32,
+    marginBottom: 2,
+    alignItems: 'center',
   },
   languageTabList: {
+    flexGrow: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingHorizontal: 4,
-    flexGrow: 1,
+    paddingHorizontal: 0,
   },
   searchInputContainer: {
     backgroundColor: '#FFFFFF',
@@ -104,9 +113,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    height: 44,
+    paddingLeft: 12,
+    paddingRight: 8,
+    paddingVertical: 9,
+    height: 52,
+    marginTop: 10,
   },
   input: {
     flex: 1,
@@ -114,7 +125,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
     letterSpacing: 1,
-    height: 18,
   },
   searchButton: {
     width: 34,

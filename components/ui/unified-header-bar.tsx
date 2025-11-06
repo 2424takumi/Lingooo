@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     gap: 8,
-    height: 88,
+    minHeight: 88,
   },
   menuButton: {
     width: 28,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
   backButton: {
@@ -245,7 +245,8 @@ const styles = StyleSheet.create({
     color: '#000000',
     textAlign: 'center',
     letterSpacing: 1,
-    width: 144,
+    flex: 1,
+    marginHorizontal: 8,
   },
   pronounceButton: {
     width: 32,

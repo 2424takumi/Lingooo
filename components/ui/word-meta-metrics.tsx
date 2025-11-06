@@ -16,6 +16,7 @@ export function WordMetaMetrics({ frequency, difficulty, nuance }: WordMetaMetri
         leftLabel="めずらしい"
         rightLabel="よく使う"
         type="frequency"
+        delay={0}
       />
       <FrequencyBar
         title="難易度"
@@ -23,6 +24,7 @@ export function WordMetaMetrics({ frequency, difficulty, nuance }: WordMetaMetri
         leftLabel="かんたん"
         rightLabel="むずかしい"
         type="difficulty"
+        delay={80}
       />
       <FrequencyBar
         title="ニュアンス"
@@ -31,6 +33,7 @@ export function WordMetaMetrics({ frequency, difficulty, nuance }: WordMetaMetri
         centerLabel="ノーマル"
         rightLabel="フォーマル"
         type="nuance"
+        delay={160}
       />
     </View>
   );

@@ -22,23 +22,23 @@ export function TypingIndicator({ color = '#2E7D32', dotSize = 6 }: TypingIndica
           Animated.delay(delay),
           Animated.timing(animValue, {
             toValue: 1,
-            duration: 100,
+            duration: 200,
             useNativeDriver: true,
           }),
           Animated.timing(animValue, {
             toValue: 0,
-            duration: 100,
+            duration: 200,
             useNativeDriver: true,
           }),
-          Animated.delay(80),
+          Animated.delay(160),
         ])
       );
     };
 
     const animations = Animated.parallel([
       createAnimation(dot1Anim, 0),
-      createAnimation(dot2Anim, 80),
-      createAnimation(dot3Anim, 160),
+      createAnimation(dot2Anim, 160),
+      createAnimation(dot3Anim, 320),
     ]);
 
     animations.start();
