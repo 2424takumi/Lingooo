@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 
 import { clearChatSession, getChatSession, setChatSession } from '@/services/cache/chat-cache';
-import { sendChatMessage, sendChatMessageStream } from '@/services/api/chat';
+import { sendChatMessage, sendChatMessageStream, sendChatMessageStreamWebSocket } from '@/services/api/chat';
 import type {
   ChatMessage,
   ChatRequestContext,
@@ -18,6 +18,14 @@ import type {
 } from '@/types/chat';
 import { generateId } from '@/utils/id';
 import { logger } from '@/utils/logger';
+
+/**
+ * WebSocketストリーミングの有効化フラグ
+ *
+ * true: WebSocketを使用（低レイテンシ、リアルタイム）
+ * false: XHRポーリングを使用（安定性重視）
+ */
+const USE_WEBSOCKET_STREAMING = false;
 
 interface ChatContextValue {
   getSession: (key: ChatSessionKey) => ChatSessionState;
@@ -271,7 +279,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
       try {
         if (streaming) {
-          const stream = sendChatMessageStream(request);
+          // フィーチャーフラグに基づいてストリーミング方式を選択
+          logger.info('[ChatContext] Starting streaming:', {
+            method: USE_WEBSOCKET_STREAMING ? 'WebSocket' : 'XHR',
+          });
+
+          const stream = USE_WEBSOCKET_STREAMING
+            ? await sendChatMessageStreamWebSocket(request)
+            : sendChatMessageStream(request);
           let completion = null;
 
           while (true) {

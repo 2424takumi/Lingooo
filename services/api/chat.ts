@@ -219,3 +219,124 @@ export async function* sendChatMessageStream(
     throw error;
   }
 }
+
+/**
+ * WebSocket経由でチャットメッセージをストリーミング送信（新実装）
+ *
+ * @param req - チャットリクエスト
+ * @returns チャット完了レスポンス
+ */
+export async function sendChatMessageStreamWebSocket(
+  req: ChatRequest
+): Promise<AsyncGenerator<ChatStreamEvent, ChatCompletion, undefined>> {
+  const { wsClient } = await import('@/services/websocket/client');
+
+  logger.info('[Chat API WebSocket] sendChatMessageStreamWebSocket called:', {
+    scope: req.scope,
+    identifier: req.identifier,
+  });
+
+  let accumulatedContent = '';
+  let followUps: string[] = [];
+  const eventQueue: ChatStreamEvent[] = [];
+  let resolveNext: ((value: ChatStreamEvent) => void) | null = null;
+  let isComplete = false;
+  let error: Error | null = null;
+
+  const requestId = `chat_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+  // WebSocketストリーミングを開始
+  wsClient.streamChat(requestId, {
+    sessionId: req.sessionId,
+    scope: req.scope,
+    identifier: req.identifier,
+    messages: req.messages,
+    context: req.context,
+  }, {
+    onChunk: (data) => {
+      if (data.content) {
+        accumulatedContent += data.content;
+        const event: ChatStreamEvent = {
+          type: 'content',
+          content: data.content,
+        };
+
+        if (resolveNext) {
+          resolveNext(event);
+          resolveNext = null;
+        } else {
+          eventQueue.push(event);
+        }
+      }
+    },
+    onMetadata: (data) => {
+      if (data.followUps) {
+        followUps = data.followUps;
+        const event: ChatStreamEvent = {
+          type: 'metadata',
+          followUps: data.followUps,
+        };
+
+        if (resolveNext) {
+          resolveNext(event);
+          resolveNext = null;
+        } else {
+          eventQueue.push(event);
+        }
+      }
+    },
+    onDone: () => {
+      logger.info('[Chat API WebSocket] Stream completed');
+      isComplete = true;
+      if (resolveNext) {
+        resolveNext({ type: 'metadata', followUps: [] });
+        resolveNext = null;
+      }
+    },
+    onError: (err) => {
+      logger.error('[Chat API WebSocket] Stream error:', err);
+      error = err;
+      isComplete = true;
+      if (resolveNext) {
+        resolveNext({ type: 'metadata', followUps: [] });
+        resolveNext = null;
+      }
+    },
+  });
+
+  // AsyncGeneratorとしてイベントをyield
+  return (async function*() {
+    try {
+      while (true) {
+        let event: ChatStreamEvent;
+
+        if (eventQueue.length > 0) {
+          event = eventQueue.shift()!;
+        } else if (isComplete) {
+          break;
+        } else {
+          // 次のイベントを待つ
+          event = await new Promise<ChatStreamEvent>((resolve) => {
+            resolveNext = resolve;
+          });
+        }
+
+        if (error) {
+          throw error;
+        }
+
+        yield event;
+      }
+
+      // 最終結果を返す
+      const message = createAssistantMessage(accumulatedContent);
+      return {
+        message,
+        followUps,
+      };
+    } catch (err) {
+      logger.error('[Chat API WebSocket] Error in sendChatMessageStreamWebSocket:', err);
+      throw err;
+    }
+  })();
+}
