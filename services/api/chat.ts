@@ -7,7 +7,21 @@ import type {
 import { generateId } from '@/utils/id';
 import { logger } from '@/utils/logger';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+const BACKEND_URL = (() => {
+  const url = process.env.EXPO_PUBLIC_BACKEND_URL;
+
+  if (url) return url;
+
+  if (__DEV__) {
+    logger.warn('[Chat API] EXPO_PUBLIC_BACKEND_URL not set, using localhost');
+    return 'http://localhost:3000';
+  }
+
+  throw new Error(
+    'EXPO_PUBLIC_BACKEND_URL environment variable must be set in production. ' +
+    'Please add it to your .env file or deployment configuration.'
+  );
+})();
 
 function createAssistantMessage(content: string): ChatMessage {
   return {
