@@ -11,6 +11,7 @@ import { ShimmerSuggestions } from '@/components/ui/shimmer';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
+import { useAISettings } from '@/contexts/ai-settings-context';
 import { getCachedSuggestions, subscribeSuggestions } from '@/services/cache/suggestion-cache';
 import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { getWordDetailStream, searchJaToEn } from '@/services/api/search';
@@ -23,6 +24,7 @@ export default function SearchScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { currentLanguage } = useLearningLanguages();
+  const { aiDetailLevel, setAIDetailLevel } = useAISettings();
 
   const query = typeof params.query === 'string' ? params.query : '';
   const resultsParam = typeof params.results === 'string' ? params.results : '[]';
@@ -233,9 +235,13 @@ export default function SearchScreen() {
             followUps={followUps}
             isStreaming={isChatStreaming}
             error={qaPairs.length === 0 ? chatError : null}
+            detailLevel={aiDetailLevel}
             onSend={handleChatSubmit}
             onQuickQuestion={sendQuickQuestion}
             onRetryQuestion={handleQACardRetry}
+            onDetailLevelChange={setAIDetailLevel}
+            scope="search"
+            identifier={query}
           />
         </View>
       </KeyboardAvoidingView>

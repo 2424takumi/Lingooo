@@ -19,11 +19,15 @@ interface ChatSectionProps {
   followUps?: string[];
   isStreaming?: boolean;
   error?: string | null;
+  detailLevel?: 'concise' | 'detailed';
   onSend?: (text: string) => Promise<void> | void;
   onQuickQuestion?: (question: string) => Promise<void> | void;
   onRetry?: () => void;
   onRetryQuestion?: (question: string) => void;
+  onDetailLevelChange?: (level: 'concise' | 'detailed') => void;
   questionPresets?: string[];
+  scope?: string;
+  identifier?: string;
 }
 
 function ExpandIcon({ size = 18 }: { size?: number }) {
@@ -76,11 +80,15 @@ export function ChatSection({
   followUps = [],
   isStreaming = false,
   error = null,
+  detailLevel = 'concise',
   onSend,
   onQuickQuestion,
   onRetry,
   onRetryQuestion,
+  onDetailLevelChange,
   questionPresets = DEFAULT_QUESTIONS,
+  scope,
+  identifier,
 }: ChatSectionProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -175,7 +183,12 @@ export function ChatSection({
         >
           {qaPairs.length > 0 ? (
             <View style={styles.qaCardList}>
-              <QACardList pairs={qaPairs} onRetry={onRetryQuestion} />
+              <QACardList
+                pairs={qaPairs}
+                onRetry={onRetryQuestion}
+                scope={scope}
+                identifier={identifier}
+              />
             </View>
           ) : (
             <View style={styles.emptyState}>
@@ -259,6 +272,33 @@ export function ChatSection({
             )}
           </TouchableOpacity>
         </View>
+
+        {/* Detail Level Toggle */}
+        <TouchableOpacity
+          style={styles.detailToggle}
+          onPress={() => {
+            const newLevel = detailLevel === 'concise' ? 'detailed' : 'concise';
+            onDetailLevelChange?.(newLevel);
+          }}
+          disabled={isStreaming}
+        >
+          <View style={[
+            styles.toggleSwitch,
+            detailLevel === 'detailed' && styles.toggleSwitchActive,
+            isStreaming && styles.toggleSwitchDisabled
+          ]}>
+            <View style={[
+              styles.toggleKnob,
+              detailLevel === 'detailed' && styles.toggleKnobActive
+            ]} />
+          </View>
+          <Text style={[
+            styles.detailToggleText,
+            isStreaming && styles.detailToggleTextDisabled
+          ]}>
+            返答をもっと詳しく
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -385,5 +425,49 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
+  },
+  detailToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    marginTop: 8,
+    gap: 8,
+  },
+  toggleSwitch: {
+    width: 40,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#ACACAC',
+    padding: 2,
+    justifyContent: 'center',
+  },
+  toggleSwitchActive: {
+    backgroundColor: '#4CAF50',
+  },
+  toggleSwitchDisabled: {
+    opacity: 0.4,
+  },
+  toggleKnob: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  toggleKnobActive: {
+    transform: [{ translateX: 18 }],
+  },
+  detailToggleText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#686868',
+  },
+  detailToggleTextDisabled: {
+    opacity: 0.4,
   },
 });
