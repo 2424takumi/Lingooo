@@ -559,11 +559,12 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    justifyContent: 'flex-end',
-    paddingBottom: 150,
-    paddingHorizontal: 16,
   },
   menuContainer: {
+    position: 'absolute',
+    bottom: 66,
+    left: 16,
+    width: '48%',
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
     padding: 16,
