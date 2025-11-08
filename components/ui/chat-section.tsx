@@ -72,6 +72,21 @@ function SendIcon({ size = 20 }: { size?: number }) {
   );
 }
 
+function DetailModeIcon({ size = 24, active = false }: { size?: number; active?: boolean }) {
+  const color = active ? '#4CAF50' : '#686868';
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 const DEFAULT_QUESTIONS = ['語源', '類義語', '対義語', '使用例'];
 
 export function ChatSection({
@@ -235,70 +250,63 @@ export function ChatSection({
           ))}
         </ScrollView>
 
-        {/* Input Container */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            ref={inputRef}
-            style={styles.input}
-            placeholder={placeholder}
-            placeholderTextColor="#ACACAC"
-            value={inputText}
-            onChangeText={setInputText}
-            onFocus={() => {
-              setIsInputFocused(true);
-            }}
-            editable={!isStreaming}
-            onSubmitEditing={(e) => {
-              const text = e.nativeEvent.text.trim();
-              if (text) {
-                void handleSubmit(text);
-              }
-            }}
-          />
+        {/* Input Row: Mode Icon + Input + Action Button */}
+        <View style={styles.inputRow}>
+          {/* Detail Mode Toggle Icon */}
           <TouchableOpacity
-            style={[
-              styles.button,
-              (isStreaming || isSubmitting) && styles.buttonDisabled,
-            ]}
-            onPress={handleActionButtonPress}
-            disabled={isStreaming || isSubmitting}
+            style={styles.modeIconButton}
+            onPress={() => {
+              const newLevel = detailLevel === 'concise' ? 'detailed' : 'concise';
+              onDetailLevelChange?.(newLevel);
+            }}
+            disabled={isStreaming}
           >
-            {isInputFocused && inputText.trim().length > 0 ? (
-              <SendIcon size={20} />
-            ) : isOpen ? (
-              <ShrinkIcon size={22} />
-            ) : (
-              <ExpandIcon size={18} />
-            )}
+            <View style={styles.modeIconContainer}>
+              <DetailModeIcon size={24} active={detailLevel === 'detailed'} />
+              {detailLevel === 'detailed' && (
+                <Text style={styles.modeLabel}>詳細モード</Text>
+              )}
+            </View>
           </TouchableOpacity>
-        </View>
 
-        {/* Detail Level Toggle */}
-        <TouchableOpacity
-          style={styles.detailToggle}
-          onPress={() => {
-            const newLevel = detailLevel === 'concise' ? 'detailed' : 'concise';
-            onDetailLevelChange?.(newLevel);
-          }}
-          disabled={isStreaming}
-        >
-          <View style={[
-            styles.toggleSwitch,
-            detailLevel === 'detailed' && styles.toggleSwitchActive,
-            isStreaming && styles.toggleSwitchDisabled
-          ]}>
-            <View style={[
-              styles.toggleKnob,
-              detailLevel === 'detailed' && styles.toggleKnobActive
-            ]} />
+          {/* Input Container */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              placeholder={placeholder}
+              placeholderTextColor="#ACACAC"
+              value={inputText}
+              onChangeText={setInputText}
+              onFocus={() => {
+                setIsInputFocused(true);
+              }}
+              editable={!isStreaming}
+              onSubmitEditing={(e) => {
+                const text = e.nativeEvent.text.trim();
+                if (text) {
+                  void handleSubmit(text);
+                }
+              }}
+            />
+            <TouchableOpacity
+              style={[
+                styles.button,
+                (isStreaming || isSubmitting) && styles.buttonDisabled,
+              ]}
+              onPress={handleActionButtonPress}
+              disabled={isStreaming || isSubmitting}
+            >
+              {isInputFocused && inputText.trim().length > 0 ? (
+                <SendIcon size={20} />
+              ) : isOpen ? (
+                <ShrinkIcon size={22} />
+              ) : (
+                <ExpandIcon size={18} />
+              )}
+            </TouchableOpacity>
           </View>
-          <Text style={[
-            styles.detailToggleText,
-            isStreaming && styles.detailToggleTextDisabled
-          ]}>
-            返答をもっと詳しく
-          </Text>
-        </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -351,9 +359,29 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     paddingHorizontal: 0,
   },
-  inputContainer: {
-    flexGrow: 0,
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+  },
+  modeIconButton: {
     flexShrink: 0,
+  },
+  modeIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  modeLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4CAF50',
+  },
+  inputContainer: {
+    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
     flexDirection: 'row',
@@ -363,8 +391,6 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     paddingVertical: 9,
     height: 52,
-    marginTop: 10,
-    marginBottom: 0,
   },
   input: {
     flex: 1,
@@ -425,49 +451,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
-  },
-  detailToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-    marginTop: 8,
-    gap: 8,
-  },
-  toggleSwitch: {
-    width: 40,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#ACACAC',
-    padding: 2,
-    justifyContent: 'center',
-  },
-  toggleSwitchActive: {
-    backgroundColor: '#4CAF50',
-  },
-  toggleSwitchDisabled: {
-    opacity: 0.4,
-  },
-  toggleKnob: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  toggleKnobActive: {
-    transform: [{ translateX: 18 }],
-  },
-  detailToggleText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#686868',
-  },
-  detailToggleTextDisabled: {
-    opacity: 0.4,
   },
 });
