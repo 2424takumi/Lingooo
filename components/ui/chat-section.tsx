@@ -562,15 +562,15 @@ const styles = StyleSheet.create({
   },
   menuContainer: {
     position: 'absolute',
-    bottom: 66,
-    left: 16,
+    bottom: 90,
+    left: 20,
     width: '60%',
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 14,
     paddingTop: 12,
     paddingBottom: 12,
-    gap: 10,
+    gap: 8,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#4A4A4A',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   toggleContainer: {
     flexDirection: 'row',
