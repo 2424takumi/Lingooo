@@ -76,8 +76,17 @@ function DetailModeIcon({ size = 24, active = false }: { size?: number; active?:
   const color = active ? '#4CAF50' : '#686868';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* 虫眼鏡 */}
       <Path
-        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+        d="M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* プラスマーク */}
+      <Path
+        d="M11 8v6M8 11h6"
         stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
@@ -250,27 +259,10 @@ export function ChatSection({
           ))}
         </ScrollView>
 
-        {/* Input Row: Mode Icon + Input + Action Button */}
-        <View style={styles.inputRow}>
-          {/* Detail Mode Toggle Icon */}
-          <TouchableOpacity
-            style={styles.modeIconButton}
-            onPress={() => {
-              const newLevel = detailLevel === 'concise' ? 'detailed' : 'concise';
-              onDetailLevelChange?.(newLevel);
-            }}
-            disabled={isStreaming}
-          >
-            <View style={styles.modeIconContainer}>
-              <DetailModeIcon size={24} active={detailLevel === 'detailed'} />
-              {detailLevel === 'detailed' && (
-                <Text style={styles.modeLabel}>詳細モード</Text>
-              )}
-            </View>
-          </TouchableOpacity>
-
-          {/* Input Container */}
-          <View style={styles.inputContainer}>
+        {/* White Container: Input + Mode Icon */}
+        <View style={styles.whiteContainer}>
+          {/* Input Row */}
+          <View style={styles.inputRow}>
             <TextInput
               ref={inputRef}
               style={styles.input}
@@ -304,6 +296,25 @@ export function ChatSection({
               ) : (
                 <ExpandIcon size={18} />
               )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Mode Icon Row */}
+          <View style={styles.modeRow}>
+            <TouchableOpacity
+              style={styles.modeIconButton}
+              onPress={() => {
+                const newLevel = detailLevel === 'concise' ? 'detailed' : 'concise';
+                onDetailLevelChange?.(newLevel);
+              }}
+              disabled={isStreaming}
+            >
+              <View style={styles.modeIconContainer}>
+                <DetailModeIcon size={24} active={detailLevel === 'detailed'} />
+                {detailLevel === 'detailed' && (
+                  <Text style={styles.modeLabel}>詳細モード</Text>
+                )}
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -359,11 +370,28 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     paddingHorizontal: 0,
   },
+  whiteContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    paddingLeft: 12,
+    paddingRight: 8,
+    paddingTop: 9,
+    paddingBottom: 9,
+    marginTop: 10,
+  },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 10,
+    justifyContent: 'space-between',
+    minHeight: 34,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
   },
   modeIconButton: {
     flexShrink: 0,
@@ -377,20 +405,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#4CAF50',
-  },
-  inputContainer: {
-    flex: 1,
-    flexGrow: 1,
-    flexShrink: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingLeft: 12,
-    paddingRight: 8,
-    paddingVertical: 9,
-    height: 52,
   },
   input: {
     flex: 1,
