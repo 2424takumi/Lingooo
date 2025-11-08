@@ -13,6 +13,7 @@ import { ChatSection } from '@/components/ui/chat-section';
 import { ShimmerHeader, ShimmerDefinitions, ShimmerMetrics, ShimmerExamples } from '@/components/ui/shimmer';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useAISettings } from '@/contexts/ai-settings-context';
 import { getWordDetailStream } from '@/services/api/search';
 import type { WordDetailResponse } from '@/types/search';
 import { getCachedWordDetail, getPendingPromise } from '@/services/cache/word-detail-cache';
@@ -23,6 +24,7 @@ export default function WordDetailScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { aiDetailLevel } = useAISettings();
 
   const [wordData, setWordData] = useState<Partial<WordDetailResponse> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +66,7 @@ export default function WordDetailScreen() {
     scope: 'word',
     identifier: word,
     context: chatContext,
+    targetLanguage,
   });
 
   const qaPairs = useMemo(
@@ -138,10 +141,10 @@ export default function WordDetailScreen() {
           }
 
           // キャッシュなし：通常のAPI呼び出し（ストリーミング）
-          logger.debug('[WordDetail] Starting STREAMING API call');
+          logger.debug('[WordDetail] Starting STREAMING API call with detail level:', aiDetailLevel);
           let data;
           try {
-            data = await getWordDetailStream(word, targetLanguage, (progress, partialData) => {
+            data = await getWordDetailStream(word, targetLanguage, aiDetailLevel, (progress, partialData) => {
               logger.debug(`[WordDetail] Progress: ${progress}%`, {
                 hasPartialData: !!partialData,
                 sections: partialData ? Object.keys(partialData) : []
@@ -179,7 +182,7 @@ export default function WordDetailScreen() {
     };
 
     loadWordData();
-  }, [word, dataParam, targetLanguage]);
+  }, [word, dataParam, targetLanguage, aiDetailLevel]);
 
   const handleBackPress = () => {
     // searchページから来た場合は、searchページに戻る
@@ -402,6 +405,8 @@ export default function WordDetailScreen() {
             onSend={handleChatSubmit}
             onQuickQuestion={handleQuestionPress}
             onRetryQuestion={handleQACardRetry}
+            scope="word"
+            identifier={word}
           />
         </View>
       </KeyboardAvoidingView>
@@ -419,7 +424,7 @@ const styles = StyleSheet.create({
   content: {
     paddingTop: 62,
     paddingHorizontal: 16,
-    paddingBottom: 220, // ChatSection分のスペースを確保
+    paddingBottom: 280, // ChatSection分のスペースを確保（高さ170 + 余裕110）
   },
   headerContainer: {
     marginBottom: 24,

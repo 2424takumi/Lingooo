@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingBottom: 10,
     overflow: 'hidden',
-    height: 116,
+    height: 170, // 質問タグ(32) + margin(10) + 白コンテナ(約110) + padding(20)
   },
   containerOpen: {
     height: '100%',

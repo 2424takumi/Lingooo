@@ -119,6 +119,7 @@ export default function SearchScreen() {
     scope: 'search',
     identifier: query,
     context: chatContext,
+    targetLanguage: currentLanguage.code,
   });
 
   const qaPairs = useMemo(
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
   content: {
     paddingTop: 61,
     paddingHorizontal: 16,
-    paddingBottom: 220, // ChatSection分のスペースを確保
+    paddingBottom: 280, // ChatSection分のスペースを確保（高さ170 + 余裕110）
   },
   headerContainer: {
     marginBottom: 39,
