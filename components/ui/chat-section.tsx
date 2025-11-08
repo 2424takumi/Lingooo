@@ -281,25 +281,9 @@ export function ChatSection({
                 }
               }}
             />
-            <TouchableOpacity
-              style={[
-                styles.button,
-                (isStreaming || isSubmitting) && styles.buttonDisabled,
-              ]}
-              onPress={handleActionButtonPress}
-              disabled={isStreaming || isSubmitting}
-            >
-              {isInputFocused && inputText.trim().length > 0 ? (
-                <SendIcon size={20} />
-              ) : isOpen ? (
-                <ShrinkIcon size={22} />
-              ) : (
-                <ExpandIcon size={18} />
-              )}
-            </TouchableOpacity>
           </View>
 
-          {/* Mode Icon Row */}
+          {/* Mode Icon + Action Button Row */}
           <View style={styles.modeRow}>
             <TouchableOpacity
               style={styles.modeIconButton}
@@ -315,6 +299,23 @@ export function ChatSection({
                   <Text style={styles.modeLabel}>詳細モード</Text>
                 )}
               </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.button,
+                (isStreaming || isSubmitting) && styles.buttonDisabled,
+              ]}
+              onPress={handleActionButtonPress}
+              disabled={isStreaming || isSubmitting}
+            >
+              {isInputFocused && inputText.trim().length > 0 ? (
+                <SendIcon size={20} />
+              ) : isOpen ? (
+                <ShrinkIcon size={22} />
+              ) : (
+                <ExpandIcon size={18} />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -382,16 +383,13 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     minHeight: 34,
   },
   modeRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
   },
   modeIconButton: {
     flexShrink: 0,
