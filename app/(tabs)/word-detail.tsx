@@ -24,7 +24,7 @@ export default function WordDetailScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { aiDetailLevel } = useAISettings();
+  const { aiDetailLevel, setAIDetailLevel } = useAISettings();
 
   const [wordData, setWordData] = useState<Partial<WordDetailResponse> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -402,9 +402,11 @@ export default function WordDetailScreen() {
             followUps={followUps}
             isStreaming={isChatStreaming}
             error={qaPairs.length === 0 ? chatError : null}
+            detailLevel={aiDetailLevel}
             onSend={handleChatSubmit}
             onQuickQuestion={handleQuestionPress}
             onRetryQuestion={handleQACardRetry}
+            onDetailLevelChange={setAIDetailLevel}
             scope="word"
             identifier={word}
           />
