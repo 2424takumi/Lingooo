@@ -73,18 +73,73 @@ function SendIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-function SettingsIcon({ size = 24 }: { size?: number }) {
+function SliderIcon({ size = 22 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* Top slider line */}
       <Path
-        d="M12 15a3 3 0 100-6 3 3 0 000 6z"
+        d="M4 7h7"
         stroke="#686868"
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <Path
-        d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"
+        d="M15 7h5"
+        stroke="#686868"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Top slider circle */}
+      <Path
+        d="M13 7a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"
+        stroke="#686868"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Middle slider line */}
+      <Path
+        d="M4 12h11"
+        stroke="#686868"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M19 12h1"
+        stroke="#686868"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Middle slider circle */}
+      <Path
+        d="M19 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"
+        stroke="#686868"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Bottom slider line */}
+      <Path
+        d="M4 17h5"
+        stroke="#686868"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M13 17h7"
+        stroke="#686868"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Bottom slider circle */}
+      <Path
+        d="M11 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"
         stroke="#686868"
         strokeWidth={2}
         strokeLinecap="round"
@@ -267,7 +322,7 @@ export function ChatSection({
               onPress={() => setIsSettingsMenuOpen(true)}
               disabled={isStreaming}
             >
-              <SettingsIcon size={22} />
+              <SliderIcon size={22} />
             </TouchableOpacity>
 
             {/* Text Input */}
@@ -322,52 +377,47 @@ export function ChatSection({
             activeOpacity={1}
             onPress={() => setIsSettingsMenuOpen(false)}
           >
-            <View style={styles.menuContainer}>
-              <View style={styles.menuHeader}>
-                <Text style={styles.menuTitle}>調整</Text>
-                <TouchableOpacity onPress={() => setIsSettingsMenuOpen(false)}>
-                  <Text style={styles.closeButton}>✕</Text>
+            <View style={styles.menuContainer} onStartShouldSetResponder={() => true}>
+              <Text style={styles.menuItemLabel}>詳細レベル</Text>
+              <View style={styles.toggleContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleOption,
+                    detailLevel === 'concise' && styles.toggleOptionActive,
+                  ]}
+                  onPress={() => {
+                    onDetailLevelChange?.('concise');
+                    setIsSettingsMenuOpen(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.toggleOptionText,
+                      detailLevel === 'concise' && styles.toggleOptionTextActive,
+                    ]}
+                  >
+                    簡潔
+                  </Text>
                 </TouchableOpacity>
-              </View>
-
-              <View style={styles.menuContent}>
-                <View style={styles.menuItem}>
-                  <Text style={styles.menuItemLabel}>詳細レベル</Text>
-                  <View style={styles.toggleContainer}>
-                    <TouchableOpacity
-                      style={[
-                        styles.toggleOption,
-                        detailLevel === 'concise' && styles.toggleOptionActive,
-                      ]}
-                      onPress={() => onDetailLevelChange?.('concise')}
-                    >
-                      <Text
-                        style={[
-                          styles.toggleOptionText,
-                          detailLevel === 'concise' && styles.toggleOptionTextActive,
-                        ]}
-                      >
-                        簡潔
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.toggleOption,
-                        detailLevel === 'detailed' && styles.toggleOptionActive,
-                      ]}
-                      onPress={() => onDetailLevelChange?.('detailed')}
-                    >
-                      <Text
-                        style={[
-                          styles.toggleOptionText,
-                          detailLevel === 'detailed' && styles.toggleOptionTextActive,
-                        ]}
-                      >
-                        詳細
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleOption,
+                    detailLevel === 'detailed' && styles.toggleOptionActive,
+                  ]}
+                  onPress={() => {
+                    onDetailLevelChange?.('detailed');
+                    setIsSettingsMenuOpen(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.toggleOptionText,
+                      detailLevel === 'detailed' && styles.toggleOptionTextActive,
+                    ]}
+                  >
+                    詳細
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
           </TouchableOpacity>
@@ -508,43 +558,29 @@ const styles = StyleSheet.create({
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'flex-end',
+    paddingBottom: 150,
+    paddingHorizontal: 16,
   },
   menuContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    width: '80%',
-    maxWidth: 400,
-    padding: 20,
-  },
-  menuHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  menuTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  closeButton: {
-    fontSize: 24,
-    color: '#686868',
-    fontWeight: '300',
-  },
-  menuContent: {
-    gap: 16,
-  },
-  menuItem: {
+    borderRadius: 15,
+    padding: 16,
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   menuItemLabel: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#000000',
+    color: '#686868',
   },
   toggleContainer: {
     flexDirection: 'row',
