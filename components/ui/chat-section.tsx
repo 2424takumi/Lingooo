@@ -387,7 +387,6 @@ export function ChatSection({
                   ]}
                   onPress={() => {
                     onDetailLevelChange?.('concise');
-                    setIsSettingsMenuOpen(false);
                   }}
                 >
                   <Text
@@ -406,7 +405,6 @@ export function ChatSection({
                   ]}
                   onPress={() => {
                     onDetailLevelChange?.('detailed');
-                    setIsSettingsMenuOpen(false);
                   }}
                 >
                   <Text
