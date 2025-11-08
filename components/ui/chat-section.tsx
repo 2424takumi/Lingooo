@@ -76,7 +76,7 @@ function SendIcon({ size = 20 }: { size?: number }) {
 function SliderIcon({ size = 22 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {/* Top slider line */}
+      {/* Top slider */}
       <Path
         d="M4 7h7"
         stroke="#686868"
@@ -91,15 +91,11 @@ function SliderIcon({ size = 22 }: { size?: number }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* Top slider circle */}
       <Path
-        d="M13 7a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"
-        stroke="#686868"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M11 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"
+        fill="#686868"
       />
-      {/* Middle slider line */}
+      {/* Middle slider */}
       <Path
         d="M4 12h11"
         stroke="#686868"
@@ -114,15 +110,11 @@ function SliderIcon({ size = 22 }: { size?: number }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* Middle slider circle */}
       <Path
-        d="M19 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"
-        stroke="#686868"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M17 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"
+        fill="#686868"
       />
-      {/* Bottom slider line */}
+      {/* Bottom slider */}
       <Path
         d="M4 17h5"
         stroke="#686868"
@@ -137,13 +129,9 @@ function SliderIcon({ size = 22 }: { size?: number }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* Bottom slider circle */}
       <Path
-        d="M11 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"
-        stroke="#686868"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M9 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"
+        fill="#686868"
       />
     </Svg>
   );
