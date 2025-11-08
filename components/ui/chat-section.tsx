@@ -73,7 +73,7 @@ function SendIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-function SliderIcon({ size = 22 }: { size?: number }) {
+function SliderIcon({ size = 24 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {/* Top slider */}
@@ -310,7 +310,7 @@ export function ChatSection({
               onPress={() => setIsSettingsMenuOpen(true)}
               disabled={isStreaming}
             >
-              <SliderIcon size={22} />
+              <SliderIcon size={24} />
             </TouchableOpacity>
 
             {/* Text Input */}
