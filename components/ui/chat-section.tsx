@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -72,22 +73,19 @@ function SendIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-function DetailModeIcon({ size = 24, active = false }: { size?: number; active?: boolean }) {
-  const color = active ? '#4CAF50' : '#686868';
+function SettingsIcon({ size = 24 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {/* 虫眼鏡 */}
       <Path
-        d="M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35"
-        stroke={color}
+        d="M12 15a3 3 0 100-6 3 3 0 000 6z"
+        stroke="#686868"
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* プラスマーク */}
       <Path
-        d="M11 8v6M8 11h6"
-        stroke={color}
+        d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"
+        stroke="#686868"
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -119,6 +117,7 @@ export function ChatSection({
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasManuallyClosedWithContent, setHasManuallyClosedWithContent] = useState(false);
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const prevQAPairsLengthRef = useRef(qaPairs.length);
@@ -259,10 +258,19 @@ export function ChatSection({
           ))}
         </ScrollView>
 
-        {/* White Container: Input + Mode Icon */}
+        {/* White Container: Settings Icon + Input + Action Button (1 row) */}
         <View style={styles.whiteContainer}>
-          {/* Input Row */}
           <View style={styles.inputRow}>
+            {/* Settings Icon Button */}
+            <TouchableOpacity
+              style={styles.settingsButton}
+              onPress={() => setIsSettingsMenuOpen(true)}
+              disabled={isStreaming}
+            >
+              <SettingsIcon size={22} />
+            </TouchableOpacity>
+
+            {/* Text Input */}
             <TextInput
               ref={inputRef}
               style={styles.input}
@@ -281,26 +289,8 @@ export function ChatSection({
                 }
               }}
             />
-          </View>
 
-          {/* Mode Icon + Action Button Row */}
-          <View style={styles.modeRow}>
-            <TouchableOpacity
-              style={styles.modeIconButton}
-              onPress={() => {
-                const newLevel = detailLevel === 'concise' ? 'detailed' : 'concise';
-                onDetailLevelChange?.(newLevel);
-              }}
-              disabled={isStreaming}
-            >
-              <View style={styles.modeIconContainer}>
-                <DetailModeIcon size={24} active={detailLevel === 'detailed'} />
-                {detailLevel === 'detailed' && (
-                  <Text style={styles.modeLabel}>詳細モード</Text>
-                )}
-              </View>
-            </TouchableOpacity>
-
+            {/* Action Button */}
             <TouchableOpacity
               style={[
                 styles.button,
@@ -319,6 +309,69 @@ export function ChatSection({
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Settings Menu Modal */}
+        <Modal
+          visible={isSettingsMenuOpen}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setIsSettingsMenuOpen(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setIsSettingsMenuOpen(false)}
+          >
+            <View style={styles.menuContainer}>
+              <View style={styles.menuHeader}>
+                <Text style={styles.menuTitle}>調整</Text>
+                <TouchableOpacity onPress={() => setIsSettingsMenuOpen(false)}>
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.menuContent}>
+                <View style={styles.menuItem}>
+                  <Text style={styles.menuItemLabel}>詳細レベル</Text>
+                  <View style={styles.toggleContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.toggleOption,
+                        detailLevel === 'concise' && styles.toggleOptionActive,
+                      ]}
+                      onPress={() => onDetailLevelChange?.('concise')}
+                    >
+                      <Text
+                        style={[
+                          styles.toggleOptionText,
+                          detailLevel === 'concise' && styles.toggleOptionTextActive,
+                        ]}
+                      >
+                        簡潔
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.toggleOption,
+                        detailLevel === 'detailed' && styles.toggleOptionActive,
+                      ]}
+                      onPress={() => onDetailLevelChange?.('detailed')}
+                    >
+                      <Text
+                        style={[
+                          styles.toggleOptionText,
+                          detailLevel === 'detailed' && styles.toggleOptionTextActive,
+                        ]}
+                      >
+                        詳細
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </View>
     </View>
   );
@@ -332,11 +385,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingBottom: 10,
     overflow: 'hidden',
-    height: 170, // 質問タグ(32) + margin(10) + 白コンテナ(約110) + padding(20)
+    height: 116, // 質問タグ(32) + margin(10) + 白コンテナ(約62) + padding(20)
   },
   containerOpen: {
     height: '100%',
-    paddingBottom: 10, // 横の余白とバランスを取る
+    paddingBottom: 10,
   },
   chatMessages: {
     flexGrow: 0,
@@ -364,7 +417,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
     paddingBottom: 0,
     paddingTop: 0,
-    height: 32, // 質問タグの高さを固定
+    height: 32,
   },
   questionList: {
     gap: 8,
@@ -374,7 +427,7 @@ const styles = StyleSheet.create({
   whiteContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
-    paddingLeft: 12,
+    paddingLeft: 8,
     paddingRight: 8,
     paddingTop: 9,
     paddingBottom: 9,
@@ -383,26 +436,14 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     minHeight: 34,
   },
-  modeRow: {
-    flexDirection: 'row',
+  settingsButton: {
+    width: 34,
+    height: 34,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  modeIconButton: {
-    flexShrink: 0,
-  },
-  modeIconContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  modeLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4CAF50',
   },
   input: {
     flex: 1,
@@ -463,5 +504,72 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    width: '80%',
+    maxWidth: 400,
+    padding: 20,
+  },
+  menuHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  menuTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  closeButton: {
+    fontSize: 24,
+    color: '#686868',
+    fontWeight: '300',
+  },
+  menuContent: {
+    gap: 16,
+  },
+  menuItem: {
+    gap: 12,
+  },
+  menuItemLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 11,
+    padding: 4,
+    gap: 4,
+  },
+  toggleOption: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleOptionActive: {
+    backgroundColor: '#00AA69',
+  },
+  toggleOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#686868',
+  },
+  toggleOptionTextActive: {
+    color: '#FFFFFF',
   },
 });

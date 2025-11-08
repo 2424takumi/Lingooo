@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   content: {
     paddingTop: 62,
     paddingHorizontal: 16,
-    paddingBottom: 280, // ChatSection分のスペースを確保（高さ170 + 余裕110）
+    paddingBottom: 220, // ChatSection分のスペースを確保（高さ116 + 余裕104）
   },
   headerContainer: {
     marginBottom: 24,
