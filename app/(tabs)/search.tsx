@@ -15,6 +15,7 @@ import { useAISettings } from '@/contexts/ai-settings-context';
 import { getCachedSuggestions, subscribeSuggestions } from '@/services/cache/suggestion-cache';
 import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { getWordDetailStream, searchJaToEn } from '@/services/api/search';
+import { addSearchHistory } from '@/services/storage/search-history-storage';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
 import type { SuggestionItem } from '@/types/search';
@@ -49,8 +50,13 @@ export default function SearchScreen() {
       return;
     }
 
-    // 新しいqueryまたは言語の場合は、前の結果をクリア
-    setSuggestions([]);
+    // initialResultsがある場合は先に設定（フォールバック用）
+    if (initialResults.length > 0) {
+      logger.debug('[Search] Using initialResults as fallback');
+      setSuggestions(initialResults);
+    } else {
+      setSuggestions([]);
+    }
     setIsLoading(true);
 
     // キャッシュチェック
@@ -71,13 +77,18 @@ export default function SearchScreen() {
         setSuggestions(result.items);
       } catch (error) {
         logger.error('[Search] Failed to fetch suggestions:', error);
+        // API失敗時、initialResultsがあればそれを保持（既に設定済み）
+        // なければ空配列のまま
+        if (initialResults.length === 0) {
+          setSuggestions([]);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchSuggestions();
-  }, [query, currentLanguage.code]); // currentLanguage.codeも監視
+  }, [query, currentLanguage.code, initialResults]); // initialResultsも依存配列に追加
 
   // サブスクリプション（キャッシュ更新を受信）
   useEffect(() => {
@@ -150,8 +161,19 @@ export default function SearchScreen() {
     void sendChatMessage(question);
   };
 
-  const handleWordCardPress = (item: SuggestionItem) => {
-    prefetchWordDetail(item.lemma, () => getWordDetailStream(item.lemma, currentLanguage.code));
+  const handleWordCardPress = async (item: SuggestionItem) => {
+    // 単語を検索履歴に保存（その言語の履歴に追加）
+    try {
+      await addSearchHistory(item.lemma, currentLanguage.code);
+      logger.info('[Search] Added word to search history:', {
+        word: item.lemma,
+        language: currentLanguage.code,
+      });
+    } catch (error) {
+      logger.error('[Search] Failed to add word to search history:', error);
+    }
+
+    prefetchWordDetail(item.lemma, (onProgress) => getWordDetailStream(item.lemma, currentLanguage.code, onProgress));
 
     router.push({
       pathname: '/(tabs)/word-detail',
@@ -205,6 +227,7 @@ export default function SearchScreen() {
                     <WordCard
                       word={item.lemma}
                       posTags={item.pos}
+                      gender={item.gender}
                       definitions={[item.shortSenseJa]}
                       description={item.usageHint || ''}
                     />
@@ -284,7 +307,7 @@ const styles = StyleSheet.create({
   chatContainerFixed: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 26,
+    paddingBottom: 14,
     justifyContent: 'flex-end',
   },
   noResultsContainer: {

@@ -64,8 +64,8 @@
         "pos": [
           "noun"
         ],
-        "shortSenseJa": "本・書籍",
-        "confidence": 0.98
+        "shortSenseJa": "本",
+        "confidence": 0.95
       }
     ],
     "読む": [
@@ -171,15 +171,7 @@
           "noun"
         ],
         "shortSenseJa": "子供",
-        "confidence": 0.98
-      },
-      {
-        "lemma": "kid",
-        "pos": [
-          "noun"
-        ],
-        "shortSenseJa": "子供",
-        "confidence": 0.85
+        "confidence": 0.95
       }
     ],
     "水": [
@@ -306,19 +298,18 @@
       {
         "lemma": "work",
         "pos": [
-          "noun",
-          "verb"
+          "noun"
         ],
-        "shortSenseJa": "仕事・働く",
-        "confidence": 0.98
+        "shortSenseJa": "仕事",
+        "confidence": 0.95
       },
       {
         "lemma": "job",
         "pos": [
           "noun"
         ],
-        "shortSenseJa": "仕事",
-        "confidence": 0.95
+        "shortSenseJa": "職",
+        "confidence": 0.92
       }
     ],
     "今日": [
@@ -361,7 +352,7 @@
           "noun"
         ],
         "shortSenseJa": "朝",
-        "confidence": 0.98
+        "confidence": 0.95
       }
     ],
     "昼": [
@@ -378,7 +369,7 @@
         "pos": [
           "noun"
         ],
-        "shortSenseJa": "昼間",
+        "shortSenseJa": "日中",
         "confidence": 0.9
       }
     ],
@@ -389,15 +380,7 @@
           "noun"
         ],
         "shortSenseJa": "夜",
-        "confidence": 0.98
-      },
-      {
-        "lemma": "evening",
-        "pos": [
-          "noun"
-        ],
-        "shortSenseJa": "夕方・夜",
-        "confidence": 0.92
+        "confidence": 0.95
       }
     ],
     "年": [
@@ -407,7 +390,7 @@
           "noun"
         ],
         "shortSenseJa": "年",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "月": [
@@ -417,7 +400,7 @@
           "noun"
         ],
         "shortSenseJa": "月",
-        "confidence": 0.98
+        "confidence": 0.95
       }
     ],
     "週": [
@@ -427,7 +410,7 @@
           "noun"
         ],
         "shortSenseJa": "週",
-        "confidence": 0.98
+        "confidence": 0.95
       }
     ],
     "日": [
@@ -465,7 +448,7 @@
           "noun"
         ],
         "shortSenseJa": "部屋",
-        "confidence": 0.98
+        "confidence": 0.95
       }
     ],
     "駅": [
@@ -475,7 +458,7 @@
           "noun"
         ],
         "shortSenseJa": "駅",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "店": [
@@ -493,7 +476,7 @@
           "noun"
         ],
         "shortSenseJa": "店",
-        "confidence": 0.94
+        "confidence": 0.93
       }
     ],
     "病院": [
@@ -503,7 +486,7 @@
           "noun"
         ],
         "shortSenseJa": "病院",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "行く": [
@@ -625,15 +608,7 @@
           "verb"
         ],
         "shortSenseJa": "作る",
-        "confidence": 0.97
-      },
-      {
-        "lemma": "create",
-        "pos": [
-          "verb"
-        ],
-        "shortSenseJa": "創る・作る",
-        "confidence": 0.9
+        "confidence": 0.95
       }
     ],
     "大きい": [
@@ -643,7 +618,7 @@
           "adjective"
         ],
         "shortSenseJa": "大きい",
-        "confidence": 0.98
+        "confidence": 0.95
       },
       {
         "lemma": "large",
@@ -651,7 +626,7 @@
           "adjective"
         ],
         "shortSenseJa": "大きい",
-        "confidence": 0.96
+        "confidence": 0.93
       }
     ],
     "小さい": [
@@ -661,15 +636,15 @@
           "adjective"
         ],
         "shortSenseJa": "小さい",
-        "confidence": 0.98
+        "confidence": 0.95
       },
       {
         "lemma": "little",
         "pos": [
           "adjective"
         ],
-        "shortSenseJa": "小さい・少ない",
-        "confidence": 0.92
+        "shortSenseJa": "小さい",
+        "confidence": 0.9
       }
     ],
     "新しい": [
@@ -679,7 +654,7 @@
           "adjective"
         ],
         "shortSenseJa": "新しい",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "古い": [
@@ -689,7 +664,7 @@
           "adjective"
         ],
         "shortSenseJa": "古い",
-        "confidence": 0.98
+        "confidence": 0.95
       }
     ],
     "良い": [
@@ -699,7 +674,7 @@
           "adjective"
         ],
         "shortSenseJa": "良い",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "悪い": [
@@ -709,7 +684,7 @@
           "adjective"
         ],
         "shortSenseJa": "悪い",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "高い": [
@@ -719,15 +694,15 @@
           "adjective"
         ],
         "shortSenseJa": "高い",
-        "confidence": 0.96
+        "confidence": 0.95
       },
       {
         "lemma": "expensive",
         "pos": [
           "adjective"
         ],
-        "shortSenseJa": "高い・高価な",
-        "confidence": 0.94
+        "shortSenseJa": "値段が高い",
+        "confidence": 0.93
       }
     ],
     "安い": [
@@ -823,15 +798,7 @@
           "noun"
         ],
         "shortSenseJa": "人",
-        "confidence": 0.98
-      },
-      {
-        "lemma": "people",
-        "pos": [
-          "noun"
-        ],
-        "shortSenseJa": "人々",
-        "confidence": 0.96
+        "confidence": 0.95
       }
     ],
     "友達": [
@@ -841,7 +808,7 @@
           "noun"
         ],
         "shortSenseJa": "友達",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "名前": [
@@ -851,7 +818,7 @@
           "noun"
         ],
         "shortSenseJa": "名前",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "国": [
@@ -861,25 +828,25 @@
           "noun"
         ],
         "shortSenseJa": "国",
-        "confidence": 0.98
+        "confidence": 0.95
       }
     ],
     "言葉": [
-      {
-        "lemma": "language",
-        "pos": [
-          "noun"
-        ],
-        "shortSenseJa": "言葉・言語",
-        "confidence": 0.96
-      },
       {
         "lemma": "word",
         "pos": [
           "noun"
         ],
-        "shortSenseJa": "単語・言葉",
-        "confidence": 0.94
+        "shortSenseJa": "言葉",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "language",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "言語",
+        "confidence": 0.92
       }
     ],
     "英語": [
@@ -909,29 +876,27 @@
           "noun"
         ],
         "shortSenseJa": "天気",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "雨": [
       {
         "lemma": "rain",
         "pos": [
-          "noun",
-          "verb"
+          "noun"
         ],
         "shortSenseJa": "雨",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "雪": [
       {
         "lemma": "snow",
         "pos": [
-          "noun",
-          "verb"
+          "noun"
         ],
         "shortSenseJa": "雪",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "暑い": [
@@ -941,7 +906,7 @@
           "adjective"
         ],
         "shortSenseJa": "暑い",
-        "confidence": 0.98
+        "confidence": 0.95
       }
     ],
     "寒い": [
@@ -951,7 +916,7 @@
           "adjective"
         ],
         "shortSenseJa": "寒い",
-        "confidence": 0.98
+        "confidence": 0.95
       }
     ],
     "車": [
@@ -961,7 +926,7 @@
           "noun"
         ],
         "shortSenseJa": "車",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "電車": [
@@ -970,8 +935,8 @@
         "pos": [
           "noun"
         ],
-        "shortSenseJa": "電車・列車",
-        "confidence": 0.99
+        "shortSenseJa": "電車",
+        "confidence": 0.95
       }
     ],
     "バス": [
@@ -981,7 +946,7 @@
           "noun"
         ],
         "shortSenseJa": "バス",
-        "confidence": 0.99
+        "confidence": 0.95
       }
     ],
     "飛行機": [
@@ -991,7 +956,7 @@
           "noun"
         ],
         "shortSenseJa": "飛行機",
-        "confidence": 0.98
+        "confidence": 0.95
       },
       {
         "lemma": "plane",
@@ -999,7 +964,4613 @@
           "noun"
         ],
         "shortSenseJa": "飛行機",
-        "confidence": 0.96
+        "confidence": 0.93
+      }
+    ],
+    "起きる": [
+      {
+        "lemma": "wake up",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "目を覚ます",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "get up",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "起床する",
+        "confidence": 0.92
+      }
+    ],
+    "寝る": [
+      {
+        "lemma": "sleep",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "眠る",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "go to bed",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "就寝する",
+        "confidence": 0.88
+      }
+    ],
+    "座る": [
+      {
+        "lemma": "sit",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "座る",
+        "confidence": 0.95
+      }
+    ],
+    "立つ": [
+      {
+        "lemma": "stand",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "立つ",
+        "confidence": 0.95
+      }
+    ],
+    "歩く": [
+      {
+        "lemma": "walk",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "歩く",
+        "confidence": 0.95
+      }
+    ],
+    "走る": [
+      {
+        "lemma": "run",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "走る",
+        "confidence": 0.95
+      }
+    ],
+    "泳ぐ": [
+      {
+        "lemma": "swim",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "泳ぐ",
+        "confidence": 0.95
+      }
+    ],
+    "飛ぶ": [
+      {
+        "lemma": "fly",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "飛ぶ",
+        "confidence": 0.95
+      }
+    ],
+    "登る": [
+      {
+        "lemma": "climb",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "登る",
+        "confidence": 0.95
+      }
+    ],
+    "降りる": [
+      {
+        "lemma": "get off",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "降りる",
+        "confidence": 0.92
+      },
+      {
+        "lemma": "descend",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "下りる",
+        "confidence": 0.85
+      }
+    ],
+    "洗う": [
+      {
+        "lemma": "wash",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "洗う",
+        "confidence": 0.95
+      }
+    ],
+    "着る": [
+      {
+        "lemma": "wear",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "身につける",
+        "confidence": 0.92
+      },
+      {
+        "lemma": "put on",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "着る",
+        "confidence": 0.9
+      }
+    ],
+    "脱ぐ": [
+      {
+        "lemma": "take off",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "脱ぐ",
+        "confidence": 0.95
+      }
+    ],
+    "履く": [
+      {
+        "lemma": "wear",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "履く",
+        "confidence": 0.9
+      },
+      {
+        "lemma": "put on",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "履く",
+        "confidence": 0.88
+      }
+    ],
+    "磨く": [
+      {
+        "lemma": "brush",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "磨く",
+        "confidence": 0.92
+      },
+      {
+        "lemma": "polish",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "磨き上げる",
+        "confidence": 0.88
+      }
+    ],
+    "掃除する": [
+      {
+        "lemma": "clean",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "掃除する",
+        "confidence": 0.95
+      }
+    ],
+    "料理する": [
+      {
+        "lemma": "cook",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "料理する",
+        "confidence": 0.95
+      }
+    ],
+    "洗濯する": [
+      {
+        "lemma": "wash",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "洗濯する",
+        "confidence": 0.92
+      },
+      {
+        "lemma": "do laundry",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "洗濯する",
+        "confidence": 0.9
+      }
+    ],
+    "教える": [
+      {
+        "lemma": "teach",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "教える",
+        "confidence": 0.95
+      }
+    ],
+    "習う": [
+      {
+        "lemma": "learn",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "習う",
+        "confidence": 0.95
+      }
+    ],
+    "質問する": [
+      {
+        "lemma": "ask",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "尋ねる",
+        "confidence": 0.92
+      },
+      {
+        "lemma": "question",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "質問する",
+        "confidence": 0.9
+      }
+    ],
+    "答える": [
+      {
+        "lemma": "answer",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "答える",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "reply",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "返答する",
+        "confidence": 0.88
+      }
+    ],
+    "笑う": [
+      {
+        "lemma": "laugh",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "笑う",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "smile",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "微笑む",
+        "confidence": 0.88
+      }
+    ],
+    "泣く": [
+      {
+        "lemma": "cry",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "泣く",
+        "confidence": 0.95
+      }
+    ],
+    "怒る": [
+      {
+        "lemma": "get angry",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "怒る",
+        "confidence": 0.95
+      }
+    ],
+    "喜ぶ": [
+      {
+        "lemma": "be happy",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "喜ぶ",
+        "confidence": 0.92
+      },
+      {
+        "lemma": "rejoice",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "喜ぶ",
+        "confidence": 0.85
+      }
+    ],
+    "悲しむ": [
+      {
+        "lemma": "be sad",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "悲しむ",
+        "confidence": 0.92
+      },
+      {
+        "lemma": "grieve",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "悲しむ",
+        "confidence": 0.85
+      }
+    ],
+    "心配する": [
+      {
+        "lemma": "worry",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "心配する",
+        "confidence": 0.95
+      }
+    ],
+    "困る": [
+      {
+        "lemma": "be troubled",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "困る",
+        "confidence": 0.92
+      }
+    ],
+    "驚く": [
+      {
+        "lemma": "be surprised",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "驚く",
+        "confidence": 0.95
+      }
+    ],
+    "帰る": [
+      {
+        "lemma": "return",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "帰る",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "go home",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "家に帰る",
+        "confidence": 0.92
+      }
+    ],
+    "出る": [
+      {
+        "lemma": "leave",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "出る",
+        "confidence": 0.92
+      },
+      {
+        "lemma": "go out",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "外出する",
+        "confidence": 0.9
+      }
+    ],
+    "入る": [
+      {
+        "lemma": "enter",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "入る",
+        "confidence": 0.95
+      }
+    ],
+    "乗る": [
+      {
+        "lemma": "ride",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "乗る",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "get on",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "乗車する",
+        "confidence": 0.92
+      }
+    ],
+    "渡る": [
+      {
+        "lemma": "cross",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "渡る",
+        "confidence": 0.95
+      }
+    ],
+    "通る": [
+      {
+        "lemma": "pass",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "通る",
+        "confidence": 0.95
+      }
+    ],
+    "働く": [
+      {
+        "lemma": "work",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "働く",
+        "confidence": 0.95
+      }
+    ],
+    "休む": [
+      {
+        "lemma": "rest",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "休む",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "take a break",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "休憩する",
+        "confidence": 0.9
+      }
+    ],
+    "始める": [
+      {
+        "lemma": "start",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "始める",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "begin",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "始める",
+        "confidence": 0.93
+      }
+    ],
+    "終わる": [
+      {
+        "lemma": "end",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "終わる",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "finish",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "終える",
+        "confidence": 0.92
+      }
+    ],
+    "続ける": [
+      {
+        "lemma": "continue",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "続ける",
+        "confidence": 0.95
+      }
+    ],
+    "やめる": [
+      {
+        "lemma": "stop",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "やめる",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "quit",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "辞める",
+        "confidence": 0.9
+      }
+    ],
+    "持つ": [
+      {
+        "lemma": "have",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "持つ",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "hold",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "手に持つ",
+        "confidence": 0.92
+      }
+    ],
+    "使う": [
+      {
+        "lemma": "use",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "使う",
+        "confidence": 0.95
+      }
+    ],
+    "壊す": [
+      {
+        "lemma": "break",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "壊す",
+        "confidence": 0.95
+      }
+    ],
+    "開ける": [
+      {
+        "lemma": "open",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "開ける",
+        "confidence": 0.95
+      }
+    ],
+    "閉める": [
+      {
+        "lemma": "close",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "閉める",
+        "confidence": 0.95
+      }
+    ],
+    "押す": [
+      {
+        "lemma": "push",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "押す",
+        "confidence": 0.95
+      }
+    ],
+    "引く": [
+      {
+        "lemma": "pull",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "引く",
+        "confidence": 0.95
+      }
+    ],
+    "切る": [
+      {
+        "lemma": "cut",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "切る",
+        "confidence": 0.95
+      }
+    ],
+    "低い": [
+      {
+        "lemma": "low",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "低い",
+        "confidence": 0.95
+      }
+    ],
+    "長い": [
+      {
+        "lemma": "long",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "長い",
+        "confidence": 0.95
+      }
+    ],
+    "短い": [
+      {
+        "lemma": "short",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "短い",
+        "confidence": 0.95
+      }
+    ],
+    "広い": [
+      {
+        "lemma": "wide",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "広い",
+        "confidence": 0.95
+      }
+    ],
+    "狭い": [
+      {
+        "lemma": "narrow",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "狭い",
+        "confidence": 0.95
+      }
+    ],
+    "厚い": [
+      {
+        "lemma": "thick",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "厚い",
+        "confidence": 0.95
+      }
+    ],
+    "薄い": [
+      {
+        "lemma": "thin",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "薄い",
+        "confidence": 0.95
+      }
+    ],
+    "重い": [
+      {
+        "lemma": "heavy",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "重い",
+        "confidence": 0.95
+      }
+    ],
+    "軽い": [
+      {
+        "lemma": "light",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "軽い",
+        "confidence": 0.95
+      }
+    ],
+    "強い": [
+      {
+        "lemma": "strong",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "強い",
+        "confidence": 0.95
+      }
+    ],
+    "弱い": [
+      {
+        "lemma": "weak",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "弱い",
+        "confidence": 0.95
+      }
+    ],
+    "暖かい": [
+      {
+        "lemma": "warm",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "暖かい",
+        "confidence": 0.95
+      }
+    ],
+    "涼しい": [
+      {
+        "lemma": "cool",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "涼しい",
+        "confidence": 0.95
+      }
+    ],
+    "熱い": [
+      {
+        "lemma": "hot",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "熱い",
+        "confidence": 0.95
+      }
+    ],
+    "冷たい": [
+      {
+        "lemma": "cold",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "冷たい",
+        "confidence": 0.95
+      }
+    ],
+    "美味しい": [
+      {
+        "lemma": "delicious",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "美味しい",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "tasty",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "美味しい",
+        "confidence": 0.9
+      }
+    ],
+    "まずい": [
+      {
+        "lemma": "bad",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "まずい",
+        "confidence": 0.92
+      }
+    ],
+    "甘い": [
+      {
+        "lemma": "sweet",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "甘い",
+        "confidence": 0.95
+      }
+    ],
+    "辛い": [
+      {
+        "lemma": "spicy",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "辛い",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "hot",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "辛い",
+        "confidence": 0.9
+      }
+    ],
+    "苦い": [
+      {
+        "lemma": "bitter",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "苦い",
+        "confidence": 0.95
+      }
+    ],
+    "酸っぱい": [
+      {
+        "lemma": "sour",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "酸っぱい",
+        "confidence": 0.95
+      }
+    ],
+    "塩辛い": [
+      {
+        "lemma": "salty",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "塩辛い",
+        "confidence": 0.95
+      }
+    ],
+    "楽しい": [
+      {
+        "lemma": "fun",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "楽しい",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "enjoyable",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "楽しい",
+        "confidence": 0.92
+      }
+    ],
+    "つまらない": [
+      {
+        "lemma": "boring",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "退屈な",
+        "confidence": 0.95
+      }
+    ],
+    "面白い": [
+      {
+        "lemma": "interesting",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "面白い",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "funny",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "おかしい",
+        "confidence": 0.9
+      }
+    ],
+    "嬉しい": [
+      {
+        "lemma": "happy",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "嬉しい",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "glad",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "嬉しい",
+        "confidence": 0.92
+      }
+    ],
+    "悲しい": [
+      {
+        "lemma": "sad",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "悲しい",
+        "confidence": 0.95
+      }
+    ],
+    "怖い": [
+      {
+        "lemma": "scary",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "怖い",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "frightening",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "恐ろしい",
+        "confidence": 0.9
+      }
+    ],
+    "痛い": [
+      {
+        "lemma": "painful",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "痛い",
+        "confidence": 0.95
+      }
+    ],
+    "眠い": [
+      {
+        "lemma": "sleepy",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "眠い",
+        "confidence": 0.95
+      }
+    ],
+    "忙しい": [
+      {
+        "lemma": "busy",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "忙しい",
+        "confidence": 0.95
+      }
+    ],
+    "暇な": [
+      {
+        "lemma": "free",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "暇な",
+        "confidence": 0.92
+      }
+    ],
+    "簡単な": [
+      {
+        "lemma": "easy",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "簡単な",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "simple",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "簡単な",
+        "confidence": 0.92
+      }
+    ],
+    "難しい": [
+      {
+        "lemma": "difficult",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "難しい",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "hard",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "難しい",
+        "confidence": 0.93
+      }
+    ],
+    "便利な": [
+      {
+        "lemma": "convenient",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "便利な",
+        "confidence": 0.95
+      }
+    ],
+    "不便な": [
+      {
+        "lemma": "inconvenient",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "不便な",
+        "confidence": 0.95
+      }
+    ],
+    "安全な": [
+      {
+        "lemma": "safe",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "安全な",
+        "confidence": 0.95
+      }
+    ],
+    "危険な": [
+      {
+        "lemma": "dangerous",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "危険な",
+        "confidence": 0.95
+      }
+    ],
+    "静かな": [
+      {
+        "lemma": "quiet",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "静かな",
+        "confidence": 0.95
+      }
+    ],
+    "賑やかな": [
+      {
+        "lemma": "lively",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "賑やかな",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "busy",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "賑やかな",
+        "confidence": 0.88
+      }
+    ],
+    "綺麗な": [
+      {
+        "lemma": "beautiful",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "美しい",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "clean",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "綺麗な",
+        "confidence": 0.9
+      }
+    ],
+    "晩": [
+      {
+        "lemma": "evening",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "晩",
+        "confidence": 0.95
+      }
+    ],
+    "午前": [
+      {
+        "lemma": "morning",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "午前",
+        "confidence": 0.95
+      }
+    ],
+    "午後": [
+      {
+        "lemma": "afternoon",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "午後",
+        "confidence": 0.95
+      }
+    ],
+    "季節": [
+      {
+        "lemma": "season",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "季節",
+        "confidence": 0.95
+      }
+    ],
+    "春": [
+      {
+        "lemma": "spring",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "春",
+        "confidence": 0.95
+      }
+    ],
+    "夏": [
+      {
+        "lemma": "summer",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "夏",
+        "confidence": 0.95
+      }
+    ],
+    "秋": [
+      {
+        "lemma": "autumn",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "秋",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "fall",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "秋",
+        "confidence": 0.93
+      }
+    ],
+    "冬": [
+      {
+        "lemma": "winter",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "冬",
+        "confidence": 0.95
+      }
+    ],
+    "風": [
+      {
+        "lemma": "wind",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "風",
+        "confidence": 0.95
+      }
+    ],
+    "雲": [
+      {
+        "lemma": "cloud",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "雲",
+        "confidence": 0.95
+      }
+    ],
+    "晴れ": [
+      {
+        "lemma": "sunny",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "晴れ",
+        "confidence": 0.95
+      }
+    ],
+    "男": [
+      {
+        "lemma": "man",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "男性",
+        "confidence": 0.95
+      }
+    ],
+    "女": [
+      {
+        "lemma": "woman",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "女性",
+        "confidence": 0.95
+      }
+    ],
+    "大人": [
+      {
+        "lemma": "adult",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "大人",
+        "confidence": 0.95
+      }
+    ],
+    "頭": [
+      {
+        "lemma": "head",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "頭",
+        "confidence": 0.95
+      }
+    ],
+    "顔": [
+      {
+        "lemma": "face",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "顔",
+        "confidence": 0.95
+      }
+    ],
+    "目": [
+      {
+        "lemma": "eye",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "目",
+        "confidence": 0.95
+      }
+    ],
+    "耳": [
+      {
+        "lemma": "ear",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "耳",
+        "confidence": 0.95
+      }
+    ],
+    "鼻": [
+      {
+        "lemma": "nose",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "鼻",
+        "confidence": 0.95
+      }
+    ],
+    "口": [
+      {
+        "lemma": "mouth",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "口",
+        "confidence": 0.95
+      }
+    ],
+    "歯": [
+      {
+        "lemma": "tooth",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "歯",
+        "confidence": 0.95
+      }
+    ],
+    "手": [
+      {
+        "lemma": "hand",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "手",
+        "confidence": 0.95
+      }
+    ],
+    "足": [
+      {
+        "lemma": "foot",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "足",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "leg",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "脚",
+        "confidence": 0.92
+      }
+    ],
+    "指": [
+      {
+        "lemma": "finger",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "指",
+        "confidence": 0.95
+      }
+    ],
+    "腕": [
+      {
+        "lemma": "arm",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "腕",
+        "confidence": 0.95
+      }
+    ],
+    "背": [
+      {
+        "lemma": "back",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "背中",
+        "confidence": 0.95
+      }
+    ],
+    "腹": [
+      {
+        "lemma": "stomach",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "お腹",
+        "confidence": 0.95
+      }
+    ],
+    "心": [
+      {
+        "lemma": "heart",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "心",
+        "confidence": 0.95
+      }
+    ],
+    "体": [
+      {
+        "lemma": "body",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "体",
+        "confidence": 0.95
+      }
+    ],
+    "声": [
+      {
+        "lemma": "voice",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "声",
+        "confidence": 0.95
+      }
+    ],
+    "髪": [
+      {
+        "lemma": "hair",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "髪",
+        "confidence": 0.95
+      }
+    ],
+    "血": [
+      {
+        "lemma": "blood",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "血",
+        "confidence": 0.95
+      }
+    ],
+    "骨": [
+      {
+        "lemma": "bone",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "骨",
+        "confidence": 0.95
+      }
+    ],
+    "皮膚": [
+      {
+        "lemma": "skin",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "皮膚",
+        "confidence": 0.95
+      }
+    ],
+    "首": [
+      {
+        "lemma": "neck",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "首",
+        "confidence": 0.95
+      }
+    ],
+    "肩": [
+      {
+        "lemma": "shoulder",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "肩",
+        "confidence": 0.95
+      }
+    ],
+    "膝": [
+      {
+        "lemma": "knee",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "膝",
+        "confidence": 0.95
+      }
+    ],
+    "喉": [
+      {
+        "lemma": "throat",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "喉",
+        "confidence": 0.95
+      }
+    ],
+    "都市": [
+      {
+        "lemma": "city",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "都市",
+        "confidence": 0.95
+      }
+    ],
+    "町": [
+      {
+        "lemma": "town",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "町",
+        "confidence": 0.95
+      }
+    ],
+    "村": [
+      {
+        "lemma": "village",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "村",
+        "confidence": 0.95
+      }
+    ],
+    "空港": [
+      {
+        "lemma": "airport",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "空港",
+        "confidence": 0.95
+      }
+    ],
+    "銀行": [
+      {
+        "lemma": "bank",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "銀行",
+        "confidence": 0.95
+      }
+    ],
+    "郵便局": [
+      {
+        "lemma": "post office",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "郵便局",
+        "confidence": 0.95
+      }
+    ],
+    "図書館": [
+      {
+        "lemma": "library",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "図書館",
+        "confidence": 0.95
+      }
+    ],
+    "公園": [
+      {
+        "lemma": "park",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "公園",
+        "confidence": 0.95
+      }
+    ],
+    "山": [
+      {
+        "lemma": "mountain",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "山",
+        "confidence": 0.95
+      }
+    ],
+    "川": [
+      {
+        "lemma": "river",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "川",
+        "confidence": 0.95
+      }
+    ],
+    "海": [
+      {
+        "lemma": "sea",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "海",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "ocean",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "海",
+        "confidence": 0.93
+      }
+    ],
+    "湖": [
+      {
+        "lemma": "lake",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "湖",
+        "confidence": 0.95
+      }
+    ],
+    "橋": [
+      {
+        "lemma": "bridge",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "橋",
+        "confidence": 0.95
+      }
+    ],
+    "道": [
+      {
+        "lemma": "road",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "道",
+        "confidence": 0.95
+      }
+    ],
+    "道路": [
+      {
+        "lemma": "street",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "道路",
+        "confidence": 0.95
+      }
+    ],
+    "建物": [
+      {
+        "lemma": "building",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "建物",
+        "confidence": 0.95
+      }
+    ],
+    "台所": [
+      {
+        "lemma": "kitchen",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "台所",
+        "confidence": 0.95
+      }
+    ],
+    "風呂": [
+      {
+        "lemma": "bath",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "風呂",
+        "confidence": 0.95
+      }
+    ],
+    "庭": [
+      {
+        "lemma": "garden",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "庭",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "yard",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "庭",
+        "confidence": 0.9
+      }
+    ],
+    "門": [
+      {
+        "lemma": "gate",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "門",
+        "confidence": 0.95
+      }
+    ],
+    "物": [
+      {
+        "lemma": "thing",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "物",
+        "confidence": 0.95
+      }
+    ],
+    "紙": [
+      {
+        "lemma": "paper",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "紙",
+        "confidence": 0.95
+      }
+    ],
+    "ペン": [
+      {
+        "lemma": "pen",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "ペン",
+        "confidence": 0.95
+      }
+    ],
+    "鉛筆": [
+      {
+        "lemma": "pencil",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "鉛筆",
+        "confidence": 0.95
+      }
+    ],
+    "机": [
+      {
+        "lemma": "desk",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "机",
+        "confidence": 0.95
+      }
+    ],
+    "椅子": [
+      {
+        "lemma": "chair",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "椅子",
+        "confidence": 0.95
+      }
+    ],
+    "窓": [
+      {
+        "lemma": "window",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "窓",
+        "confidence": 0.95
+      }
+    ],
+    "ドア": [
+      {
+        "lemma": "door",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "ドア",
+        "confidence": 0.95
+      }
+    ],
+    "鍵": [
+      {
+        "lemma": "key",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "鍵",
+        "confidence": 0.95
+      }
+    ],
+    "箱": [
+      {
+        "lemma": "box",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "箱",
+        "confidence": 0.95
+      }
+    ],
+    "袋": [
+      {
+        "lemma": "bag",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "袋",
+        "confidence": 0.95
+      }
+    ],
+    "財布": [
+      {
+        "lemma": "wallet",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "財布",
+        "confidence": 0.95
+      }
+    ],
+    "時計": [
+      {
+        "lemma": "clock",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "時計",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "watch",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "腕時計",
+        "confidence": 0.93
+      }
+    ],
+    "電話": [
+      {
+        "lemma": "phone",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "電話",
+        "confidence": 0.95
+      }
+    ],
+    "カメラ": [
+      {
+        "lemma": "camera",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "カメラ",
+        "confidence": 0.95
+      }
+    ],
+    "テレビ": [
+      {
+        "lemma": "television",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "テレビ",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "TV",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "テレビ",
+        "confidence": 0.95
+      }
+    ],
+    "ラジオ": [
+      {
+        "lemma": "radio",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "ラジオ",
+        "confidence": 0.95
+      }
+    ],
+    "コンピュータ": [
+      {
+        "lemma": "computer",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "コンピュータ",
+        "confidence": 0.95
+      }
+    ],
+    "自転車": [
+      {
+        "lemma": "bicycle",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "自転車",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "bike",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "自転車",
+        "confidence": 0.93
+      }
+    ],
+    "船": [
+      {
+        "lemma": "ship",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "船",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "boat",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "船",
+        "confidence": 0.92
+      }
+    ],
+    "傘": [
+      {
+        "lemma": "umbrella",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "傘",
+        "confidence": 0.95
+      }
+    ],
+    "眼鏡": [
+      {
+        "lemma": "glasses",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "眼鏡",
+        "confidence": 0.95
+      }
+    ],
+    "帽子": [
+      {
+        "lemma": "hat",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "帽子",
+        "confidence": 0.95
+      }
+    ],
+    "靴": [
+      {
+        "lemma": "shoes",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "靴",
+        "confidence": 0.95
+      }
+    ],
+    "服": [
+      {
+        "lemma": "clothes",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "服",
+        "confidence": 0.95
+      }
+    ],
+    "肉": [
+      {
+        "lemma": "meat",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "肉",
+        "confidence": 0.95
+      }
+    ],
+    "魚": [
+      {
+        "lemma": "fish",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "魚",
+        "confidence": 0.95
+      }
+    ],
+    "野菜": [
+      {
+        "lemma": "vegetable",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "野菜",
+        "confidence": 0.95
+      }
+    ],
+    "果物": [
+      {
+        "lemma": "fruit",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "果物",
+        "confidence": 0.95
+      }
+    ],
+    "卵": [
+      {
+        "lemma": "egg",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "卵",
+        "confidence": 0.95
+      }
+    ],
+    "牛乳": [
+      {
+        "lemma": "milk",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "牛乳",
+        "confidence": 0.95
+      }
+    ],
+    "チーズ": [
+      {
+        "lemma": "cheese",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "チーズ",
+        "confidence": 0.95
+      }
+    ],
+    "バター": [
+      {
+        "lemma": "butter",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "バター",
+        "confidence": 0.95
+      }
+    ],
+    "砂糖": [
+      {
+        "lemma": "sugar",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "砂糖",
+        "confidence": 0.95
+      }
+    ],
+    "塩": [
+      {
+        "lemma": "salt",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "塩",
+        "confidence": 0.95
+      }
+    ],
+    "油": [
+      {
+        "lemma": "oil",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "油",
+        "confidence": 0.95
+      }
+    ],
+    "醤油": [
+      {
+        "lemma": "soy sauce",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "醤油",
+        "confidence": 0.95
+      }
+    ],
+    "お茶": [
+      {
+        "lemma": "tea",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "お茶",
+        "confidence": 0.95
+      }
+    ],
+    "コーヒー": [
+      {
+        "lemma": "coffee",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "コーヒー",
+        "confidence": 0.95
+      }
+    ],
+    "ジュース": [
+      {
+        "lemma": "juice",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "ジュース",
+        "confidence": 0.95
+      }
+    ],
+    "ビール": [
+      {
+        "lemma": "beer",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "ビール",
+        "confidence": 0.95
+      }
+    ],
+    "酒": [
+      {
+        "lemma": "alcohol",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "酒",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "sake",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "日本酒",
+        "confidence": 0.92
+      }
+    ],
+    "ワイン": [
+      {
+        "lemma": "wine",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "ワイン",
+        "confidence": 0.95
+      }
+    ],
+    "料理": [
+      {
+        "lemma": "dish",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "料理",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "cooking",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "料理",
+        "confidence": 0.92
+      }
+    ],
+    "朝ご飯": [
+      {
+        "lemma": "breakfast",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "朝食",
+        "confidence": 0.95
+      }
+    ],
+    "昼ご飯": [
+      {
+        "lemma": "lunch",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "昼食",
+        "confidence": 0.95
+      }
+    ],
+    "晩ご飯": [
+      {
+        "lemma": "dinner",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "夕食",
+        "confidence": 0.95
+      }
+    ],
+    "レストラン": [
+      {
+        "lemma": "restaurant",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "レストラン",
+        "confidence": 0.95
+      }
+    ],
+    "喫茶店": [
+      {
+        "lemma": "cafe",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "喫茶店",
+        "confidence": 0.95
+      }
+    ],
+    "スーパー": [
+      {
+        "lemma": "supermarket",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "スーパー",
+        "confidence": 0.95
+      }
+    ],
+    "番号": [
+      {
+        "lemma": "number",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "番号",
+        "confidence": 0.95
+      }
+    ],
+    "色": [
+      {
+        "lemma": "color",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "色",
+        "confidence": 0.95
+      }
+    ],
+    "音": [
+      {
+        "lemma": "sound",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "音",
+        "confidence": 0.95
+      }
+    ],
+    "匂い": [
+      {
+        "lemma": "smell",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "匂い",
+        "confidence": 0.95
+      }
+    ],
+    "問題": [
+      {
+        "lemma": "problem",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "問題",
+        "confidence": 0.95
+      }
+    ],
+    "答え": [
+      {
+        "lemma": "answer",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "答え",
+        "confidence": 0.95
+      }
+    ],
+    "お金": [
+      {
+        "lemma": "money",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "お金",
+        "confidence": 0.95
+      }
+    ],
+    "手紙": [
+      {
+        "lemma": "letter",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "手紙",
+        "confidence": 0.95
+      }
+    ],
+    "荷物": [
+      {
+        "lemma": "luggage",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "荷物",
+        "confidence": 0.95
+      }
+    ],
+    "切符": [
+      {
+        "lemma": "ticket",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "切符",
+        "confidence": 0.95
+      }
+    ],
+    "写真": [
+      {
+        "lemma": "photo",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "写真",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "picture",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "写真",
+        "confidence": 0.93
+      }
+    ],
+    "映画": [
+      {
+        "lemma": "movie",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "映画",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "film",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "映画",
+        "confidence": 0.92
+      }
+    ],
+    "音楽": [
+      {
+        "lemma": "music",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "音楽",
+        "confidence": 0.95
+      }
+    ],
+    "歌": [
+      {
+        "lemma": "song",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "歌",
+        "confidence": 0.95
+      }
+    ],
+    "絵": [
+      {
+        "lemma": "picture",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "絵",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "painting",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "絵画",
+        "confidence": 0.92
+      }
+    ],
+    "花": [
+      {
+        "lemma": "flower",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "花",
+        "confidence": 0.95
+      }
+    ],
+    "意味": [
+      {
+        "lemma": "meaning",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "意味",
+        "confidence": 0.95
+      }
+    ],
+    "理由": [
+      {
+        "lemma": "reason",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "理由",
+        "confidence": 0.95
+      }
+    ],
+    "目的": [
+      {
+        "lemma": "purpose",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "目的",
+        "confidence": 0.95
+      }
+    ],
+    "結果": [
+      {
+        "lemma": "result",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "結果",
+        "confidence": 0.95
+      }
+    ],
+    "方法": [
+      {
+        "lemma": "method",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "方法",
+        "confidence": 0.95
+      }
+    ],
+    "経験": [
+      {
+        "lemma": "experience",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "経験",
+        "confidence": 0.95
+      }
+    ],
+    "知識": [
+      {
+        "lemma": "knowledge",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "知識",
+        "confidence": 0.95
+      }
+    ],
+    "意見": [
+      {
+        "lemma": "opinion",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "意見",
+        "confidence": 0.95
+      }
+    ],
+    "考え": [
+      {
+        "lemma": "thought",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "考え",
+        "confidence": 0.95
+      }
+    ],
+    "気持ち": [
+      {
+        "lemma": "feeling",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "気持ち",
+        "confidence": 0.95
+      }
+    ],
+    "感じ": [
+      {
+        "lemma": "feeling",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "感じ",
+        "confidence": 0.95
+      }
+    ],
+    "興味": [
+      {
+        "lemma": "interest",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "興味",
+        "confidence": 0.95
+      }
+    ],
+    "趣味": [
+      {
+        "lemma": "hobby",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "趣味",
+        "confidence": 0.95
+      }
+    ],
+    "習慣": [
+      {
+        "lemma": "habit",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "習慣",
+        "confidence": 0.95
+      }
+    ],
+    "文化": [
+      {
+        "lemma": "culture",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "文化",
+        "confidence": 0.95
+      }
+    ],
+    "歴史": [
+      {
+        "lemma": "history",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "歴史",
+        "confidence": 0.95
+      }
+    ],
+    "社会": [
+      {
+        "lemma": "society",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "社会",
+        "confidence": 0.95
+      }
+    ],
+    "政治": [
+      {
+        "lemma": "politics",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "政治",
+        "confidence": 0.95
+      }
+    ],
+    "経済": [
+      {
+        "lemma": "economy",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "経済",
+        "confidence": 0.95
+      }
+    ],
+    "科学": [
+      {
+        "lemma": "science",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "科学",
+        "confidence": 0.95
+      }
+    ],
+    "技術": [
+      {
+        "lemma": "technology",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "技術",
+        "confidence": 0.95
+      }
+    ],
+    "自然": [
+      {
+        "lemma": "nature",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "自然",
+        "confidence": 0.95
+      }
+    ],
+    "環境": [
+      {
+        "lemma": "environment",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "環境",
+        "confidence": 0.95
+      }
+    ],
+    "状態": [
+      {
+        "lemma": "condition",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "状態",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "state",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "状態",
+        "confidence": 0.93
+      }
+    ],
+    "状況": [
+      {
+        "lemma": "situation",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "状況",
+        "confidence": 0.95
+      }
+    ],
+    "場合": [
+      {
+        "lemma": "case",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "場合",
+        "confidence": 0.95
+      }
+    ],
+    "機会": [
+      {
+        "lemma": "opportunity",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "機会",
+        "confidence": 0.95
+      }
+    ],
+    "可能性": [
+      {
+        "lemma": "possibility",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "可能性",
+        "confidence": 0.95
+      }
+    ],
+    "必要": [
+      {
+        "lemma": "necessity",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "必要",
+        "confidence": 0.95
+      }
+    ],
+    "重要": [
+      {
+        "lemma": "importance",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "重要",
+        "confidence": 0.95
+      }
+    ],
+    "説明する": [
+      {
+        "lemma": "explain",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "説明する",
+        "confidence": 0.95
+      }
+    ],
+    "理解する": [
+      {
+        "lemma": "understand",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "理解する",
+        "confidence": 0.95
+      }
+    ],
+    "覚える": [
+      {
+        "lemma": "remember",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "覚える",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "memorize",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "暗記する",
+        "confidence": 0.92
+      }
+    ],
+    "忘れる": [
+      {
+        "lemma": "forget",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "忘れる",
+        "confidence": 0.95
+      }
+    ],
+    "思い出す": [
+      {
+        "lemma": "recall",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "思い出す",
+        "confidence": 0.95
+      }
+    ],
+    "決める": [
+      {
+        "lemma": "decide",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "決める",
+        "confidence": 0.95
+      }
+    ],
+    "選ぶ": [
+      {
+        "lemma": "choose",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "選ぶ",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "select",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "選択する",
+        "confidence": 0.92
+      }
+    ],
+    "考える": [
+      {
+        "lemma": "think",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "考える",
+        "confidence": 0.95
+      }
+    ],
+    "感じる": [
+      {
+        "lemma": "feel",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "感じる",
+        "confidence": 0.95
+      }
+    ],
+    "思う": [
+      {
+        "lemma": "think",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "思う",
+        "confidence": 0.95
+      }
+    ],
+    "信じる": [
+      {
+        "lemma": "believe",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "信じる",
+        "confidence": 0.95
+      }
+    ],
+    "疑う": [
+      {
+        "lemma": "doubt",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "疑う",
+        "confidence": 0.95
+      }
+    ],
+    "望む": [
+      {
+        "lemma": "wish",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "望む",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "hope",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "願う",
+        "confidence": 0.92
+      }
+    ],
+    "期待する": [
+      {
+        "lemma": "expect",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "期待する",
+        "confidence": 0.95
+      }
+    ],
+    "待つ": [
+      {
+        "lemma": "wait",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "待つ",
+        "confidence": 0.95
+      }
+    ],
+    "探す": [
+      {
+        "lemma": "search",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "探す",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "look for",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "探す",
+        "confidence": 0.93
+      }
+    ],
+    "見つける": [
+      {
+        "lemma": "find",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "見つける",
+        "confidence": 0.95
+      }
+    ],
+    "失う": [
+      {
+        "lemma": "lose",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "失う",
+        "confidence": 0.95
+      }
+    ],
+    "得る": [
+      {
+        "lemma": "get",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "得る",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "obtain",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "獲得する",
+        "confidence": 0.92
+      }
+    ],
+    "与える": [
+      {
+        "lemma": "give",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "与える",
+        "confidence": 0.95
+      }
+    ],
+    "受ける": [
+      {
+        "lemma": "receive",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "受ける",
+        "confidence": 0.95
+      }
+    ],
+    "送る": [
+      {
+        "lemma": "send",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "送る",
+        "confidence": 0.95
+      }
+    ],
+    "届ける": [
+      {
+        "lemma": "deliver",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "届ける",
+        "confidence": 0.95
+      }
+    ],
+    "貸す": [
+      {
+        "lemma": "lend",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "貸す",
+        "confidence": 0.95
+      }
+    ],
+    "借りる": [
+      {
+        "lemma": "borrow",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "借りる",
+        "confidence": 0.95
+      }
+    ],
+    "増える": [
+      {
+        "lemma": "increase",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "増える",
+        "confidence": 0.95
+      }
+    ],
+    "減る": [
+      {
+        "lemma": "decrease",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "減る",
+        "confidence": 0.95
+      }
+    ],
+    "変わる": [
+      {
+        "lemma": "change",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "変わる",
+        "confidence": 0.95
+      }
+    ],
+    "直す": [
+      {
+        "lemma": "fix",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "直す",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "correct",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "訂正する",
+        "confidence": 0.92
+      }
+    ],
+    "守る": [
+      {
+        "lemma": "protect",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "守る",
+        "confidence": 0.95
+      }
+    ],
+    "攻撃する": [
+      {
+        "lemma": "attack",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "攻撃する",
+        "confidence": 0.95
+      }
+    ],
+    "勝つ": [
+      {
+        "lemma": "win",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "勝つ",
+        "confidence": 0.95
+      }
+    ],
+    "負ける": [
+      {
+        "lemma": "lose",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "負ける",
+        "confidence": 0.95
+      }
+    ],
+    "成功する": [
+      {
+        "lemma": "succeed",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "成功する",
+        "confidence": 0.95
+      }
+    ],
+    "失敗する": [
+      {
+        "lemma": "fail",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "失敗する",
+        "confidence": 0.95
+      }
+    ],
+    "試す": [
+      {
+        "lemma": "try",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "試す",
+        "confidence": 0.95
+      }
+    ],
+    "確認する": [
+      {
+        "lemma": "confirm",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "確認する",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "check",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "確認する",
+        "confidence": 0.93
+      }
+    ],
+    "比較する": [
+      {
+        "lemma": "compare",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "比較する",
+        "confidence": 0.95
+      }
+    ],
+    "完成する": [
+      {
+        "lemma": "complete",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "完成する",
+        "confidence": 0.95
+      }
+    ],
+    "参加する": [
+      {
+        "lemma": "participate",
+        "pos": [
+          "verb"
+        ],
+        "shortSenseJa": "参加する",
+        "confidence": 0.95
+      }
+    ],
+    "複雑な": [
+      {
+        "lemma": "complex",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "複雑な",
+        "confidence": 0.95
+      }
+    ],
+    "単純な": [
+      {
+        "lemma": "simple",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "単純な",
+        "confidence": 0.95
+      }
+    ],
+    "正確な": [
+      {
+        "lemma": "accurate",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "正確な",
+        "confidence": 0.95
+      }
+    ],
+    "不正確な": [
+      {
+        "lemma": "inaccurate",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "不正確な",
+        "confidence": 0.95
+      }
+    ],
+    "明確な": [
+      {
+        "lemma": "clear",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "明確な",
+        "confidence": 0.95
+      }
+    ],
+    "曖昧な": [
+      {
+        "lemma": "vague",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "曖昧な",
+        "confidence": 0.95
+      }
+    ],
+    "詳しい": [
+      {
+        "lemma": "detailed",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "詳しい",
+        "confidence": 0.95
+      }
+    ],
+    "具体的な": [
+      {
+        "lemma": "concrete",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "具体的な",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "specific",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "具体的な",
+        "confidence": 0.93
+      }
+    ],
+    "抽象的な": [
+      {
+        "lemma": "abstract",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "抽象的な",
+        "confidence": 0.95
+      }
+    ],
+    "一般的な": [
+      {
+        "lemma": "general",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "一般的な",
+        "confidence": 0.95
+      }
+    ],
+    "特別な": [
+      {
+        "lemma": "special",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "特別な",
+        "confidence": 0.95
+      }
+    ],
+    "普通の": [
+      {
+        "lemma": "ordinary",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "普通の",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "common",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "普通の",
+        "confidence": 0.92
+      }
+    ],
+    "珍しい": [
+      {
+        "lemma": "rare",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "珍しい",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "unusual",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "珍しい",
+        "confidence": 0.93
+      }
+    ],
+    "豊かな": [
+      {
+        "lemma": "rich",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "豊かな",
+        "confidence": 0.95
+      }
+    ],
+    "貧しい": [
+      {
+        "lemma": "poor",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "貧しい",
+        "confidence": 0.95
+      }
+    ],
+    "厳しい": [
+      {
+        "lemma": "strict",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "厳しい",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "severe",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "厳しい",
+        "confidence": 0.92
+      }
+    ],
+    "優しい": [
+      {
+        "lemma": "kind",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "優しい",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "gentle",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "優しい",
+        "confidence": 0.93
+      }
+    ],
+    "賢い": [
+      {
+        "lemma": "smart",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "賢い",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "wise",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "賢い",
+        "confidence": 0.93
+      }
+    ],
+    "愚かな": [
+      {
+        "lemma": "foolish",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "愚かな",
+        "confidence": 0.95
+      }
+    ],
+    "勇敢な": [
+      {
+        "lemma": "brave",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "勇敢な",
+        "confidence": 0.95
+      }
+    ],
+    "臆病な": [
+      {
+        "lemma": "cowardly",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "臆病な",
+        "confidence": 0.95
+      }
+    ],
+    "素晴らしい": [
+      {
+        "lemma": "wonderful",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "素晴らしい",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "excellent",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "素晴らしい",
+        "confidence": 0.93
+      }
+    ],
+    "ひどい": [
+      {
+        "lemma": "terrible",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "ひどい",
+        "confidence": 0.95
+      }
+    ],
+    "適切な": [
+      {
+        "lemma": "appropriate",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "適切な",
+        "confidence": 0.95
+      }
+    ],
+    "不適切な": [
+      {
+        "lemma": "inappropriate",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "不適切な",
+        "confidence": 0.95
+      }
+    ],
+    "十分な": [
+      {
+        "lemma": "enough",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "十分な",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "sufficient",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "十分な",
+        "confidence": 0.93
+      }
+    ],
+    "不十分な": [
+      {
+        "lemma": "insufficient",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "不十分な",
+        "confidence": 0.95
+      }
+    ],
+    "完全な": [
+      {
+        "lemma": "perfect",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "完全な",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "complete",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "完全な",
+        "confidence": 0.93
+      }
+    ],
+    "不完全な": [
+      {
+        "lemma": "incomplete",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "不完全な",
+        "confidence": 0.95
+      }
+    ],
+    "深刻な": [
+      {
+        "lemma": "serious",
+        "pos": [
+          "adjective"
+        ],
+        "shortSenseJa": "深刻な",
+        "confidence": 0.95
+      }
+    ],
+    "情報": [
+      {
+        "lemma": "information",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "情報",
+        "confidence": 0.95
+      }
+    ],
+    "データ": [
+      {
+        "lemma": "data",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "データ",
+        "confidence": 0.95
+      }
+    ],
+    "資料": [
+      {
+        "lemma": "material",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "資料",
+        "confidence": 0.95
+      }
+    ],
+    "記録": [
+      {
+        "lemma": "record",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "記録",
+        "confidence": 0.95
+      }
+    ],
+    "報告": [
+      {
+        "lemma": "report",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "報告",
+        "confidence": 0.95
+      }
+    ],
+    "連絡": [
+      {
+        "lemma": "contact",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "連絡",
+        "confidence": 0.95
+      }
+    ],
+    "相談": [
+      {
+        "lemma": "consultation",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "相談",
+        "confidence": 0.95
+      }
+    ],
+    "議論": [
+      {
+        "lemma": "discussion",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "議論",
+        "confidence": 0.95
+      }
+    ],
+    "会議": [
+      {
+        "lemma": "meeting",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "会議",
+        "confidence": 0.95
+      }
+    ],
+    "約束": [
+      {
+        "lemma": "promise",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "約束",
+        "confidence": 0.95
+      }
+    ],
+    "契約": [
+      {
+        "lemma": "contract",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "契約",
+        "confidence": 0.95
+      }
+    ],
+    "規則": [
+      {
+        "lemma": "rule",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "規則",
+        "confidence": 0.95
+      }
+    ],
+    "法律": [
+      {
+        "lemma": "law",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "法律",
+        "confidence": 0.95
+      }
+    ],
+    "権利": [
+      {
+        "lemma": "right",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "権利",
+        "confidence": 0.95
+      }
+    ],
+    "義務": [
+      {
+        "lemma": "duty",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "義務",
+        "confidence": 0.95
+      }
+    ],
+    "責任": [
+      {
+        "lemma": "responsibility",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "責任",
+        "confidence": 0.95
+      }
+    ],
+    "影響": [
+      {
+        "lemma": "influence",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "影響",
+        "confidence": 0.95
+      }
+    ],
+    "効果": [
+      {
+        "lemma": "effect",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "効果",
+        "confidence": 0.95
+      }
+    ],
+    "原因": [
+      {
+        "lemma": "cause",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "原因",
+        "confidence": 0.95
+      }
+    ],
+    "結論": [
+      {
+        "lemma": "conclusion",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "結論",
+        "confidence": 0.95
+      }
+    ],
+    "過程": [
+      {
+        "lemma": "process",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "過程",
+        "confidence": 0.95
+      }
+    ],
+    "段階": [
+      {
+        "lemma": "stage",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "段階",
+        "confidence": 0.95
+      }
+    ],
+    "順序": [
+      {
+        "lemma": "order",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "順序",
+        "confidence": 0.95
+      }
+    ],
+    "順番": [
+      {
+        "lemma": "turn",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "順番",
+        "confidence": 0.95
+      }
+    ],
+    "関係": [
+      {
+        "lemma": "relationship",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "関係",
+        "confidence": 0.95
+      }
+    ],
+    "違い": [
+      {
+        "lemma": "difference",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "違い",
+        "confidence": 0.95
+      }
+    ],
+    "共通点": [
+      {
+        "lemma": "common point",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "共通点",
+        "confidence": 0.95
+      }
+    ],
+    "特徴": [
+      {
+        "lemma": "feature",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "特徴",
+        "confidence": 0.95
+      }
+    ],
+    "性質": [
+      {
+        "lemma": "property",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "性質",
+        "confidence": 0.95
+      }
+    ],
+    "性格": [
+      {
+        "lemma": "personality",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "性格",
+        "confidence": 0.95
+      }
+    ],
+    "態度": [
+      {
+        "lemma": "attitude",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "態度",
+        "confidence": 0.95
+      }
+    ],
+    "行動": [
+      {
+        "lemma": "behavior",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "行動",
+        "confidence": 0.95
+      }
+    ],
+    "反応": [
+      {
+        "lemma": "reaction",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "反応",
+        "confidence": 0.95
+      }
+    ],
+    "動き": [
+      {
+        "lemma": "movement",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "動き",
+        "confidence": 0.95
+      }
+    ],
+    "速度": [
+      {
+        "lemma": "speed",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "速度",
+        "confidence": 0.95
+      }
+    ],
+    "距離": [
+      {
+        "lemma": "distance",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "距離",
+        "confidence": 0.95
+      }
+    ],
+    "範囲": [
+      {
+        "lemma": "range",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "範囲",
+        "confidence": 0.95
+      }
+    ],
+    "限界": [
+      {
+        "lemma": "limit",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "限界",
+        "confidence": 0.95
+      }
+    ],
+    "程度": [
+      {
+        "lemma": "degree",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "程度",
+        "confidence": 0.95
+      }
+    ],
+    "割合": [
+      {
+        "lemma": "rate",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "割合",
+        "confidence": 0.95
+      }
+    ],
+    "量": [
+      {
+        "lemma": "amount",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "量",
+        "confidence": 0.95
+      }
+    ],
+    "数": [
+      {
+        "lemma": "number",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "数",
+        "confidence": 0.95
+      }
+    ],
+    "合計": [
+      {
+        "lemma": "total",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "合計",
+        "confidence": 0.95
+      }
+    ],
+    "平均": [
+      {
+        "lemma": "average",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "平均",
+        "confidence": 0.95
+      }
+    ],
+    "最大": [
+      {
+        "lemma": "maximum",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "最大",
+        "confidence": 0.95
+      }
+    ],
+    "最小": [
+      {
+        "lemma": "minimum",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "最小",
+        "confidence": 0.95
+      }
+    ],
+    "価格": [
+      {
+        "lemma": "price",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "価格",
+        "confidence": 0.95
+      }
+    ],
+    "価値": [
+      {
+        "lemma": "value",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "価値",
+        "confidence": 0.95
+      }
+    ],
+    "利益": [
+      {
+        "lemma": "profit",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "利益",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "benefit",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "利益",
+        "confidence": 0.93
+      }
+    ],
+    "損": [
+      {
+        "lemma": "loss",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "損",
+        "confidence": 0.95
+      }
+    ],
+    "危険": [
+      {
+        "lemma": "danger",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "危険",
+        "confidence": 0.95
+      }
+    ],
+    "安全": [
+      {
+        "lemma": "safety",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "安全",
+        "confidence": 0.95
+      }
+    ],
+    "心配": [
+      {
+        "lemma": "worry",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "心配",
+        "confidence": 0.95
+      }
+    ],
+    "不安": [
+      {
+        "lemma": "anxiety",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "不安",
+        "confidence": 0.95
+      }
+    ],
+    "希望": [
+      {
+        "lemma": "hope",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "希望",
+        "confidence": 0.95
+      }
+    ],
+    "夢": [
+      {
+        "lemma": "dream",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "夢",
+        "confidence": 0.95
+      }
+    ],
+    "計画": [
+      {
+        "lemma": "plan",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "計画",
+        "confidence": 0.95
+      }
+    ],
+    "予定": [
+      {
+        "lemma": "schedule",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "予定",
+        "confidence": 0.95
+      }
+    ],
+    "予想": [
+      {
+        "lemma": "expectation",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "予想",
+        "confidence": 0.95
+      }
+    ],
+    "推測": [
+      {
+        "lemma": "guess",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "推測",
+        "confidence": 0.95
+      }
+    ],
+    "判断": [
+      {
+        "lemma": "judgment",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "判断",
+        "confidence": 0.95
+      }
+    ],
+    "決定": [
+      {
+        "lemma": "decision",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "決定",
+        "confidence": 0.95
+      }
+    ],
+    "選択": [
+      {
+        "lemma": "choice",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "選択",
+        "confidence": 0.95
+      }
+    ],
+    "変化": [
+      {
+        "lemma": "change",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "変化",
+        "confidence": 0.95
+      }
+    ],
+    "進歩": [
+      {
+        "lemma": "progress",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "進歩",
+        "confidence": 0.95
+      }
+    ],
+    "発展": [
+      {
+        "lemma": "development",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "発展",
+        "confidence": 0.95
+      }
+    ],
+    "改善": [
+      {
+        "lemma": "improvement",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "改善",
+        "confidence": 0.95
+      }
+    ],
+    "悪化": [
+      {
+        "lemma": "worsening",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "悪化",
+        "confidence": 0.95
+      }
+    ],
+    "増加": [
+      {
+        "lemma": "increase",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "増加",
+        "confidence": 0.95
+      }
+    ],
+    "減少": [
+      {
+        "lemma": "decrease",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "減少",
+        "confidence": 0.95
+      }
+    ],
+    "維持": [
+      {
+        "lemma": "maintenance",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "維持",
+        "confidence": 0.95
+      }
+    ],
+    "保存": [
+      {
+        "lemma": "preservation",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "保存",
+        "confidence": 0.95
+      }
+    ],
+    "破壊": [
+      {
+        "lemma": "destruction",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "破壊",
+        "confidence": 0.95
+      }
+    ],
+    "修理": [
+      {
+        "lemma": "repair",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "修理",
+        "confidence": 0.95
+      }
+    ],
+    "準備": [
+      {
+        "lemma": "preparation",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "準備",
+        "confidence": 0.95
+      }
+    ],
+    "練習": [
+      {
+        "lemma": "practice",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "練習",
+        "confidence": 0.95
+      }
+    ],
+    "訓練": [
+      {
+        "lemma": "training",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "訓練",
+        "confidence": 0.95
+      }
+    ],
+    "試験": [
+      {
+        "lemma": "examination",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "試験",
+        "confidence": 0.95
+      },
+      {
+        "lemma": "test",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "試験",
+        "confidence": 0.93
+      }
+    ],
+    "調査": [
+      {
+        "lemma": "survey",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "調査",
+        "confidence": 0.95
+      }
+    ],
+    "分析": [
+      {
+        "lemma": "analysis",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "分析",
+        "confidence": 0.95
+      }
+    ],
+    "比較": [
+      {
+        "lemma": "comparison",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "比較",
+        "confidence": 0.95
+      }
+    ],
+    "評価": [
+      {
+        "lemma": "evaluation",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "評価",
+        "confidence": 0.95
+      }
+    ],
+    "批判": [
+      {
+        "lemma": "criticism",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "批判",
+        "confidence": 0.95
+      }
+    ],
+    "賛成": [
+      {
+        "lemma": "agreement",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "賛成",
+        "confidence": 0.95
+      }
+    ],
+    "反対": [
+      {
+        "lemma": "opposition",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "反対",
+        "confidence": 0.95
+      }
+    ],
+    "主張": [
+      {
+        "lemma": "claim",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "主張",
+        "confidence": 0.95
+      }
+    ],
+    "証拠": [
+      {
+        "lemma": "evidence",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "証拠",
+        "confidence": 0.95
+      }
+    ],
+    "事実": [
+      {
+        "lemma": "fact",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "事実",
+        "confidence": 0.95
+      }
+    ],
+    "真実": [
+      {
+        "lemma": "truth",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "真実",
+        "confidence": 0.95
+      }
+    ],
+    "嘘": [
+      {
+        "lemma": "lie",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "嘘",
+        "confidence": 0.95
+      }
+    ],
+    "秘密": [
+      {
+        "lemma": "secret",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "秘密",
+        "confidence": 0.95
+      }
+    ],
+    "機密": [
+      {
+        "lemma": "confidential",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "機密",
+        "confidence": 0.95
+      }
+    ],
+    "公開": [
+      {
+        "lemma": "public",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "公開",
+        "confidence": 0.95
+      }
+    ],
+    "発表": [
+      {
+        "lemma": "announcement",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "発表",
+        "confidence": 0.95
+      }
+    ],
+    "説明": [
+      {
+        "lemma": "explanation",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "説明",
+        "confidence": 0.95
+      }
+    ],
+    "紹介": [
+      {
+        "lemma": "introduction",
+        "pos": [
+          "noun"
+        ],
+        "shortSenseJa": "紹介",
+        "confidence": 0.95
       }
     ]
   },
@@ -1361,30 +5932,45 @@
         "lang": "en",
         "pos": [
           "noun"
-        ]
+        ],
+        "pronunciation": "/ˈfɑːðər/"
       },
       "senses": [
         {
           "id": "n1",
-          "glossShort": "父・父親"
+          "pos": "noun",
+          "glossShort": "父",
+          "glossLong": "父親",
+          "examples": [
+            "my father",
+            "young father"
+          ]
         }
       ],
       "examples": [
         {
-          "textSrc": "My father works at a bank.",
-          "textDst": "私の父は銀行で働いています。"
+          "textSrc": "My father is a teacher.",
+          "textDst": "私の父は教師です。"
+        },
+        {
+          "textSrc": "I love my father.",
+          "textDst": "私は父を愛しています。"
         }
       ],
       "collocations": [
         {
-          "phrase": "father and son"
+          "phrase": "my father",
+          "meaning": "私の父"
+        },
+        {
+          "phrase": "young father",
+          "meaning": "若い父親"
+        },
+        {
+          "phrase": "like father",
+          "meaning": "父のように"
         }
-      ],
-      "metrics": {
-        "frequency": 95,
-        "difficulty": 15,
-        "nuance": 50
-      }
+      ]
     },
     "mother": {
       "headword": {
@@ -1392,30 +5978,45 @@
         "lang": "en",
         "pos": [
           "noun"
-        ]
+        ],
+        "pronunciation": "/ˈmʌðər/"
       },
       "senses": [
         {
           "id": "n1",
-          "glossShort": "母・母親"
+          "pos": "noun",
+          "glossShort": "母",
+          "glossLong": "母親",
+          "examples": [
+            "my mother",
+            "young mother"
+          ]
         }
       ],
       "examples": [
         {
-          "textSrc": "My mother is a teacher.",
-          "textDst": "私の母は教師です。"
+          "textSrc": "My mother is a doctor.",
+          "textDst": "私の母は医者です。"
+        },
+        {
+          "textSrc": "I love my mother.",
+          "textDst": "私は母を愛しています。"
         }
       ],
       "collocations": [
         {
-          "phrase": "mother tongue"
+          "phrase": "my mother",
+          "meaning": "私の母"
+        },
+        {
+          "phrase": "young mother",
+          "meaning": "若い母親"
+        },
+        {
+          "phrase": "mother tongue",
+          "meaning": "母語"
         }
-      ],
-      "metrics": {
-        "frequency": 95,
-        "difficulty": 15,
-        "nuance": 50
-      }
+      ]
     },
     "water": {
       "headword": {
@@ -1457,33 +6058,45 @@
         "lang": "en",
         "pos": [
           "verb"
-        ]
+        ],
+        "pronunciation": "/iːt/"
       },
       "senses": [
         {
           "id": "v1",
-          "glossShort": "食べる"
+          "pos": "verb",
+          "glossShort": "食べる",
+          "glossLong": "食物を口に入れて飲み込む",
+          "examples": [
+            "eat breakfast",
+            "eat out"
+          ]
         }
       ],
       "examples": [
         {
-          "textSrc": "I eat breakfast every morning.",
-          "textDst": "私は毎朝朝食を食べます。"
+          "textSrc": "What did you eat for breakfast?",
+          "textDst": "朝食に何を食べましたか？"
+        },
+        {
+          "textSrc": "Let's eat out tonight.",
+          "textDst": "今夜は外食しましょう。"
         }
       ],
       "collocations": [
         {
-          "phrase": "eat out"
+          "phrase": "eat breakfast",
+          "meaning": "朝食を食べる"
         },
         {
-          "phrase": "eat up"
+          "phrase": "eat out",
+          "meaning": "外食する"
+        },
+        {
+          "phrase": "eat well",
+          "meaning": "よく食べる"
         }
-      ],
-      "metrics": {
-        "frequency": 99,
-        "difficulty": 10,
-        "nuance": 50
-      }
+      ]
     },
     "drink": {
       "headword": {
@@ -1492,34 +6105,55 @@
         "pos": [
           "verb",
           "noun"
-        ]
+        ],
+        "pronunciation": "/drɪŋk/"
       },
       "senses": [
         {
           "id": "v1",
-          "glossShort": "飲む"
+          "pos": "verb",
+          "glossShort": "飲む",
+          "glossLong": "液体を口に入れて飲み込む",
+          "examples": [
+            "drink water",
+            "drink coffee"
+          ]
         },
         {
           "id": "n1",
-          "glossShort": "飲み物"
+          "pos": "noun",
+          "glossShort": "飲み物",
+          "glossLong": "飲用する液体",
+          "examples": [
+            "cold drink",
+            "soft drink"
+          ]
         }
       ],
       "examples": [
         {
-          "textSrc": "I drink coffee every day.",
-          "textDst": "私は毎日コーヒーを飲みます。"
+          "textSrc": "I drink a lot of water.",
+          "textDst": "私はたくさん水を飲みます。"
+        },
+        {
+          "textSrc": "Would you like a drink?",
+          "textDst": "何か飲みますか？"
         }
       ],
       "collocations": [
         {
-          "phrase": "soft drink"
+          "phrase": "drink water",
+          "meaning": "水を飲む"
+        },
+        {
+          "phrase": "drink coffee",
+          "meaning": "コーヒーを飲む"
+        },
+        {
+          "phrase": "have a drink",
+          "meaning": "一杯飲む"
         }
-      ],
-      "metrics": {
-        "frequency": 98,
-        "difficulty": 10,
-        "nuance": 50
-      }
+      ]
     },
     "school": {
       "headword": {
@@ -1527,33 +6161,45 @@
         "lang": "en",
         "pos": [
           "noun"
-        ]
+        ],
+        "pronunciation": "/skuːl/"
       },
       "senses": [
         {
           "id": "n1",
-          "glossShort": "学校"
+          "pos": "noun",
+          "glossShort": "学校",
+          "glossLong": "教育機関",
+          "examples": [
+            "go to school",
+            "at school"
+          ]
         }
       ],
       "examples": [
         {
-          "textSrc": "I go to school by bus.",
-          "textDst": "私はバスで学校に行きます。"
+          "textSrc": "I go to school every day.",
+          "textDst": "私は毎日学校に行きます。"
+        },
+        {
+          "textSrc": "My school is near here.",
+          "textDst": "私の学校はここの近くです。"
         }
       ],
       "collocations": [
         {
-          "phrase": "high school"
+          "phrase": "go to school",
+          "meaning": "学校に行く"
         },
         {
-          "phrase": "go to school"
+          "phrase": "at school",
+          "meaning": "学校で"
+        },
+        {
+          "phrase": "high school",
+          "meaning": "高校"
         }
-      ],
-      "metrics": {
-        "frequency": 99,
-        "difficulty": 10,
-        "nuance": 50
-      }
+      ]
     },
     "teacher": {
       "headword": {
@@ -1561,30 +6207,45 @@
         "lang": "en",
         "pos": [
           "noun"
-        ]
+        ],
+        "pronunciation": "/ˈtiːtʃər/"
       },
       "senses": [
         {
           "id": "n1",
-          "glossShort": "先生・教師"
+          "pos": "noun",
+          "glossShort": "教師",
+          "glossLong": "先生",
+          "examples": [
+            "English teacher",
+            "my teacher"
+          ]
         }
       ],
       "examples": [
         {
-          "textSrc": "She is an English teacher.",
-          "textDst": "彼女は英語の先生です。"
+          "textSrc": "My teacher is very kind.",
+          "textDst": "私の先生はとても親切です。"
+        },
+        {
+          "textSrc": "I want to be a teacher.",
+          "textDst": "教師になりたいです。"
         }
       ],
       "collocations": [
         {
-          "phrase": "school teacher"
+          "phrase": "English teacher",
+          "meaning": "英語教師"
+        },
+        {
+          "phrase": "my teacher",
+          "meaning": "私の先生"
+        },
+        {
+          "phrase": "good teacher",
+          "meaning": "良い先生"
         }
-      ],
-      "metrics": {
-        "frequency": 95,
-        "difficulty": 15,
-        "nuance": 50
-      }
+      ]
     },
     "student": {
       "headword": {
@@ -1592,30 +6253,45 @@
         "lang": "en",
         "pos": [
           "noun"
-        ]
+        ],
+        "pronunciation": "/ˈstuːdnt/"
       },
       "senses": [
         {
           "id": "n1",
-          "glossShort": "学生・生徒"
+          "pos": "noun",
+          "glossShort": "学生",
+          "glossLong": "生徒",
+          "examples": [
+            "college student",
+            "high school student"
+          ]
         }
       ],
       "examples": [
         {
-          "textSrc": "I am a university student.",
+          "textSrc": "I'm a college student.",
           "textDst": "私は大学生です。"
+        },
+        {
+          "textSrc": "There are many students here.",
+          "textDst": "ここにはたくさんの学生がいます。"
         }
       ],
       "collocations": [
         {
-          "phrase": "college student"
+          "phrase": "college student",
+          "meaning": "大学生"
+        },
+        {
+          "phrase": "high school student",
+          "meaning": "高校生"
+        },
+        {
+          "phrase": "good student",
+          "meaning": "優秀な学生"
         }
-      ],
-      "metrics": {
-        "frequency": 98,
-        "difficulty": 10,
-        "nuance": 50
-      }
+      ]
     },
     "today": {
       "headword": {
@@ -1687,30 +6363,45 @@
         "lang": "en",
         "pos": [
           "noun"
-        ]
+        ],
+        "pronunciation": "/haʊs/"
       },
       "senses": [
         {
           "id": "n1",
-          "glossShort": "家・住宅"
+          "pos": "noun",
+          "glossShort": "家",
+          "glossLong": "住居",
+          "examples": [
+            "my house",
+            "old house"
+          ]
         }
       ],
       "examples": [
         {
-          "textSrc": "I live in a big house.",
-          "textDst": "私は大きな家に住んでいます。"
+          "textSrc": "This is my house.",
+          "textDst": "これは私の家です。"
+        },
+        {
+          "textSrc": "I want to buy a house.",
+          "textDst": "家を買いたいです。"
         }
       ],
       "collocations": [
         {
-          "phrase": "at home"
+          "phrase": "my house",
+          "meaning": "私の家"
+        },
+        {
+          "phrase": "go home",
+          "meaning": "家に帰る"
+        },
+        {
+          "phrase": "at home",
+          "meaning": "家で"
         }
-      ],
-      "metrics": {
-        "frequency": 98,
-        "difficulty": 10,
-        "nuance": 50
-      }
+      ]
     },
     "go": {
       "headword": {
@@ -2050,37 +6741,55 @@
         "lang": "en",
         "pos": [
           "noun"
-        ]
+        ],
+        "pronunciation": "/taɪm/"
       },
       "senses": [
         {
           "id": "n1",
-          "glossShort": "時間"
+          "pos": "noun",
+          "glossShort": "時間",
+          "glossLong": "過ぎ行く時",
+          "examples": [
+            "what time",
+            "save time"
+          ]
         },
         {
           "id": "n2",
-          "glossShort": "時刻"
+          "pos": "noun",
+          "glossShort": "回",
+          "glossLong": "～回目",
+          "examples": [
+            "first time",
+            "three times"
+          ]
         }
       ],
       "examples": [
         {
           "textSrc": "What time is it?",
-          "textDst": "何時ですか？"
+          "textDst": "今何時ですか？"
+        },
+        {
+          "textSrc": "I don't have time.",
+          "textDst": "時間がありません。"
         }
       ],
       "collocations": [
         {
-          "phrase": "on time"
+          "phrase": "what time",
+          "meaning": "何時"
         },
         {
-          "phrase": "free time"
+          "phrase": "have time",
+          "meaning": "時間がある"
+        },
+        {
+          "phrase": "first time",
+          "meaning": "初めて"
         }
-      ],
-      "metrics": {
-        "frequency": 100,
-        "difficulty": 10,
-        "nuance": 60
-      }
+      ]
     },
     "friend": {
       "headword": {
@@ -2088,30 +6797,45 @@
         "lang": "en",
         "pos": [
           "noun"
-        ]
+        ],
+        "pronunciation": "/frend/"
       },
       "senses": [
         {
           "id": "n1",
-          "glossShort": "友達・友人"
+          "pos": "noun",
+          "glossShort": "友達",
+          "glossLong": "友人",
+          "examples": [
+            "good friend",
+            "best friend"
+          ]
         }
       ],
       "examples": [
         {
           "textSrc": "She is my best friend.",
           "textDst": "彼女は私の親友です。"
+        },
+        {
+          "textSrc": "I want to make friends.",
+          "textDst": "友達を作りたいです。"
         }
       ],
       "collocations": [
         {
-          "phrase": "make friends"
+          "phrase": "best friend",
+          "meaning": "親友"
+        },
+        {
+          "phrase": "make friends",
+          "meaning": "友達を作る"
+        },
+        {
+          "phrase": "close friend",
+          "meaning": "親しい友人"
         }
-      ],
-      "metrics": {
-        "frequency": 98,
-        "difficulty": 10,
-        "nuance": 50
-      }
+      ]
     },
     "car": {
       "headword": {
@@ -2119,32 +6843,3348 @@
         "lang": "en",
         "pos": [
           "noun"
-        ]
+        ],
+        "pronunciation": "/kɑːr/"
       },
       "senses": [
         {
           "id": "n1",
-          "glossShort": "車・自動車"
+          "pos": "noun",
+          "glossShort": "車",
+          "glossLong": "automobile",
+          "examples": [
+            "my car",
+            "by car"
+          ]
         }
       ],
       "examples": [
         {
-          "textSrc": "I drive a car to work.",
-          "textDst": "私は車で仕事に行きます。"
+          "textSrc": "I go to work by car.",
+          "textDst": "私は車で通勤します。"
+        },
+        {
+          "textSrc": "This is my car.",
+          "textDst": "これは私の車です。"
         }
       ],
       "collocations": [
         {
-          "phrase": "by car"
+          "phrase": "my car",
+          "meaning": "私の車"
         },
         {
-          "phrase": "car park"
+          "phrase": "by car",
+          "meaning": "車で"
+        },
+        {
+          "phrase": "car park",
+          "meaning": "駐車場"
+        }
+      ]
+    },
+    "walk": {
+      "headword": {
+        "lemma": "walk",
+        "lang": "en",
+        "pos": [
+          "verb",
+          "noun"
+        ],
+        "pronunciation": "/wɔːk/"
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "歩く",
+          "glossLong": "足を使って移動する",
+          "examples": [
+            "walk to school",
+            "walk the dog"
+          ]
+        },
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "散歩",
+          "glossLong": "歩くこと",
+          "examples": [
+            "take a walk",
+            "go for a walk"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I walk to school every day.",
+          "textDst": "私は毎日学校まで歩きます。"
+        },
+        {
+          "textSrc": "Let's take a walk in the park.",
+          "textDst": "公園を散歩しましょう。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "walk to",
+          "meaning": "〜まで歩く"
+        },
+        {
+          "phrase": "walk home",
+          "meaning": "家まで歩く"
+        },
+        {
+          "phrase": "take a walk",
+          "meaning": "散歩する"
+        }
+      ]
+    },
+    "run": {
+      "headword": {
+        "lemma": "run",
+        "lang": "en",
+        "pos": [
+          "verb",
+          "noun"
+        ],
+        "pronunciation": "/rʌn/"
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "走る",
+          "glossLong": "速く移動する",
+          "examples": [
+            "run fast",
+            "run a marathon"
+          ]
+        },
+        {
+          "id": "v2",
+          "pos": "verb",
+          "glossShort": "経営する",
+          "glossLong": "事業を運営する",
+          "examples": [
+            "run a company",
+            "run a business"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I run every morning.",
+          "textDst": "私は毎朝走ります。"
+        },
+        {
+          "textSrc": "She runs her own business.",
+          "textDst": "彼女は自分の事業を経営しています。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "run fast",
+          "meaning": "速く走る"
+        },
+        {
+          "phrase": "run away",
+          "meaning": "逃げる"
+        },
+        {
+          "phrase": "run out of",
+          "meaning": "〜を使い果たす"
+        }
+      ]
+    },
+    "sleep": {
+      "headword": {
+        "lemma": "sleep",
+        "lang": "en",
+        "pos": [
+          "verb",
+          "noun"
+        ],
+        "pronunciation": "/sliːp/"
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "眠る",
+          "glossLong": "睡眠をとる",
+          "examples": [
+            "sleep well",
+            "sleep late"
+          ]
+        },
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "睡眠",
+          "glossLong": "眠っている状態",
+          "examples": [
+            "deep sleep",
+            "good sleep"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I couldn't sleep last night.",
+          "textDst": "昨夜は眠れませんでした。"
+        },
+        {
+          "textSrc": "I need more sleep.",
+          "textDst": "もっと睡眠が必要です。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "sleep well",
+          "meaning": "よく眠る"
+        },
+        {
+          "phrase": "go to sleep",
+          "meaning": "眠りにつく"
+        },
+        {
+          "phrase": "fall asleep",
+          "meaning": "眠りに落ちる"
+        }
+      ]
+    },
+    "sit": {
+      "headword": {
+        "lemma": "sit",
+        "lang": "en",
+        "pos": [
+          "verb"
+        ],
+        "pronunciation": "/sɪt/"
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "座る",
+          "glossLong": "腰を下ろす",
+          "examples": [
+            "sit down",
+            "sit on a chair"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Please sit down.",
+          "textDst": "どうぞ座ってください。"
+        },
+        {
+          "textSrc": "I sat on the bench.",
+          "textDst": "私はベンチに座りました。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "sit down",
+          "meaning": "座る"
+        },
+        {
+          "phrase": "sit on",
+          "meaning": "〜に座る"
+        },
+        {
+          "phrase": "sit still",
+          "meaning": "じっと座る"
+        }
+      ]
+    },
+    "stand": {
+      "headword": {
+        "lemma": "stand",
+        "lang": "en",
+        "pos": [
+          "verb",
+          "noun"
+        ],
+        "pronunciation": "/stænd/"
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "立つ",
+          "glossLong": "直立する",
+          "examples": [
+            "stand up",
+            "stand still"
+          ]
+        },
+        {
+          "id": "v2",
+          "pos": "verb",
+          "glossShort": "我慢する",
+          "glossLong": "耐える",
+          "examples": [
+            "can't stand",
+            "stand the pain"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Please stand up.",
+          "textDst": "立ち上がってください。"
+        },
+        {
+          "textSrc": "I can't stand the heat.",
+          "textDst": "この暑さには耐えられません。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "stand up",
+          "meaning": "立ち上がる"
+        },
+        {
+          "phrase": "stand still",
+          "meaning": "じっと立つ"
+        },
+        {
+          "phrase": "can't stand",
+          "meaning": "我慢できない"
+        }
+      ]
+    },
+    "open": {
+      "headword": {
+        "lemma": "open",
+        "lang": "en",
+        "pos": [
+          "verb",
+          "adjective"
+        ],
+        "pronunciation": "/ˈoʊpən/"
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "開ける",
+          "glossLong": "閉じているものを開く",
+          "examples": [
+            "open the door",
+            "open a box"
+          ]
+        },
+        {
+          "id": "adj1",
+          "pos": "adjective",
+          "glossShort": "開いている",
+          "glossLong": "閉じていない状態",
+          "examples": [
+            "the door is open",
+            "open space"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Can you open the window?",
+          "textDst": "窓を開けてくれますか？"
+        },
+        {
+          "textSrc": "The store is open.",
+          "textDst": "その店は営業しています。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "open the door",
+          "meaning": "ドアを開ける"
+        },
+        {
+          "phrase": "open wide",
+          "meaning": "大きく開ける"
+        },
+        {
+          "phrase": "open up",
+          "meaning": "開く"
+        }
+      ]
+    },
+    "close": {
+      "headword": {
+        "lemma": "close",
+        "lang": "en",
+        "pos": [
+          "verb",
+          "adjective"
+        ],
+        "pronunciation": "/kloʊz/"
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "閉める",
+          "glossLong": "開いているものを閉じる",
+          "examples": [
+            "close the door",
+            "close your eyes"
+          ]
+        },
+        {
+          "id": "adj1",
+          "pos": "adjective",
+          "glossShort": "近い",
+          "glossLong": "距離が短い",
+          "examples": [
+            "close to",
+            "close friend"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Please close the door.",
+          "textDst": "ドアを閉めてください。"
+        },
+        {
+          "textSrc": "The station is close to my house.",
+          "textDst": "駅は私の家の近くです。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "close the door",
+          "meaning": "ドアを閉める"
+        },
+        {
+          "phrase": "close to",
+          "meaning": "〜の近くに"
+        },
+        {
+          "phrase": "close friend",
+          "meaning": "親友"
+        }
+      ]
+    },
+    "watch": {
+      "headword": {
+        "lemma": "watch",
+        "lang": "en",
+        "pos": [
+          "verb",
+          "noun"
+        ],
+        "pronunciation": "/wɑːtʃ/"
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "見る",
+          "glossLong": "注意して見る",
+          "examples": [
+            "watch TV",
+            "watch a movie"
+          ]
+        },
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "腕時計",
+          "glossLong": "時刻を示す装置",
+          "examples": [
+            "wear a watch",
+            "check the watch"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I watch TV every evening.",
+          "textDst": "私は毎晩テレビを見ます。"
+        },
+        {
+          "textSrc": "This is my watch.",
+          "textDst": "これは私の腕時計です。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "watch TV",
+          "meaning": "テレビを見る"
+        },
+        {
+          "phrase": "watch out",
+          "meaning": "気をつける"
+        },
+        {
+          "phrase": "watch over",
+          "meaning": "見守る"
+        }
+      ]
+    },
+    "happy": {
+      "headword": {
+        "lemma": "happy",
+        "lang": "en",
+        "pos": [
+          "adjective"
+        ],
+        "pronunciation": "/ˈhæpi/"
+      },
+      "senses": [
+        {
+          "id": "adj1",
+          "pos": "adjective",
+          "glossShort": "幸せな",
+          "glossLong": "満足して喜んでいる",
+          "examples": [
+            "happy smile",
+            "happy life"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I'm happy to hear that.",
+          "textDst": "それを聞いて嬉しいです。"
+        },
+        {
+          "textSrc": "She looks happy.",
+          "textDst": "彼女は幸せそうです。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "happy birthday",
+          "meaning": "誕生日おめでとう"
+        },
+        {
+          "phrase": "happy to",
+          "meaning": "〜して嬉しい"
+        },
+        {
+          "phrase": "feel happy",
+          "meaning": "幸せに感じる"
+        }
+      ]
+    },
+    "sad": {
+      "headword": {
+        "lemma": "sad",
+        "lang": "en",
+        "pos": [
+          "adjective"
+        ],
+        "pronunciation": "/sæd/"
+      },
+      "senses": [
+        {
+          "id": "adj1",
+          "pos": "adjective",
+          "glossShort": "悲しい",
+          "glossLong": "不幸で落ち込んでいる",
+          "examples": [
+            "sad news",
+            "sad story"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I feel sad today.",
+          "textDst": "今日は悲しい気分です。"
+        },
+        {
+          "textSrc": "That's a sad story.",
+          "textDst": "それは悲しい話です。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "feel sad",
+          "meaning": "悲しく感じる"
+        },
+        {
+          "phrase": "sad news",
+          "meaning": "悲しい知らせ"
+        },
+        {
+          "phrase": "sad face",
+          "meaning": "悲しい顔"
+        }
+      ]
+    },
+    "beautiful": {
+      "headword": {
+        "lemma": "beautiful",
+        "lang": "en",
+        "pos": [
+          "adjective"
+        ],
+        "pronunciation": "/ˈbjuːtɪfl/"
+      },
+      "senses": [
+        {
+          "id": "adj1",
+          "pos": "adjective",
+          "glossShort": "美しい",
+          "glossLong": "見た目が魅力的",
+          "examples": [
+            "beautiful view",
+            "beautiful woman"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "What a beautiful day!",
+          "textDst": "なんて美しい日でしょう！"
+        },
+        {
+          "textSrc": "She is beautiful.",
+          "textDst": "彼女は美しいです。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "beautiful view",
+          "meaning": "美しい景色"
+        },
+        {
+          "phrase": "beautiful day",
+          "meaning": "美しい日"
+        },
+        {
+          "phrase": "beautiful woman",
+          "meaning": "美しい女性"
+        }
+      ]
+    },
+    "interesting": {
+      "headword": {
+        "lemma": "interesting",
+        "lang": "en",
+        "pos": [
+          "adjective"
+        ],
+        "pronunciation": "/ˈɪntrəstɪŋ/"
+      },
+      "senses": [
+        {
+          "id": "adj1",
+          "pos": "adjective",
+          "glossShort": "面白い",
+          "glossLong": "興味を引く",
+          "examples": [
+            "interesting book",
+            "interesting story"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "That's very interesting.",
+          "textDst": "それはとても面白いですね。"
+        },
+        {
+          "textSrc": "I read an interesting book.",
+          "textDst": "面白い本を読みました。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "very interesting",
+          "meaning": "とても面白い"
+        },
+        {
+          "phrase": "interesting story",
+          "meaning": "面白い話"
+        },
+        {
+          "phrase": "find interesting",
+          "meaning": "面白いと思う"
+        }
+      ]
+    },
+    "boring": {
+      "headword": {
+        "lemma": "boring",
+        "lang": "en",
+        "pos": [
+          "adjective"
+        ],
+        "pronunciation": "/ˈbɔːrɪŋ/"
+      },
+      "senses": [
+        {
+          "id": "adj1",
+          "pos": "adjective",
+          "glossShort": "退屈な",
+          "glossLong": "興味を引かない",
+          "examples": [
+            "boring movie",
+            "boring job"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "The movie was boring.",
+          "textDst": "その映画は退屈でした。"
+        },
+        {
+          "textSrc": "It's a boring job.",
+          "textDst": "それは退屈な仕事です。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "boring movie",
+          "meaning": "退屈な映画"
+        },
+        {
+          "phrase": "boring job",
+          "meaning": "退屈な仕事"
+        },
+        {
+          "phrase": "feel boring",
+          "meaning": "退屈に感じる"
+        }
+      ]
+    },
+    "difficult": {
+      "headword": {
+        "lemma": "difficult",
+        "lang": "en",
+        "pos": [
+          "adjective"
+        ],
+        "pronunciation": "/ˈdɪfɪkəlt/"
+      },
+      "senses": [
+        {
+          "id": "adj1",
+          "pos": "adjective",
+          "glossShort": "難しい",
+          "glossLong": "簡単ではない",
+          "examples": [
+            "difficult question",
+            "difficult task"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "This is a difficult question.",
+          "textDst": "これは難しい質問です。"
+        },
+        {
+          "textSrc": "It's difficult to explain.",
+          "textDst": "説明するのは難しいです。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "difficult question",
+          "meaning": "難しい質問"
+        },
+        {
+          "phrase": "difficult task",
+          "meaning": "難しい課題"
+        },
+        {
+          "phrase": "difficult to",
+          "meaning": "〜するのが難しい"
+        }
+      ]
+    },
+    "easy": {
+      "headword": {
+        "lemma": "easy",
+        "lang": "en",
+        "pos": [
+          "adjective"
+        ],
+        "pronunciation": "/ˈiːzi/"
+      },
+      "senses": [
+        {
+          "id": "adj1",
+          "pos": "adjective",
+          "glossShort": "簡単な",
+          "glossLong": "難しくない",
+          "examples": [
+            "easy question",
+            "easy task"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "This is an easy question.",
+          "textDst": "これは簡単な質問です。"
+        },
+        {
+          "textSrc": "It's easy to use.",
+          "textDst": "使うのは簡単です。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "easy question",
+          "meaning": "簡単な質問"
+        },
+        {
+          "phrase": "easy task",
+          "meaning": "簡単な課題"
+        },
+        {
+          "phrase": "easy to",
+          "meaning": "〜するのが簡単"
+        }
+      ]
+    },
+    "important": {
+      "headword": {
+        "lemma": "important",
+        "lang": "en",
+        "pos": [
+          "adjective"
+        ],
+        "pronunciation": "/ɪmˈpɔːrtənt/"
+      },
+      "senses": [
+        {
+          "id": "adj1",
+          "pos": "adjective",
+          "glossShort": "重要な",
+          "glossLong": "価値や影響力が大きい",
+          "examples": [
+            "important meeting",
+            "important decision"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "This is very important.",
+          "textDst": "これはとても重要です。"
+        },
+        {
+          "textSrc": "I have an important meeting.",
+          "textDst": "重要な会議があります。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "very important",
+          "meaning": "とても重要"
+        },
+        {
+          "phrase": "important meeting",
+          "meaning": "重要な会議"
+        },
+        {
+          "phrase": "important decision",
+          "meaning": "重要な決定"
+        }
+      ]
+    },
+    "day": {
+      "headword": {
+        "lemma": "day",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/deɪ/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "日",
+          "glossLong": "24時間の期間",
+          "examples": [
+            "every day",
+            "one day"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I study English every day.",
+          "textDst": "私は毎日英語を勉強します。"
+        },
+        {
+          "textSrc": "Have a nice day!",
+          "textDst": "良い一日を！"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "every day",
+          "meaning": "毎日"
+        },
+        {
+          "phrase": "one day",
+          "meaning": "ある日"
+        },
+        {
+          "phrase": "all day",
+          "meaning": "一日中"
+        }
+      ]
+    },
+    "year": {
+      "headword": {
+        "lemma": "year",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/jɪr/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "年",
+          "glossLong": "12ヶ月の期間",
+          "examples": [
+            "this year",
+            "last year"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I'm 20 years old.",
+          "textDst": "私は20歳です。"
+        },
+        {
+          "textSrc": "Happy New Year!",
+          "textDst": "新年おめでとう！"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "this year",
+          "meaning": "今年"
+        },
+        {
+          "phrase": "last year",
+          "meaning": "去年"
+        },
+        {
+          "phrase": "next year",
+          "meaning": "来年"
+        }
+      ]
+    },
+    "person": {
+      "headword": {
+        "lemma": "person",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈpɜːrsn/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "人",
+          "glossLong": "個人",
+          "examples": [
+            "nice person",
+            "young person"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "She is a kind person.",
+          "textDst": "彼女は親切な人です。"
+        },
+        {
+          "textSrc": "How many people are there?",
+          "textDst": "何人いますか？"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "kind person",
+          "meaning": "親切な人"
+        },
+        {
+          "phrase": "young person",
+          "meaning": "若い人"
+        },
+        {
+          "phrase": "in person",
+          "meaning": "直接"
+        }
+      ]
+    },
+    "place": {
+      "headword": {
+        "lemma": "place",
+        "lang": "en",
+        "pos": [
+          "noun",
+          "verb"
+        ],
+        "pronunciation": "/pleɪs/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "場所",
+          "glossLong": "特定の位置",
+          "examples": [
+            "good place",
+            "this place"
+          ]
+        },
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "置く",
+          "glossLong": "物を配置する",
+          "examples": [
+            "place on",
+            "place here"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "This is a nice place.",
+          "textDst": "ここは素敵な場所です。"
+        },
+        {
+          "textSrc": "Place it on the table.",
+          "textDst": "それをテーブルの上に置いてください。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good place",
+          "meaning": "良い場所"
+        },
+        {
+          "phrase": "take place",
+          "meaning": "行われる"
+        },
+        {
+          "phrase": "in place",
+          "meaning": "適切な場所に"
+        }
+      ]
+    },
+    "thing": {
+      "headword": {
+        "lemma": "thing",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/θɪŋ/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "物",
+          "glossLong": "対象物",
+          "examples": [
+            "good thing",
+            "many things"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "That's a good thing.",
+          "textDst": "それは良いことです。"
+        },
+        {
+          "textSrc": "I have many things to do.",
+          "textDst": "やることがたくさんあります。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good thing",
+          "meaning": "良いこと"
+        },
+        {
+          "phrase": "many things",
+          "meaning": "多くのこと"
+        },
+        {
+          "phrase": "all things",
+          "meaning": "すべてのこと"
+        }
+      ]
+    },
+    "way": {
+      "headword": {
+        "lemma": "way",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/weɪ/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "方法",
+          "glossLong": "やり方",
+          "examples": [
+            "good way",
+            "this way"
+          ]
+        },
+        {
+          "id": "n2",
+          "pos": "noun",
+          "glossShort": "道",
+          "glossLong": "通り道",
+          "examples": [
+            "on the way",
+            "which way"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "That's a good way.",
+          "textDst": "それは良い方法です。"
+        },
+        {
+          "textSrc": "Which way should I go?",
+          "textDst": "どちらの道を行けばいいですか？"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good way",
+          "meaning": "良い方法"
+        },
+        {
+          "phrase": "on the way",
+          "meaning": "途中で"
+        },
+        {
+          "phrase": "by the way",
+          "meaning": "ところで"
+        }
+      ]
+    },
+    "life": {
+      "headword": {
+        "lemma": "life",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/laɪf/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "人生",
+          "glossLong": "生きている期間",
+          "examples": [
+            "happy life",
+            "my life"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I enjoy my life.",
+          "textDst": "私は人生を楽しんでいます。"
+        },
+        {
+          "textSrc": "Life is short.",
+          "textDst": "人生は短いです。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "happy life",
+          "meaning": "幸せな人生"
+        },
+        {
+          "phrase": "real life",
+          "meaning": "現実の生活"
+        },
+        {
+          "phrase": "way of life",
+          "meaning": "生き方"
+        }
+      ]
+    },
+    "world": {
+      "headword": {
+        "lemma": "world",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/wɜːrld/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "世界",
+          "glossLong": "地球全体",
+          "examples": [
+            "around the world",
+            "whole world"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I want to travel around the world.",
+          "textDst": "世界中を旅したいです。"
+        },
+        {
+          "textSrc": "It's famous all over the world.",
+          "textDst": "それは世界中で有名です。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "around the world",
+          "meaning": "世界中"
+        },
+        {
+          "phrase": "all over the world",
+          "meaning": "世界中に"
+        },
+        {
+          "phrase": "world war",
+          "meaning": "世界大戦"
+        }
+      ]
+    },
+    "hand": {
+      "headword": {
+        "lemma": "hand",
+        "lang": "en",
+        "pos": [
+          "noun",
+          "verb"
+        ],
+        "pronunciation": "/hænd/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "手",
+          "glossLong": "手首から先の部分",
+          "examples": [
+            "left hand",
+            "right hand"
+          ]
+        },
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "手渡す",
+          "glossLong": "物を渡す",
+          "examples": [
+            "hand over",
+            "hand in"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Wash your hands.",
+          "textDst": "手を洗ってください。"
+        },
+        {
+          "textSrc": "Can you hand me that book?",
+          "textDst": "その本を取ってくれますか？"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "by hand",
+          "meaning": "手で"
+        },
+        {
+          "phrase": "on hand",
+          "meaning": "手元に"
+        },
+        {
+          "phrase": "hand in",
+          "meaning": "提出する"
+        }
+      ]
+    },
+    "work": {
+      "headword": {
+        "lemma": "work",
+        "lang": "en",
+        "pos": [
+          "verb",
+          "noun"
+        ],
+        "pronunciation": "/wɜːrk/"
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "働く",
+          "glossLong": "仕事をする",
+          "examples": [
+            "work hard",
+            "work at"
+          ]
+        },
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "仕事",
+          "glossLong": "労働・職",
+          "examples": [
+            "go to work",
+            "at work"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I work at a hospital.",
+          "textDst": "私は病院で働いています。"
+        },
+        {
+          "textSrc": "I go to work by train.",
+          "textDst": "私は電車で通勤します。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "work hard",
+          "meaning": "一生懸命働く"
+        },
+        {
+          "phrase": "go to work",
+          "meaning": "仕事に行く"
+        },
+        {
+          "phrase": "at work",
+          "meaning": "職場で"
+        }
+      ]
+    },
+    "family": {
+      "headword": {
+        "lemma": "family",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈfæməli/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "家族",
+          "glossLong": "親族",
+          "examples": [
+            "my family",
+            "big family"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I love my family.",
+          "textDst": "私は家族を愛しています。"
+        },
+        {
+          "textSrc": "How many people are in your family?",
+          "textDst": "あなたの家族は何人ですか？"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "my family",
+          "meaning": "私の家族"
+        },
+        {
+          "phrase": "family member",
+          "meaning": "家族の一員"
+        },
+        {
+          "phrase": "big family",
+          "meaning": "大家族"
+        }
+      ]
+    },
+    "child": {
+      "headword": {
+        "lemma": "child",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/tʃaɪld/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "子供",
+          "glossLong": "幼い人",
+          "examples": [
+            "young child",
+            "my child"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I have two children.",
+          "textDst": "私には2人の子供がいます。"
+        },
+        {
+          "textSrc": "Children are playing.",
+          "textDst": "子供たちが遊んでいます。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "young child",
+          "meaning": "幼い子供"
+        },
+        {
+          "phrase": "my child",
+          "meaning": "私の子供"
+        },
+        {
+          "phrase": "only child",
+          "meaning": "一人っ子"
+        }
+      ]
+    },
+    "city": {
+      "headword": {
+        "lemma": "city",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈsɪti/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "都市",
+          "glossLong": "大きな町",
+          "examples": [
+            "big city",
+            "beautiful city"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Tokyo is a big city.",
+          "textDst": "東京は大都市です。"
+        },
+        {
+          "textSrc": "I live in the city.",
+          "textDst": "私は都会に住んでいます。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "big city",
+          "meaning": "大都市"
+        },
+        {
+          "phrase": "in the city",
+          "meaning": "都会で"
+        },
+        {
+          "phrase": "city life",
+          "meaning": "都会の生活"
+        }
+      ]
+    },
+    "country": {
+      "headword": {
+        "lemma": "country",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈkʌntri/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "国",
+          "glossLong": "国家",
+          "examples": [
+            "my country",
+            "foreign country"
+          ]
+        },
+        {
+          "id": "n2",
+          "pos": "noun",
+          "glossShort": "田舎",
+          "glossLong": "rural area",
+          "examples": [
+            "in the country",
+            "country life"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Japan is my country.",
+          "textDst": "日本は私の国です。"
+        },
+        {
+          "textSrc": "I live in the country.",
+          "textDst": "私は田舎に住んでいます。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "my country",
+          "meaning": "私の国"
+        },
+        {
+          "phrase": "foreign country",
+          "meaning": "外国"
+        },
+        {
+          "phrase": "country life",
+          "meaning": "田舎生活"
+        }
+      ]
+    },
+    "weather": {
+      "headword": {
+        "lemma": "weather",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈweðər/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "天気",
+          "glossLong": "気象",
+          "examples": [
+            "good weather",
+            "bad weather"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "The weather is nice today.",
+          "textDst": "今日は天気が良いです。"
+        },
+        {
+          "textSrc": "How's the weather?",
+          "textDst": "天気はどうですか？"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good weather",
+          "meaning": "良い天気"
+        },
+        {
+          "phrase": "bad weather",
+          "meaning": "悪い天気"
+        },
+        {
+          "phrase": "weather forecast",
+          "meaning": "天気予報"
+        }
+      ]
+    },
+    "season": {
+      "headword": {
+        "lemma": "season",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈsiːzn/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "季節",
+          "glossLong": "春夏秋冬",
+          "examples": [
+            "favorite season",
+            "rainy season"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "What's your favorite season?",
+          "textDst": "好きな季節は何ですか？"
+        },
+        {
+          "textSrc": "Spring is a beautiful season.",
+          "textDst": "春は美しい季節です。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "favorite season",
+          "meaning": "好きな季節"
+        },
+        {
+          "phrase": "rainy season",
+          "meaning": "雨季"
+        },
+        {
+          "phrase": "four seasons",
+          "meaning": "四季"
+        }
+      ]
+    },
+    "morning": {
+      "headword": {
+        "lemma": "morning",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈmɔːrnɪŋ/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "朝",
+          "glossLong": "午前中",
+          "examples": [
+            "this morning",
+            "every morning"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Good morning!",
+          "textDst": "おはようございます！"
+        },
+        {
+          "textSrc": "I run every morning.",
+          "textDst": "私は毎朝走ります。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good morning",
+          "meaning": "おはよう"
+        },
+        {
+          "phrase": "this morning",
+          "meaning": "今朝"
+        },
+        {
+          "phrase": "every morning",
+          "meaning": "毎朝"
+        }
+      ]
+    },
+    "evening": {
+      "headword": {
+        "lemma": "evening",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈiːvnɪŋ/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "夕方",
+          "glossLong": "evening",
+          "examples": [
+            "this evening",
+            "every evening"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Good evening!",
+          "textDst": "こんばんは！"
+        },
+        {
+          "textSrc": "I watch TV every evening.",
+          "textDst": "私は毎晩テレビを見ます。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good evening",
+          "meaning": "こんばんは"
+        },
+        {
+          "phrase": "this evening",
+          "meaning": "今晩"
+        },
+        {
+          "phrase": "every evening",
+          "meaning": "毎晩"
+        }
+      ]
+    },
+    "week": {
+      "headword": {
+        "lemma": "week",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/wiːk/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "週",
+          "glossLong": "7日間",
+          "examples": [
+            "this week",
+            "next week"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I'm busy this week.",
+          "textDst": "今週は忙しいです。"
+        },
+        {
+          "textSrc": "See you next week.",
+          "textDst": "また来週会いましょう。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "this week",
+          "meaning": "今週"
+        },
+        {
+          "phrase": "next week",
+          "meaning": "来週"
+        },
+        {
+          "phrase": "last week",
+          "meaning": "先週"
+        }
+      ]
+    },
+    "month": {
+      "headword": {
+        "lemma": "month",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/mʌnθ/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "月",
+          "glossLong": "1ヶ月",
+          "examples": [
+            "this month",
+            "next month"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I'll visit Japan next month.",
+          "textDst": "来月日本を訪れます。"
+        },
+        {
+          "textSrc": "It's been a month.",
+          "textDst": "1ヶ月経ちました。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "this month",
+          "meaning": "今月"
+        },
+        {
+          "phrase": "next month",
+          "meaning": "来月"
+        },
+        {
+          "phrase": "last month",
+          "meaning": "先月"
+        }
+      ]
+    },
+    "food": {
+      "headword": {
+        "lemma": "food",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/fuːd/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "食べ物",
+          "glossLong": "food",
+          "examples": [
+            "good food",
+            "delicious food"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I like Japanese food.",
+          "textDst": "私は日本食が好きです。"
+        },
+        {
+          "textSrc": "This food is delicious.",
+          "textDst": "この食べ物は美味しいです。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good food",
+          "meaning": "美味しい食べ物"
+        },
+        {
+          "phrase": "fast food",
+          "meaning": "ファーストフード"
+        },
+        {
+          "phrase": "Japanese food",
+          "meaning": "日本食"
+        }
+      ]
+    },
+    "restaurant": {
+      "headword": {
+        "lemma": "restaurant",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈrestrɑːnt/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "レストラン",
+          "glossLong": "飲食店",
+          "examples": [
+            "good restaurant",
+            "Italian restaurant"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Let's go to a restaurant.",
+          "textDst": "レストランに行きましょう。"
+        },
+        {
+          "textSrc": "This is a good restaurant.",
+          "textDst": "ここは良いレストランです。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good restaurant",
+          "meaning": "良いレストラン"
+        },
+        {
+          "phrase": "Italian restaurant",
+          "meaning": "イタリアンレストラン"
+        },
+        {
+          "phrase": "at the restaurant",
+          "meaning": "レストランで"
+        }
+      ]
+    },
+    "hospital": {
+      "headword": {
+        "lemma": "hospital",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈhɑːspɪtl/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "病院",
+          "glossLong": "medical facility",
+          "examples": [
+            "go to hospital",
+            "in hospital"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I went to the hospital.",
+          "textDst": "私は病院に行きました。"
+        },
+        {
+          "textSrc": "She is in the hospital.",
+          "textDst": "彼女は入院しています。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "go to hospital",
+          "meaning": "病院に行く"
+        },
+        {
+          "phrase": "in hospital",
+          "meaning": "入院中"
+        },
+        {
+          "phrase": "leave hospital",
+          "meaning": "退院する"
+        }
+      ]
+    },
+    "station": {
+      "headword": {
+        "lemma": "station",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈsteɪʃn/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "駅",
+          "glossLong": "train station",
+          "examples": [
+            "train station",
+            "bus station"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Where is the station?",
+          "textDst": "駅はどこですか？"
+        },
+        {
+          "textSrc": "I'll meet you at the station.",
+          "textDst": "駅で会いましょう。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "train station",
+          "meaning": "鉄道駅"
+        },
+        {
+          "phrase": "bus station",
+          "meaning": "バス停"
+        },
+        {
+          "phrase": "at the station",
+          "meaning": "駅で"
+        }
+      ]
+    },
+    "airport": {
+      "headword": {
+        "lemma": "airport",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈerpɔːrt/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "空港",
+          "glossLong": "airport",
+          "examples": [
+            "international airport",
+            "at the airport"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I'll pick you up at the airport.",
+          "textDst": "空港まで迎えに行きます。"
+        },
+        {
+          "textSrc": "The airport is far from here.",
+          "textDst": "空港はここから遠いです。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "international airport",
+          "meaning": "国際空港"
+        },
+        {
+          "phrase": "at the airport",
+          "meaning": "空港で"
+        },
+        {
+          "phrase": "go to airport",
+          "meaning": "空港に行く"
+        }
+      ]
+    },
+    "shop": {
+      "headword": {
+        "lemma": "shop",
+        "lang": "en",
+        "pos": [
+          "noun",
+          "verb"
+        ],
+        "pronunciation": "/ʃɑːp/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "店",
+          "glossLong": "store",
+          "examples": [
+            "book shop",
+            "coffee shop"
+          ]
+        },
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "買い物する",
+          "glossLong": "shopping",
+          "examples": [
+            "go shopping",
+            "shop online"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "There's a shop nearby.",
+          "textDst": "近くに店があります。"
+        },
+        {
+          "textSrc": "I shop online.",
+          "textDst": "私はオンラインで買い物します。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "book shop",
+          "meaning": "書店"
+        },
+        {
+          "phrase": "coffee shop",
+          "meaning": "喫茶店"
+        },
+        {
+          "phrase": "go shopping",
+          "meaning": "買い物に行く"
+        }
+      ]
+    },
+    "store": {
+      "headword": {
+        "lemma": "store",
+        "lang": "en",
+        "pos": [
+          "noun",
+          "verb"
+        ],
+        "pronunciation": "/stɔːr/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "店",
+          "glossLong": "shop",
+          "examples": [
+            "department store",
+            "grocery store"
+          ]
+        },
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "保管する",
+          "glossLong": "storage",
+          "examples": [
+            "store food",
+            "store data"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I work at a store.",
+          "textDst": "私は店で働いています。"
+        },
+        {
+          "textSrc": "Store it in a cool place.",
+          "textDst": "涼しい場所に保管してください。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "department store",
+          "meaning": "デパート"
+        },
+        {
+          "phrase": "grocery store",
+          "meaning": "食料品店"
+        },
+        {
+          "phrase": "in store",
+          "meaning": "店内で"
+        }
+      ]
+    },
+    "park": {
+      "headword": {
+        "lemma": "park",
+        "lang": "en",
+        "pos": [
+          "noun",
+          "verb"
+        ],
+        "pronunciation": "/pɑːrk/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "公園",
+          "glossLong": "public garden",
+          "examples": [
+            "national park",
+            "in the park"
+          ]
+        },
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "駐車する",
+          "glossLong": "parking",
+          "examples": [
+            "park the car",
+            "park here"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Let's go to the park.",
+          "textDst": "公園に行きましょう。"
+        },
+        {
+          "textSrc": "You can park here.",
+          "textDst": "ここに駐車できます。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "national park",
+          "meaning": "国立公園"
+        },
+        {
+          "phrase": "in the park",
+          "meaning": "公園で"
+        },
+        {
+          "phrase": "park the car",
+          "meaning": "車を駐車する"
+        }
+      ]
+    },
+    "library": {
+      "headword": {
+        "lemma": "library",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈlaɪbreri/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "図書館",
+          "glossLong": "library",
+          "examples": [
+            "public library",
+            "at the library"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I study at the library.",
+          "textDst": "私は図書館で勉強します。"
+        },
+        {
+          "textSrc": "The library is open.",
+          "textDst": "図書館は開いています。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "public library",
+          "meaning": "公共図書館"
+        },
+        {
+          "phrase": "at the library",
+          "meaning": "図書館で"
+        },
+        {
+          "phrase": "school library",
+          "meaning": "学校図書館"
+        }
+      ]
+    },
+    "bank": {
+      "headword": {
+        "lemma": "bank",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/bæŋk/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "銀行",
+          "glossLong": "financial institution",
+          "examples": [
+            "go to bank",
+            "at the bank"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I went to the bank.",
+          "textDst": "私は銀行に行きました。"
+        },
+        {
+          "textSrc": "Where is the nearest bank?",
+          "textDst": "最寄りの銀行はどこですか？"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "go to bank",
+          "meaning": "銀行に行く"
+        },
+        {
+          "phrase": "at the bank",
+          "meaning": "銀行で"
+        },
+        {
+          "phrase": "bank account",
+          "meaning": "銀行口座"
+        }
+      ]
+    },
+    "office": {
+      "headword": {
+        "lemma": "office",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈɔːfɪs/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "事務所",
+          "glossLong": "workplace",
+          "examples": [
+            "go to office",
+            "at the office"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I work in an office.",
+          "textDst": "私はオフィスで働いています。"
+        },
+        {
+          "textSrc": "He's at the office.",
+          "textDst": "彼はオフィスにいます。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "go to office",
+          "meaning": "オフィスに行く"
+        },
+        {
+          "phrase": "at the office",
+          "meaning": "オフィスで"
+        },
+        {
+          "phrase": "office worker",
+          "meaning": "会社員"
+        }
+      ]
+    },
+    "room": {
+      "headword": {
+        "lemma": "room",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ruːm/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "部屋",
+          "glossLong": "space",
+          "examples": [
+            "my room",
+            "living room"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "This is my room.",
+          "textDst": "これは私の部屋です。"
+        },
+        {
+          "textSrc": "The room is big.",
+          "textDst": "その部屋は大きいです。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "my room",
+          "meaning": "私の部屋"
+        },
+        {
+          "phrase": "living room",
+          "meaning": "居間"
+        },
+        {
+          "phrase": "meeting room",
+          "meaning": "会議室"
+        }
+      ]
+    },
+    "window": {
+      "headword": {
+        "lemma": "window",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈwɪndoʊ/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "窓",
+          "glossLong": "window",
+          "examples": [
+            "open window",
+            "by the window"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Open the window please.",
+          "textDst": "窓を開けてください。"
+        },
+        {
+          "textSrc": "I sit by the window.",
+          "textDst": "私は窓際に座ります。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "open window",
+          "meaning": "窓を開ける"
+        },
+        {
+          "phrase": "close window",
+          "meaning": "窓を閉める"
+        },
+        {
+          "phrase": "by the window",
+          "meaning": "窓際に"
+        }
+      ]
+    },
+    "door": {
+      "headword": {
+        "lemma": "door",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/dɔːr/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "ドア",
+          "glossLong": "entrance",
+          "examples": [
+            "open door",
+            "front door"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Close the door please.",
+          "textDst": "ドアを閉めてください。"
+        },
+        {
+          "textSrc": "Someone is at the door.",
+          "textDst": "誰かがドアのところにいます。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "open door",
+          "meaning": "ドアを開ける"
+        },
+        {
+          "phrase": "close door",
+          "meaning": "ドアを閉める"
+        },
+        {
+          "phrase": "front door",
+          "meaning": "玄関"
+        }
+      ]
+    },
+    "table": {
+      "headword": {
+        "lemma": "table",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈteɪbl/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "テーブル",
+          "glossLong": "table",
+          "examples": [
+            "dining table",
+            "on the table"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Sit at the table.",
+          "textDst": "テーブルに座ってください。"
+        },
+        {
+          "textSrc": "The book is on the table.",
+          "textDst": "本はテーブルの上にあります。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "dining table",
+          "meaning": "食卓"
+        },
+        {
+          "phrase": "on the table",
+          "meaning": "テーブルの上に"
+        },
+        {
+          "phrase": "at the table",
+          "meaning": "テーブルについて"
+        }
+      ]
+    },
+    "chair": {
+      "headword": {
+        "lemma": "chair",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/tʃer/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "椅子",
+          "glossLong": "seat",
+          "examples": [
+            "comfortable chair",
+            "sit on chair"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Please sit on the chair.",
+          "textDst": "椅子に座ってください。"
+        },
+        {
+          "textSrc": "This chair is comfortable.",
+          "textDst": "この椅子は快適です。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "comfortable chair",
+          "meaning": "快適な椅子"
+        },
+        {
+          "phrase": "sit on chair",
+          "meaning": "椅子に座る"
+        },
+        {
+          "phrase": "office chair",
+          "meaning": "オフィスチェア"
+        }
+      ]
+    },
+    "desk": {
+      "headword": {
+        "lemma": "desk",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/desk/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "机",
+          "glossLong": "work table",
+          "examples": [
+            "at the desk",
+            "study desk"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I study at my desk.",
+          "textDst": "私は机で勉強します。"
+        },
+        {
+          "textSrc": "There's a lamp on the desk.",
+          "textDst": "机の上にランプがあります。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "at the desk",
+          "meaning": "机で"
+        },
+        {
+          "phrase": "study desk",
+          "meaning": "学習机"
+        },
+        {
+          "phrase": "office desk",
+          "meaning": "オフィスデスク"
+        }
+      ]
+    },
+    "bed": {
+      "headword": {
+        "lemma": "bed",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/bed/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "ベッド",
+          "glossLong": "bed",
+          "examples": [
+            "go to bed",
+            "in bed"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I go to bed at 11.",
+          "textDst": "私は11時に寝ます。"
+        },
+        {
+          "textSrc": "She's still in bed.",
+          "textDst": "彼女はまだベッドにいます。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "go to bed",
+          "meaning": "寝る"
+        },
+        {
+          "phrase": "in bed",
+          "meaning": "ベッドで"
+        },
+        {
+          "phrase": "make the bed",
+          "meaning": "ベッドを整える"
+        }
+      ]
+    },
+    "phone": {
+      "headword": {
+        "lemma": "phone",
+        "lang": "en",
+        "pos": [
+          "noun",
+          "verb"
+        ],
+        "pronunciation": "/foʊn/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "電話",
+          "glossLong": "telephone",
+          "examples": [
+            "mobile phone",
+            "on the phone"
+          ]
+        },
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "電話する",
+          "glossLong": "call",
+          "examples": [
+            "phone me",
+            "phone home"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "My phone is ringing.",
+          "textDst": "私の電話が鳴っています。"
+        },
+        {
+          "textSrc": "I'll phone you later.",
+          "textDst": "後で電話します。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "mobile phone",
+          "meaning": "携帯電話"
+        },
+        {
+          "phrase": "on the phone",
+          "meaning": "電話中"
+        },
+        {
+          "phrase": "phone call",
+          "meaning": "電話"
+        }
+      ]
+    },
+    "computer": {
+      "headword": {
+        "lemma": "computer",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/kəmˈpjuːtər/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "コンピュータ",
+          "glossLong": "computer",
+          "examples": [
+            "personal computer",
+            "use computer"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I use a computer every day.",
+          "textDst": "私は毎日コンピュータを使います。"
+        },
+        {
+          "textSrc": "My computer is slow.",
+          "textDst": "私のコンピュータは遅いです。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "personal computer",
+          "meaning": "パソコン"
+        },
+        {
+          "phrase": "use computer",
+          "meaning": "コンピュータを使う"
+        },
+        {
+          "phrase": "computer game",
+          "meaning": "コンピュータゲーム"
+        }
+      ]
+    },
+    "train": {
+      "headword": {
+        "lemma": "train",
+        "lang": "en",
+        "pos": [
+          "noun",
+          "verb"
+        ],
+        "pronunciation": "/treɪn/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "電車",
+          "glossLong": "railway",
+          "examples": [
+            "by train",
+            "catch train"
+          ]
+        },
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "訓練する",
+          "glossLong": "practice",
+          "examples": [
+            "train hard",
+            "train for"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I go to work by train.",
+          "textDst": "私は電車で通勤します。"
+        },
+        {
+          "textSrc": "I train every day.",
+          "textDst": "私は毎日トレーニングします。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "by train",
+          "meaning": "電車で"
+        },
+        {
+          "phrase": "catch train",
+          "meaning": "電車に乗る"
+        },
+        {
+          "phrase": "train station",
+          "meaning": "駅"
+        }
+      ]
+    },
+    "bus": {
+      "headword": {
+        "lemma": "bus",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/bʌs/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "バス",
+          "glossLong": "bus",
+          "examples": [
+            "by bus",
+            "bus stop"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I go to school by bus.",
+          "textDst": "私はバスで学校に行きます。"
+        },
+        {
+          "textSrc": "The bus is late.",
+          "textDst": "バスが遅れています。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "by bus",
+          "meaning": "バスで"
+        },
+        {
+          "phrase": "bus stop",
+          "meaning": "バス停"
+        },
+        {
+          "phrase": "catch bus",
+          "meaning": "バスに乗る"
+        }
+      ]
+    },
+    "bike": {
+      "headword": {
+        "lemma": "bike",
+        "lang": "en",
+        "pos": [
+          "noun",
+          "verb"
+        ],
+        "pronunciation": "/baɪk/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "自転車",
+          "glossLong": "bicycle",
+          "examples": [
+            "by bike",
+            "ride bike"
+          ]
+        },
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "自転車に乗る",
+          "glossLong": "cycling",
+          "examples": [
+            "bike to work",
+            "bike around"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I go to school by bike.",
+          "textDst": "私は自転車で学校に行きます。"
+        },
+        {
+          "textSrc": "I bike to work.",
+          "textDst": "私は自転車で通勤します。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "by bike",
+          "meaning": "自転車で"
+        },
+        {
+          "phrase": "ride bike",
+          "meaning": "自転車に乗る"
+        },
+        {
+          "phrase": "mountain bike",
+          "meaning": "マウンテンバイク"
+        }
+      ]
+    },
+    "question": {
+      "headword": {
+        "lemma": "question",
+        "lang": "en",
+        "pos": [
+          "noun",
+          "verb"
+        ],
+        "pronunciation": "/ˈkwestʃən/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "質問",
+          "glossLong": "inquiry",
+          "examples": [
+            "good question",
+            "ask question"
+          ]
+        },
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "質問する",
+          "glossLong": "ask",
+          "examples": [
+            "question about",
+            "question someone"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Do you have any questions?",
+          "textDst": "何か質問はありますか？"
+        },
+        {
+          "textSrc": "I'll question him about it.",
+          "textDst": "それについて彼に質問します。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good question",
+          "meaning": "良い質問"
+        },
+        {
+          "phrase": "ask question",
+          "meaning": "質問する"
+        },
+        {
+          "phrase": "difficult question",
+          "meaning": "難しい質問"
+        }
+      ]
+    },
+    "answer": {
+      "headword": {
+        "lemma": "answer",
+        "lang": "en",
+        "pos": [
+          "noun",
+          "verb"
+        ],
+        "pronunciation": "/ˈænsər/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "答え",
+          "glossLong": "response",
+          "examples": [
+            "right answer",
+            "give answer"
+          ]
+        },
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "答える",
+          "glossLong": "reply",
+          "examples": [
+            "answer question",
+            "answer phone"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "What's the answer?",
+          "textDst": "答えは何ですか？"
+        },
+        {
+          "textSrc": "Please answer my question.",
+          "textDst": "私の質問に答えてください。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "right answer",
+          "meaning": "正しい答え"
+        },
+        {
+          "phrase": "give answer",
+          "meaning": "答えを出す"
+        },
+        {
+          "phrase": "answer phone",
+          "meaning": "電話に出る"
+        }
+      ]
+    },
+    "problem": {
+      "headword": {
+        "lemma": "problem",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈprɑːbləm/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "問題",
+          "glossLong": "difficulty",
+          "examples": [
+            "big problem",
+            "solve problem"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I have a problem.",
+          "textDst": "問題があります。"
+        },
+        {
+          "textSrc": "No problem!",
+          "textDst": "問題ありません！"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "big problem",
+          "meaning": "大きな問題"
+        },
+        {
+          "phrase": "solve problem",
+          "meaning": "問題を解決する"
+        },
+        {
+          "phrase": "no problem",
+          "meaning": "問題ない"
+        }
+      ]
+    },
+    "idea": {
+      "headword": {
+        "lemma": "idea",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/aɪˈdiːə/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "考え",
+          "glossLong": "thought",
+          "examples": [
+            "good idea",
+            "have idea"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "That's a good idea!",
+          "textDst": "それは良い考えです！"
+        },
+        {
+          "textSrc": "I have an idea.",
+          "textDst": "考えがあります。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good idea",
+          "meaning": "良い考え"
+        },
+        {
+          "phrase": "have idea",
+          "meaning": "考えがある"
+        },
+        {
+          "phrase": "no idea",
+          "meaning": "わからない"
+        }
+      ]
+    },
+    "help": {
+      "headword": {
+        "lemma": "help",
+        "lang": "en",
+        "pos": [
+          "verb",
+          "noun"
+        ],
+        "pronunciation": "/help/"
+      },
+      "senses": [
+        {
+          "id": "v1",
+          "pos": "verb",
+          "glossShort": "助ける",
+          "glossLong": "assist",
+          "examples": [
+            "help me",
+            "help with"
+          ]
+        },
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "助け",
+          "glossLong": "assistance",
+          "examples": [
+            "need help",
+            "ask for help"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "Can you help me?",
+          "textDst": "手伝ってくれますか？"
+        },
+        {
+          "textSrc": "I need your help.",
+          "textDst": "あなたの助けが必要です。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "help me",
+          "meaning": "私を助けて"
+        },
+        {
+          "phrase": "need help",
+          "meaning": "助けが必要"
+        },
+        {
+          "phrase": "help with",
+          "meaning": "〜を手伝う"
+        }
+      ]
+    },
+    "money": {
+      "headword": {
+        "lemma": "money",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/ˈmʌni/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "お金",
+          "glossLong": "currency",
+          "examples": [
+            "have money",
+            "need money"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "I don't have much money.",
+          "textDst": "私はあまりお金を持っていません。"
+        },
+        {
+          "textSrc": "Money isn't everything.",
+          "textDst": "お金が全てではありません。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "have money",
+          "meaning": "お金を持つ"
+        },
+        {
+          "phrase": "need money",
+          "meaning": "お金が必要"
+        },
+        {
+          "phrase": "save money",
+          "meaning": "お金を節約する"
+        }
+      ]
+    },
+    "price": {
+      "headword": {
+        "lemma": "price",
+        "lang": "en",
+        "pos": [
+          "noun"
+        ],
+        "pronunciation": "/praɪs/"
+      },
+      "senses": [
+        {
+          "id": "n1",
+          "pos": "noun",
+          "glossShort": "価格",
+          "glossLong": "cost",
+          "examples": [
+            "good price",
+            "high price"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "What's the price?",
+          "textDst": "価格はいくらですか？"
+        },
+        {
+          "textSrc": "The price is too high.",
+          "textDst": "価格が高すぎます。"
+        }
+      ],
+      "collocations": [
+        {
+          "phrase": "good price",
+          "meaning": "良い価格"
+        },
+        {
+          "phrase": "high price",
+          "meaning": "高い価格"
+        },
+        {
+          "phrase": "low price",
+          "meaning": "低い価格"
+        }
+      ]
+    },
+    "fundamental": {
+      "headword": {
+        "lemma": "fundamental",
+        "lang": "en",
+        "pos": [
+          "adjective",
+          "noun"
+        ]
+      },
+      "senses": [
+        {
+          "id": "adj1",
+          "glossShort": "基本的な・根本的な"
+        },
+        {
+          "id": "n1",
+          "glossShort": "基本・基礎"
+        }
+      ],
+      "examples": [
+        {
+          "textSrc": "This is a fundamental principle of science.",
+          "textDst": "これは科学の基本原理です。"
+        },
+        {
+          "textSrc": "Understanding grammar is fundamental to learning a language.",
+          "textDst": "文法を理解することは言語学習の基礎です。"
+        },
+        {
+          "textSrc": "We need to address the fundamental issues.",
+          "textDst": "根本的な問題に取り組む必要があります。"
         }
       ],
       "metrics": {
-        "frequency": 99,
-        "difficulty": 5,
-        "nuance": 50
+        "frequency": 75,
+        "difficulty": 55,
+        "nuance": 60
       }
     }
   }

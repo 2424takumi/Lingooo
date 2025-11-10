@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { LearningLanguagesProvider } from '@/contexts/learning-languages-context';
 import { ChatProvider } from '@/contexts/chat-context';
+import { AISettingsProvider } from '@/contexts/ai-settings-context';
 import { ErrorBoundary } from '@/components/error-boundary';
 
 export const unstable_settings = {
@@ -17,17 +18,19 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <LearningLanguagesProvider>
-        <ChatProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-            </Stack>
-            <StatusBar style="auto" />
-          </ThemeProvider>
-        </ChatProvider>
-      </LearningLanguagesProvider>
+      <AISettingsProvider>
+        <LearningLanguagesProvider>
+          <ChatProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+              </Stack>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </ChatProvider>
+        </LearningLanguagesProvider>
+      </AISettingsProvider>
     </ErrorBoundary>
   );
 }

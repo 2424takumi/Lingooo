@@ -526,7 +526,8 @@ export async function isGeminiConfigured(): Promise<boolean> {
     const data = await response.json();
     return data.configured;
   } catch (error) {
-    logger.error('[GeminiClient] Error checking configuration:', error);
+    // バックエンドサーバーが起動していない場合はモックデータを使用（正常な動作）
+    logger.debug('[GeminiClient] Backend server not available, using mock data');
     return false;
   }
 }

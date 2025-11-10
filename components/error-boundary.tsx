@@ -7,7 +7,6 @@
 
 import React, { Component, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import crashlytics from '@react-native-firebase/crashlytics';
 import { logger } from '@/utils/logger';
 
 interface Props {
@@ -88,18 +87,10 @@ export class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
 
-    // 本番環境では、Firebase Crashlyticsに送信
+    // 本番環境では、エラーレポートサービスに送信
+    // TODO: クラッシュレポーティングサービス（Firebase Crashlytics等）を追加
     if (!__DEV__) {
-      try {
-        // コンポーネントスタック情報を追加
-        crashlytics().setAttribute('component_stack', errorInfo.componentStack || 'N/A');
-
-        // エラーを記録
-        crashlytics().recordError(error);
-      } catch (crashlyticsError) {
-        // Crashlyticsへの送信に失敗してもアプリは動作を継続
-        logger.error('Failed to send error to Crashlytics:', crashlyticsError);
-      }
+      // 将来的にクラッシュレポーティングを追加可能
     }
   }
 

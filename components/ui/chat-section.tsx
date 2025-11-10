@@ -16,6 +16,7 @@ import type { QAPair } from '@/types/chat';
 import { QuestionTag } from './question-tag';
 import { QACardList } from './qa-card-list';
 import { useAISettings } from '@/contexts/ai-settings-context';
+import { logger } from '@/utils/logger';
 
 interface ChatSectionProps {
   placeholder?: string;
@@ -32,6 +33,7 @@ interface ChatSectionProps {
   questionPresets?: string[];
   scope?: string;
   identifier?: string;
+  onBookmarkAdded?: (bookmarkId: string) => void;
 }
 
 function ExpandIcon({ size = 18 }: { size?: number }) {
@@ -121,8 +123,9 @@ export function ChatSection({
   questionPresets = DEFAULT_QUESTIONS,
   scope,
   identifier,
+  onBookmarkAdded,
 }: ChatSectionProps) {
-  const { customQuestions, addCustomQuestion, removeCustomQuestion } = useAISettings();
+  const { customQuestions, addCustomQuestion } = useAISettings();
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -132,16 +135,15 @@ export function ChatSection({
   const [isCustomQuestionModalOpen, setIsCustomQuestionModalOpen] = useState(false);
   const [customQuestionTitle, setCustomQuestionTitle] = useState('');
   const [customQuestionText, setCustomQuestionText] = useState('');
-  const [inputHeight, setInputHeight] = useState(34);
+  const [inputContentHeight, setInputContentHeight] = useState(0);
+  const [isInputScrollEnabled, setIsInputScrollEnabled] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const prevQAPairsLengthRef = useRef(qaPairs.length);
   const lastCardYRef = useRef<number>(0);
   const prevIdentifierRef = useRef(identifier);
 
-  // テキストインプットの高さ制限
-  const MIN_INPUT_HEIGHT = 34;
-  const MAX_INPUT_HEIGHT = 106; // 約5行分（1行≈21px × 5 + padding）
+  const MAX_INPUT_HEIGHT = 110; // 約5行分
 
   // 単語（identifier）が変わったときにチャットを閉じる
   useEffect(() => {
@@ -188,8 +190,7 @@ export function ChatSection({
       setIsSubmitting(true);
       setIsOpen(true); // 送信時に開く
       await onSend(text.trim());
-      setInputText('');
-      setInputHeight(MIN_INPUT_HEIGHT); // 送信後に高さをリセット
+      setInputText(''); // テキストをクリアすれば高さも自動的にリセットされる
     } finally {
       setIsSubmitting(false);
     }
@@ -220,6 +221,17 @@ export function ChatSection({
     setIsOpen(true);
   };
 
+  const combinedQuestions = useMemo(() => {
+    // カスタム質問のタイトルを先頭に、次にデフォルト質問、最後にフォローアップ質問
+    const tags = [...customQuestions.map(cq => cq.title), ...questionPresets];
+    for (const item of followUps) {
+      if (!tags.includes(item)) {
+        tags.push(item);
+      }
+    }
+    return tags;
+  }, [customQuestions, questionPresets, followUps]);
+
   // タイトルと実際の質問文のマッピングを作成
   const questionMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -231,17 +243,6 @@ export function ChatSection({
     questionPresets.forEach(q => map.set(q, q));
     followUps.forEach(q => map.set(q, q));
     return map;
-  }, [customQuestions, questionPresets, followUps]);
-
-  const combinedQuestions = useMemo(() => {
-    // カスタム質問のタイトルを先頭に、次にデフォルト質問、最後にフォローアップ質問
-    const tags = [...customQuestions.map(cq => cq.title), ...questionPresets];
-    for (const item of followUps) {
-      if (!tags.includes(item)) {
-        tags.push(item);
-      }
-    }
-    return tags;
   }, [customQuestions, questionPresets, followUps]);
 
   const handleAddCustomQuestion = async () => {
@@ -256,13 +257,12 @@ export function ChatSection({
       setCustomQuestionText('');
       setIsCustomQuestionModalOpen(false);
     } catch (error) {
-      // エラーハンドリング（必要に応じて）
-      console.error('Failed to add custom question:', error);
+      logger.error('Failed to add custom question:', error);
     }
   };
 
   return (
-    <View style={[styles.container, isOpen && styles.containerOpen]}>
+    <View style={[styles.container, isOpen ? styles.containerOpen : styles.containerClosed]}>
       {isOpen && (
         <ScrollView
           ref={scrollViewRef}
@@ -285,6 +285,7 @@ export function ChatSection({
                 onLastCardLayout={(y) => {
                   lastCardYRef.current = y;
                 }}
+                onBookmarkAdded={onBookmarkAdded}
               />
             </View>
           ) : (
@@ -313,56 +314,51 @@ export function ChatSection({
 
       {/* Bottom Section: Question Tags + Input */}
       <View style={styles.bottomSection}>
-        {/* Question Tags */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.questionScrollView}
-          contentContainerStyle={styles.questionList}
-        >
-          {/* Plus button for adding custom questions */}
-          <TouchableOpacity
-            style={styles.plusButton}
-            onPress={() => setIsCustomQuestionModalOpen(true)}
+          {/* Question Tags */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.questionScrollView}
+            contentContainerStyle={styles.questionList}
           >
-            <PlusIcon size={20} />
-          </TouchableOpacity>
-
-          {combinedQuestions.map((label, index) => (
-            <QuestionTag
-              key={`${label}-${index}`}
-              label={label}
-              onPress={() => {
-                setIsOpen(true);
-                // questionMapから実際の質問文を取得して送信
-                const actualQuestion = questionMap.get(label) || label;
-                onQuickQuestion?.(actualQuestion);
-              }}
-            />
-          ))}
-        </ScrollView>
-
-        {/* White Container: Settings Icon + Input + Action Button (1 row) */}
-        <View style={styles.whiteContainer}>
-          <View style={styles.inputRow}>
-            {/* Settings Icon Button */}
+            {/* Plus button for adding custom questions */}
             <TouchableOpacity
-              style={styles.settingsButton}
-              onPress={() => setIsSettingsMenuOpen(true)}
-              disabled={isStreaming}
+              style={styles.plusButton}
+              onPress={() => setIsCustomQuestionModalOpen(true)}
             >
-              <SliderIcon size={24} />
+              <PlusIcon size={20} />
             </TouchableOpacity>
 
-            {/* Text Input */}
+            {combinedQuestions.map((label, index) => (
+              <QuestionTag
+                key={`${label}-${index}`}
+                label={label}
+                onPress={() => {
+                  setIsOpen(true);
+                  // questionMapから実際の質問文を取得して送信
+                  const actualQuestion = questionMap.get(label) || label;
+                  onQuickQuestion?.(actualQuestion);
+                }}
+              />
+            ))}
+          </ScrollView>
+
+          {/* White Container: Settings Icon + Input + Action Button (1 row) */}
+          <View style={styles.whiteContainer}>
+            <View style={styles.inputRow}>
+              {/* Settings Icon Button */}
+              <TouchableOpacity
+                style={styles.settingsButton}
+                onPress={() => setIsSettingsMenuOpen(true)}
+                disabled={isStreaming}
+              >
+                <SliderIcon size={24} />
+              </TouchableOpacity>
+
+              {/* Text Input */}
             <TextInput
               ref={inputRef}
-              style={[
-                styles.input,
-                {
-                  height: Math.max(MIN_INPUT_HEIGHT, Math.min(inputHeight, MAX_INPUT_HEIGHT)),
-                },
-              ]}
+              style={[styles.input, { maxHeight: MAX_INPUT_HEIGHT }]}
               placeholder={placeholder}
               placeholderTextColor="#ACACAC"
               value={inputText}
@@ -374,42 +370,39 @@ export function ChatSection({
                 setIsInputFocused(false);
               }}
               editable={!isStreaming}
-              onSubmitEditing={(e) => {
-                const text = e.nativeEvent.text.trim();
-                if (text) {
-                  void handleSubmit(text);
-                }
-              }}
-              returnKeyType="send"
-              blurOnSubmit={false}
-              multiline={true}
+              multiline
               textAlignVertical="top"
+              scrollEnabled={isInputScrollEnabled}
               onContentSizeChange={(event) => {
-                const newHeight = event.nativeEvent.contentSize.height;
-                setInputHeight(newHeight);
+                const nextHeight = event.nativeEvent.contentSize.height;
+                setInputContentHeight(nextHeight);
+                setIsInputScrollEnabled(nextHeight > MAX_INPUT_HEIGHT);
               }}
-              scrollEnabled={inputHeight >= MAX_INPUT_HEIGHT}
+              selectionColor="#00AA69"
+              selectTextOnFocus={false}
+              contextMenuHidden={false}
             />
 
-            {/* Action Button */}
-            <TouchableOpacity
-              style={[
-                styles.button,
-                (isStreaming || isSubmitting) && styles.buttonDisabled,
-              ]}
-              onPress={handleActionButtonPress}
-              disabled={isStreaming || isSubmitting}
-            >
-              {isInputFocused && inputText.trim().length > 0 ? (
-                <SendIcon size={20} />
-              ) : isOpen ? (
-                <ShrinkIcon size={22} />
-              ) : (
-                <ExpandIcon size={18} />
-              )}
-            </TouchableOpacity>
+              {/* Action Button */}
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  (isStreaming || isSubmitting) && styles.buttonDisabled,
+                ]}
+                onPress={handleActionButtonPress}
+                disabled={isStreaming || isSubmitting}
+              >
+                {isInputFocused && inputText.trim().length > 0 ? (
+                  <SendIcon size={20} />
+                ) : isOpen ? (
+                  <ShrinkIcon size={22} />
+                ) : (
+                  <ExpandIcon size={18} />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+      </View>
 
         {/* Settings Menu Modal */}
         <Modal
@@ -546,7 +539,6 @@ export function ChatSection({
             </TouchableOpacity>
           </KeyboardAvoidingView>
         </Modal>
-      </View>
     </View>
   );
 }
@@ -559,10 +551,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingBottom: 10,
     overflow: 'hidden',
-    height: 116, // 質問タグ(32) + margin(10) + 白コンテナ(約62) + padding(20)
+    alignSelf: 'stretch',
+    flexShrink: 0,
+  },
+  containerClosed: {
+    minHeight: 116, // 最低でも閉じた高さは維持
+    marginBottom: 4,
   },
   containerOpen: {
-    height: '100%',
     paddingBottom: 10,
   },
   chatMessages: {
@@ -581,8 +577,10 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     flexShrink: 0,
-    marginTop: 0,
     paddingTop: 0,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 12, // 質問タグとテキストインプットの間隔
   },
   questionScrollView: {
     flexGrow: 0,
@@ -605,7 +603,9 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     paddingTop: 9,
     paddingBottom: 9,
-    marginTop: 10,
+    marginBottom: 0, // テキストインプットの下のマージン
+    overflow: 'hidden',
+    flexShrink: 0,
   },
   inputRow: {
     flexDirection: 'row',
@@ -618,16 +618,20 @@ const styles = StyleSheet.create({
     height: 34,
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginBottom: 0,
   },
   input: {
     flex: 1,
+    width: 0, // 折り返し維持のため
+    minHeight: 34, // 1行分
+    textAlignVertical: 'top',
+    paddingVertical: 7,
+    paddingHorizontal: 0,
     fontSize: 14,
     fontWeight: '600',
     color: '#000000',
     letterSpacing: 1,
-    paddingTop: 9,
-    paddingBottom: 9,
-    paddingHorizontal: 0,
   },
   button: {
     width: 34,
@@ -636,6 +640,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#686868',
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginBottom: 0,
   },
   buttonDisabled: {
     opacity: 0.4,

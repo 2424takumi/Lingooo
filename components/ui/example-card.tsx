@@ -8,8 +8,12 @@ interface ExampleCardProps {
 export function ExampleCard({ english, japanese }: ExampleCardProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.english}>{english}</Text>
-      <Text style={styles.japanese}>{japanese}</Text>
+      <Text selectable selectionColor="#00AA69" style={styles.english}>
+        {english}
+      </Text>
+      <Text selectable selectionColor="#00AA69" style={styles.japanese}>
+        {japanese}
+      </Text>
     </View>
   );
 }

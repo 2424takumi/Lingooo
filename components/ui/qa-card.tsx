@@ -8,6 +8,7 @@ import { TypingIndicator } from './typing-indicator';
 import { CopyIcon } from '@/components/icons/copy-icon';
 import { BookmarkIcon } from '@/components/icons/bookmark-icon';
 import { addBookmark, removeBookmark, findBookmark } from '@/services/storage/bookmark-storage';
+import { logger } from '@/utils/logger';
 
 interface QACardProps {
   pair: QAPair;
@@ -15,9 +16,10 @@ interface QACardProps {
   scope?: string;
   identifier?: string;
   hideActions?: boolean;
+  onBookmarkAdded?: (bookmarkId: string) => void;
 }
 
-export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false }: QACardProps) {
+export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded }: QACardProps) {
   const cardBackground = useThemeColor({ light: '#FAFCFB', dark: '#1C1C1E' }, 'background');
   const borderColor = useThemeColor({ light: '#FFFFFF', dark: '#3A3A3C' }, 'background');
   const questionColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'icon');
@@ -84,7 +86,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
       await Clipboard.setStringAsync(textToCopy);
       Alert.alert('コピーしました', '質問と回答をクリップボードにコピーしました');
     } catch (error) {
-      console.error('Failed to copy:', error);
+      logger.error('Failed to copy:', error);
       Alert.alert('エラー', 'コピーに失敗しました');
     }
   };
@@ -96,27 +98,32 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
     try {
       if (isBookmarked) {
         // ブックマークを削除
-        console.log('[QACard] Removing bookmark...');
+        logger.debug('[QACard] Removing bookmark...');
         const bookmark = await findBookmark(pair.q, pair.a);
         if (bookmark) {
           await removeBookmark(bookmark.id);
           setIsBookmarked(false);
-          console.log('[QACard] Bookmark removed');
+          logger.debug('[QACard] Bookmark removed');
         }
       } else {
         // ブックマークを追加
-        console.log('[QACard] Adding bookmark...', { scope, identifier, question: pair.q });
+        logger.debug('[QACard] Adding bookmark...', { scope, identifier, question: pair.q });
         const newBookmark = await addBookmark({
           question: pair.q,
           answer: pair.a,
           scope,
           identifier,
         });
-        console.log('[QACard] Bookmark added:', newBookmark.id);
+        logger.debug('[QACard] Bookmark added:', newBookmark.id);
         setIsBookmarked(true);
+
+        // トースト通知を表示するためのコールバック
+        if (onBookmarkAdded) {
+          onBookmarkAdded(newBookmark.id);
+        }
       }
     } catch (error) {
-      console.error('[QACard] Failed to bookmark:', error);
+      logger.error('[QACard] Failed to bookmark:', error);
       Alert.alert('エラー', 'ブックマークの操作に失敗しました');
     }
   };

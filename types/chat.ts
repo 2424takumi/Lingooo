@@ -40,6 +40,8 @@ export interface ChatRequest {
   identifier: string;
   messages: ChatMessage[];
   context?: ChatRequestContext;
+  detailLevel?: 'concise' | 'detailed';
+  targetLanguage?: string; // 学習言語コード (e.g., 'en', 'pt', 'es')
 }
 
 export interface ChatCompletion {

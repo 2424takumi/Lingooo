@@ -267,7 +267,7 @@ export async function getWordDetail(
   if (!detail) {
     throw {
       type: 'not_found',
-      message: `「${word}」が見つかりませんでした`
+      message: `「${word}」はサンプル辞書に含まれていません。\n\nすべての単語を検索するには、設定からGemini APIキーを設定してください。`
     } as SearchError;
   }
 
@@ -312,7 +312,7 @@ export async function getWordDetailStream(
     if (!detail) {
       throw {
         type: 'not_found',
-        message: `「${word}」が見つかりませんでした（オフライン）`
+        message: `「${word}」はサンプル辞書に含まれていません。\n\nオンライン時にGemini APIキーを設定すると、すべての単語を検索できます。`
       } as SearchError;
     }
 

@@ -7,6 +7,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
+import { useAISettings } from '@/contexts/ai-settings-context';
 
 // Icons
 function ChevronRightIcon({ size = 24, color = '#686868' }: { size?: number; color?: string }) {
@@ -26,9 +27,10 @@ function ChevronRightIcon({ size = 24, color = '#686868' }: { size?: number; col
 export default function SettingsScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const { learningLanguages, defaultLanguage, nativeLanguage } = useLearningLanguages();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [autoPlayAudio, setAutoPlayAudio] = useState(false);
+  const {
+    aiDetailLevel,
+    setAIDetailLevel,
+  } = useAISettings();
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
@@ -45,31 +47,20 @@ export default function SettingsScreen() {
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* General Settings */}
+          {/* AI Settings */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>一般設定</Text>
+            <Text style={styles.sectionTitle}>AI設定</Text>
 
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>通知</Text>
-                <Text style={styles.settingDescription}>学習リマインダーを受け取る</Text>
+                <Text style={styles.settingLabel}>AI返答の詳細度</Text>
+                <Text style={styles.settingDescription}>
+                  {aiDetailLevel === 'concise' ? '簡潔（デフォルト）' : '詳細（語源・追加例文含む）'}
+                </Text>
               </View>
               <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{ false: '#D1D1D1', true: '#00AA69' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <View style={styles.settingItem}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>サウンド</Text>
-                <Text style={styles.settingDescription}>効果音を有効にする</Text>
-              </View>
-              <Switch
-                value={soundEnabled}
-                onValueChange={setSoundEnabled}
+                value={aiDetailLevel === 'detailed'}
+                onValueChange={(value) => setAIDetailLevel(value ? 'detailed' : 'concise')}
                 trackColor={{ false: '#D1D1D1', true: '#00AA69' }}
                 thumbColor="#FFFFFF"
               />
@@ -118,46 +109,6 @@ export default function SettingsScreen() {
                     <Text style={styles.moreLanguages}>+{learningLanguages.length - 3}</Text>
                   )}
                 </View>
-              </View>
-              <ChevronRightIcon />
-            </TouchableOpacity>
-
-            <View style={styles.settingItem}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>音声自動再生</Text>
-                <Text style={styles.settingDescription}>単語の発音を自動再生</Text>
-              </View>
-              <Switch
-                value={autoPlayAudio}
-                onValueChange={setAutoPlayAudio}
-                trackColor={{ false: '#D1D1D1', true: '#00AA69' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => router.push('/font-size')}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>フォントサイズ</Text>
-                <Text style={styles.settingDescription}>中</Text>
-              </View>
-              <ChevronRightIcon />
-            </TouchableOpacity>
-          </View>
-
-          {/* Display Settings */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>表示設定</Text>
-
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => router.push('/theme-select')}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>テーマ</Text>
-                <Text style={styles.settingDescription}>ライト</Text>
               </View>
               <ChevronRightIcon />
             </TouchableOpacity>

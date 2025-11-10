@@ -16,6 +16,7 @@ import { searchJaToEn, getWordDetail } from '@/services/api/search';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import type { SearchError } from '@/types/search';
+import { logger } from '@/utils/logger';
 
 export function useSearch() {
   const router = useRouter();
@@ -52,10 +53,16 @@ export function useSearch() {
       // - アルファベット: タブで選択中の言語
       const targetLang = resolveLanguageCode(detectedLang, currentLanguage.code, nativeLanguage.code);
 
-      // 5. 検索分岐（母語判定）
+      // 5. 検索分岐
       if (targetLang === nativeLanguage.code) {
-        // 母語検索 → SearchPage（選択中の学習言語への翻訳）
-        await searchAndNavigateToJp(normalizedQuery);
+        // 母語（日本語）が検出された場合
+        if (currentLanguage.code === nativeLanguage.code) {
+          // 選択中の言語も母語（日本語） → 日本語辞書として検索
+          await searchAndNavigateToWord(normalizedQuery, targetLang);
+        } else {
+          // 選択中の言語が他言語 → 訳語候補を表示
+          await searchAndNavigateToJp(normalizedQuery);
+        }
       } else {
         // 非母語検索 → WordDetailPage（検出された言語の辞書検索）
         await searchAndNavigateToWord(normalizedQuery, targetLang);
@@ -63,10 +70,14 @@ export function useSearch() {
 
       // 6. 検索履歴に保存
       try {
-        await addSearchHistory(normalizedQuery, targetLang);
+        // 日本語→他言語の翻訳検索の場合は、学習言語で保存
+        const historyLanguage = (targetLang === nativeLanguage.code && currentLanguage.code !== nativeLanguage.code)
+          ? currentLanguage.code
+          : targetLang;
+        await addSearchHistory(normalizedQuery, historyLanguage);
       } catch (historyError) {
         // 履歴保存に失敗しても検索は成功とみなす
-        console.error('Failed to save search history:', historyError);
+        logger.error('Failed to save search history:', historyError);
       }
 
       return true;

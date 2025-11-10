@@ -5,31 +5,41 @@ import { Shimmer } from './shimmer';
 interface WordCardProps {
   word: string;
   posTags: string[];
+  gender?: 'm' | 'f' | 'n' | 'mf';
   definitions: string[];
   description: string;
 }
 
-export function WordCard({ word, posTags, definitions, description }: WordCardProps) {
+export function WordCard({ word, posTags, gender, definitions, description }: WordCardProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.word}>{word}</Text>
+      <Text selectable selectionColor="#00AA69" style={styles.word}>
+        {word}
+      </Text>
 
       <View style={styles.posTagList}>
         {posTags.map((tag, index) => (
-          <PosTag key={index} label={tag} />
+          <PosTag key={index} label={tag} gender={gender} />
         ))}
       </View>
 
       <View style={styles.definitionList}>
         {definitions.map((def, index) => (
-          <Text key={index} style={styles.definition}>
+          <Text
+            key={index}
+            selectable
+            selectionColor="#00AA69"
+            style={styles.definition}
+          >
             {def}
           </Text>
         ))}
       </View>
 
       {description ? (
-        <Text style={styles.description}>{description}</Text>
+        <Text selectable selectionColor="#00AA69" style={styles.description}>
+          {description}
+        </Text>
       ) : (
         <View style={styles.descriptionShimmerContainer}>
           <Shimmer width="90%" height={14} borderRadius={4} style={styles.descriptionShimmer} />

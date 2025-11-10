@@ -1,13 +1,15 @@
-import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SideMenu } from '@/components/ui/side-menu';
+import { SearchHistoryList } from '@/components/ui/search-history-list';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSearch } from '@/hooks/use-search';
+import { useClipboardSearch } from '@/hooks/use-clipboard-search';
 
 export default function HomeScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
@@ -31,6 +33,20 @@ export default function HomeScreen() {
     }
   };
 
+  // クリップボード検索
+  const { clipboardText, shouldSearch, clearClipboard } = useClipboardSearch({
+    enabled: true,
+    autoSearch: false,
+  });
+
+  // クリップボードテキストが検出されたら検索ボックスに自動入力
+  useEffect(() => {
+    if (shouldSearch && clipboardText) {
+      setSearchText(clipboardText);
+      clearClipboard();
+    }
+  }, [shouldSearch, clipboardText]);
+
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
       <StatusBar style="auto" />
@@ -44,29 +60,34 @@ export default function HomeScreen() {
           />
         </View>
 
-        <View style={styles.searchContainer}>
-          <SearchBar
-            placeholder="知りたい単語を検索..."
-            onSearch={onSearch}
-            value={searchText}
-            onChangeText={setSearchText}
-          />
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.searchContainer}>
+            <SearchBar
+              placeholder="知りたい単語を検索..."
+              onSearch={onSearch}
+              value={searchText}
+              onChangeText={setSearchText}
+            />
 
-          {/* Loading Indicator */}
-          {isLoading && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#00AA69" />
-              <Text style={styles.loadingText}>検索中...</Text>
-            </View>
-          )}
+            {/* Loading Indicator */}
+            {isLoading && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#00AA69" />
+                <Text style={styles.loadingText}>検索中...</Text>
+              </View>
+            )}
 
-          {/* Error Message */}
-          {error && !isLoading && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-        </View>
+            {/* Error Message */}
+            {error && !isLoading && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Search History */}
+          <SearchHistoryList onItemPress={onSearch} maxItems={20} />
+        </ScrollView>
       </View>
 
       {/* Side Menu */}
@@ -86,6 +107,9 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginBottom: 35,
+  },
+  scrollView: {
+    flex: 1,
   },
   searchContainer: {
     marginHorizontal: 7,

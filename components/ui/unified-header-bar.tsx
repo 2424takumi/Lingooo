@@ -119,7 +119,9 @@ export function UnifiedHeaderBar({
           <ChevronLeftIcon size={28} />
         </TouchableOpacity>
 
-        <Text style={styles.title}>{title}</Text>
+        <Text selectable selectionColor="#00AA69" style={styles.title}>
+          {title}
+        </Text>
 
         <LanguageSwitcher />
       </View>
@@ -135,7 +137,9 @@ export function UnifiedHeaderBar({
             <ChevronLeftIcon size={28} />
           </TouchableOpacity>
 
-          <Text style={styles.word}>{word}</Text>
+          <Text selectable selectionColor="#00AA69" style={styles.word}>
+            {word}
+          </Text>
 
           <TouchableOpacity onPress={onPronouncePress} style={styles.pronounceButton}>
             <VolumeIcon size={18} />

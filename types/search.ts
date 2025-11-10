@@ -11,6 +11,8 @@ export interface SuggestionItem {
   lemma: string;
   /** 品詞のリスト */
   pos: string[];
+  /** 文法上の性別（名詞の場合） */
+  gender?: 'm' | 'f' | 'n' | 'mf';
   /** 短義（日本語） */
   shortSenseJa: string;
   /** 信頼度スコア (0.0-1.0) */
@@ -39,6 +41,8 @@ export interface WordDetailResponse {
     lang: string;
     /** 品詞のリスト */
     pos: string[];
+    /** 文法上の性別（名詞の場合） */
+    gender?: 'm' | 'f' | 'n' | 'mf';
   };
   /** 意味のリスト */
   senses: Array<{
@@ -93,4 +97,18 @@ export interface SearchError {
   type: SearchErrorType;
   /** エラーメッセージ */
   message: string;
+}
+
+/**
+ * 検索履歴アイテム
+ */
+export interface SearchHistoryItem {
+  /** ユニークID */
+  id: string;
+  /** 検索した単語 */
+  query: string;
+  /** 言語コード (e.g., 'en', 'pt', 'es') */
+  language: string;
+  /** 検索日時（ミリ秒） */
+  timestamp: number;
 }

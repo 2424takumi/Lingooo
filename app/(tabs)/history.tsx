@@ -1,10 +1,14 @@
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState, useCallback } from 'react';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
+import { getSearchHistory } from '@/services/storage/search-history-storage';
+import type { SearchHistoryItem } from '@/types/search';
+import { logger } from '@/utils/logger';
 
 // Icons
 function ClockIcon({ size = 24, color = '#686868' }: { size?: number; color?: string }) {
@@ -30,16 +34,48 @@ function ClockIcon({ size = 24, color = '#686868' }: { size?: number; color?: st
 
 export default function HistoryScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const [historyItems, setHistoryItems] = useState<SearchHistoryItem[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Mock data for demonstration
-  const historyItems = [
-    { word: 'Hello', time: '2時間前', date: '2024-01-15' },
-    { word: 'World', time: '5時間前', date: '2024-01-15' },
-    { word: 'Language', time: '昨日', date: '2024-01-14' },
-    { word: 'Learning', time: '昨日', date: '2024-01-14' },
-    { word: 'Study', time: '2日前', date: '2024-01-13' },
-    { word: 'Practice', time: '2日前', date: '2024-01-13' },
-  ];
+  // 履歴をロードする関数
+  const loadHistory = useCallback(async () => {
+    try {
+      logger.info('[History] Loading search history...');
+      const history = await getSearchHistory();
+      logger.info('[History] Loaded items:', history.length);
+      setHistoryItems(history);
+    } catch (error) {
+      logger.error('[History] Failed to load search history:', error);
+    }
+  }, []);
+
+  // 初回ロード
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  // Pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await loadHistory();
+    setIsRefreshing(false);
+  }, [loadHistory]);
+
+  // 相対時間を計算
+  const getRelativeTime = (timestamp: number): string => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'たった今';
+    if (minutes < 60) return `${minutes}分前`;
+    if (hours < 24) return `${hours}時間前`;
+    if (days === 1) return '昨日';
+    if (days < 7) return `${days}日前`;
+    return `${Math.floor(days / 7)}週間前`;
+  };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
@@ -56,21 +92,33 @@ export default function HistoryScreen() {
         </View>
 
         {historyItems.length > 0 ? (
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                tintColor="#00AA69"
+              />
+            }
+          >
             <View style={styles.historyList}>
-              {historyItems.map((item, index) => (
-                <TouchableOpacity key={index} style={styles.historyItem}>
+              {historyItems.map((item) => (
+                <TouchableOpacity key={item.id} style={styles.historyItem}>
                   <ClockIcon size={20} color="#00AA69" />
                   <View style={styles.historyContent}>
-                    <Text style={styles.wordText}>{item.word}</Text>
-                    <Text style={styles.timeText}>{item.time}</Text>
+                    <Text style={styles.wordText}>{item.query}</Text>
+                    <Text style={styles.timeText}>
+                      {getRelativeTime(item.timestamp)} • {item.language.toUpperCase()}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))}
             </View>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>過去30日間の学習履歴を表示しています</Text>
+              <Text style={styles.footerText}>最大{historyItems.length}件の履歴を表示</Text>
             </View>
           </ScrollView>
         ) : (

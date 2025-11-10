@@ -6,7 +6,7 @@ import {
   detectLang,
   normalizeQuery,
   validateSearchInput,
-  resolveMixedLanguage,
+  resolveLanguageCode,
 } from '../language-detect';
 
 describe('detectLang', () => {
@@ -19,34 +19,34 @@ describe('detectLang', () => {
       expect(detectLang('ベンキョウ')).toBe('ja');
     });
 
-    it('漢字を日本語と判定', () => {
-      expect(detectLang('勉強')).toBe('ja');
+    it('漢字のみはkanji-onlyと判定', () => {
+      expect(detectLang('勉強')).toBe('kanji-only');
     });
 
-    it('日本語の混在を日本語と判定', () => {
+    it('ひらがな/カタカナを含む混在は日本語と判定', () => {
       expect(detectLang('勉強する')).toBe('ja');
       expect(detectLang('研究者')).toBe('ja');
     });
   });
 
-  describe('英語判定', () => {
-    it('英語のみを英語と判定', () => {
-      expect(detectLang('study')).toBe('en');
-      expect(detectLang('STUDY')).toBe('en');
-      expect(detectLang('Study')).toBe('en');
+  describe('アルファベット判定', () => {
+    it('アルファベットのみをalphabetと判定', () => {
+      expect(detectLang('study')).toBe('alphabet');
+      expect(detectLang('STUDY')).toBe('alphabet');
+      expect(detectLang('Study')).toBe('alphabet');
     });
 
-    it('複数単語を英語と判定', () => {
-      expect(detectLang('study hard')).toBe('en');
-      expect(detectLang('study abroad')).toBe('en');
+    it('複数単語をalphabetと判定', () => {
+      expect(detectLang('study hard')).toBe('alphabet');
+      expect(detectLang('study abroad')).toBe('alphabet');
     });
 
-    it('ハイフン付き単語を英語と判定', () => {
-      expect(detectLang('self-study')).toBe('en');
+    it('ハイフン付き単語をalphabetと判定', () => {
+      expect(detectLang('self-study')).toBe('alphabet');
     });
 
-    it('アポストロフィ付き単語を英語と判定', () => {
-      expect(detectLang("it's")).toBe('en');
+    it('アポストロフィ付き単語をalphabetと判定', () => {
+      expect(detectLang("it's")).toBe('alphabet');
     });
   });
 
@@ -58,17 +58,17 @@ describe('detectLang', () => {
   });
 
   describe('エッジケース', () => {
-    it('空文字は英語と判定（デフォルト）', () => {
-      expect(detectLang('')).toBe('en');
-      expect(detectLang('   ')).toBe('en');
+    it('空文字はalphabetと判定（デフォルト）', () => {
+      expect(detectLang('')).toBe('alphabet');
+      expect(detectLang('   ')).toBe('alphabet');
     });
 
-    it('数字のみは英語と判定', () => {
-      expect(detectLang('123')).toBe('en');
+    it('数字のみはmixedと判定', () => {
+      expect(detectLang('123')).toBe('mixed');
     });
 
-    it('記号のみは英語と判定', () => {
-      expect(detectLang('!!!')).toBe('en');
+    it('記号のみはmixedと判定', () => {
+      expect(detectLang('!!!')).toBe('mixed');
     });
   });
 });
@@ -128,16 +128,28 @@ describe('validateSearchInput', () => {
   });
 });
 
-describe('resolveMixedLanguage', () => {
-  it('mixedを日本語として解決', () => {
-    expect(resolveMixedLanguage('mixed')).toBe('ja');
+describe('resolveLanguageCode', () => {
+  it('日本語はjaを返す', () => {
+    expect(resolveLanguageCode('ja', 'en', 'ja')).toBe('ja');
   });
 
-  it('jaはそのまま返す', () => {
-    expect(resolveMixedLanguage('ja')).toBe('ja');
+  it('kanji-onlyは選択中の言語がzhならzhを返す', () => {
+    expect(resolveLanguageCode('kanji-only', 'zh', 'ja')).toBe('zh');
   });
 
-  it('enはそのまま返す', () => {
-    expect(resolveMixedLanguage('en')).toBe('en');
+  it('kanji-onlyは選択中の言語がzh以外なら母語(ja)を返す', () => {
+    expect(resolveLanguageCode('kanji-only', 'en', 'ja')).toBe('ja');
+    expect(resolveLanguageCode('kanji-only', 'es', 'ja')).toBe('ja');
+  });
+
+  it('alphabetは選択中の言語を返す', () => {
+    expect(resolveLanguageCode('alphabet', 'en', 'ja')).toBe('en');
+    expect(resolveLanguageCode('alphabet', 'es', 'ja')).toBe('es');
+    expect(resolveLanguageCode('alphabet', 'pt', 'ja')).toBe('pt');
+  });
+
+  it('mixedは選択中の言語を返す', () => {
+    expect(resolveLanguageCode('mixed', 'en', 'ja')).toBe('en');
+    expect(resolveLanguageCode('mixed', 'fr', 'ja')).toBe('fr');
   });
 });

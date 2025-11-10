@@ -2,6 +2,9 @@
  * 多言語対応プロンプト生成
  *
  * 学習言語に応じて適切なプロンプトを動的に生成
+ *
+ * 注意：detailLevel（詳細度）はチャット機能のAI返答にのみ適用
+ * 辞書データには詳細度の概念はなく、常に同じ構造を返す
  */
 
 /**
@@ -9,6 +12,7 @@
  */
 const LANGUAGE_NAMES_JA: Record<string, string> = {
   en: '英語',
+  ja: '日本語',
   es: 'スペイン語',
   pt: 'ポルトガル語',
   zh: '中国語',
@@ -26,6 +30,14 @@ const LANGUAGE_NAMES_JA: Record<string, string> = {
  */
 function getLanguageNameJa(languageCode: string): string {
   return LANGUAGE_NAMES_JA[languageCode] || languageCode.toUpperCase();
+}
+
+/**
+ * 名詞に性別がある言語かチェック
+ */
+function hasGrammaticalGender(languageCode: string): boolean {
+  const genderLanguages = ['es', 'pt', 'fr', 'de', 'it', 'ru', 'ar', 'hi'];
+  return genderLanguages.includes(languageCode);
 }
 
 /**
@@ -53,14 +65,25 @@ export function createBasicInfoPrompt(word: string, targetLanguage: string = 'en
  *
  * 生成順序：headword → senses → metrics → examples
  * （UIでの表示順と一致させて体感速度を向上）
+ *
+ * 注意：辞書データは常に同じ構造（詳細度の概念なし）
+ * 詳細度はチャット機能のAI返答にのみ適用される
+ *
+ * @param word - 検索する単語
+ * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
  */
-export function createDictionaryPrompt(word: string, targetLanguage: string = 'en'): string {
+export function createDictionaryPrompt(
+  word: string,
+  targetLanguage: string = 'en'
+): string {
   const langName = getLanguageNameJa(targetLanguage);
+  const needsGender = hasGrammaticalGender(targetLanguage);
+  const genderField = needsGender ? ', "gender": "m または f または n または mf（名詞の場合のみ）"' : '';
 
   return `${langName}の単語"${word}"の辞書情報を以下のJSON構造で生成してください：
 
 {
-  "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["品詞（英語、例: verb, noun）"]},
+  "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["品詞（英語、例: verb, noun）"]${genderField}},
   "senses": [{"id": "1", "glossShort": "簡潔な日本語の意味（10文字以内）"}, {"id": "2", "glossShort": "意味2"}],
   "metrics": {"frequency": 頻出度0-100, "difficulty": 難易度0-100, "nuance": ニュアンスの強さ0-100},
   "examples": [
@@ -84,6 +107,8 @@ export function createDictionaryPrompt(word: string, targetLanguage: string = 'e
  */
 export function createSuggestionsPrompt(japaneseQuery: string, targetLanguage: string = 'en'): string {
   const langName = getLanguageNameJa(targetLanguage);
+  const needsGender = hasGrammaticalGender(targetLanguage);
+  const genderExample = needsGender ? ',\n    "gender": "m または f または n（名詞の場合のみ）"' : '';
 
   return `日本語"${japaneseQuery}"に対応する${langName}の単語を3~5個、以下のJSON配列構造で生成：
 
@@ -93,14 +118,14 @@ export function createSuggestionsPrompt(japaneseQuery: string, targetLanguage: s
     "pos": ["品詞（英語）"],
     "shortSenseJa": "簡潔な日本語の意味（10文字以内）",
     "confidence": 関連性スコア0-1,
-    "usageHint": "この単語の使い方や特徴を1文で（20文字以内）"
+    "usageHint": "この単語の使い方や特徴を1文で（20文字以内）"${genderExample}
   },
   {
     "lemma": "${langName}単語2",
     "pos": ["品詞"],
     "shortSenseJa": "意味2",
     "confidence": スコア,
-    "usageHint": "使い方2"
+    "usageHint": "使い方2"${genderExample}
   }
 ]
 

@@ -52,6 +52,8 @@ export async function sendChatMessage(req: ChatRequest): Promise<ChatCompletion>
         identifier: req.identifier,
         messages: req.messages,
         context: req.context,
+        detailLevel: req.detailLevel,
+        targetLanguage: req.targetLanguage,
       }),
     });
 
@@ -178,6 +180,8 @@ export async function* sendChatMessageStream(
       identifier: req.identifier,
       messages: req.messages,
       context: req.context,
+      detailLevel: req.detailLevel,
+      targetLanguage: req.targetLanguage,
     })
   );
 

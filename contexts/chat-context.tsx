@@ -36,6 +36,8 @@ interface ChatContextValue {
       text: string;
       context?: ChatRequestContext;
       streaming?: boolean;
+      detailLevel?: 'concise' | 'detailed';
+      targetLanguage?: string;
     }
   ) => Promise<void>;
   clearSession: (key: ChatSessionKey) => void;
@@ -216,7 +218,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   }, []);
 
   const sendMessage = useCallback<ChatContextValue['sendMessage']>(
-    async ({ scope, identifier, text, context, streaming = true }) => {
+    async ({ scope, identifier, text, context, streaming = true, detailLevel, targetLanguage }) => {
       const key: ChatSessionKey = { scope, identifier };
       const sessionBefore = ensureSession(key);
 
@@ -224,6 +226,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         scope,
         identifier,
         text,
+        detailLevel,
         sessionBeforeMessageCount: sessionBefore.messages.length,
       });
 
@@ -253,6 +256,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
         identifier,
         messages: requestMessages,
         context,
+        detailLevel,
+        targetLanguage,
       };
 
       const updateAssistant = (updater: (message: ChatMessage) => ChatMessage) => {

@@ -1,9 +1,11 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
+import Svg, { Path } from 'react-native-svg';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { DefinitionList } from '@/components/ui/definition-list';
@@ -11,6 +13,8 @@ import { WordMetaMetrics } from '@/components/ui/word-meta-metrics';
 import { ExampleCard } from '@/components/ui/example-card';
 import { ChatSection } from '@/components/ui/chat-section';
 import { ShimmerHeader, ShimmerDefinitions, ShimmerMetrics, ShimmerExamples } from '@/components/ui/shimmer';
+import { BookmarkToast } from '@/components/ui/bookmark-toast';
+import { loadFolders, updateBookmarkFolder, type BookmarkFolder } from '@/services/storage/bookmark-storage';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useAISettings } from '@/contexts/ai-settings-context';
@@ -19,17 +23,25 @@ import type { WordDetailResponse } from '@/types/search';
 import { getCachedWordDetail, getPendingPromise } from '@/services/cache/word-detail-cache';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
+import { addSearchHistory, removeSearchHistoryItem, getSearchHistory } from '@/services/storage/search-history-storage';
 
 export default function WordDetailScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const router = useRouter();
   const params = useLocalSearchParams();
   const { aiDetailLevel, setAIDetailLevel } = useAISettings();
+  const safeAreaInsets = useSafeAreaInsets();
 
   const [wordData, setWordData] = useState<Partial<WordDetailResponse> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  // ブックマークトースト & フォルダ選択
+  const [toastVisible, setToastVisible] = useState(false);
+  const [selectedBookmarkId, setSelectedBookmarkId] = useState<string | null>(null);
+  const [isFolderSelectModalOpen, setIsFolderSelectModalOpen] = useState(false);
+  const [folders, setFolders] = useState<BookmarkFolder[]>([]);
 
   // パラメータから単語を取得
   const word = params.word as string || '';
@@ -55,6 +67,9 @@ export default function WordDetailScreen() {
     };
   }, [wordData]);
 
+  // チャット識別子：正しい単語（headword.lemma）を使用、ロード前はパラメータの単語を使用
+  const chatIdentifier = wordData?.headword?.lemma || word;
+
   const {
     messages: chatMessages,
     followUps,
@@ -64,7 +79,7 @@ export default function WordDetailScreen() {
     sendQuickQuestion,
   } = useChatSession({
     scope: 'word',
-    identifier: word,
+    identifier: chatIdentifier,
     context: chatContext,
     targetLanguage,
   });
@@ -141,10 +156,10 @@ export default function WordDetailScreen() {
           }
 
           // キャッシュなし：通常のAPI呼び出し（ストリーミング）
-          logger.debug('[WordDetail] Starting STREAMING API call with detail level:', aiDetailLevel);
+          logger.debug('[WordDetail] Starting STREAMING API call');
           let data;
           try {
-            data = await getWordDetailStream(word, targetLanguage, aiDetailLevel, (progress, partialData) => {
+            data = await getWordDetailStream(word, targetLanguage, (progress, partialData) => {
               logger.debug(`[WordDetail] Progress: ${progress}%`, {
                 hasPartialData: !!partialData,
                 sections: partialData ? Object.keys(partialData) : []
@@ -182,7 +197,97 @@ export default function WordDetailScreen() {
     };
 
     loadWordData();
-  }, [word, dataParam, targetLanguage, aiDetailLevel]);
+  }, [word, dataParam, targetLanguage]);
+
+  // 検索履歴を正しい単語で更新（誤字の場合）
+  useEffect(() => {
+    const updateSearchHistoryWithCorrectWord = async () => {
+      // wordDataが読み込まれ、headwordが存在する場合のみ
+      if (!wordData?.headword?.lemma || !word || isLoading) {
+        return;
+      }
+
+      const correctWord = wordData.headword.lemma;
+      const inputWord = word.trim().toLowerCase();
+      const normalizedCorrectWord = correctWord.trim().toLowerCase();
+
+      // 入力された単語と正しい単語が異なる場合（誤字があった場合）
+      if (inputWord !== normalizedCorrectWord) {
+        try {
+          logger.info('[WordDetail] Fixing search history: replacing typo with correct word', {
+            input: inputWord,
+            correct: correctWord,
+          });
+
+          // 既存の検索履歴を取得
+          const history = await getSearchHistory();
+
+          // 誤字のエントリを探して削除
+          const typoEntry = history.find(
+            (item) => item.query.trim().toLowerCase() === inputWord && item.language === targetLanguage
+          );
+
+          if (typoEntry) {
+            await removeSearchHistoryItem(typoEntry.id);
+            logger.info('[WordDetail] Removed typo entry from search history:', typoEntry.query);
+          }
+
+          // 正しい単語を検索履歴に追加
+          await addSearchHistory(correctWord, targetLanguage);
+          logger.info('[WordDetail] Added correct word to search history:', correctWord);
+        } catch (error) {
+          logger.error('[WordDetail] Failed to update search history:', error);
+          // エラーが起きても続行（検索履歴の更新は重要ではない）
+        }
+      }
+    };
+
+    void updateSearchHistoryWithCorrectWord();
+  }, [wordData, word, targetLanguage, isLoading]);
+
+  // フォルダを読み込む
+  useEffect(() => {
+    const fetchFolders = async () => {
+      try {
+        const data = await loadFolders();
+        setFolders(data);
+      } catch (error) {
+        logger.error('[WordDetail] Failed to load folders:', error);
+      }
+    };
+    void fetchFolders();
+  }, []);
+
+  // ブックマーク追加時のハンドラー
+  const handleBookmarkAdded = (bookmarkId: string) => {
+    setSelectedBookmarkId(bookmarkId);
+    setToastVisible(true);
+  };
+
+  // トースト終了時
+  const handleToastDismiss = () => {
+    setToastVisible(false);
+    setSelectedBookmarkId(null);
+  };
+
+  // フォルダ選択モーダルを開く
+  const handleOpenFolderSelect = () => {
+    setIsFolderSelectModalOpen(true);
+  };
+
+  // フォルダにブックマークを追加
+  const handleAddToFolder = async (folderId?: string) => {
+    if (!selectedBookmarkId) return;
+
+    try {
+      await updateBookmarkFolder(selectedBookmarkId, folderId);
+      setIsFolderSelectModalOpen(false);
+      setSelectedBookmarkId(null);
+      logger.debug('[WordDetail] Bookmark added to folder:', folderId);
+    } catch (error) {
+      logger.error('[WordDetail] Failed to add bookmark to folder:', error);
+    }
+  };
 
   const handleBackPress = () => {
     // searchページから来た場合は、searchページに戻る
@@ -327,6 +432,7 @@ export default function WordDetailScreen() {
                 pageType="wordDetail"
                 word={wordData.headword.lemma}
                 posTags={wordData.headword.pos || []}
+                gender={wordData.headword.gender}
                 onBackPress={handleBackPress}
                 onPronouncePress={handlePronouncePress}
               />
@@ -393,7 +499,7 @@ export default function WordDetailScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={safeAreaInsets.bottom}
       >
         <View pointerEvents="box-none" style={styles.chatContainerFixed}>
           <ChatSection
@@ -408,10 +514,79 @@ export default function WordDetailScreen() {
             onRetryQuestion={handleQACardRetry}
             onDetailLevelChange={setAIDetailLevel}
             scope="word"
-            identifier={word}
+            identifier={chatIdentifier}
+            onBookmarkAdded={handleBookmarkAdded}
           />
         </View>
       </KeyboardAvoidingView>
+
+      {/* Bookmark Toast */}
+      <BookmarkToast
+        visible={toastVisible}
+        onAddToFolder={handleOpenFolderSelect}
+        onDismiss={handleToastDismiss}
+      />
+
+      {/* Folder Select Modal */}
+      <Modal
+        visible={isFolderSelectModalOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setIsFolderSelectModalOpen(false);
+        }}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => {
+            setIsFolderSelectModalOpen(false);
+          }}
+        >
+          <View style={styles.folderSelectModalContainer} onStartShouldSetResponder={() => true}>
+            <Text style={styles.modalTitle}>フォルダに追加</Text>
+
+            <ScrollView style={styles.folderSelectList} showsVerticalScrollIndicator={false}>
+              {/* No folder option */}
+              <TouchableOpacity
+                style={styles.folderSelectItem}
+                onPress={() => handleAddToFolder(undefined)}
+              >
+                <Text style={styles.folderSelectItemText}>フォルダなし</Text>
+              </TouchableOpacity>
+
+              {/* Existing folders */}
+              {folders.map((folder) => (
+                <TouchableOpacity
+                  key={folder.id}
+                  style={styles.folderSelectItem}
+                  onPress={() => handleAddToFolder(folder.id)}
+                >
+                  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11z"
+                      stroke="#00AA69"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                  <Text style={styles.folderSelectItemText}>{folder.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.modalCancelButton}
+              onPress={() => {
+                setIsFolderSelectModalOpen(false);
+              }}
+            >
+              <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ThemedView>
   );
 }
@@ -453,15 +628,13 @@ const styles = StyleSheet.create({
   },
   keyboardAvoidingView: {
     position: 'absolute',
-    top: 180,
-    bottom: 0,
     left: 0,
     right: 0,
+    bottom: 0,
   },
   chatContainerFixed: {
-    flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 26,
+    paddingBottom: 14,
     justifyContent: 'flex-end',
   },
   loadingContainer: {
@@ -492,5 +665,67 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  folderSelectModalContainer: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '70%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+  },
+  folderSelectList: {
+    maxHeight: 300,
+  },
+  folderSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    marginBottom: 8,
+  },
+  folderSelectItemText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    flex: 1,
+  },
+  modalCancelButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#686868',
   },
 });

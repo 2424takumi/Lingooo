@@ -129,6 +129,20 @@ function CrownIcon({ size = 24, color = '#FFFFFF' }: { size?: number; color?: st
   );
 }
 
+function MessageIcon({ size = 24, color = '#000000' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 export function SideMenu({ visible, onClose }: SideMenuProps) {
   const translateX = useSharedValue(-300);
 
@@ -162,39 +176,40 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
         onPress={onClose}
       >
         <Animated.View style={[styles.menuContainer, animatedStyle]}>
-          <TouchableOpacity activeOpacity={1}>
+          <TouchableOpacity activeOpacity={1} style={styles.menuContent}>
             {/* App Name */}
             <View style={styles.header}>
               <Text style={styles.appName}>Lingooo</Text>
               <Text style={styles.appTagline}>英語学習をもっと楽しく</Text>
             </View>
 
-            {/* Pro Plan Promotion */}
-            <TouchableOpacity style={styles.proSection}>
-              <View style={styles.proContent}>
-                <CrownIcon size={28} color="#FFFFFF" />
-                <View style={styles.proText}>
-                  <Text style={styles.proTitle}>Pro版にアップグレード</Text>
-                  <Text style={styles.proDescription}>
-                    無制限の学習と高度な機能を利用
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Menu Items */}
+            {/* Menu Items - Top */}
             <View style={styles.menuList}>
-              <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/history')}>
-                <HistoryIcon size={24} color="#686868" />
-                <Text style={styles.menuText}>学習履歴</Text>
-              </TouchableOpacity>
-
               <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/bookmarks')}>
                 <BookmarkIcon size={24} color="#686868" />
                 <Text style={styles.menuText}>ブックマーク</Text>
               </TouchableOpacity>
 
-              <View style={styles.divider} />
+              <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/custom-questions')}>
+                <MessageIcon size={24} color="#686868" />
+                <Text style={styles.menuText}>カスタム質問</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Menu Items - Bottom */}
+            <View style={styles.bottomMenuList}>
+              {/* Pro Plan Promotion */}
+              <TouchableOpacity style={styles.proMenuItem}>
+                <View style={styles.proContent}>
+                  <CrownIcon size={28} color="#00AA69" />
+                  <View style={styles.proText}>
+                    <Text style={styles.proTitle}>Pro版にアップグレード</Text>
+                    <Text style={styles.proDescription}>
+                      無制限の学習と高度な機能を利用
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
 
               <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/settings')}>
                 <SettingsIcon size={24} color="#686868" />
@@ -210,10 +225,10 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
                 <InfoIcon size={24} color="#686868" />
                 <Text style={styles.menuText}>アプリについて</Text>
               </TouchableOpacity>
-            </View>
 
-            {/* Version */}
-            <Text style={styles.version}>Version 1.0.0</Text>
+              {/* Version */}
+              <Text style={styles.version}>Version 1.0.0</Text>
+            </View>
           </TouchableOpacity>
         </Animated.View>
       </TouchableOpacity>
@@ -236,14 +251,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FFFFFF',
     borderRadius: 12,
-    paddingTop: 20,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 2, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 5,
+  },
+  menuContent: {
+    flex: 1,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
   },
   header: {
     marginBottom: 24,
@@ -259,16 +277,16 @@ const styles = StyleSheet.create({
     color: '#686868',
     fontWeight: '500',
   },
-  proSection: {
-    backgroundColor: '#00AA69',
-    borderRadius: 15,
+  proMenuItem: {
+    backgroundColor: '#DCF0E1',
+    borderRadius: 14,
     padding: 16,
-    marginBottom: 24,
+    marginVertical: 4,
   },
   proContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
   },
   proText: {
     flex: 1,
@@ -276,16 +294,20 @@ const styles = StyleSheet.create({
   proTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
+    color: '#00AA69',
+    marginBottom: 3,
   },
   proDescription: {
     fontSize: 13,
-    color: '#FFFFFF',
-    opacity: 0.9,
+    color: '#4A4A4A',
+    opacity: 0.95,
   },
   menuList: {
     gap: 4,
+  },
+  bottomMenuList: {
+    gap: 4,
+    marginTop: 'auto',
   },
   menuItem: {
     flexDirection: 'row',
@@ -309,7 +331,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ACACAC',
     textAlign: 'center',
-    marginTop: 'auto',
-    paddingTop: 20,
+    paddingTop: 16,
   },
 });

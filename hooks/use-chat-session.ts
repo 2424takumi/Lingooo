@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { useChatContext } from '@/contexts/chat-context';
+import { useAISettings } from '@/contexts/ai-settings-context';
 import type { ChatRequestContext, ChatScope } from '@/types/chat';
 import { logger } from '@/utils/logger';
 
@@ -8,10 +9,12 @@ interface UseChatSessionOptions {
   scope: ChatScope;
   identifier: string;
   context?: ChatRequestContext;
+  targetLanguage?: string;
 }
 
-export function useChatSession({ scope, identifier, context }: UseChatSessionOptions) {
+export function useChatSession({ scope, identifier, context, targetLanguage }: UseChatSessionOptions) {
   const chat = useChatContext();
+  const { aiDetailLevel } = useAISettings();
 
   const normalizedIdentifier = identifier.trim();
   const sessionKey = useMemo(
@@ -23,7 +26,7 @@ export function useChatSession({ scope, identifier, context }: UseChatSessionOpt
 
   const sendMessage = useCallback(
     async (text: string) => {
-      logger.info('[useChatSession] sendMessage called:', { text, scope, identifier: normalizedIdentifier });
+      logger.info('[useChatSession] sendMessage called:', { text, scope, identifier: normalizedIdentifier, detailLevel: aiDetailLevel });
 
       if (!normalizedIdentifier || !text.trim()) {
         logger.warn('[useChatSession] Skipping: empty identifier or text');
@@ -37,10 +40,12 @@ export function useChatSession({ scope, identifier, context }: UseChatSessionOpt
         text,
         context,
         streaming: true,
+        detailLevel: aiDetailLevel,
+        targetLanguage,
       });
       logger.info('[useChatSession] chat.sendMessage completed');
     },
-    [chat, scope, normalizedIdentifier, context]
+    [chat, scope, normalizedIdentifier, context, aiDetailLevel, targetLanguage]
   );
 
   const sendQuickQuestion = useCallback(

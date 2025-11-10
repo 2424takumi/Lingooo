@@ -8,7 +8,12 @@ export function DefinitionList({ definitions }: DefinitionListProps) {
   return (
     <View style={styles.container}>
       {definitions.map((definition, index) => (
-        <Text key={index} style={styles.definition}>
+        <Text
+          key={index}
+          selectable
+          selectionColor="#00AA69"
+          style={styles.definition}
+        >
           <Text style={styles.bullet}>・</Text>
           {definition}
         </Text>
