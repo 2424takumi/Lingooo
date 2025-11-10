@@ -143,14 +143,35 @@ async function tryGenerateAiSuggestionsTwoStage(
  *
  * @param query - 日本語の検索クエリ
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param isOffline - オフライン状態かどうか（オプション）
  * @returns 候補のリスト
  */
-export async function searchJaToEn(query: string, targetLanguage: string = 'en'): Promise<SuggestionResponse> {
+export async function searchJaToEn(query: string, targetLanguage: string = 'en', isOffline: boolean = false): Promise<SuggestionResponse> {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
     return {
       items: [],
     };
+  }
+
+  // オフライン時: キャッシュ → モックデータの順に検索
+  if (isOffline) {
+    logger.info('[searchJaToEn] Offline mode: checking cache and mock data');
+
+    // キャッシュをチェック
+    const cachedItems = getCachedSuggestions(trimmedQuery, targetLanguage);
+    if (cachedItems && cachedItems.length > 0) {
+      logger.info('[searchJaToEn] Returning cached suggestions (offline)');
+      return { items: cachedItems };
+    }
+
+    // キャッシュがない場合はモックデータ
+    const mockItems = findMockSuggestions(trimmedQuery);
+    logger.info(`[searchJaToEn] Returning ${mockItems.length} mock suggestions (offline)`);
+    if (mockItems.length > 0) {
+      setCachedSuggestions(trimmedQuery, mockItems, targetLanguage);
+    }
+    return { items: mockItems };
   }
 
   // Gemini未設定の場合はモックデータのみ
@@ -198,13 +219,38 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en')
  *
  * @param word - 検索する単語
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param detailLevel - AI返答の詳細度レベル（'concise' | 'detailed'）
+ * @param isOffline - オフライン状態かどうか（オプション）
  * @returns 単語の詳細情報
  */
-export async function getWordDetail(word: string, targetLanguage: string = 'en'): Promise<WordDetailResponse> {
+export async function getWordDetail(
+  word: string,
+  targetLanguage: string = 'en',
+  detailLevel?: 'concise' | 'detailed',
+  isOffline: boolean = false
+): Promise<WordDetailResponse> {
+  // オフライン時: モックデータのみ使用
+  if (isOffline) {
+    logger.info('[getWordDetail] Offline mode: using mock data only');
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const enDetails = mockDictionary.en_details as Record<string, WordDetailResponse>;
+    const detail = enDetails[word.toLowerCase()];
+
+    if (!detail) {
+      throw {
+        type: 'not_found',
+        message: `「${word}」が見つかりませんでした（オフライン）`
+      } as SearchError;
+    }
+
+    return detail;
+  }
+
   // AI生成を使用（Gemini API設定済みの場合）
   if (await isGeminiConfigured()) {
     try {
-      const detail = await generateWordDetail(word, targetLanguage);
+      const detail = await generateWordDetail(word, targetLanguage, detailLevel);
       return detail;
     } catch (error) {
       logger.error('AI生成エラー、モックデータにフォールバック:', error);
@@ -236,15 +282,46 @@ export async function getWordDetail(word: string, targetLanguage: string = 'en')
  *
  * @param word - 検索する単語
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param detailLevel - AI返答の詳細度レベル（'concise' | 'detailed'）
  * @param onProgress - 進捗コールバック（0-100、部分データ付き）
+ * @param isOffline - オフライン状態かどうか（オプション）
  * @returns 単語の詳細情報
  */
 export async function getWordDetailStream(
   word: string,
   targetLanguage: string = 'en',
-  onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void
+  detailLevel: 'concise' | 'detailed' = 'concise',
+  onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void,
+  isOffline: boolean = false
 ): Promise<WordDetailResponse> {
-  logger.info(`[Search API] getWordDetailStream (2-stage) called for: ${word} (${targetLanguage})`);
+  logger.info(`[Search API] getWordDetailStream (2-stage) called for: ${word} (${targetLanguage}, ${detailLevel}, offline: ${isOffline})`);
+
+  // オフライン時: モックデータのみ使用
+  if (isOffline) {
+    logger.info('[Search API] Offline mode: using mock data');
+
+    // 進捗表示のシミュレーション
+    if (onProgress) {
+      onProgress(50);
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    const enDetails = mockDictionary.en_details as Record<string, WordDetailResponse>;
+    const detail = enDetails[word.toLowerCase()];
+
+    if (!detail) {
+      throw {
+        type: 'not_found',
+        message: `「${word}」が見つかりませんでした（オフライン）`
+      } as SearchError;
+    }
+
+    if (onProgress) {
+      onProgress(100, detail);
+    }
+
+    return detail;
+  }
 
   // AI生成を使用（Gemini API設定済みの場合）
   try {
@@ -254,7 +331,7 @@ export async function getWordDetailStream(
     if (isConfigured) {
       try {
         logger.info('[Search API] Calling generateWordDetailTwoStage');
-        const detail = await generateWordDetailTwoStage(word, targetLanguage, onProgress);
+        const detail = await generateWordDetailTwoStage(word, targetLanguage, detailLevel, onProgress);
         logger.info('[Search API] generateWordDetailTwoStage succeeded');
         return detail;
       } catch (error) {
@@ -269,7 +346,7 @@ export async function getWordDetailStream(
         }
 
         // エラー時は通常版にフォールバック
-        return getWordDetail(word, targetLanguage);
+        return getWordDetail(word, targetLanguage, detailLevel, isOffline);
       }
     }
   } catch (configError) {
@@ -278,7 +355,7 @@ export async function getWordDetailStream(
 
   // APIキーなしの場合は通常版を使用
   logger.info('[Search API] Using mock data');
-  return getWordDetail(word, targetLanguage);
+  return getWordDetail(word, targetLanguage, detailLevel, isOffline);
 }
 
 /**

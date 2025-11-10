@@ -91,12 +91,17 @@ export async function generateSuggestionsFast(
 ): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number }>> {
   const modelConfig = selectModel();
 
+  // 性別が必要な言語かチェック
+  const genderLanguages = ['es', 'pt', 'fr', 'de', 'it', 'ru', 'ar', 'hi'];
+  const needsGender = genderLanguages.includes(targetLanguage);
+  const genderField = needsGender ? ', "gender": "m/f/n（名詞のみ）"' : '';
+
   // 基本情報のみのプロンプト（usageHintなし）
   const prompt = `日本語"${japaneseQuery}"に対応する${targetLanguage === 'en' ? '英' : targetLanguage}単語を3~5個、以下のJSON配列構造で生成：
 
 [
-  {"lemma": "単語1", "pos": ["品詞"], "shortSenseJa": "簡潔な意味（10文字以内）", "confidence": 関連性スコア0-1},
-  {"lemma": "単語2", "pos": ["品詞"], "shortSenseJa": "意味2", "confidence": スコア}
+  {"lemma": "単語1", "pos": ["品詞"], "shortSenseJa": "簡潔な意味（10文字以内）", "confidence": 関連性スコア0-1${genderField}},
+  {"lemma": "単語2", "pos": ["品詞"], "shortSenseJa": "意味2", "confidence": スコア${genderField}}
 ]
 
 要件:
@@ -193,6 +198,8 @@ export async function addUsageHints(
  *
  * バックエンドで段階的に生成し、フロントエンドがポーリングで取得。
  * 各セクションが実際に生成されるたびに即座に表示されます。
+ *
+ * 注意：辞書データは常に同じ構造（詳細度の概念なし）
  *
  * @param word - 検索する単語
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
@@ -314,14 +321,18 @@ export async function generateWordDetailStreamLegacy(
  *
  * 体感速度が10倍以上向上！
  *
+ * 注意：辞書データは常に同じ構造（詳細度の概念なし）
+ *
  * @param word - 検索する単語
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param detailLevel - AI返答の詳細度レベル（'concise' | 'detailed'）
  * @param onProgress - 進捗コールバック（0-100、部分データ付き）
  * @returns 単語の詳細情報
  */
 export async function generateWordDetailTwoStage(
   word: string,
   targetLanguage: string = 'en',
+  detailLevel: 'concise' | 'detailed' = 'concise',
   onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void
 ): Promise<WordDetailResponse> {
   const modelConfig = selectModel();
@@ -334,7 +345,7 @@ export async function generateWordDetailTwoStage(
     const basicPromise = generateBasicInfo<Partial<WordDetailResponse>>(basicPrompt, modelConfig);
 
     // ステージ2: 詳細情報を並行生成（2.5秒）
-    const detailPrompt = createDictionaryPrompt(word, targetLanguage);
+    const detailPrompt = createDictionaryPrompt(word, targetLanguage, detailLevel);
     const detailPromise = generateJSONProgressive<WordDetailResponse>(
       detailPrompt,
       modelConfig,

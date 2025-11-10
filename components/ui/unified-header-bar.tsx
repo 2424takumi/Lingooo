@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MenuIcon } from './icons';
 import Svg, { Path } from 'react-native-svg';
+import { PosTag } from './pos-tag';
 import { LanguageSwitcher } from './language-switcher';
 
 // Icons
@@ -76,7 +77,10 @@ interface UnifiedHeaderBarProps {
   // WordDetail
   word?: string;
   posTags?: string[];
+  gender?: 'm' | 'f' | 'n' | 'mf';
   onPronouncePress?: () => void;
+  // Network status
+  isOffline?: boolean;
 }
 
 export function UnifiedHeaderBar({
@@ -89,7 +93,9 @@ export function UnifiedHeaderBar({
   onBackPress,
   word,
   posTags = [],
+  gender,
   onPronouncePress,
+  isOffline = false,
 }: UnifiedHeaderBarProps) {
   // Home variant
   if (pageType === 'home') {
@@ -139,9 +145,7 @@ export function UnifiedHeaderBar({
         {posTags.length > 0 && (
           <View style={styles.tagRow}>
             {posTags.map((tag, index) => (
-              <View key={index} style={styles.posTagContainer}>
-                <Text style={styles.posTagText}>{tag}</Text>
-              </View>
+              <PosTag key={index} label={tag} gender={gender} />
             ))}
           </View>
         )}

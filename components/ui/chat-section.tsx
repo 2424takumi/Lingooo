@@ -7,12 +7,15 @@ import {
   TouchableOpacity,
   View,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import type { QAPair } from '@/types/chat';
 import { QuestionTag } from './question-tag';
 import { QACardList } from './qa-card-list';
+import { useAISettings } from '@/contexts/ai-settings-context';
 
 interface ChatSectionProps {
   placeholder?: string;
@@ -76,62 +79,26 @@ function SendIcon({ size = 20 }: { size?: number }) {
 function SliderIcon({ size = 24 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {/* Top slider */}
       <Path
-        d="M4 7h7"
+        d="M10 18H21M3 18H6M6 18V20M6 18V16M20 12H21M3 12H16M16 12V14M16 12V10M14 6H21M3 6H10M10 6V8M10 6V4"
         stroke="#686868"
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </Svg>
+  );
+}
+
+function PlusIcon({ size = 24 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M15 7h5"
-        stroke="#686868"
+        d="M12 5v14M5 12h14"
+        stroke="#00AA69"
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <Path
-        d="M11 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"
-        fill="#686868"
-      />
-      {/* Middle slider */}
-      <Path
-        d="M4 12h11"
-        stroke="#686868"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M19 12h1"
-        stroke="#686868"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M17 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"
-        fill="#686868"
-      />
-      {/* Bottom slider */}
-      <Path
-        d="M4 17h5"
-        stroke="#686868"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M13 17h7"
-        stroke="#686868"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M9 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"
-        fill="#686868"
       />
     </Svg>
   );
@@ -155,15 +122,36 @@ export function ChatSection({
   scope,
   identifier,
 }: ChatSectionProps) {
+  const { customQuestions, addCustomQuestion, removeCustomQuestion } = useAISettings();
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasManuallyClosedWithContent, setHasManuallyClosedWithContent] = useState(false);
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const [isCustomQuestionModalOpen, setIsCustomQuestionModalOpen] = useState(false);
+  const [customQuestionTitle, setCustomQuestionTitle] = useState('');
+  const [customQuestionText, setCustomQuestionText] = useState('');
+  const [inputHeight, setInputHeight] = useState(34);
   const inputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const prevQAPairsLengthRef = useRef(qaPairs.length);
+  const lastCardYRef = useRef<number>(0);
+  const prevIdentifierRef = useRef(identifier);
+
+  // テキストインプットの高さ制限
+  const MIN_INPUT_HEIGHT = 34;
+  const MAX_INPUT_HEIGHT = 106; // 約5行分（1行≈21px × 5 + padding）
+
+  // 単語（identifier）が変わったときにチャットを閉じる
+  useEffect(() => {
+    if (identifier !== prevIdentifierRef.current) {
+      setIsOpen(false);
+      setHasManuallyClosedWithContent(false);
+      setInputText('');
+      prevIdentifierRef.current = identifier;
+    }
+  }, [identifier]);
 
   useEffect(() => {
     // 新しいQAペアが追加された場合のみ自動的に開く
@@ -171,15 +159,23 @@ export function ChatSection({
       setIsOpen(true);
       setHasManuallyClosedWithContent(false);
     }
+
+    // 新しいQAペアが追加されたら即座にスクロール（生成中のカードを見せる）
+    if (qaPairs.length > prevQAPairsLengthRef.current && isOpen) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+
     prevQAPairsLengthRef.current = qaPairs.length;
   }, [qaPairs.length, isOpen]);
 
   // 自動スクロール: 新しいメッセージやストリーミング中
   useEffect(() => {
-    if (isOpen && qaPairs.length > 0) {
+    if (isOpen && qaPairs.length > 0 && lastCardYRef.current > 0) {
       // 少し遅延を入れてレンダリングを待つ
       setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: false });
+        scrollViewRef.current?.scrollTo({ y: lastCardYRef.current, animated: false });
       }, 50);
     }
   }, [qaPairs, isStreaming, isOpen]);
@@ -193,6 +189,7 @@ export function ChatSection({
       setIsOpen(true); // 送信時に開く
       await onSend(text.trim());
       setInputText('');
+      setInputHeight(MIN_INPUT_HEIGHT); // 送信後に高さをリセット
     } finally {
       setIsSubmitting(false);
     }
@@ -223,15 +220,46 @@ export function ChatSection({
     setIsOpen(true);
   };
 
+  // タイトルと実際の質問文のマッピングを作成
+  const questionMap = useMemo(() => {
+    const map = new Map<string, string>();
+    // カスタム質問のマッピング
+    customQuestions.forEach(cq => {
+      map.set(cq.title, cq.question);
+    });
+    // デフォルト質問とフォローアップ質問はタイトル=質問文
+    questionPresets.forEach(q => map.set(q, q));
+    followUps.forEach(q => map.set(q, q));
+    return map;
+  }, [customQuestions, questionPresets, followUps]);
+
   const combinedQuestions = useMemo(() => {
-    const tags = [...questionPresets];
+    // カスタム質問のタイトルを先頭に、次にデフォルト質問、最後にフォローアップ質問
+    const tags = [...customQuestions.map(cq => cq.title), ...questionPresets];
     for (const item of followUps) {
       if (!tags.includes(item)) {
         tags.push(item);
       }
     }
     return tags;
-  }, [questionPresets, followUps]);
+  }, [customQuestions, questionPresets, followUps]);
+
+  const handleAddCustomQuestion = async () => {
+    const title = customQuestionTitle.trim();
+    const question = customQuestionText.trim();
+    if (!title || !question) {
+      return;
+    }
+    try {
+      await addCustomQuestion(title, question);
+      setCustomQuestionTitle('');
+      setCustomQuestionText('');
+      setIsCustomQuestionModalOpen(false);
+    } catch (error) {
+      // エラーハンドリング（必要に応じて）
+      console.error('Failed to add custom question:', error);
+    }
+  };
 
   return (
     <View style={[styles.container, isOpen && styles.containerOpen]}>
@@ -241,9 +269,9 @@ export function ChatSection({
           style={styles.chatMessages}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => {
-            // コンテンツサイズが変更されたら自動的に下にスクロール（ストリーミング中は即座に）
-            if (isStreaming || qaPairs.some(pair => pair.status === 'pending')) {
-              scrollViewRef.current?.scrollToEnd({ animated: false });
+            // コンテンツサイズが変更されたら最後のカードの位置にスクロール（ストリーミング中は即座に）
+            if ((isStreaming || qaPairs.some(pair => pair.status === 'pending')) && lastCardYRef.current > 0) {
+              scrollViewRef.current?.scrollTo({ y: lastCardYRef.current, animated: false });
             }
           }}
         >
@@ -254,6 +282,9 @@ export function ChatSection({
                 onRetry={onRetryQuestion}
                 scope={scope}
                 identifier={identifier}
+                onLastCardLayout={(y) => {
+                  lastCardYRef.current = y;
+                }}
               />
             </View>
           ) : (
@@ -289,13 +320,23 @@ export function ChatSection({
           style={styles.questionScrollView}
           contentContainerStyle={styles.questionList}
         >
+          {/* Plus button for adding custom questions */}
+          <TouchableOpacity
+            style={styles.plusButton}
+            onPress={() => setIsCustomQuestionModalOpen(true)}
+          >
+            <PlusIcon size={20} />
+          </TouchableOpacity>
+
           {combinedQuestions.map((label, index) => (
             <QuestionTag
               key={`${label}-${index}`}
               label={label}
               onPress={() => {
                 setIsOpen(true);
-                onQuickQuestion?.(label);
+                // questionMapから実際の質問文を取得して送信
+                const actualQuestion = questionMap.get(label) || label;
+                onQuickQuestion?.(actualQuestion);
               }}
             />
           ))}
@@ -316,13 +357,21 @@ export function ChatSection({
             {/* Text Input */}
             <TextInput
               ref={inputRef}
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  height: Math.max(MIN_INPUT_HEIGHT, Math.min(inputHeight, MAX_INPUT_HEIGHT)),
+                },
+              ]}
               placeholder={placeholder}
               placeholderTextColor="#ACACAC"
               value={inputText}
               onChangeText={setInputText}
               onFocus={() => {
                 setIsInputFocused(true);
+              }}
+              onBlur={() => {
+                setIsInputFocused(false);
               }}
               editable={!isStreaming}
               onSubmitEditing={(e) => {
@@ -331,6 +380,15 @@ export function ChatSection({
                   void handleSubmit(text);
                 }
               }}
+              returnKeyType="send"
+              blurOnSubmit={false}
+              multiline={true}
+              textAlignVertical="top"
+              onContentSizeChange={(event) => {
+                const newHeight = event.nativeEvent.contentSize.height;
+                setInputHeight(newHeight);
+              }}
+              scrollEnabled={inputHeight >= MAX_INPUT_HEIGHT}
             />
 
             {/* Action Button */}
@@ -408,6 +466,86 @@ export function ChatSection({
             </View>
           </TouchableOpacity>
         </Modal>
+
+        {/* Custom Question Modal */}
+        <Modal
+          visible={isCustomQuestionModalOpen}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setIsCustomQuestionModalOpen(false)}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}
+          >
+            <TouchableOpacity
+              style={styles.modalOverlay}
+              activeOpacity={1}
+              onPress={() => {
+                setIsCustomQuestionModalOpen(false);
+                setCustomQuestionTitle('');
+                setCustomQuestionText('');
+              }}
+            >
+              <ScrollView
+                contentContainerStyle={styles.scrollViewContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.customQuestionModalContainer} onStartShouldSetResponder={() => true}>
+                  <Text style={styles.modalTitle}>カスタム質問を追加</Text>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>タイトル（タグに表示）</Text>
+                    <TextInput
+                      style={styles.customQuestionTitleInput}
+                      placeholder="例: 例文"
+                      placeholderTextColor="#ACACAC"
+                      value={customQuestionTitle}
+                      onChangeText={setCustomQuestionTitle}
+                      autoFocus
+                    />
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>質問文</Text>
+                    <TextInput
+                      style={styles.customQuestionInput}
+                      placeholder="例: この単語の例文を3つ教えて"
+                      placeholderTextColor="#ACACAC"
+                      value={customQuestionText}
+                      onChangeText={setCustomQuestionText}
+                      multiline
+                    />
+                  </View>
+
+                  <View style={styles.modalButtonsRow}>
+                    <TouchableOpacity
+                      style={styles.modalCancelButton}
+                      onPress={() => {
+                        setIsCustomQuestionModalOpen(false);
+                        setCustomQuestionTitle('');
+                        setCustomQuestionText('');
+                      }}
+                    >
+                      <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalAddButton,
+                        (!customQuestionTitle.trim() || !customQuestionText.trim()) && styles.modalAddButtonDisabled,
+                      ]}
+                      onPress={handleAddCustomQuestion}
+                      disabled={!customQuestionTitle.trim() || !customQuestionText.trim()}
+                    >
+                      <Text style={styles.modalAddButtonText}>追加</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </Modal>
       </View>
     </View>
   );
@@ -431,7 +569,7 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     flexShrink: 1,
     maxHeight: 512,
-    marginBottom: 0,
+    marginBottom: 10,
     minHeight: 0,
   },
   qaCardList: {
@@ -443,7 +581,7 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     flexShrink: 0,
-    marginTop: 4,
+    marginTop: 0,
     paddingTop: 0,
   },
   questionScrollView: {
@@ -471,7 +609,7 @@ const styles = StyleSheet.create({
   },
   inputRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: 10,
     minHeight: 34,
   },
@@ -487,6 +625,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
     letterSpacing: 1,
+    paddingTop: 9,
+    paddingBottom: 9,
+    paddingHorizontal: 0,
   },
   button: {
     width: 34,
@@ -605,5 +746,110 @@ const styles = StyleSheet.create({
   },
   toggleOptionTextActive: {
     color: '#000000',
+  },
+  plusButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  customQuestionModalContainer: {
+    width: '85%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+  },
+  inputGroup: {
+    gap: 6,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4A4A4A',
+  },
+  customQuestionTitleInput: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    color: '#000000',
+  },
+  customQuestionInput: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    color: '#000000',
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#686868',
+  },
+  modalAddButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#00AA69',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalAddButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  modalAddButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

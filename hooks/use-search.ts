@@ -14,6 +14,7 @@ import {
 } from '@/services/utils/language-detect';
 import { searchJaToEn, getWordDetail } from '@/services/api/search';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
+import { addSearchHistory } from '@/services/storage/search-history-storage';
 import type { SearchError } from '@/types/search';
 
 export function useSearch() {
@@ -59,6 +60,15 @@ export function useSearch() {
         // 非母語検索 → WordDetailPage（検出された言語の辞書検索）
         await searchAndNavigateToWord(normalizedQuery, targetLang);
       }
+
+      // 6. 検索履歴に保存
+      try {
+        await addSearchHistory(normalizedQuery, targetLang);
+      } catch (historyError) {
+        // 履歴保存に失敗しても検索は成功とみなす
+        console.error('Failed to save search history:', historyError);
+      }
+
       return true;
     } catch (err) {
       const searchError = err as SearchError;
