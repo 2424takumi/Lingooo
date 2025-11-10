@@ -21,7 +21,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.lingooo.mobile",
       "buildNumber": "1",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSUserActivityTypes": [
           "com.lingooo.mobile.search"
@@ -65,9 +64,7 @@
             "backgroundColor": "#000000"
           }
         }
-      ],
-      "@react-native-firebase/app",
-      "@react-native-firebase/crashlytics"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
