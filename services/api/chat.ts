@@ -256,6 +256,8 @@ export async function sendChatMessageStreamWebSocket(
     identifier: req.identifier,
     messages: req.messages,
     context: req.context,
+    detailLevel: req.detailLevel,
+    targetLanguage: req.targetLanguage,
   }, {
     onChunk: (data) => {
       if (data.content) {
@@ -343,4 +345,88 @@ export async function sendChatMessageStreamWebSocket(
       throw err;
     }
   })();
+}
+
+/**
+ * 追加質問専用のストリーミング関数（チャットコンテキストを経由しない）
+ * QAカード内の追加質問機能で使用
+ */
+export async function* sendFollowUpQuestionStream(
+  req: ChatRequest,
+  onContent: (content: string) => void,
+  onComplete: (fullAnswer: string) => void,
+  onError: (error: Error) => void
+): AsyncGenerator<string, void, void> {
+  logger.info('[Chat API] sendFollowUpQuestionStream called:', {
+    scope: req.scope,
+    identifier: req.identifier,
+    messageCount: req.messages.length,
+  });
+
+  const xhr = new XMLHttpRequest();
+  let accumulatedContent = '';
+  let buffer = '';
+  let lastProcessedIndex = 0;
+
+  xhr.open('POST', `${BACKEND_URL}/api/chat/stream`);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+
+  xhr.onprogress = () => {
+    const newText = xhr.responseText.substring(lastProcessedIndex);
+    lastProcessedIndex = xhr.responseText.length;
+
+    buffer += newText;
+
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6);
+
+        if (data === '[DONE]') {
+          continue;
+        }
+
+        try {
+          const event = JSON.parse(data);
+
+          if (event.type === 'content') {
+            accumulatedContent += event.content;
+            onContent(event.content);
+          } else if (event.type === 'error') {
+            onError(new Error(event.error));
+            return;
+          }
+        } catch (parseError) {
+          logger.error('[Chat API] Failed to parse SSE event:', parseError);
+        }
+      }
+    }
+  };
+
+  xhr.onload = () => {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      onComplete(accumulatedContent);
+    } else {
+      onError(new Error(`HTTP error! status: ${xhr.status}`));
+    }
+  };
+
+  xhr.onerror = () => {
+    logger.error('[Chat API] XHR error occurred');
+    onError(new Error('Network error'));
+  };
+
+  xhr.send(
+    JSON.stringify({
+      sessionId: req.sessionId,
+      scope: req.scope,
+      identifier: req.identifier,
+      messages: req.messages,
+      context: req.context,
+      detailLevel: req.detailLevel,
+      targetLanguage: req.targetLanguage,
+    })
+  );
 }

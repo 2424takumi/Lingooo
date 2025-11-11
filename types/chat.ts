@@ -1,4 +1,4 @@
-export type ChatScope = 'word' | 'search';
+export type ChatScope = 'word' | 'search' | 'word-detail' | 'general' | 'grammar' | 'pronunciation';
 
 export type ChatRole = 'user' | 'assistant' | 'system';
 
@@ -62,4 +62,11 @@ export interface QAPair {
   a?: string;
   status: QAPairStatus;
   errorMessage?: string;
+  followUpQAs?: Array<{
+    id: string;
+    q: string;
+    a?: string;
+    status: QAPairStatus;
+    errorMessage?: string;
+  }>;
 }
