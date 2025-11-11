@@ -35,6 +35,7 @@ interface ChatSectionProps {
   identifier?: string;
   onBookmarkAdded?: (bookmarkId: string) => void;
   expandedMaxHeight?: number; // 展開時のchatMessagesの最大高さ（デフォルト: 512）
+  onFollowUpQuestion?: (pairId: string, question: string) => Promise<void>;
 }
 
 function ExpandIcon({ size = 18 }: { size?: number }) {
@@ -126,6 +127,7 @@ export function ChatSection({
   identifier,
   onBookmarkAdded,
   expandedMaxHeight = 512,
+  onFollowUpQuestion,
 }: ChatSectionProps) {
   const { customQuestions, addCustomQuestion } = useAISettings();
   const [isOpen, setIsOpen] = useState(false);
@@ -288,6 +290,7 @@ export function ChatSection({
                   lastCardYRef.current = y;
                 }}
                 onBookmarkAdded={onBookmarkAdded}
+                onFollowUpQuestion={onFollowUpQuestion}
               />
             </View>
           ) : (

@@ -1,82 +1,134 @@
-import { Tabs } from 'expo-router';
+import { Stack } from 'expo-router';
 import React from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <Tabs
+    <Stack
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarStyle: { display: 'none' },
         gestureEnabled: true,
         gestureDirection: 'horizontal',
       }}>
-      <Tabs.Screen
+      <Stack.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
-      <Tabs.Screen
+      <Stack.Screen
         name="search"
         options={{
           title: 'Search',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="magnifyingglass" color={color} />,
         }}
       />
-      <Tabs.Screen
+      <Stack.Screen
         name="word-detail"
         options={{
           title: 'Word',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book.fill" color={color} />,
         }}
       />
-      <Tabs.Screen
+      <Stack.Screen
         name="explore"
         options={{
           title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
         }}
       />
-      <Tabs.Screen
+      <Stack.Screen
         name="settings"
         options={{
-          href: null,
+          title: 'Settings',
         }}
       />
-      <Tabs.Screen
+      <Stack.Screen
         name="help"
         options={{
-          href: null,
+          title: 'Help',
         }}
       />
-      <Tabs.Screen
+      <Stack.Screen
         name="about"
         options={{
-          href: null,
+          title: 'About',
         }}
       />
-      <Tabs.Screen
+      <Stack.Screen
         name="history"
         options={{
-          href: null,
+          title: 'History',
         }}
       />
-      <Tabs.Screen
+      <Stack.Screen
         name="bookmarks"
         options={{
-          href: null,
+          title: 'Bookmarks',
         }}
       />
-    </Tabs>
+      <Stack.Screen
+        name="folder-detail"
+        options={{
+          title: 'Folder',
+        }}
+      />
+      <Stack.Screen
+        name="font-size"
+        options={{
+          title: 'Font Size',
+        }}
+      />
+      <Stack.Screen
+        name="learning-languages"
+        options={{
+          title: 'Learning Languages',
+        }}
+      />
+      <Stack.Screen
+        name="custom-questions"
+        options={{
+          title: 'Custom Questions',
+        }}
+      />
+      <Stack.Screen
+        name="privacy-policy"
+        options={{
+          title: 'Privacy Policy',
+        }}
+      />
+      <Stack.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+        }}
+      />
+      <Stack.Screen
+        name="native-language-select"
+        options={{
+          title: 'Native Language',
+        }}
+      />
+      <Stack.Screen
+        name="language-select"
+        options={{
+          title: 'Select Language',
+        }}
+      />
+      <Stack.Screen
+        name="theme-select"
+        options={{
+          title: 'Theme',
+        }}
+      />
+      <Stack.Screen
+        name="data-management"
+        options={{
+          title: 'Data Management',
+        }}
+      />
+      <Stack.Screen
+        name="terms-of-service"
+        options={{
+          title: 'Terms of Service',
+        }}
+      />
+    </Stack>
   );
 }

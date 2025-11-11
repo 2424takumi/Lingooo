@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -19,6 +19,8 @@ import { addSearchHistory } from '@/services/storage/search-history-storage';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
 import type { SuggestionItem } from '@/types/search';
+import { generateId } from '@/utils/id';
+import type { QAPair } from '@/types/chat';
 
 export default function SearchScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
@@ -133,10 +135,25 @@ export default function SearchScreen() {
     targetLanguage: currentLanguage.code,
   });
 
-  const qaPairs = useMemo(
-    () => toQAPairs(chatMessages, { fallbackError: chatError }),
-    [chatMessages, chatError]
-  );
+  // QAPairsをstateとして管理（追加質問をサポートするため）
+  const [qaPairs, setQAPairs] = useState<QAPair[]>([]);
+
+  // chatMessagesが変更されたときにqaPairsを更新
+  useEffect(() => {
+    const newPairs = toQAPairs(chatMessages, { fallbackError: chatError });
+
+    // 既存のfollowUpQAsを保持しながらqaPairsを更新
+    setQAPairs(prevPairs => {
+      return newPairs.map(newPair => {
+        const existingPair = prevPairs.find(p => p.id === newPair.id);
+        if (existingPair?.followUpQAs) {
+          // 既存のfollowUpQAsを保持
+          return { ...newPair, followUpQAs: existingPair.followUpQAs };
+        }
+        return newPair;
+      });
+    });
+  }, [chatMessages, chatError]);
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -159,6 +176,120 @@ export default function SearchScreen() {
       return;
     }
     void sendChatMessage(question);
+  };
+
+  // 追加質問ハンドラ
+  const handleFollowUpQuestion = async (pairId: string, question: string) => {
+    logger.debug('[Search] handleFollowUpQuestion:', { pairId, question });
+
+    // 1. 対象のQAPairを見つける
+    const targetPair = qaPairs.find(p => p.id === pairId);
+    if (!targetPair) {
+      logger.error('[Search] Target pair not found:', pairId);
+      return;
+    }
+
+    // 2. 新しい追加質問オブジェクトを作成（pending状態）
+    const followUpId = generateId('followup');
+    const newFollowUp = {
+      id: followUpId,
+      q: question,
+      a: '',
+      status: 'pending' as const,
+    };
+
+    // 3. QAPairのfollowUpQAs配列に追加
+    setQAPairs(prev => prev.map(pair => {
+      if (pair.id === pairId) {
+        return {
+          ...pair,
+          followUpQAs: [...(pair.followUpQAs || []), newFollowUp],
+        };
+      }
+      return pair;
+    }));
+
+    // 4. 文脈を含めたメッセージを作成
+    let contextualQuestion = `[前回の質問]\n${targetPair.q}\n\n[前回の回答]\n${targetPair.a}`;
+
+    // 以前の追加質問と回答があれば追加
+    if (targetPair.followUpQAs && targetPair.followUpQAs.length > 0) {
+      targetPair.followUpQAs.forEach((fu, index) => {
+        if (fu.status === 'completed' && fu.a) {
+          contextualQuestion += `\n\n[追加質問${index + 1}]\n${fu.q}\n\n[追加回答${index + 1}]\n${fu.a}`;
+        }
+      });
+    }
+
+    contextualQuestion += `\n\n[新しい追加質問]\n${question}`;
+
+    // 5. チャットコンテキストを経由せずに直接APIを呼び出し
+    const { sendFollowUpQuestionStream } = await import('@/services/api/chat');
+
+    try {
+      const generator = sendFollowUpQuestionStream(
+        {
+          sessionId: generateId('session'),
+          scope: 'word',
+          identifier: query,
+          messages: [{ id: generateId('msg'), role: 'user', content: contextualQuestion, createdAt: Date.now() }],
+          detailLevel: aiDetailLevel,
+          targetLanguage: currentLanguage.code,
+        },
+        // onContent: ストリーミング中の更新
+        (content) => {
+          setQAPairs(prev => prev.map(pair => {
+            if (pair.id === pairId) {
+              return {
+                ...pair,
+                followUpQAs: pair.followUpQAs?.map(fu =>
+                  fu.id === followUpId ? { ...fu, a: fu.a + content } : fu
+                ),
+              };
+            }
+            return pair;
+          }));
+        },
+        // onComplete: 完了時
+        (fullAnswer) => {
+          setQAPairs(prev => prev.map(pair => {
+            if (pair.id === pairId) {
+              return {
+                ...pair,
+                followUpQAs: pair.followUpQAs?.map(fu =>
+                  fu.id === followUpId ? { ...fu, a: fullAnswer, status: 'completed' as const } : fu
+                ),
+              };
+            }
+            return pair;
+          }));
+        },
+        // onError: エラー時
+        (error) => {
+          logger.error('[Search] Follow-up question error:', error);
+          setQAPairs(prev => prev.map(pair => {
+            if (pair.id === pairId) {
+              return {
+                ...pair,
+                followUpQAs: pair.followUpQAs?.map(fu =>
+                  fu.id === followUpId
+                    ? { ...fu, status: 'error' as const, errorMessage: error.message }
+                    : fu
+                ),
+              };
+            }
+            return pair;
+          }));
+        }
+      );
+
+      // ジェネレーターを開始（実際にはコールバックが処理する）
+      for await (const _ of generator) {
+        // コールバックで処理されるため、ここでは何もしない
+      }
+    } catch (error) {
+      logger.error('[Search] Failed to send follow-up question:', error);
+    }
   };
 
   const handleWordCardPress = async (item: SuggestionItem) => {
@@ -266,6 +397,7 @@ export default function SearchScreen() {
             onDetailLevelChange={setAIDetailLevel}
             scope="search"
             identifier={query}
+            onFollowUpQuestion={handleFollowUpQuestion}
           />
         </View>
       </KeyboardAvoidingView>

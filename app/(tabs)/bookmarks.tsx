@@ -84,6 +84,20 @@ function PlusIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: str
   );
 }
 
+function CheckIcon({ size = 20, color = '#00AA69' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M20 6L9 17l-5-5"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 type TabType = 'all' | 'folders';
 
 interface FolderCardProps {
@@ -272,6 +286,8 @@ export default function BookmarksScreen() {
   const [isEditFolderModalOpen, setIsEditFolderModalOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<BookmarkFolder | null>(null);
   const [editFolderName, setEditFolderName] = useState('');
+  const [isCreatingNewFolder, setIsCreatingNewFolder] = useState(false);
+  const [newFolderNameInline, setNewFolderNameInline] = useState('');
 
   // Load bookmarks and folders
   const fetchBookmarks = useCallback(async () => {
@@ -386,6 +402,31 @@ export default function BookmarksScreen() {
     } catch (error) {
       logger.error('[Bookmarks] Failed to add bookmark to folder:', error);
       Alert.alert('エラー', 'フォルダへの追加に失敗しました');
+    }
+  };
+
+  // Handle create new folder inline
+  const handleCreateNewFolderInline = async () => {
+    const name = newFolderNameInline.trim();
+    if (!name || !selectedBookmarkId) {
+      return;
+    }
+
+    try {
+      const newFolder = await addFolder(name);
+      setFolders(prev => [...prev, newFolder]);
+      await updateBookmarkFolder(selectedBookmarkId, newFolder.id);
+      setBookmarks(prev => prev.map(b =>
+        b.id === selectedBookmarkId ? { ...b, folder: newFolder.id } : b
+      ));
+      setNewFolderNameInline('');
+      setIsCreatingNewFolder(false);
+      setIsFolderSelectModalOpen(false);
+      setSelectedBookmarkId(null);
+      logger.debug('[Bookmarks] New folder created and bookmark added:', newFolder.id);
+    } catch (error) {
+      logger.error('[Bookmarks] Failed to create folder:', error);
+      Alert.alert('エラー', 'フォルダの作成に失敗しました');
     }
   };
 
@@ -696,77 +737,144 @@ export default function BookmarksScreen() {
           onRequestClose={() => {
             setIsFolderSelectModalOpen(false);
             setSelectedBookmarkId(null);
+            setIsCreatingNewFolder(false);
+            setNewFolderNameInline('');
           }}
         >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => {
-              setIsFolderSelectModalOpen(false);
-              setSelectedBookmarkId(null);
-            }}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}
           >
-            <View style={styles.folderSelectModalContainer} onStartShouldSetResponder={() => true}>
-              <Text style={styles.modalTitle}>フォルダに追加</Text>
+            <TouchableOpacity
+              style={styles.modalOverlay}
+              activeOpacity={1}
+              onPress={() => {
+                setIsFolderSelectModalOpen(false);
+                setSelectedBookmarkId(null);
+                setIsCreatingNewFolder(false);
+                setNewFolderNameInline('');
+              }}
+            >
+              <View style={styles.folderSelectModalContainer} onStartShouldSetResponder={() => true}>
+                <Text style={styles.modalTitle}>フォルダに追加</Text>
 
-              <ScrollView style={styles.folderSelectList} showsVerticalScrollIndicator={false}>
-                {/* No folder option */}
-                <TouchableOpacity
-                  style={styles.folderSelectItem}
-                  onPress={() => handleAddBookmarkToFolder(undefined)}
-                >
-                  <Text style={styles.folderSelectItemText}>フォルダなし</Text>
-                </TouchableOpacity>
+                <ScrollView style={styles.folderSelectList} showsVerticalScrollIndicator={false}>
+                  {/* No folder option */}
+                  {!isCreatingNewFolder && (() => {
+                    const currentBookmark = bookmarks.find(b => b.id === selectedBookmarkId);
+                    const isNoFolder = !currentBookmark?.folder;
 
-                {/* Existing folders */}
-                {folders.length > 0 ? (
-                  folders.map((folder) => (
+                    return (
+                      <TouchableOpacity
+                        style={[
+                          styles.folderSelectItem,
+                          isNoFolder && styles.folderSelectItemActive
+                        ]}
+                        onPress={() => handleAddBookmarkToFolder(undefined)}
+                      >
+                        <Text style={[styles.folderSelectItemText, { flex: 1 }]}>フォルダなし</Text>
+                        {isNoFolder && <CheckIcon size={20} color="#00AA69" />}
+                      </TouchableOpacity>
+                    );
+                  })()}
+
+                  {/* Existing folders */}
+                  {!isCreatingNewFolder && folders.length > 0 && (
+                    folders.map((folder) => {
+                      const currentBookmark = bookmarks.find(b => b.id === selectedBookmarkId);
+                      const isCurrentFolder = currentBookmark?.folder === folder.id;
+
+                      return (
+                        <TouchableOpacity
+                          key={folder.id}
+                          style={[
+                            styles.folderSelectItem,
+                            isCurrentFolder && styles.folderSelectItemActive
+                          ]}
+                          onPress={() => handleAddBookmarkToFolder(folder.id)}
+                        >
+                          <FolderIcon size={20} color="#00AA69" />
+                          <Text style={styles.folderSelectItemText}>{folder.name}</Text>
+                          {isCurrentFolder && <CheckIcon size={20} color="#00AA69" />}
+                        </TouchableOpacity>
+                      );
+                    })
+                  )}
+
+                  {!isCreatingNewFolder && folders.length === 0 && (
+                    <View style={styles.noFoldersMessage}>
+                      <Text style={styles.noFoldersMessageText}>
+                        フォルダがまだありません
+                      </Text>
+                      <Text style={styles.noFoldersMessageSubtext}>
+                        下のボタンから新しいフォルダを作成できます
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Create new folder UI */}
+                  {isCreatingNewFolder ? (
+                    <View style={styles.createFolderInline}>
+                      <View style={styles.inputGroup}>
+                        <Text style={styles.inputLabel}>フォルダ名</Text>
+                        <TextInput
+                          style={styles.folderNameInput}
+                          placeholder="例: 重要な単語"
+                          placeholderTextColor="#ACACAC"
+                          value={newFolderNameInline}
+                          onChangeText={setNewFolderNameInline}
+                          autoFocus
+                        />
+                      </View>
+                      <View style={styles.modalButtonsRow}>
+                        <TouchableOpacity
+                          style={styles.modalCancelButton}
+                          onPress={() => {
+                            setIsCreatingNewFolder(false);
+                            setNewFolderNameInline('');
+                          }}
+                        >
+                          <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[
+                            styles.modalAddButton,
+                            !newFolderNameInline.trim() && styles.modalAddButtonDisabled,
+                          ]}
+                          onPress={handleCreateNewFolderInline}
+                          disabled={!newFolderNameInline.trim()}
+                        >
+                          <Text style={styles.modalAddButtonText}>作成して追加</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
                     <TouchableOpacity
-                      key={folder.id}
-                      style={styles.folderSelectItem}
-                      onPress={() => handleAddBookmarkToFolder(folder.id)}
+                      style={[styles.folderSelectItem, styles.createFolderItem]}
+                      onPress={() => setIsCreatingNewFolder(true)}
                     >
-                      <FolderIcon size={20} color="#00AA69" />
-                      <Text style={styles.folderSelectItemText}>{folder.name}</Text>
+                      <PlusIcon size={20} color="#00AA69" />
+                      <Text style={[styles.folderSelectItemText, styles.createFolderText]}>
+                        新しいフォルダを作成
+                      </Text>
                     </TouchableOpacity>
-                  ))
-                ) : (
-                  <View style={styles.noFoldersMessage}>
-                    <Text style={styles.noFoldersMessageText}>
-                      フォルダがまだありません
-                    </Text>
-                    <Text style={styles.noFoldersMessageSubtext}>
-                      下のボタンから新しいフォルダを作成できます
-                    </Text>
-                  </View>
+                  )}
+                </ScrollView>
+
+                {!isCreatingNewFolder && (
+                  <TouchableOpacity
+                    style={styles.modalCancelButton}
+                    onPress={() => {
+                      setIsFolderSelectModalOpen(false);
+                      setSelectedBookmarkId(null);
+                    }}
+                  >
+                    <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+                  </TouchableOpacity>
                 )}
-
-                {/* Create new folder option */}
-                <TouchableOpacity
-                  style={[styles.folderSelectItem, styles.createFolderItem]}
-                  onPress={() => {
-                    setIsFolderSelectModalOpen(false);
-                    setIsCreateFolderModalOpen(true);
-                  }}
-                >
-                  <PlusIcon size={20} color="#00AA69" />
-                  <Text style={[styles.folderSelectItemText, styles.createFolderText]}>
-                    新しいフォルダを作成
-                  </Text>
-                </TouchableOpacity>
-              </ScrollView>
-
-              <TouchableOpacity
-                style={styles.modalCancelButton}
-                onPress={() => {
-                  setIsFolderSelectModalOpen(false);
-                  setSelectedBookmarkId(null);
-                }}
-              >
-                <Text style={styles.modalCancelButtonText}>キャンセル</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Folder Menu Modal */}
@@ -1160,6 +1268,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     marginBottom: 8,
   },
+  folderSelectItemActive: {
+    backgroundColor: '#E5F3E8',
+    borderWidth: 1,
+    borderColor: '#00AA69',
+  },
   folderSelectItemText: {
     fontSize: 16,
     fontWeight: '500',
@@ -1232,5 +1345,9 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#ACACAC',
     textAlign: 'center',
+  },
+  createFolderInline: {
+    padding: 16,
+    gap: 16,
   },
 });

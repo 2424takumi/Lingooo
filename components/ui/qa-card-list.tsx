@@ -10,9 +10,10 @@ interface QACardListProps {
   identifier?: string;
   onLastCardLayout?: (y: number) => void;
   onBookmarkAdded?: (bookmarkId: string) => void;
+  onFollowUpQuestion?: (pairId: string, question: string) => Promise<void>;
 }
 
-export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout, onBookmarkAdded }: QACardListProps) {
+export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout, onBookmarkAdded, onFollowUpQuestion }: QACardListProps) {
   if (!pairs.length) {
     return null;
   }
@@ -36,6 +37,7 @@ export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout
               scope={scope}
               identifier={identifier}
               onBookmarkAdded={onBookmarkAdded}
+              onFollowUpQuestion={onFollowUpQuestion ? (question) => onFollowUpQuestion(pair.id, question) : undefined}
             />
           </View>
         );
