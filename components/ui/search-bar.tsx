@@ -1,5 +1,5 @@
-import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard, ScrollView } from 'react-native';
-import { useState, useMemo, useCallback } from 'react';
+import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard, ScrollView, Pressable } from 'react-native';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { SearchIcon } from './icons';
 import { LanguageTag } from './language-tag';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
@@ -19,6 +19,7 @@ export function SearchBar({
 }: SearchBarProps) {
   const { learningLanguages, currentLanguage, setCurrentLanguage } = useLearningLanguages();
   const [internalValue, setInternalValue] = useState('');
+  const inputRef = useRef<TextInput>(null);
 
   // 制御コンポーネントと非制御コンポーネントの両方に対応（最適化）
   const searchText = useMemo(
@@ -48,6 +49,10 @@ export function SearchBar({
     await setCurrentLanguage(languageId);
   }, [setCurrentLanguage]);
 
+  const handleContainerPress = useCallback(() => {
+    inputRef.current?.focus();
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.languageTabContainer}>
@@ -66,8 +71,9 @@ export function SearchBar({
           ))}
         </ScrollView>
       </View>
-      <View style={styles.searchInputContainer}>
+      <Pressable onPress={handleContainerPress} style={styles.searchInputContainer}>
         <TextInput
+          ref={inputRef}
           style={styles.input}
           placeholder={placeholder}
           placeholderTextColor="#ACACAC"
@@ -78,7 +84,7 @@ export function SearchBar({
         <TouchableOpacity style={styles.searchButton} onPress={handleSearchPress}>
           <SearchIcon size={20} color="#FFFFFF" />
         </TouchableOpacity>
-      </View>
+      </Pressable>
     </View>
   );
 }

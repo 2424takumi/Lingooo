@@ -11,6 +11,7 @@ import { loadBookmarks, removeBookmark, loadFolders, addFolder, updateBookmarkFo
 import { CopyIcon } from '@/components/icons/copy-icon';
 import Svg, { Path } from 'react-native-svg';
 import { logger } from '@/utils/logger';
+import { useLearningLanguages } from '@/contexts/learning-languages-context';
 
 // Icons
 function LockIcon({ size = 16, color = '#686868' }: { size?: number; color?: string }) {
@@ -129,9 +130,10 @@ interface BookmarkCardProps {
   bookmark: ChatBookmark;
   onDelete: (id: string) => void;
   onAddToFolder: (bookmarkId: string) => void;
+  onCardPress?: (bookmark: ChatBookmark) => void;
 }
 
-function BookmarkCard({ bookmark, onDelete, onAddToFolder }: BookmarkCardProps) {
+function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: BookmarkCardProps) {
   const labelColor = useThemeColor({ light: '#949494', dark: '#8E8E93' }, 'icon');
   const iconColor = useThemeColor({ light: '#686868', dark: '#8E8E93' }, 'icon');
 
@@ -232,16 +234,21 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder }: BookmarkCardProps) 
       </View>
 
       {/* QA Card */}
-      <QACard
-        pair={{
-          q: bookmark.question,
-          a: bookmark.answer,
-          status: 'completed',
-        }}
-        scope={bookmark.scope}
-        identifier={bookmark.identifier}
-        hideActions={true}
-      />
+      <Pressable
+        onPress={() => onCardPress?.(bookmark)}
+        disabled={!onCardPress || bookmark.scope !== 'word'}
+      >
+        <QACard
+          pair={{
+            q: bookmark.question,
+            a: bookmark.answer,
+            status: 'completed',
+          }}
+          scope={bookmark.scope}
+          identifier={bookmark.identifier}
+          hideActions={true}
+        />
+      </Pressable>
     </View>
   );
 }
@@ -250,6 +257,7 @@ export default function BookmarksScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const tabTextColor = useThemeColor({ light: '#686868', dark: '#8E8E93' }, 'icon');
   const activeTabColor = useThemeColor({}, 'primary');
+  const { currentLanguage } = useLearningLanguages();
 
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [bookmarks, setBookmarks] = useState<ChatBookmark[]>([]);
@@ -352,8 +360,14 @@ export default function BookmarksScreen() {
   };
 
   // Handle open folder select modal
-  const handleOpenFolderSelect = (bookmarkId: string) => {
+  const handleOpenFolderSelect = async (bookmarkId: string) => {
+    logger.debug('[Bookmarks] Opening folder select modal for bookmark:', bookmarkId);
     setSelectedBookmarkId(bookmarkId);
+
+    // Reload folders to ensure we have the latest list
+    await fetchFolders();
+    logger.debug('[Bookmarks] Current folders count:', folders.length);
+
     setIsFolderSelectModalOpen(true);
   };
 
@@ -438,6 +452,20 @@ export default function BookmarksScreen() {
       ]
     );
   };
+
+  // Handle bookmark card press (navigate to word detail page)
+  const handleCardPress = useCallback((bookmark: ChatBookmark) => {
+    if (bookmark.scope === 'word') {
+      logger.debug('[Bookmarks] Navigating to word detail:', bookmark.identifier);
+      router.push({
+        pathname: '/(tabs)/word-detail',
+        params: {
+          word: bookmark.identifier,
+          targetLanguage: currentLanguage.id,
+        },
+      });
+    }
+  }, [currentLanguage.id]);
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
@@ -563,6 +591,7 @@ export default function BookmarksScreen() {
                   bookmark={bookmark}
                   onDelete={handleDelete}
                   onAddToFolder={handleOpenFolderSelect}
+                  onCardPress={handleCardPress}
                 />
               ))}
             </View>
@@ -690,16 +719,27 @@ export default function BookmarksScreen() {
                 </TouchableOpacity>
 
                 {/* Existing folders */}
-                {folders.map((folder) => (
-                  <TouchableOpacity
-                    key={folder.id}
-                    style={styles.folderSelectItem}
-                    onPress={() => handleAddBookmarkToFolder(folder.id)}
-                  >
-                    <FolderIcon size={20} color="#00AA69" />
-                    <Text style={styles.folderSelectItemText}>{folder.name}</Text>
-                  </TouchableOpacity>
-                ))}
+                {folders.length > 0 ? (
+                  folders.map((folder) => (
+                    <TouchableOpacity
+                      key={folder.id}
+                      style={styles.folderSelectItem}
+                      onPress={() => handleAddBookmarkToFolder(folder.id)}
+                    >
+                      <FolderIcon size={20} color="#00AA69" />
+                      <Text style={styles.folderSelectItemText}>{folder.name}</Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <View style={styles.noFoldersMessage}>
+                    <Text style={styles.noFoldersMessageText}>
+                      フォルダがまだありません
+                    </Text>
+                    <Text style={styles.noFoldersMessageSubtext}>
+                      下のボタンから新しいフォルダを作成できます
+                    </Text>
+                  </View>
+                )}
 
                 {/* Create new folder option */}
                 <TouchableOpacity
@@ -1174,5 +1214,23 @@ const styles = StyleSheet.create({
   folderMenuItemTextDanger: {
     color: '#CC0000',
     fontWeight: '600',
+  },
+  noFoldersMessage: {
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  noFoldersMessageText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#686868',
+    textAlign: 'center',
+  },
+  noFoldersMessageSubtext: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#ACACAC',
+    textAlign: 'center',
   },
 });

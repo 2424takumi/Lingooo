@@ -34,6 +34,7 @@ interface ChatSectionProps {
   scope?: string;
   identifier?: string;
   onBookmarkAdded?: (bookmarkId: string) => void;
+  expandedMaxHeight?: number; // 展開時のchatMessagesの最大高さ（デフォルト: 512）
 }
 
 function ExpandIcon({ size = 18 }: { size?: number }) {
@@ -124,6 +125,7 @@ export function ChatSection({
   scope,
   identifier,
   onBookmarkAdded,
+  expandedMaxHeight = 512,
 }: ChatSectionProps) {
   const { customQuestions, addCustomQuestion } = useAISettings();
   const [isOpen, setIsOpen] = useState(false);
@@ -266,7 +268,7 @@ export function ChatSection({
       {isOpen && (
         <ScrollView
           ref={scrollViewRef}
-          style={styles.chatMessages}
+          style={[styles.chatMessages, { maxHeight: expandedMaxHeight }]}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => {
             // コンテンツサイズが変更されたら最後のカードの位置にスクロール（ストリーミング中は即座に）

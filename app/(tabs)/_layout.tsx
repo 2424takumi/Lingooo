@@ -16,6 +16,8 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: { display: 'none' },
+        gestureEnabled: true,
+        gestureDirection: 'horizontal',
       }}>
       <Tabs.Screen
         name="index"

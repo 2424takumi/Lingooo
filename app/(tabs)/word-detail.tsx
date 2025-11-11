@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Modal, Dimensions, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -18,6 +18,7 @@ import { loadFolders, updateBookmarkFolder, type BookmarkFolder } from '@/servic
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useAISettings } from '@/contexts/ai-settings-context';
+import { useClipboardSearch } from '@/hooks/use-clipboard-search';
 import { getWordDetailStream } from '@/services/api/search';
 import type { WordDetailResponse } from '@/types/search';
 import { getCachedWordDetail, getPendingPromise } from '@/services/cache/word-detail-cache';
@@ -88,6 +89,50 @@ export default function WordDetailScreen() {
     () => toQAPairs(chatMessages, { fallbackError: chatError }),
     [chatMessages, chatError]
   );
+
+  // クリップボード監視 - word-detailでは手動でペースト確認
+  const { clipboardText, shouldSearch: shouldPaste, clearClipboard } = useClipboardSearch({
+    enabled: true,
+    autoSearch: false, // 自動検索は無効、手動でペースト確認
+  });
+
+  // クリップボードテキストが検出されたら確認ダイアログを表示
+  useEffect(() => {
+    if (shouldPaste && clipboardText) {
+      Alert.alert(
+        'クリップボードからペースト',
+        `コピーしたテキストをチャットに入力しますか？\n\n「${clipboardText.substring(0, 50)}${clipboardText.length > 50 ? '...' : ''}」`,
+        [
+          {
+            text: 'キャンセル',
+            style: 'cancel',
+            onPress: () => {
+              clearClipboard();
+            },
+          },
+          {
+            text: 'ペースト',
+            onPress: () => {
+              // チャットにペーストして送信
+              void sendChatMessage(clipboardText);
+              clearClipboard();
+            },
+          },
+        ]
+      );
+    }
+  }, [shouldPaste, clipboardText, clearClipboard, sendChatMessage]);
+
+  // チャット展開時の最大高さを計算（ヘッダーの下から画面下部まで）
+  const chatExpandedMaxHeight = useMemo(() => {
+    const screenHeight = Dimensions.get('window').height;
+    const headerHeight = 52; // UnifiedHeaderBarの高さ
+    const chatClosedHeight = 116; // ChatSection閉じた状態の最低高さ
+    const padding = 36; // 余白（20 + 16px追加）
+
+    // 画面高さ - safeAreaTop - headerHeight - chatClosedHeight - bottomSafeArea - padding
+    return screenHeight - safeAreaInsets.top - headerHeight - chatClosedHeight - safeAreaInsets.bottom - padding;
+  }, [safeAreaInsets.top, safeAreaInsets.bottom]);
 
   // オーディオモードを設定（サイレントモードでも音声再生を可能に）
   useEffect(() => {
@@ -503,6 +548,7 @@ export default function WordDetailScreen() {
       >
         <View pointerEvents="box-none" style={styles.chatContainerFixed}>
           <ChatSection
+            key={chatIdentifier} // Reset chat state when navigating to a different word
             placeholder="この単語について質問をする..."
             qaPairs={qaPairs}
             followUps={followUps}
@@ -516,6 +562,7 @@ export default function WordDetailScreen() {
             scope="word"
             identifier={chatIdentifier}
             onBookmarkAdded={handleBookmarkAdded}
+            expandedMaxHeight={chatExpandedMaxHeight}
           />
         </View>
       </KeyboardAvoidingView>
