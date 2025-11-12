@@ -40,6 +40,14 @@ export function useClipboardSearch(
   const lastCheckedText = useRef<string>('');
   const appState = useRef(AppState.currentState);
 
+  // onSearchをrefで保持して、useEffect依存配列から除外
+  const onSearchRef = useRef(onSearch);
+
+  // onSearchが変更されたら最新版をrefに保存
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
   /**
    * クリップボードの内容が検索可能かチェック
    */
@@ -123,8 +131,8 @@ export function useClipboardSearch(
       await AsyncStorage.setItem(LAST_CLIPBOARD_KEY, text);
 
       // 自動検索が有効な場合はコールバック実行
-      if (autoSearch && onSearch) {
-        onSearch(text.trim());
+      if (autoSearch && onSearchRef.current) {
+        onSearchRef.current(text.trim());
       }
 
       setIsChecking(false);
@@ -164,7 +172,7 @@ export function useClipboardSearch(
     return () => {
       subscription.remove();
     };
-  }, [enabled, autoSearch, onSearch]);
+  }, [enabled, autoSearch]); // onSearchを依存配列から削除（refで管理）
 
   return {
     clipboardText,

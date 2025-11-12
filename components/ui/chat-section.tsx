@@ -168,9 +168,13 @@ export function ChatSection({
 
     // 新しいQAペアが追加されたら即座にスクロール（生成中のカードを見せる）
     if (qaPairs.length > prevQAPairsLengthRef.current && isOpen) {
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
+
+      // クリーンアップ関数でタイマーをクリア
+      prevQAPairsLengthRef.current = qaPairs.length;
+      return () => clearTimeout(timerId);
     }
 
     prevQAPairsLengthRef.current = qaPairs.length;
@@ -180,9 +184,12 @@ export function ChatSection({
   useEffect(() => {
     if (isOpen && qaPairs.length > 0 && lastCardYRef.current > 0) {
       // 少し遅延を入れてレンダリングを待つ
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         scrollViewRef.current?.scrollTo({ y: lastCardYRef.current, animated: false });
       }, 50);
+
+      // クリーンアップ関数でタイマーをクリア
+      return () => clearTimeout(timerId);
     }
   }, [qaPairs, isStreaming, isOpen]);
 

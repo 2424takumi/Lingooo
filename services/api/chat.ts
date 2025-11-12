@@ -221,6 +221,12 @@ export async function* sendChatMessageStream(
   } catch (error) {
     logger.error('[Chat API] Error in sendChatMessageStream:', error);
     throw error;
+  } finally {
+    // クリーンアップ: XHRをabortしてリソースリークを防ぐ
+    if (xhr.readyState !== XMLHttpRequest.DONE && xhr.readyState !== XMLHttpRequest.UNSENT) {
+      logger.info('[Chat API] Aborting XHR connection');
+      xhr.abort();
+    }
   }
 }
 
@@ -249,16 +255,17 @@ export async function sendChatMessageStreamWebSocket(
 
   const requestId = `chat_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-  // WebSocketストリーミングを開始
-  wsClient.streamChat(requestId, {
-    sessionId: req.sessionId,
-    scope: req.scope,
-    identifier: req.identifier,
-    messages: req.messages,
-    context: req.context,
-    detailLevel: req.detailLevel,
-    targetLanguage: req.targetLanguage,
-  }, {
+  // WebSocketストリーミングを開始（awaitを追加してエラーをキャッチ）
+  try {
+    await wsClient.streamChat(requestId, {
+      sessionId: req.sessionId,
+      scope: req.scope,
+      identifier: req.identifier,
+      messages: req.messages,
+      context: req.context,
+      detailLevel: req.detailLevel,
+      targetLanguage: req.targetLanguage,
+    }, {
     onChunk: (data) => {
       if (data.content) {
         accumulatedContent += data.content;
@@ -309,6 +316,12 @@ export async function sendChatMessageStreamWebSocket(
       }
     },
   });
+  } catch (connectionError) {
+    // WebSocket接続エラーをキャッチ
+    logger.error('[Chat API WebSocket] Connection error:', connectionError);
+    error = connectionError instanceof Error ? connectionError : new Error('WebSocket connection failed');
+    isComplete = true;
+  }
 
   // AsyncGeneratorとしてイベントをyield
   return (async function*() {

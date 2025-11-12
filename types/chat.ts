@@ -1,4 +1,11 @@
-export type ChatScope = 'word' | 'search' | 'word-detail' | 'general' | 'grammar' | 'pronunciation';
+export type ChatScope =
+  | 'word'
+  | 'search'
+  | 'word-detail'
+  | 'general'
+  | 'grammar'
+  | 'pronunciation'
+  | 'translate'; // 翻訳機能用のスコープ
 
 export type ChatRole = 'user' | 'assistant' | 'system';
 

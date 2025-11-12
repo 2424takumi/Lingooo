@@ -5,6 +5,8 @@
  * 仕様: docs/lingooo_search_spec.md セクション2.2参照
  */
 
+import { MAX_TEXT_LENGTH } from '@/constants/validation';
+
 export type Language = 'ja' | 'kanji-only' | 'alphabet' | 'mixed';
 
 /**
@@ -94,10 +96,11 @@ export function validateSearchInput(text: string): { valid: boolean; error?: str
 
   const trimmedText = text.trim();
 
-  if (trimmedText.length > 128) {
+  // 文字数制限
+  if (trimmedText.length > MAX_TEXT_LENGTH) {
     return {
       valid: false,
-      error: '入力は128文字以内にしてください',
+      error: `入力は${MAX_TEXT_LENGTH}文字以内にしてください`,
     };
   }
 

@@ -58,7 +58,12 @@ export class WebSocketClient {
 
         this.ws.onerror = (error) => {
           logger.error('[WebSocket] Connection error:', error);
-          reject(new Error('WebSocket connection failed'));
+
+          // 待機中のコールバックをエラーでドレイン
+          const connectionError = new Error('WebSocket connection failed');
+          this.drainCallbacksWithError(connectionError);
+
+          reject(connectionError);
         };
 
         this.ws.onmessage = (event) => {
@@ -68,6 +73,10 @@ export class WebSocketClient {
         this.ws.onclose = (event) => {
           logger.info('[WebSocket] Connection closed:', event.code, event.reason);
           this.stopPingInterval();
+
+          // 待機中のコールバックをエラーでドレイン
+          const connectionError = new Error(`WebSocket closed: ${event.code} ${event.reason || 'Unknown reason'}`);
+          this.drainCallbacksWithError(connectionError);
 
           if (!this.isIntentionalClose) {
             this.handleReconnect();
@@ -212,6 +221,24 @@ export class WebSocketClient {
       id: requestId,
       data,
     });
+  }
+
+  /**
+   * 待機中のコールバックをエラーでドレイン
+   * WebSocket切断時に呼び出され、UIが永久に待機しないようにする
+   */
+  private drainCallbacksWithError(error: Error): void {
+    logger.info(`[WebSocket] Draining ${this.callbacks.size} pending callbacks with error`);
+
+    // すべてのコールバックにエラーを通知
+    for (const [requestId, callbacks] of this.callbacks.entries()) {
+      if (callbacks.onError) {
+        callbacks.onError(error);
+      }
+    }
+
+    // コールバックをクリア
+    this.callbacks.clear();
   }
 
   /**
