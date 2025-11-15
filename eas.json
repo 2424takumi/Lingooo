@@ -18,26 +18,31 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "preview",
-        "EXPO_PUBLIC_BACKEND_URL": "https://lingooo-backend.onrender.com"
+        "EXPO_PUBLIC_BACKEND_URL": "https://lingooo-backend.onrender.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ocfyyzcuthzgwdxcbnjd.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jZnl5emN1dGh6Z3dkeGNibmpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMjA4MzgsImV4cCI6MjA3ODY5NjgzOH0.oLWsMs8bUVYc4rf_kYpPvIvWROLxMd5O2KRBiC23jYE"
       }
     },
     "production": {
       "distribution": "store",
+      "autoIncrement": true,
       "ios": {
         "buildConfiguration": "Release"
       },
       "env": {
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_BACKEND_URL": "https://lingooo-backend.onrender.com"
+        "EXPO_PUBLIC_BACKEND_URL": "https://lingooo-backend.onrender.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ocfyyzcuthzgwdxcbnjd.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jZnl5emN1dGh6Z3dkeGNibmpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMjA4MzgsImV4cCI6MjA3ODY5NjgzOH0.oLWsMs8bUVYc4rf_kYpPvIvWROLxMd5O2KRBiC23jYE"
       }
     }
   },
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@example.com",
-        "ascAppId": "1234567890",
-        "appleTeamId": "XXXXXXXXXX"
+        "appleId": "a2424.t@gmail.com",
+        "ascAppId": "6738858162",
+        "appleTeamId": "U82SZ4BYK5"
       }
     }
   }
