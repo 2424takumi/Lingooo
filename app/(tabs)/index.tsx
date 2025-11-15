@@ -1,12 +1,14 @@
 import { StyleSheet, View, Text, ActivityIndicator, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SideMenu } from '@/components/ui/side-menu';
+import { SettingsBottomSheet } from '@/components/ui/settings-bottom-sheet';
 import { SearchHistoryList } from '@/components/ui/search-history-list';
+import { PenIcon } from '@/components/ui/icons';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSearch } from '@/hooks/use-search';
 import { useClipboardSearch } from '@/hooks/use-clipboard-search';
@@ -16,13 +18,16 @@ export default function HomeScreen() {
   const { handleSearch, isLoading, error } = useSearch();
   const [searchText, setSearchText] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [menuButtonLayout, setMenuButtonLayout] = useState<{ x: number; y: number; width: number; height: number } | undefined>(undefined);
 
-  const handleMenuPress = () => {
+  const handleMenuPress = (layout: { x: number; y: number; width: number; height: number }) => {
+    setMenuButtonLayout(layout);
     setMenuVisible(true);
   };
 
-  const handleProfilePress = () => {
-    router.push('/settings');
+  const handleSettingsPress = () => {
+    setSettingsVisible(true);
   };
 
   const onSearch = async (text: string) => {
@@ -34,18 +39,13 @@ export default function HomeScreen() {
   };
 
   // クリップボード検索
-  const { clipboardText, shouldSearch, clearClipboard } = useClipboardSearch({
+  // ユーザーが「貼り付け」を選択したときに、検索ボックスにテキストを設定
+  const { isChecking } = useClipboardSearch({
     enabled: true,
-    autoSearch: false,
+    onPaste: (text: string) => {
+      setSearchText(text);
+    },
   });
-
-  // クリップボードテキストが検出されたら検索ボックスに自動入力
-  useEffect(() => {
-    if (shouldSearch && clipboardText) {
-      setSearchText(clipboardText);
-      clearClipboard();
-    }
-  }, [shouldSearch, clipboardText]);
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
@@ -56,7 +56,7 @@ export default function HomeScreen() {
           <UnifiedHeaderBar
             pageType="home"
             onMenuPress={handleMenuPress}
-            onProfilePress={handleProfilePress}
+            onSettingsPress={handleSettingsPress}
           />
         </View>
 
@@ -69,10 +69,18 @@ export default function HomeScreen() {
               onChangeText={setSearchText}
             />
 
+            {/* Hint Text */}
+            {!searchText && !isLoading && !error && (
+              <View style={styles.hintContainer}>
+                <PenIcon size={14} color="#B9B9B9" />
+                <Text style={styles.hintText}>長文を入力すると自動で翻訳機能に切り替わります</Text>
+              </View>
+            )}
+
             {/* Loading Indicator */}
             {isLoading && (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#00AA69" />
+                <ActivityIndicator size="small" color="#111111" />
                 <Text style={styles.loadingText}>検索中...</Text>
               </View>
             )}
@@ -91,7 +99,10 @@ export default function HomeScreen() {
       </View>
 
       {/* Side Menu */}
-      <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
+      <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} menuButtonLayout={menuButtonLayout} />
+
+      {/* Settings Bottom Sheet */}
+      <SettingsBottomSheet visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
     </ThemedView>
   );
 }
@@ -106,13 +117,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   headerContainer: {
-    marginBottom: 35,
+    marginBottom: 8,
   },
   scrollView: {
     flex: 1,
   },
   searchContainer: {
-    marginHorizontal: 7,
+    marginHorizontal: 0,
+  },
+  hintContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginLeft: 4,
+    gap: 6,
+  },
+  hintText: {
+    fontSize: 12,
+    color: '#B9B9B9',
+    fontWeight: '400',
+    letterSpacing: 0,
   },
   loadingContainer: {
     flexDirection: 'row',

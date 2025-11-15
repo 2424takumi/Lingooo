@@ -49,13 +49,35 @@ function MessagePlusIcon({ size = 19, color = '#ACACAC' }: { size?: number; colo
   );
 }
 
+function ChevronIcon({ size = 16, color = '#ACACAC', expanded = false }: { size?: number; color?: string; expanded?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16" fill="none" style={{ transform: [{ rotate: expanded ? '-90deg' : '90deg' }] }}>
+      <Path
+        d="M6 12L10 8L6 4"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion }: QACardProps) {
-  const cardBackground = useThemeColor({ light: '#FAFCFB', dark: '#1C1C1E' }, 'background');
+  // ブックマークページ用の配色（hideActions=trueの時）
+  const cardBackground = useThemeColor(
+    { light: hideActions ? '#F8F8F8' : '#FAFCFB', dark: '#1C1C1E' },
+    'background'
+  );
   const borderColor = useThemeColor({ light: '#FFFFFF', dark: '#3A3A3C' }, 'background');
   const questionColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'icon');
-  const answerBackground = useThemeColor({ light: '#E5F3E8', dark: '#2C2C2E' }, 'searchBackground');
+  const answerBackground = useThemeColor(
+    { light: hideActions ? '#FFFFFF' : '#F1F1F1', dark: '#2C2C2E' },
+    'searchBackground'
+  );
   const answerTextColor = useThemeColor({ light: '#000000', dark: '#F2F2F2' }, 'text');
   const errorColor = useThemeColor({ light: '#D33', dark: '#FF6B6B' }, 'primary');
+  const primaryColor = useThemeColor({ light: '#111111', dark: '#FFFFFF' }, 'text');
   const iconColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'icon');
   const placeholderColor = useThemeColor({ light: '#ACACAC', dark: '#8E8E93' }, 'icon');
   const inputBackground = useThemeColor({ light: '#FFFFFF', dark: '#2C2C2E' }, 'background');
@@ -64,6 +86,8 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
   const [isCheckingBookmark, setIsCheckingBookmark] = useState(true);
   const [followUpText, setFollowUpText] = useState('');
   const [isSubmittingFollowUp, setIsSubmittingFollowUp] = useState(false);
+  // 追加質問の開閉状態を管理（初期状態は全て閉じている）
+  const [expandedFollowUps, setExpandedFollowUps] = useState<Record<string, boolean>>({});
 
   const showRetry = pair.status === 'error' && typeof onRetry === 'function';
   const showActions = pair.status === 'completed' && pair.a;
@@ -139,13 +163,20 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
           logger.debug('[QACard] Bookmark removed');
         }
       } else {
-        // ブックマークを追加
+        // ブックマークを追加（追加質問も含める）
         logger.debug('[QACard] Adding bookmark...', { scope, identifier, question: pair.q });
         const newBookmark = await addBookmark({
           question: pair.q,
           answer: pair.a,
           scope,
           identifier,
+          followUpQAs: pair.followUpQAs?.filter(fu => fu.status === 'completed').map(fu => ({
+            id: fu.id,
+            q: fu.q,
+            a: fu.a || '',
+            status: fu.status,
+            errorMessage: fu.errorMessage,
+          })),
         });
         logger.debug('[QACard] Bookmark added:', newBookmark.id);
         setIsBookmarked(true);
@@ -175,6 +206,14 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
     } finally {
       setIsSubmittingFollowUp(false);
     }
+  };
+
+  // アコーディオンの開閉を切り替え
+  const toggleFollowUp = (followUpId: string) => {
+    setExpandedFollowUps((prev) => ({
+      ...prev,
+      [followUpId]: !prev[followUpId],
+    }));
   };
 
   return (
@@ -233,7 +272,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                 <Text style={[styles.answerText, { color: answerTextColor }]}>{pair.a}</Text>
               </Animated.View>
             ) : null}
-            <TypingIndicator color="#2E7D32" dotSize={6} />
+            <TypingIndicator color="#2C2C2C" dotSize={6} />
           </View>
         ) : (
           <Text style={[styles.answerText, { color: answerTextColor }]}>
@@ -258,61 +297,74 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
       </View>
 
       {/* 追加質問セクション */}
-      {pair.status === 'completed' && pair.a && onFollowUpQuestion && (
+      {pair.status === 'completed' && pair.a && (pair.followUpQAs?.length || onFollowUpQuestion) && (
         <View style={styles.followUpSection}>
           {/* 追加質問のQAペアを表示 */}
           {pair.followUpQAs && pair.followUpQAs.length > 0 && (
             <View style={styles.followUpList}>
-              {pair.followUpQAs.map((followUp, index) => (
-                <View key={followUp.id} style={styles.followUpItem}>
-                  {/* フォローアップのQA */}
-                  <View style={styles.followUpContent}>
-                    <View style={styles.followUpQuestionRow}>
-                      {/* 左側の破線 */}
-                      <View style={styles.followUpLineContainer}>
-                        <Svg width={2} height={20} style={styles.followUpLineSvg}>
-                          <Path
-                            d="M1 0 L1 20"
-                            stroke="#E0E0E0"
-                            strokeWidth={2}
-                            strokeDasharray="4,4"
-                          />
-                        </Svg>
-                      </View>
-                      <Text style={[styles.followUpQuestionText, { color: questionColor }]}>
-                        {followUp.q}
-                      </Text>
-                    </View>
+              {pair.followUpQAs.map((followUp, index) => {
+                const isExpanded = expandedFollowUps[followUp.id] || false;
 
-                    <View style={[styles.followUpAnswerContainer, { backgroundColor: answerBackground }]}>
-                      {followUp.status === 'pending' ? (
-                        <View style={styles.followUpPendingContainer}>
-                          {followUp.a ? (
-                            <Text style={[styles.answerText, { color: answerTextColor }]}>
-                              {followUp.a}
-                            </Text>
-                          ) : null}
-                          <TypingIndicator color="#2E7D32" dotSize={6} />
+                return (
+                  <View key={followUp.id} style={styles.followUpItem}>
+                    {/* フォローアップのQA */}
+                    <View style={styles.followUpContent}>
+                      <TouchableOpacity
+                        style={styles.followUpQuestionRow}
+                        onPress={() => toggleFollowUp(followUp.id)}
+                        activeOpacity={0.7}
+                      >
+                        {/* 左側の破線 */}
+                        <View style={styles.followUpLineContainer}>
+                          <Svg width={2} height={20} style={styles.followUpLineSvg}>
+                            <Path
+                              d="M1 0 L1 20"
+                              stroke="#E0E0E0"
+                              strokeWidth={2}
+                              strokeDasharray="4,4"
+                            />
+                          </Svg>
                         </View>
-                      ) : (
-                        <Text style={[styles.answerText, { color: answerTextColor }]}>
-                          {followUp.a ?? (followUp.status === 'error' ? '回答を取得できませんでした。' : '')}
+                        <Text style={[styles.followUpQuestionText, { color: questionColor }]}>
+                          {followUp.q}
                         </Text>
-                      )}
+                        <ChevronIcon size={16} color={iconColor} expanded={isExpanded} />
+                      </TouchableOpacity>
 
-                      {followUp.status === 'error' && followUp.errorMessage && (
-                        <Text style={[styles.errorText, { color: errorColor }]}>
-                          {followUp.errorMessage}
-                        </Text>
+                      {/* 回答はアコーディオンで表示 */}
+                      {isExpanded && (
+                        <View style={[styles.followUpAnswerContainer, { backgroundColor: answerBackground }]}>
+                          {followUp.status === 'pending' ? (
+                            <View style={styles.followUpPendingContainer}>
+                              {followUp.a ? (
+                                <Text style={[styles.answerText, { color: answerTextColor }]}>
+                                  {followUp.a}
+                                </Text>
+                              ) : null}
+                              <TypingIndicator color="#2C2C2C" dotSize={6} />
+                            </View>
+                          ) : (
+                            <Text style={[styles.answerText, { color: answerTextColor }]}>
+                              {followUp.a ?? (followUp.status === 'error' ? '回答を取得できませんでした。' : '')}
+                            </Text>
+                          )}
+
+                          {followUp.status === 'error' && followUp.errorMessage && (
+                            <Text style={[styles.errorText, { color: errorColor }]}>
+                              {followUp.errorMessage}
+                            </Text>
+                          )}
+                        </View>
                       )}
                     </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           )}
 
-          {/* 追加質問入力 */}
+          {/* 追加質問入力 - hideActionsがfalseの場合のみ表示 */}
+          {!hideActions && onFollowUpQuestion && (
           <View style={styles.followUpInputSection}>
             <View style={[styles.followUpInputContainer, { backgroundColor: inputBackground }]}>
               <TextInput
@@ -344,6 +396,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
               )}
             </View>
           </View>
+          )}
         </View>
       )}
     </View>
@@ -374,8 +427,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     gap: 10,
-    marginHorizontal: -8,
-    marginBottom: -10,
+    marginHorizontal: -4,
+    marginBottom: -4,
   },
   answerText: {
     fontSize: 14,
@@ -425,7 +478,7 @@ const styles = StyleSheet.create({
   followUpQuestionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 8,
   },
   followUpLineContainer: {
     width: 2,
@@ -446,8 +499,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     gap: 10,
-    marginLeft: -8,
-    marginRight: -8,
+    marginHorizontal: -4,
   },
   followUpPendingContainer: {
     gap: 8,

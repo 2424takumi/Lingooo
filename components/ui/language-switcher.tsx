@@ -7,13 +7,14 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { useState, useRef } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
-function CaretDownIcon({ size = 18 }: { size?: number }) {
+function CaretDownIcon({ size = 18, color = '#000000' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M6 9l6 6 6-6"
-        stroke="#000000"
+        stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -22,7 +23,7 @@ function CaretDownIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function CheckIcon({ size = 20, color = '#00AA69' }: { size?: number; color?: string }) {
+function CheckIcon({ size = 20, color = '#111111' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -40,6 +41,9 @@ export function LanguageSwitcher() {
   const { learningLanguages, currentLanguage, setCurrentLanguage } = useLearningLanguages();
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const buttonRef = useRef<View>(null);
+  const textColor = useThemeColor({}, 'text');
+  const dropdownBackground = useThemeColor({}, 'cardBackground');
+  const accentColor = useThemeColor({}, 'primary');
 
   const handleLanguageSelect = async (languageId: string) => {
     await setCurrentLanguage(languageId);
@@ -54,7 +58,7 @@ export function LanguageSwitcher() {
           style={styles.languageButton}
         >
           <Text style={styles.flag}>{currentLanguage.flag}</Text>
-          <CaretDownIcon size={18} />
+          <CaretDownIcon size={18} color={textColor} />
         </TouchableOpacity>
       </View>
 
@@ -71,22 +75,22 @@ export function LanguageSwitcher() {
             onPress={() => setDropdownVisible(false)}
           >
             <View style={styles.dropdownContainer}>
-              <View style={styles.dropdown}>
+              <View style={[styles.dropdown, { backgroundColor: dropdownBackground }]}>
                 {learningLanguages.map((language) => (
                   <TouchableOpacity
                     key={language.id}
                     style={[
                       styles.languageItem,
-                      currentLanguage.id === language.id && styles.selectedLanguageItem,
+                      currentLanguage.id === language.id && { backgroundColor: '#E8E8E8' },
                     ]}
                     onPress={() => handleLanguageSelect(language.id)}
                   >
                     <View style={styles.languageInfo}>
                       <Text style={styles.languageFlag}>{language.flag}</Text>
-                      <Text style={styles.languageName}>{language.name}</Text>
+                      <Text style={[styles.languageName, { color: textColor }]}>{language.name}</Text>
                     </View>
                     {currentLanguage.id === language.id && (
-                      <CheckIcon size={20} color="#00AA69" />
+                      <CheckIcon size={20} color={accentColor} />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -121,7 +125,6 @@ const styles = StyleSheet.create({
     right: 16,
   },
   dropdown: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 8,
     minWidth: 180,
@@ -143,9 +146,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'transparent',
   },
-  selectedLanguageItem: {
-    backgroundColor: '#F0FBF7',
-  },
   languageInfo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -157,6 +157,5 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
   },
 });

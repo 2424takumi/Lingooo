@@ -1,5 +1,6 @@
 import { logger } from '@/utils/logger';
 import { MAX_TEXT_LENGTH } from '@/constants/validation';
+import { authenticatedFetch } from './client';
 
 const BACKEND_URL = (() => {
   const url = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -50,11 +51,8 @@ export async function translateText(
       targetLang,
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/translate`, {
+    const response = await authenticatedFetch(`${BACKEND_URL}/api/translate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         text,
         sourceLang,

@@ -6,6 +6,7 @@ import type {
 } from '@/types/chat';
 import { generateId } from '@/utils/id';
 import { logger } from '@/utils/logger';
+import { authenticatedFetch, getAuthHeaders } from './client';
 
 const BACKEND_URL = (() => {
   const url = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -41,11 +42,8 @@ export async function sendChatMessage(req: ChatRequest): Promise<ChatCompletion>
   });
 
   try {
-    const response = await fetch(`${BACKEND_URL}/api/chat`, {
+    const response = await authenticatedFetch(`${BACKEND_URL}/api/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         sessionId: req.sessionId,
         scope: req.scope,
@@ -80,8 +78,35 @@ export async function sendChatMessage(req: ChatRequest): Promise<ChatCompletion>
   }
 }
 
+/**
+ * チャットストリームのコントローラー
+ * キャンセル機能を提供
+ */
+export class ChatStreamController {
+  private xhr: XMLHttpRequest | null = null;
+
+  /**
+   * ストリームをキャンセル
+   */
+  cancel(): void {
+    if (this.xhr && this.xhr.readyState !== XMLHttpRequest.DONE && this.xhr.readyState !== XMLHttpRequest.UNSENT) {
+      logger.info('[Chat API] Cancelling chat stream');
+      this.xhr.abort();
+      this.xhr = null;
+    }
+  }
+
+  /**
+   * XHRをセット（内部用）
+   */
+  _setXhr(xhr: XMLHttpRequest): void {
+    this.xhr = xhr;
+  }
+}
+
 export async function* sendChatMessageStream(
-  req: ChatRequest
+  req: ChatRequest,
+  controller?: ChatStreamController
 ): AsyncGenerator<ChatStreamEvent, ChatCompletion, void> {
   logger.info('[Chat API] sendChatMessageStream called:', {
     scope: req.scope,
@@ -104,6 +129,9 @@ export async function* sendChatMessageStream(
     }
   };
 
+  // 認証ヘッダーを取得
+  const authHeaders = await getAuthHeaders();
+
   // XMLHttpRequestでストリーミングを受信
   const xhr = new XMLHttpRequest();
   let accumulatedContent = '';
@@ -111,8 +139,18 @@ export async function* sendChatMessageStream(
   let buffer = '';
   let lastProcessedIndex = 0;
 
+  // コントローラーにXHRをセット
+  if (controller) {
+    controller._setXhr(xhr);
+  }
+
   xhr.open('POST', `${BACKEND_URL}/api/chat/stream`);
   xhr.setRequestHeader('Content-Type', 'application/json');
+
+  // 認証ヘッダーを設定
+  if (authHeaders.Authorization) {
+    xhr.setRequestHeader('Authorization', authHeaders.Authorization);
+  }
 
   xhr.onprogress = () => {
     const newText = xhr.responseText.substring(lastProcessedIndex);
@@ -170,6 +208,12 @@ export async function* sendChatMessageStream(
   xhr.onerror = () => {
     logger.error('[Chat API] XHR error occurred');
     pushEvent({ type: 'error', error: new Error('Network error') });
+    isComplete = true;
+  };
+
+  xhr.onabort = () => {
+    logger.info('[Chat API] XHR aborted by user');
+    pushEvent({ type: 'error', error: new Error('Request cancelled') });
     isComplete = true;
   };
 
@@ -356,6 +400,12 @@ export async function sendChatMessageStreamWebSocket(
     } catch (err) {
       logger.error('[Chat API WebSocket] Error in sendChatMessageStreamWebSocket:', err);
       throw err;
+    } finally {
+      // クリーンアップ: WebSocketストリームをキャンセルしてコールバックリークを防ぐ
+      if (!isComplete) {
+        logger.info('[Chat API WebSocket] Cleaning up WebSocket stream (generator abandoned)');
+        wsClient.cancelStream(requestId);
+      }
     }
   })();
 }
@@ -370,10 +420,23 @@ export async function* sendFollowUpQuestionStream(
   onComplete: (fullAnswer: string) => void,
   onError: (error: Error) => void
 ): AsyncGenerator<string, void, void> {
+  const requestBody = {
+    sessionId: req.sessionId,
+    scope: req.scope,
+    identifier: req.identifier,
+    messages: req.messages,
+    context: req.context,
+    detailLevel: req.detailLevel,
+    targetLanguage: req.targetLanguage,
+  };
+
   logger.info('[Chat API] sendFollowUpQuestionStream called:', {
     scope: req.scope,
     identifier: req.identifier,
     messageCount: req.messages.length,
+    url: `${BACKEND_URL}/api/chat/stream`,
+    // 最初のメッセージの一部をログ（デバッグ用）
+    firstMessagePreview: req.messages[0]?.content.substring(0, 100),
   });
 
   const xhr = new XMLHttpRequest();
@@ -422,7 +485,22 @@ export async function* sendFollowUpQuestionStream(
     if (xhr.status >= 200 && xhr.status < 300) {
       onComplete(accumulatedContent);
     } else {
-      onError(new Error(`HTTP error! status: ${xhr.status}`));
+      // サーバーからのエラーメッセージを取得
+      let errorMessage = `HTTP error! status: ${xhr.status}`;
+      try {
+        const errorData = JSON.parse(xhr.responseText);
+        if (errorData.error) {
+          errorMessage += ` - ${errorData.error}`;
+        }
+        if (errorData.details) {
+          errorMessage += ` (${errorData.details})`;
+        }
+        logger.error('[Chat API] Server error details:', errorData);
+      } catch (e) {
+        // JSONパースに失敗した場合、レスポンステキストをそのままログに出力
+        logger.error('[Chat API] Server error response:', xhr.responseText.substring(0, 500));
+      }
+      onError(new Error(errorMessage));
     }
   };
 
@@ -431,15 +509,5 @@ export async function* sendFollowUpQuestionStream(
     onError(new Error('Network error'));
   };
 
-  xhr.send(
-    JSON.stringify({
-      sessionId: req.sessionId,
-      scope: req.scope,
-      identifier: req.identifier,
-      messages: req.messages,
-      context: req.context,
-      detailLevel: req.detailLevel,
-      targetLanguage: req.targetLanguage,
-    })
-  );
+  xhr.send(JSON.stringify(requestBody));
 }

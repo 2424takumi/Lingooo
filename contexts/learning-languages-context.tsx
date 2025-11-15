@@ -5,14 +5,13 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AVAILABLE_LANGUAGES, Language } from '@/types/language';
 import { logger } from '@/utils/logger';
+import { useAuth } from './auth-context';
+import { supabase } from '@/lib/supabase';
+import i18n from '@/i18n';
 
-const LEARNING_LANGUAGES_KEY = '@lingooo_learning_languages';
-const DEFAULT_LANGUAGE_KEY = '@lingooo_default_language';
-const CURRENT_LANGUAGE_KEY = '@lingooo_current_language';
-const NATIVE_LANGUAGE_KEY = '@lingooo_native_language';
+// AsyncStorageキーは削除（Supabaseに移行）
 
 interface LearningLanguagesContextType {
   learningLanguages: Language[];
@@ -36,6 +35,7 @@ interface LearningLanguagesProviderProps {
 }
 
 export function LearningLanguagesProvider({ children }: LearningLanguagesProviderProps) {
+  const { user, loading: authLoading } = useAuth();
   const [learningLanguages, setLearningLanguages] = useState<Language[]>([
     AVAILABLE_LANGUAGES[0], // デフォルトは英語
   ]);
@@ -49,49 +49,57 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     AVAILABLE_LANGUAGES[1] // デフォルトは日本語
   );
 
-  // 初期化
+  // 初期化（userが取得されたら実行）
   useEffect(() => {
-    loadSettings();
-  }, []);
+    if (!authLoading && user) {
+      loadSettings();
+    }
+  }, [user, authLoading]);
 
   const loadSettings = async () => {
+    if (!user) return;
+
     try {
-      // 学習中言語を読み込み
-      const savedLearningIds = await AsyncStorage.getItem(LEARNING_LANGUAGES_KEY);
-      if (savedLearningIds) {
-        const ids = JSON.parse(savedLearningIds) as string[];
-        const languages = ids
-          .map((id) => AVAILABLE_LANGUAGES.find((lang) => lang.id === id))
-          .filter((lang): lang is Language => lang !== undefined);
-        if (languages.length > 0) {
-          setLearningLanguages(languages);
-        }
+      // Supabaseからユーザー設定を読み込み
+      const { data, error } = await supabase
+        .from('users')
+        .select('native_language, default_language, learning_languages')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        logger.error('Failed to load language settings:', error);
+        return;
       }
 
-      // デフォルト言語を読み込み
-      const savedDefaultId = await AsyncStorage.getItem(DEFAULT_LANGUAGE_KEY);
-      if (savedDefaultId) {
-        const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === savedDefaultId);
-        if (language) {
-          setDefaultLanguageState(language);
+      if (data) {
+        // 母語を設定
+        if (data.native_language) {
+          const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === data.native_language);
+          if (language) {
+            setNativeLanguageState(language);
+            // UIの言語も設定
+            await i18n.changeLanguage(language.code);
+          }
         }
-      }
 
-      // 現在の言語を読み込み
-      const savedCurrentId = await AsyncStorage.getItem(CURRENT_LANGUAGE_KEY);
-      if (savedCurrentId) {
-        const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === savedCurrentId);
-        if (language) {
-          setCurrentLanguageState(language);
+        // デフォルト言語を設定
+        if (data.default_language) {
+          const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === data.default_language);
+          if (language) {
+            setDefaultLanguageState(language);
+            setCurrentLanguageState(language); // 初期表示用
+          }
         }
-      }
 
-      // 母語を読み込み
-      const savedNativeId = await AsyncStorage.getItem(NATIVE_LANGUAGE_KEY);
-      if (savedNativeId) {
-        const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === savedNativeId);
-        if (language) {
-          setNativeLanguageState(language);
+        // 学習中の言語を設定
+        if (data.learning_languages && Array.isArray(data.learning_languages)) {
+          const languages = data.learning_languages
+            .map((id: string) => AVAILABLE_LANGUAGES.find((lang) => lang.id === id))
+            .filter((lang): lang is Language => lang !== undefined);
+          if (languages.length > 0) {
+            setLearningLanguages(languages);
+          }
         }
       }
     } catch (error) {
@@ -100,6 +108,8 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
   };
 
   const addLearningLanguage = async (languageId: string) => {
+    if (!user) return;
+
     const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === languageId);
     if (!language) return;
 
@@ -110,7 +120,14 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
 
       try {
         const ids = newLearningLanguages.map((lang) => lang.id);
-        await AsyncStorage.setItem(LEARNING_LANGUAGES_KEY, JSON.stringify(ids));
+        const { error } = await supabase
+          .from('users')
+          .update({ learning_languages: ids })
+          .eq('id', user.id);
+
+        if (error) {
+          logger.error('Failed to save learning languages:', error);
+        }
       } catch (error) {
         logger.error('Failed to save learning languages:', error);
       }
@@ -118,6 +135,7 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
   };
 
   const removeLearningLanguage = async (languageId: string) => {
+    if (!user) return;
     // 最後の1つは削除できない
     if (learningLanguages.length <= 1) return;
 
@@ -127,29 +145,40 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     // 削除した言語が現在の言語だった場合、最初の言語に切り替え
     if (currentLanguage.id === languageId) {
       setCurrentLanguageState(newLearningLanguages[0]);
-      try {
-        await AsyncStorage.setItem(CURRENT_LANGUAGE_KEY, newLearningLanguages[0].id);
-      } catch (error) {
-        logger.error('Failed to save current language:', error);
-      }
     }
 
     try {
       const ids = newLearningLanguages.map((lang) => lang.id);
-      await AsyncStorage.setItem(LEARNING_LANGUAGES_KEY, JSON.stringify(ids));
+      const { error } = await supabase
+        .from('users')
+        .update({ learning_languages: ids })
+        .eq('id', user.id);
+
+      if (error) {
+        logger.error('Failed to save learning languages:', error);
+      }
     } catch (error) {
       logger.error('Failed to save learning languages:', error);
     }
   };
 
   const setDefaultLanguage = async (languageId: string) => {
+    if (!user) return;
+
     const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === languageId);
     if (!language) return;
 
     setDefaultLanguageState(language);
 
     try {
-      await AsyncStorage.setItem(DEFAULT_LANGUAGE_KEY, languageId);
+      const { error } = await supabase
+        .from('users')
+        .update({ default_language: languageId })
+        .eq('id', user.id);
+
+      if (error) {
+        logger.error('Failed to save default language:', error);
+      }
     } catch (error) {
       logger.error('Failed to save default language:', error);
     }
@@ -159,23 +188,30 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     const language = learningLanguages.find((lang) => lang.id === languageId);
     if (!language) return;
 
+    // 現在の言語は一時的な選択なのでローカル状態のみ
     setCurrentLanguageState(language);
-
-    try {
-      await AsyncStorage.setItem(CURRENT_LANGUAGE_KEY, languageId);
-    } catch (error) {
-      logger.error('Failed to save current language:', error);
-    }
   };
 
   const setNativeLanguage = async (languageId: string) => {
+    if (!user) return;
+
     const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === languageId);
     if (!language) return;
 
     setNativeLanguageState(language);
 
+    // UIの言語も変更
+    await i18n.changeLanguage(language.code);
+
     try {
-      await AsyncStorage.setItem(NATIVE_LANGUAGE_KEY, languageId);
+      const { error } = await supabase
+        .from('users')
+        .update({ native_language: languageId })
+        .eq('id', user.id);
+
+      if (error) {
+        logger.error('Failed to save native language:', error);
+      }
     } catch (error) {
       logger.error('Failed to save native language:', error);
     }

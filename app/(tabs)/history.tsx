@@ -99,14 +99,14 @@ export default function HistoryScreen() {
               <RefreshControl
                 refreshing={isRefreshing}
                 onRefresh={handleRefresh}
-                tintColor="#00AA69"
+                tintColor="#111111"
               />
             }
           >
             <View style={styles.historyList}>
               {historyItems.map((item) => (
                 <TouchableOpacity key={item.id} style={styles.historyItem}>
-                  <ClockIcon size={20} color="#00AA69" />
+                  <ClockIcon size={20} color="#111111" />
                   <View style={styles.historyContent}>
                     <Text style={styles.wordText}>{item.query}</Text>
                     <Text style={styles.timeText}>
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,

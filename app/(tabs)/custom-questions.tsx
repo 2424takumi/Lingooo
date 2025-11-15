@@ -10,7 +10,7 @@ import { useAISettings } from '@/contexts/ai-settings-context';
 import type { CustomQuestion } from '@/types/settings';
 
 // Icons
-function PlusIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: string }) {
+function PlusIcon({ size = 24, color = '#111111' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -24,7 +24,7 @@ function PlusIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: str
   );
 }
 
-function EditIcon({ size = 20, color = '#00AA69' }: { size?: number; color?: string }) {
+function EditIcon({ size = 20, color = '#111111' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -289,21 +289,21 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
     paddingHorizontal: 16,
   },
   descriptionContainer: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#F5F5F5',
     padding: 16,
     borderRadius: 12,
     marginBottom: 24,
   },
   descriptionText: {
     fontSize: 14,
-    color: '#2E7D32',
+    color: '#2C2C2C',
     lineHeight: 20,
   },
   section: {
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#00AA69',
+    backgroundColor: '#111111',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#00AA69',
+    backgroundColor: '#111111',
     alignItems: 'center',
     justifyContent: 'center',
   },

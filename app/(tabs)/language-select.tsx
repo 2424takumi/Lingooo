@@ -9,7 +9,7 @@ import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { AVAILABLE_LANGUAGES } from '@/types/language';
 
 // Icons
-function CheckIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: string }) {
+function CheckIcon({ size = 24, color = '#111111' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -69,7 +69,7 @@ export default function LanguageSelectScreen() {
                   <Text style={styles.languageName}>{language.name}</Text>
                 </View>
                 {defaultLanguage.id === language.id && (
-                  <CheckIcon size={24} color="#00AA69" />
+                  <CheckIcon size={24} color="#111111" />
                 )}
               </TouchableOpacity>
             ))}
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
@@ -118,8 +118,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   selectedLanguageItem: {
-    borderColor: '#00AA69',
-    backgroundColor: '#F0FBF7',
+    borderColor: '#111111',
+    backgroundColor: '#F8F8F8',
   },
   languageInfo: {
     flexDirection: 'row',

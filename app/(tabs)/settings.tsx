@@ -1,12 +1,10 @@
 import { StyleSheet, View, Text, TouchableOpacity, Switch, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
-import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useAISettings } from '@/contexts/ai-settings-context';
 
 // Icons
@@ -26,7 +24,6 @@ function ChevronRightIcon({ size = 24, color = '#686868' }: { size?: number; col
 
 export default function SettingsScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
-  const { learningLanguages, defaultLanguage, nativeLanguage } = useLearningLanguages();
   const {
     aiDetailLevel,
     setAIDetailLevel,
@@ -61,57 +58,10 @@ export default function SettingsScreen() {
               <Switch
                 value={aiDetailLevel === 'detailed'}
                 onValueChange={(value) => setAIDetailLevel(value ? 'detailed' : 'concise')}
-                trackColor={{ false: '#D1D1D1', true: '#00AA69' }}
+                trackColor={{ false: '#D1D1D1', true: '#111111' }}
                 thumbColor="#FFFFFF"
               />
             </View>
-          </View>
-
-          {/* Learning Settings */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>学習設定</Text>
-
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => router.push('/native-language-select')}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>母語</Text>
-                <Text style={styles.settingDescription}>{nativeLanguage.name}</Text>
-              </View>
-              <ChevronRightIcon />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => router.push('/language-select')}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>デフォルト言語</Text>
-                <Text style={styles.settingDescription}>{defaultLanguage.name}</Text>
-              </View>
-              <ChevronRightIcon />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => router.push('/learning-languages')}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>学習中の言語</Text>
-                <View style={styles.languagePreview}>
-                  {learningLanguages.slice(0, 3).map((lang) => (
-                    <Text key={lang.id} style={styles.languageFlag}>
-                      {lang.flag}
-                    </Text>
-                  ))}
-                  {learningLanguages.length > 3 && (
-                    <Text style={styles.moreLanguages}>+{learningLanguages.length - 3}</Text>
-                  )}
-                </View>
-              </View>
-              <ChevronRightIcon />
-            </TouchableOpacity>
           </View>
 
           {/* Account Settings */}
@@ -186,7 +136,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
@@ -234,20 +184,6 @@ const styles = StyleSheet.create({
   settingDescription: {
     fontSize: 14,
     color: '#686868',
-  },
-  languagePreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  languageFlag: {
-    fontSize: 20,
-    marginRight: 4,
-  },
-  moreLanguages: {
-    fontSize: 12,
-    color: '#686868',
-    fontWeight: '600',
   },
   versionText: {
     fontSize: 14,

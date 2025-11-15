@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
@@ -184,11 +184,11 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 20,
-    backgroundColor: '#00AA69',
+    backgroundColor: '#111111',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#00AA69',
+    shadowColor: '#111111',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#00AA69',
+    color: '#111111',
     marginBottom: 8,
   },
   appTagline: {
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   },
   featureBullet: {
     fontSize: 16,
-    color: '#00AA69',
+    color: '#111111',
     marginRight: 12,
     fontWeight: '700',
   },

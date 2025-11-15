@@ -1,0 +1,86 @@
+{
+  "common": {
+    "settings": "Configurações",
+    "back": "Voltar",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "create": "Criar",
+    "close": "Fechar",
+    "error": "Erro",
+    "loading": "Carregando..."
+  },
+  "settings": {
+    "title": "Configurações",
+    "user": "Nome de usuário",
+    "plan": {
+      "free": "Plano Gratuito",
+      "plus": "Plano Plus"
+    },
+    "usage": {
+      "questions": "Perguntas",
+      "tokens": "Uso de Tokens",
+      "monthly": "Uso Mensal",
+      "limit": "Limite",
+      "resetIn": "Redefine em {{days}} dias"
+    },
+    "nativeLanguage": {
+      "title": "Idioma Nativo",
+      "description": "Selecione seu idioma nativo.\nQuando você inserir texto neste idioma, ele será traduzido para seus idiomas de aprendizado."
+    },
+    "learningLanguages": {
+      "title": "Idiomas de Aprendizado",
+      "description": "Selecione os idiomas que você deseja aprender. Esses idiomas estarão disponíveis nas telas de pesquisa e inicial.",
+      "add": "Adicionar Idioma",
+      "minOneRequired": "Pelo menos um idioma deve ser selecionado",
+      "confirmDelete": "Remover este idioma da sua lista de aprendizado?"
+    },
+    "defaultLanguage": {
+      "title": "Idioma Padrão",
+      "description": "Selecione o idioma a ser exibido quando o aplicativo for iniciado."
+    },
+    "aiSettings": {
+      "title": "Configurações de IA",
+      "detailLevel": {
+        "title": "Nível de Detalhes",
+        "concise": "Conciso",
+        "balanced": "Equilibrado",
+        "detailed": "Detalhado"
+      }
+    }
+  },
+  "search": {
+    "placeholder": "Digite uma palavra ou frase para aprender...",
+    "noResults": "Nenhum resultado encontrado para \"{{query}}\"",
+    "chatPlaceholder": "Faça uma pergunta sobre esta palavra..."
+  },
+  "wordDetail": {
+    "bookmarked": "Adicionado aos favoritos",
+    "examples": "Exemplos",
+    "usageHint": "Dica de Uso",
+    "frequency": "Frequência",
+    "difficulty": "Dificuldade",
+    "nuance": "Nuance"
+  },
+  "bookmarks": {
+    "title": "Favoritos",
+    "addToFolder": "Adicionar à Pasta",
+    "noFolder": "Sem Pasta",
+    "createFolder": "Criar Nova Pasta",
+    "folderName": "Nome da Pasta",
+    "createNewFolder": "Criar Nova Pasta",
+    "folderNameRequired": "Por favor, insira um nome para a pasta",
+    "createFailed": "Falha ao criar pasta"
+  },
+  "history": {
+    "title": "Histórico",
+    "searchHistory": "Histórico de Pesquisa",
+    "clear": "Limpar Histórico"
+  },
+  "chat": {
+    "send": "Enviar",
+    "retry": "Tentar Novamente",
+    "followUpQuestion": "Continuação",
+    "askFollowUp": "Fazer uma pergunta de acompanhamento"
+  }
+}

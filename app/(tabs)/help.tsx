@@ -97,7 +97,7 @@ export default function HelpScreen() {
             <Text style={styles.sectionTitle}>よくある質問</Text>
 
             <TouchableOpacity style={styles.helpItem}>
-              <BookOpenIcon size={24} color="#00AA69" />
+              <BookOpenIcon size={24} color="#111111" />
               <View style={styles.helpInfo}>
                 <Text style={styles.helpTitle}>使い方ガイド</Text>
                 <Text style={styles.helpDescription}>アプリの基本的な使い方を学ぶ</Text>
@@ -141,7 +141,7 @@ export default function HelpScreen() {
             <Text style={styles.sectionTitle}>お問い合わせ</Text>
 
             <TouchableOpacity style={styles.helpItem} onPress={handleEmailPress}>
-              <MailIcon size={24} color="#00AA69" />
+              <MailIcon size={24} color="#111111" />
               <View style={styles.helpInfo}>
                 <Text style={styles.helpTitle}>メールで問い合わせ</Text>
                 <Text style={styles.helpDescription}>support@lingooo.app</Text>
@@ -150,7 +150,7 @@ export default function HelpScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.helpItem}>
-              <MessageCircleIcon size={24} color="#00AA69" />
+              <MessageCircleIcon size={24} color="#111111" />
               <View style={styles.helpInfo}>
                 <Text style={styles.helpTitle}>フィードバックを送る</Text>
                 <Text style={styles.helpDescription}>ご意見・ご要望をお聞かせください</Text>
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
@@ -263,11 +263,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   tipCard: {
-    backgroundColor: '#F0F9F5',
+    backgroundColor: '#F7F7F7',
     padding: 20,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#00AA69',
+    borderLeftColor: '#111111',
   },
   tipTitle: {
     fontSize: 16,

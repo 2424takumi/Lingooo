@@ -135,9 +135,11 @@ function BookmarkCard({ bookmark, onDelete }: BookmarkCardProps) {
       {/* QA Card */}
       <QACard
         pair={{
+          id: bookmark.id,
           q: bookmark.question,
           a: bookmark.answer,
           status: 'completed',
+          followUpQAs: bookmark.followUpQAs,
         }}
         scope={bookmark.scope}
         identifier={bookmark.identifier}
@@ -265,7 +267,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   scrollView: {
     flex: 1,

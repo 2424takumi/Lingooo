@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#00AA69',
+    backgroundColor: '#111111',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#00AA69',
+    backgroundColor: '#111111',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   saveButton: {
-    backgroundColor: '#00AA69',
+    backgroundColor: '#111111',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',

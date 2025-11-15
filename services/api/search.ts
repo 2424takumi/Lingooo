@@ -102,6 +102,7 @@ async function tryGenerateAiSuggestionsTwoStage(
       pos: item.pos,
       shortSenseJa: item.shortSenseJa,
       confidence: item.confidence,
+      nuance: item.nuance,
     }));
 
     // ステージ2: usageHintを並列でバックグラウンド追加
@@ -228,7 +229,7 @@ export async function getWordDetail(
   targetLanguage: string = 'en',
   detailLevel?: 'concise' | 'detailed',
   isOffline: boolean = false
-): Promise<WordDetailResponse> {
+): Promise<{ data: WordDetailResponse; tokensUsed: number }> {
   // オフライン時: モックデータのみ使用
   if (isOffline) {
     logger.info('[getWordDetail] Offline mode: using mock data only');
@@ -244,14 +245,17 @@ export async function getWordDetail(
       } as SearchError;
     }
 
-    return detail;
+    return {
+      data: detail,
+      tokensUsed: 0,
+    };
   }
 
   // AI生成を使用（Gemini API設定済みの場合）
   if (await isGeminiConfigured()) {
     try {
-      const detail = await generateWordDetail(word, targetLanguage, detailLevel);
-      return detail;
+      const result = await generateWordDetail(word, targetLanguage, detailLevel);
+      return result;
     } catch (error) {
       logger.error('AI生成エラー、モックデータにフォールバック:', error);
       // エラー時はモックデータにフォールバック
@@ -271,7 +275,10 @@ export async function getWordDetail(
     } as SearchError;
   }
 
-  return detail;
+  return {
+    data: detail,
+    tokensUsed: 0,
+  };
 }
 
 /**
@@ -282,6 +289,7 @@ export async function getWordDetail(
  *
  * @param word - 検索する単語
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param nativeLanguage - 母国語コード（例: 'ja', 'en', 'zh'）
  * @param detailLevel - AI返答の詳細度レベル（'concise' | 'detailed'）
  * @param onProgress - 進捗コールバック（0-100、部分データ付き）
  * @param isOffline - オフライン状態かどうか（オプション）
@@ -290,11 +298,12 @@ export async function getWordDetail(
 export async function getWordDetailStream(
   word: string,
   targetLanguage: string = 'en',
+  nativeLanguage: string = 'ja',
   detailLevel: 'concise' | 'detailed' = 'concise',
   onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void,
   isOffline: boolean = false
-): Promise<WordDetailResponse> {
-  logger.info(`[Search API] getWordDetailStream (2-stage) called for: ${word} (${targetLanguage}, ${detailLevel}, offline: ${isOffline})`);
+): Promise<{ data: WordDetailResponse; tokensUsed: number }> {
+  logger.info(`[Search API] getWordDetailStream (2-stage) called for: ${word} (${targetLanguage}, native: ${nativeLanguage}, ${detailLevel}, offline: ${isOffline})`);
 
   // オフライン時: モックデータのみ使用
   if (isOffline) {
@@ -320,7 +329,10 @@ export async function getWordDetailStream(
       onProgress(100, detail);
     }
 
-    return detail;
+    return {
+      data: detail,
+      tokensUsed: 0, // オフライン時はトークン使用なし
+    };
   }
 
   // AI生成を使用（Gemini API設定済みの場合）
@@ -331,9 +343,9 @@ export async function getWordDetailStream(
     if (isConfigured) {
       try {
         logger.info('[Search API] Calling generateWordDetailTwoStage');
-        const detail = await generateWordDetailTwoStage(word, targetLanguage, detailLevel, onProgress);
+        const result = await generateWordDetailTwoStage(word, targetLanguage, nativeLanguage, detailLevel, onProgress);
         logger.info('[Search API] generateWordDetailTwoStage succeeded');
-        return detail;
+        return result;
       } catch (error) {
         // 429エラー（レート制限）の場合は特別なメッセージ
         const isRateLimitError = error instanceof Error &&
@@ -345,17 +357,19 @@ export async function getWordDetailStream(
           logger.error('[Search API] AI生成エラー、モックデータにフォールバック:', error);
         }
 
-        // エラー時は通常版にフォールバック
-        return getWordDetail(word, targetLanguage, detailLevel, isOffline);
+        // エラー時は通常版にフォールバック（これもトークン数を返す）
+        const fallbackResult = await getWordDetail(word, targetLanguage, detailLevel, isOffline);
+        return fallbackResult;
       }
     }
   } catch (configError) {
     logger.error('[Search API] isGeminiConfigured error:', configError);
   }
 
-  // APIキーなしの場合は通常版を使用
+  // APIキーなしの場合は通常版を使用（これもトークン数を返す）
   logger.info('[Search API] Using mock data');
-  return getWordDetail(word, targetLanguage, detailLevel, isOffline);
+  const mockResult = await getWordDetail(word, targetLanguage, detailLevel, isOffline);
+  return mockResult;
 }
 
 /**

@@ -14,7 +14,7 @@ const GENDER_LABELS = {
 };
 
 const GENDER_COLORS = {
-  'm': '#C5E3FF', // 少し濃い青
+  'm': '#E4E4E4', // 少し濃い青
   'f': '#FFD6E8', // 薄い赤
   'n': '#E8E8E8', // 薄いグレー
   'mf': '#E8E8E8', // 薄いグレー
@@ -39,16 +39,17 @@ export function PosTag({ label, gender }: PosTagProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#EBEBEB',
-    borderRadius: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    backgroundColor: '#EDEDED',
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 4,
+    minHeight: 20,
   },
   text: {
-    fontSize: 12,
+    fontSize: 14,
     lineHeight: 14,
     color: '#000000',
     fontWeight: '400',

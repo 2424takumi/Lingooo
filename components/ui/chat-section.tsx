@@ -9,6 +9,8 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
+  Animated,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -17,6 +19,7 @@ import { QuestionTag } from './question-tag';
 import { QACardList } from './qa-card-list';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { logger } from '@/utils/logger';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface ChatSectionProps {
   placeholder?: string;
@@ -36,6 +39,8 @@ interface ChatSectionProps {
   onBookmarkAdded?: (bookmarkId: string) => void;
   expandedMaxHeight?: number; // 展開時のchatMessagesの最大高さ（デフォルト: 512）
   onFollowUpQuestion?: (pairId: string, question: string) => Promise<void>;
+  prefilledInputText?: string | null;
+  onPrefillConsumed?: () => void;
 }
 
 function ExpandIcon({ size = 18 }: { size?: number }) {
@@ -81,12 +86,14 @@ function SendIcon({ size = 20 }: { size?: number }) {
 }
 
 function SliderIcon({ size = 24 }: { size?: number }) {
+  const width = size;
+  const height = (size * 18) / 20;
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Svg width={width} height={height} viewBox="0 0 20 18" fill="none">
       <Path
-        d="M10 18H21M3 18H6M6 18V20M6 18V16M20 12H21M3 12H16M16 12V14M16 12V10M14 6H21M3 6H10M10 6V8M10 6V4"
-        stroke="#686868"
-        strokeWidth={2}
+        d="M7.75 14.75H18.75M0.75 14.75H3.75M3.75 14.75V16.75M3.75 14.75V12.75M17.75 8.75H18.75M0.75 8.75H13.75M13.75 8.75V10.75M13.75 8.75V6.75M11.75 2.75H18.75M0.75 2.75H7.75M7.75 2.75V4.75M7.75 2.75V0.75"
+        stroke="#242424"
+        strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -99,7 +106,7 @@ function PlusIcon({ size = 24 }: { size?: number }) {
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M12 5v14M5 12h14"
-        stroke="#00AA69"
+        stroke="#FFFFFF"
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -128,8 +135,16 @@ export function ChatSection({
   onBookmarkAdded,
   expandedMaxHeight = 512,
   onFollowUpQuestion,
+  prefilledInputText,
+  onPrefillConsumed,
 }: ChatSectionProps) {
   const { customQuestions, addCustomQuestion } = useAISettings();
+  const containerBackground = useThemeColor({}, 'chatSectionBackground');
+  const inputBackground = useThemeColor({}, 'chatInputBackground');
+  const placeholderColor = useThemeColor({}, 'textPlaceholder');
+
+  // questionPresetsをローカル変数として保持（依存配列で使用するため）
+  const questions = questionPresets;
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -139,15 +154,63 @@ export function ChatSection({
   const [isCustomQuestionModalOpen, setIsCustomQuestionModalOpen] = useState(false);
   const [customQuestionTitle, setCustomQuestionTitle] = useState('');
   const [customQuestionText, setCustomQuestionText] = useState('');
-  const [inputContentHeight, setInputContentHeight] = useState(0);
-  const [isInputScrollEnabled, setIsInputScrollEnabled] = useState(false);
+  const INPUT_LINE_HEIGHT = 22;
+  const MAX_LINES = 5;
+  const INPUT_TOP_PADDING = 6;
+  const INPUT_BOTTOM_PADDING = 6;
+  const MIN_INPUT_HEIGHT = INPUT_LINE_HEIGHT + INPUT_TOP_PADDING + INPUT_BOTTOM_PADDING;
+  const MAX_INPUT_HEIGHT = MIN_INPUT_HEIGHT + INPUT_LINE_HEIGHT * (MAX_LINES - 1);
   const inputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const prevQAPairsLengthRef = useRef(qaPairs.length);
   const lastCardYRef = useRef<number>(0);
   const prevIdentifierRef = useRef(identifier);
+  const lastPrefilledValueRef = useRef<string | null>(null);
 
-  const MAX_INPUT_HEIGHT = 110; // 約5行分
+  // 画面の高さを取得し、チャットメッセージの最大高さを計算
+  // JPsearchページの場合は上のマージンを72px、それ以外は98px
+  // ボトムセクション（約150px）+ その他マージン（約50px）を引いた値
+  const screenHeight = Dimensions.get('window').height;
+  const topMargin = scope === 'jpSearch' ? 72 : 98;
+  const calculatedMaxHeight = screenHeight - topMargin - 200;
+
+  // アニメーション用の値
+  const animatedHeight = useRef(new Animated.Value(0)).current;
+  const animatedOpacity = useRef(new Animated.Value(0)).current;
+
+  // チャットの開閉アニメーション
+  useEffect(() => {
+    if (isOpen) {
+      // 開くアニメーション
+      Animated.parallel([
+        Animated.spring(animatedHeight, {
+          toValue: calculatedMaxHeight,
+          useNativeDriver: false,
+          friction: 9,
+          tension: 50,
+        }),
+        Animated.timing(animatedOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    } else {
+      // 閉じるアニメーション
+      Animated.parallel([
+        Animated.timing(animatedHeight, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animatedOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
+  }, [isOpen, calculatedMaxHeight]);
 
   // 単語（identifier）が変わったときにチャットを閉じる
   useEffect(() => {
@@ -158,6 +221,34 @@ export function ChatSection({
       prevIdentifierRef.current = identifier;
     }
   }, [identifier]);
+
+  // 外部から指定されたテキストでインプットをプレフィル
+  useEffect(() => {
+    if (!prefilledInputText || !prefilledInputText.trim()) {
+      if (lastPrefilledValueRef.current) {
+        lastPrefilledValueRef.current = null;
+      }
+      return;
+    }
+
+    // 同じ値を繰り返し処理しない
+    if (lastPrefilledValueRef.current === prefilledInputText) {
+      return;
+    }
+
+    lastPrefilledValueRef.current = prefilledInputText;
+    setInputText(prefilledInputText);
+    setIsOpen(true);
+    setHasManuallyClosedWithContent(false);
+
+    const focusTimer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+
+    onPrefillConsumed?.();
+
+    return () => clearTimeout(focusTimer);
+  }, [prefilledInputText, onPrefillConsumed]);
 
   useEffect(() => {
     // 新しいQAペアが追加された場合のみ自動的に開く
@@ -234,14 +325,14 @@ export function ChatSection({
 
   const combinedQuestions = useMemo(() => {
     // カスタム質問のタイトルを先頭に、次にデフォルト質問、最後にフォローアップ質問
-    const tags = [...customQuestions.map(cq => cq.title), ...questionPresets];
+    const tags = [...customQuestions.map(cq => cq.title), ...questions];
     for (const item of followUps) {
       if (!tags.includes(item)) {
         tags.push(item);
       }
     }
     return tags;
-  }, [customQuestions, questionPresets, followUps]);
+  }, [customQuestions, questions, followUps]);
 
   // タイトルと実際の質問文のマッピングを作成
   const questionMap = useMemo(() => {
@@ -251,10 +342,10 @@ export function ChatSection({
       map.set(cq.title, cq.question);
     });
     // デフォルト質問とフォローアップ質問はタイトル=質問文
-    questionPresets.forEach(q => map.set(q, q));
+    questions.forEach(q => map.set(q, q));
     followUps.forEach(q => map.set(q, q));
     return map;
-  }, [customQuestions, questionPresets, followUps]);
+  }, [customQuestions, questions, followUps]);
 
   const handleAddCustomQuestion = async () => {
     const title = customQuestionTitle.trim();
@@ -273,11 +364,17 @@ export function ChatSection({
   };
 
   return (
-    <View style={[styles.container, isOpen ? styles.containerOpen : styles.containerClosed]}>
-      {isOpen && (
+    <View style={[styles.container, { backgroundColor: containerBackground }, isOpen ? styles.containerOpen : styles.containerClosed]}>
+      <Animated.View
+        style={{
+          height: animatedHeight,
+          opacity: animatedOpacity,
+          overflow: 'hidden',
+        }}
+      >
         <ScrollView
           ref={scrollViewRef}
-          style={[styles.chatMessages, { maxHeight: expandedMaxHeight }]}
+          style={[styles.chatMessages, { maxHeight: calculatedMaxHeight, minHeight: calculatedMaxHeight }]}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => {
             // コンテンツサイズが変更されたら最後のカードの位置にスクロール（ストリーミング中は即座に）
@@ -286,7 +383,7 @@ export function ChatSection({
             }
           }}
         >
-          {qaPairs.length > 0 ? (
+          {qaPairs.length > 0 && (
             <View style={styles.qaCardList}>
               <QACardList
                 pairs={qaPairs}
@@ -300,13 +397,6 @@ export function ChatSection({
                 onFollowUpQuestion={onFollowUpQuestion}
               />
             </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateTitle}>Lingoooチャットを試してみましょう</Text>
-              <Text style={styles.emptyStateText}>
-                上の質問タグをタップするか、気になることを入力してみてください。
-              </Text>
-            </View>
           )}
           {qaPairs.length === 0 && error && !isStreaming && (
             <View style={styles.errorBanner}>
@@ -319,7 +409,7 @@ export function ChatSection({
             </View>
           )}
         </ScrollView>
-      )}
+      </Animated.View>
 
       {/* Spacer to push tags and input to bottom when open */}
       {isOpen && <View style={styles.spacer} />}
@@ -356,7 +446,7 @@ export function ChatSection({
           </ScrollView>
 
           {/* White Container: Settings Icon + Input + Action Button (1 row) */}
-          <View style={styles.whiteContainer}>
+          <View style={[styles.whiteContainer, { backgroundColor: inputBackground }]}>
             <View style={styles.inputRow}>
               {/* Settings Icon Button */}
               <TouchableOpacity
@@ -364,36 +454,40 @@ export function ChatSection({
                 onPress={() => setIsSettingsMenuOpen(true)}
                 disabled={isStreaming}
               >
-                <SliderIcon size={24} />
+                <SliderIcon size={20} />
               </TouchableOpacity>
 
               {/* Text Input */}
-            <TextInput
-              ref={inputRef}
-              style={[styles.input, { maxHeight: MAX_INPUT_HEIGHT }]}
-              placeholder={placeholder}
-              placeholderTextColor="#ACACAC"
-              value={inputText}
-              onChangeText={setInputText}
-              onFocus={() => {
-                setIsInputFocused(true);
-              }}
-              onBlur={() => {
-                setIsInputFocused(false);
-              }}
-              editable={!isStreaming}
-              multiline
-              textAlignVertical="top"
-              scrollEnabled={isInputScrollEnabled}
-              onContentSizeChange={(event) => {
-                const nextHeight = event.nativeEvent.contentSize.height;
-                setInputContentHeight(nextHeight);
-                setIsInputScrollEnabled(nextHeight > MAX_INPUT_HEIGHT);
-              }}
-              selectionColor="#00AA69"
-              selectTextOnFocus={false}
-              contextMenuHidden={false}
-            />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  ref={inputRef}
+                  style={[
+                    styles.input,
+                    {
+                      lineHeight: INPUT_LINE_HEIGHT,
+                      paddingTop: INPUT_TOP_PADDING,
+                      paddingBottom: INPUT_BOTTOM_PADDING,
+                    },
+                  ]}
+                  placeholder={placeholder}
+                  placeholderTextColor={placeholderColor}
+                  value={inputText}
+                  onChangeText={setInputText}
+                  onFocus={() => {
+                    setIsInputFocused(true);
+                  }}
+                  onBlur={() => {
+                    setIsInputFocused(false);
+                  }}
+                  editable={!isStreaming}
+                  multiline
+                  textAlignVertical="top"
+                  scrollEnabled={false}
+                  selectionColor="#242424"
+                  selectTextOnFocus={false}
+                  contextMenuHidden={false}
+                />
+              </View>
 
               {/* Action Button */}
               <TouchableOpacity
@@ -557,7 +651,6 @@ export function ChatSection({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#DCF0E1',
     borderRadius: 18,
     paddingTop: 10,
     paddingHorizontal: 10,
@@ -572,12 +665,13 @@ const styles = StyleSheet.create({
   },
   containerOpen: {
     paddingBottom: 10,
+    marginBottom: 4,
   },
   chatMessages: {
     flexGrow: 0,
     flexShrink: 1,
     maxHeight: 512,
-    marginBottom: 10,
+    marginBottom: 12,
     minHeight: 0,
   },
   qaCardList: {
@@ -592,7 +686,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     flexDirection: 'column',
     alignItems: 'stretch',
-    gap: 12, // 質問タグとテキストインプットの間隔
+    gap: 10, // 質問タグとテキストインプットの間隔
   },
   questionScrollView: {
     flexGrow: 0,
@@ -614,14 +708,14 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     paddingRight: 8,
     paddingTop: 9,
-    paddingBottom: 9,
+    paddingBottom: 12,
     marginBottom: 0, // テキストインプットの下のマージン
     overflow: 'hidden',
     flexShrink: 0,
   },
   inputRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: 10,
     minHeight: 34,
   },
@@ -631,48 +725,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'flex-end',
-    marginBottom: 0,
+    marginBottom: -2,
+  },
+  inputWrapper: {
+    flex: 1,
+    width: 0,
   },
   input: {
-    flex: 1,
-    width: 0, // 折り返し維持のため
-    minHeight: 34, // 1行分
+    width: '100%',
     textAlignVertical: 'top',
-    paddingVertical: 7,
     paddingHorizontal: 0,
     fontSize: 14,
     fontWeight: '600',
     color: '#000000',
     letterSpacing: 1,
+    backgroundColor: 'transparent',
+    minHeight: 34, // MIN_INPUT_HEIGHT - 固定値
+    maxHeight: 122, // MAX_INPUT_HEIGHT
   },
   button: {
     width: 34,
     height: 34,
     borderRadius: 11,
-    backgroundColor: '#686868',
+    backgroundColor: '#242424',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'flex-end',
-    marginBottom: 0,
+    marginBottom: -2,
   },
   buttonDisabled: {
     opacity: 0.4,
-  },
-  emptyState: {
-    paddingVertical: 0,
-    paddingTop: 4,
-    paddingBottom: 4,
-    gap: 6,
-  },
-  emptyStateTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  emptyStateText: {
-    fontSize: 13,
-    color: '#686868',
-    lineHeight: 18,
   },
   errorBanner: {
     marginTop: 12,
@@ -687,7 +769,7 @@ const styles = StyleSheet.create({
   errorBannerText: {
     flex: 1,
     color: '#CC0000',
-    fontSize: 13,
+    fontSize: 14,
   },
   retryInlineButton: {
     paddingHorizontal: 12,
@@ -697,7 +779,7 @@ const styles = StyleSheet.create({
   },
   retryInlineButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
   },
   // Modal styles
@@ -758,7 +840,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   toggleOptionText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: '#999999',
   },
@@ -768,19 +850,9 @@ const styles = StyleSheet.create({
   plusButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
-    elevation: 1,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -824,14 +896,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 12,
-    fontSize: 16,
+    fontSize: 14,
     color: '#000000',
   },
   customQuestionInput: {
     backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 12,
-    fontSize: 16,
+    fontSize: 14,
     color: '#000000',
     minHeight: 80,
     textAlignVertical: 'top',
@@ -850,7 +922,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalCancelButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#686868',
   },
@@ -858,7 +930,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#00AA69',
+    backgroundColor: '#242424',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -866,7 +938,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#CCCCCC',
   },
   modalAddButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
   },

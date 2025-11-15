@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 
 // Icons
-function UploadCloudIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: string }) {
+function UploadCloudIcon({ size = 24, color = '#111111' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -29,7 +29,7 @@ function UploadCloudIcon({ size = 24, color = '#00AA69' }: { size?: number; colo
   );
 }
 
-function DownloadCloudIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: string }) {
+function DownloadCloudIcon({ size = 24, color = '#111111' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -196,7 +196,7 @@ export default function DataManagementScreen() {
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* Storage Info */}
           <View style={styles.storageCard}>
-            <DatabaseIcon size={32} color="#00AA69" />
+            <DatabaseIcon size={32} color="#111111" />
             <Text style={styles.storageTitle}>データ使用量</Text>
             <Text style={styles.storageSize}>42.5 MB</Text>
             <Text style={styles.storageDetails}>
@@ -214,7 +214,7 @@ export default function DataManagementScreen() {
               disabled={isBackingUp}
             >
               <View style={styles.actionInfo}>
-                <UploadCloudIcon size={24} color="#00AA69" />
+                <UploadCloudIcon size={24} color="#111111" />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>
                     {isBackingUp ? 'バックアップ中...' : 'バックアップ'}
@@ -232,7 +232,7 @@ export default function DataManagementScreen() {
               disabled={isRestoring}
             >
               <View style={styles.actionInfo}>
-                <DownloadCloudIcon size={24} color="#00AA69" />
+                <DownloadCloudIcon size={24} color="#111111" />
                 <View style={styles.actionText}>
                   <Text style={styles.actionLabel}>
                     {isRestoring ? '復元中...' : 'データの復元'}
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   storageSize: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#00AA69',
+    color: '#111111',
     marginBottom: 8,
   },
   storageDetails: {

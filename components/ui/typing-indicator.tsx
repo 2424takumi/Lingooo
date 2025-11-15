@@ -10,7 +10,7 @@ interface TypingIndicatorProps {
  * ChatGPT/Claude風のタイピングインジケーター
  * 3つのドットが順番にアニメーション
  */
-export function TypingIndicator({ color = '#2E7D32', dotSize = 6 }: TypingIndicatorProps) {
+export function TypingIndicator({ color = '#2C2C2C', dotSize = 6 }: TypingIndicatorProps) {
   const dot1Anim = useRef(new Animated.Value(0)).current;
   const dot2Anim = useRef(new Animated.Value(0)).current;
   const dot3Anim = useRef(new Animated.Value(0)).current;

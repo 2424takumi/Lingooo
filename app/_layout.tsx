@@ -5,10 +5,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AuthProvider } from '@/contexts/auth-context';
 import { LearningLanguagesProvider } from '@/contexts/learning-languages-context';
 import { ChatProvider } from '@/contexts/chat-context';
 import { AISettingsProvider } from '@/contexts/ai-settings-context';
 import { ErrorBoundary } from '@/components/error-boundary';
+import '@/i18n'; // i18nを初期化
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -20,19 +22,21 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
-        <AISettingsProvider>
-          <LearningLanguagesProvider>
-            <ChatProvider>
-              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                <Stack>
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-                </Stack>
-                <StatusBar style="auto" />
-              </ThemeProvider>
-            </ChatProvider>
-          </LearningLanguagesProvider>
-        </AISettingsProvider>
+        <AuthProvider>
+          <AISettingsProvider>
+            <LearningLanguagesProvider>
+              <ChatProvider>
+                <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                  <Stack>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+                  </Stack>
+                  <StatusBar style="auto" />
+                </ThemeProvider>
+              </ChatProvider>
+            </LearningLanguagesProvider>
+          </AISettingsProvider>
+        </AuthProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>
   );

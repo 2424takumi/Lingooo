@@ -12,7 +12,7 @@ const GENDER_LABELS = {
 };
 
 const GENDER_COLORS = {
-  'm': '#D6E9FF', // 薄い青
+  'm': '#E6E6E6', // 薄い青
   'f': '#FFD6E0', // 薄い赤
   'n': '#E8E8E8', // 薄いグレー（中性）
   'mf': '#E8E8E8', // 薄いグレー（両性）

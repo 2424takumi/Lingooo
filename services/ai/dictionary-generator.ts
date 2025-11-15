@@ -5,23 +5,90 @@
  * 多言語対応
  */
 
-import { generateJSON, generateTextStream, generateJSONProgressive, generateBasicInfo, generateSuggestionsArray, generateSuggestionsArrayFast, generateUsageHint, generateUsageHints } from './gemini-client';
+import { generateJSON, generateText, generateTextStream, generateJSONProgressive, generateBasicInfo, generateSuggestionsArray, generateSuggestionsArrayFast, generateUsageHint, generateUsageHints } from './gemini-client';
 import { selectModel } from './model-selector';
 import { createBasicInfoPrompt, createDictionaryPrompt, createSuggestionsPrompt } from './prompt-generator';
 import type { WordDetailResponse } from '@/types/search';
 import { logger } from '@/utils/logger';
 
 /**
+ * 単語の言語を検出
+ *
+ * @param word - 検出する単語
+ * @param candidateLanguages - 候補となる言語コードのリスト（例: ['en', 'pt', 'es']）
+ * @returns 検出された言語コード（候補にない場合はnull）
+ */
+export async function detectWordLanguage(
+  word: string,
+  candidateLanguages: string[]
+): Promise<string | null> {
+  const modelConfig = selectModel();
+
+  // 言語名のマッピング
+  const languageNames: Record<string, string> = {
+    en: '英語',
+    pt: 'ポルトガル語',
+    es: 'スペイン語',
+    fr: 'フランス語',
+    de: 'ドイツ語',
+    it: 'イタリア語',
+    zh: '中国語',
+    ko: '韓国語',
+    vi: 'ベトナム語',
+    id: 'インドネシア語',
+    ja: '日本語',
+  };
+
+  const candidateLanguageNames = candidateLanguages
+    .map(code => languageNames[code] || code)
+    .join('、');
+
+  const prompt = `単語「${word}」はどの言語の単語ですか？
+
+候補言語: ${candidateLanguageNames}
+
+以下の条件に従って回答してください：
+1. 候補言語の中にこの単語が存在する言語があれば、その言語コード（例: en, pt, es）のみを返す
+2. 複数の候補言語に存在する場合は、最も一般的な言語を1つだけ返す
+3. 候補言語のいずれにも存在しない場合は「none」と返す
+4. 言語コード以外の説明や記号は一切含めない
+
+回答（言語コードのみ）:`;
+
+  try {
+    const result = await generateText(prompt, modelConfig);
+    const detectedLanguage = result.trim().toLowerCase();
+
+    logger.info('[detectWordLanguage] Detected language:', {
+      word,
+      candidates: candidateLanguages,
+      detected: detectedLanguage,
+    });
+
+    // 候補言語に含まれるか確認
+    if (candidateLanguages.includes(detectedLanguage)) {
+      return detectedLanguage;
+    }
+
+    // "none" または候補にない場合はnull
+    return null;
+  } catch (error) {
+    logger.error('[detectWordLanguage] Error:', error);
+    return null;
+  }
+}
+
+/**
  * 単語の詳細情報を生成
  *
  * @param word - 検索する単語
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
- * @returns 単語の詳細情報
+ * @returns 単語の詳細情報とトークン使用量
  */
 export async function generateWordDetail(
   word: string,
   targetLanguage: string = 'en'
-): Promise<WordDetailResponse> {
+): Promise<{ data: WordDetailResponse; tokensUsed: number }> {
   // モデル選択
   const modelConfig = selectModel();
 
@@ -32,7 +99,7 @@ export async function generateWordDetail(
   const result = await generateJSON<WordDetailResponse>(prompt, modelConfig);
 
   // 結果の検証
-  if (!result.headword || !result.headword.lemma) {
+  if (!result.data.headword || !result.data.headword.lemma) {
     throw new Error(`「${word}」の生成に失敗しました。`);
   }
 
@@ -49,14 +116,14 @@ export async function generateWordDetail(
 export async function generateSuggestions(
   japaneseQuery: string,
   targetLanguage: string = 'en'
-): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number; usageHint: string }>> {
+): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number; usageHint: string; nuance?: number }>> {
   const modelConfig = selectModel();
 
   // 多言語対応プロンプト生成
   const prompt = createSuggestionsPrompt(japaneseQuery, targetLanguage);
 
   try {
-    const result = await generateSuggestionsArray<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number; usageHint: string }>(prompt, modelConfig);
+    const result = await generateSuggestionsArray<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number; usageHint: string; nuance?: number }>(prompt, modelConfig);
 
     if (!Array.isArray(result)) {
       logger.error('[generateSuggestions] Result is not array:', typeof result);
@@ -88,7 +155,7 @@ export async function generateSuggestions(
 export async function generateSuggestionsFast(
   japaneseQuery: string,
   targetLanguage: string = 'en'
-): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number }>> {
+): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number; nuance?: number }>> {
   const modelConfig = selectModel();
 
   // 性別が必要な言語かチェック
@@ -96,34 +163,36 @@ export async function generateSuggestionsFast(
   const needsGender = genderLanguages.includes(targetLanguage);
   const genderField = needsGender ? ', "gender": "m/f/n（名詞のみ）"' : '';
 
-  // 基本情報のみのプロンプト（usageHintなし）
+  // 基本情報のみのプロンプト（usageHintなし、ニュアンスあり）
   const prompt = `日本語"${japaneseQuery}"に対応する${targetLanguage === 'en' ? '英' : targetLanguage}単語を3~5個、以下のJSON配列構造で生成：
 
 [
-  {"lemma": "単語1", "pos": ["品詞"], "shortSenseJa": "簡潔な意味（10文字以内）", "confidence": 関連性スコア0-1${genderField}},
-  {"lemma": "単語2", "pos": ["品詞"], "shortSenseJa": "意味2", "confidence": スコア${genderField}}
+  {"lemma": "単語1", "pos": ["品詞"], "shortSenseJa": "簡潔な意味（10文字以内）", "confidence": 関連性スコア0-1, "nuance": ニュアンススコア0-100${genderField}},
+  {"lemma": "単語2", "pos": ["品詞"], "shortSenseJa": "意味2", "confidence": スコア, "nuance": ニュアンススコア${genderField}}
 ]
 
 要件:
 - 必ず3個以上の候補を返すこと
 - 関連性の高い順にソート
-- confidenceは最も関連性が高いものを1.0とする`;
+- confidenceは最も関連性が高いものを1.0とする
+- nuanceは単語のフォーマル度を示すスコア（0=非常にカジュアル・スラング, 30=カジュアル, 50=中立的, 70=フォーマル, 100=非常にフォーマル・学術的）`;
 
   try {
-    const result = await generateSuggestionsArrayFast<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number }>(prompt, modelConfig);
+    const result = await generateSuggestionsArrayFast<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number; nuance?: number }>(prompt, modelConfig);
 
-    if (!Array.isArray(result)) {
-      logger.error('[generateSuggestionsFast] Result is not array:', typeof result);
+    if (!Array.isArray(result.data)) {
+      logger.error('[generateSuggestionsFast] Result is not array:', typeof result.data);
       return [];
     }
 
-    if (result.length === 0) {
+    if (result.data.length === 0) {
       logger.warn('[generateSuggestionsFast] Empty array returned');
       return [];
     }
 
-    logger.info(`[generateSuggestionsFast] Received ${result.length} ${targetLanguage} suggestions (fast) for "${japaneseQuery}"`);
-    return result;
+    logger.info(`[generateSuggestionsFast] Received ${result.data.length} ${targetLanguage} suggestions (fast) for "${japaneseQuery}", tokens: ${result.tokensUsed}`);
+    // NOTE: トークン数は返り値に含めない（この関数はサジェストのみを返す）
+    return result.data;
   } catch (error) {
     logger.error('[generateSuggestionsFast] Error:', error);
     return [];
@@ -203,16 +272,18 @@ export async function addUsageHints(
  *
  * @param word - 検索する単語
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param nativeLanguage - 母国語コード（例: 'ja', 'en', 'zh'）
  * @param onProgress - 進捗コールバック（0-100、部分データ付き）
  * @returns 単語の詳細情報
  */
 export async function generateWordDetailStream(
   word: string,
   targetLanguage: string = 'en',
+  nativeLanguage: string = 'ja',
   onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void
 ): Promise<WordDetailResponse> {
   const modelConfig = selectModel();
-  const prompt = createDictionaryPrompt(word, targetLanguage);
+  const prompt = createDictionaryPrompt(word, targetLanguage, nativeLanguage);
 
   logger.info(`[WordDetail API] Starting TRUE streaming for: ${word} (${targetLanguage})`);
 
@@ -332,20 +403,23 @@ export async function generateWordDetailStreamLegacy(
 export async function generateWordDetailTwoStage(
   word: string,
   targetLanguage: string = 'en',
+  nativeLanguage: string = 'ja',
   detailLevel: 'concise' | 'detailed' = 'concise',
   onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void
-): Promise<WordDetailResponse> {
+): Promise<{ data: WordDetailResponse; tokensUsed: number }> {
   const modelConfig = selectModel();
 
   logger.info(`[WordDetail 2-Stage] Starting two-stage generation for: ${word} (${targetLanguage})`);
 
   try {
+    let totalTokens = 0;
+
     // ステージ1: 基本情報を超高速取得（0.2~0.3秒）
-    const basicPrompt = createBasicInfoPrompt(word, targetLanguage);
+    const basicPrompt = createBasicInfoPrompt(word, targetLanguage, nativeLanguage);
     const basicPromise = generateBasicInfo<Partial<WordDetailResponse>>(basicPrompt, modelConfig);
 
     // ステージ2: 詳細情報を並行生成（2.5秒）
-    const detailPrompt = createDictionaryPrompt(word, targetLanguage, detailLevel);
+    const detailPrompt = createDictionaryPrompt(word, targetLanguage, nativeLanguage);
     const detailPromise = generateJSONProgressive<WordDetailResponse>(
       detailPrompt,
       modelConfig,
@@ -359,25 +433,31 @@ export async function generateWordDetailTwoStage(
     );
 
     // 基本情報が来たら即表示（0.2~0.3秒）
-    const basicData = await basicPromise;
-    logger.info('[WordDetail 2-Stage] Basic info received');
+    const basicResult = await basicPromise;
+    totalTokens += basicResult.tokensUsed;
+    logger.info('[WordDetail 2-Stage] Basic info received, tokens:', basicResult.tokensUsed);
     if (onProgress) {
-      onProgress(30, basicData); // ヘッダー + 意味だけ表示
+      onProgress(30, basicResult.data); // ヘッダー + 意味だけ表示
     }
 
     // 詳細情報を待つ（2.5秒）
-    const fullData = await detailPromise;
-    logger.info('[WordDetail 2-Stage] Full data received');
+    const fullResult = await detailPromise;
+    totalTokens += fullResult.tokensUsed;
+    logger.info('[WordDetail 2-Stage] Full data received, tokens:', fullResult.tokensUsed);
 
-    if (!fullData.headword || !fullData.headword.lemma) {
+    if (!fullResult.data.headword || !fullResult.data.headword.lemma) {
       throw new Error(`「${word}」の生成に失敗しました。`);
     }
 
     if (onProgress) {
-      onProgress(100, fullData); // メトリクス + 例文を追加
+      onProgress(100, fullResult.data); // メトリクス + 例文を追加
     }
 
-    return fullData;
+    logger.info(`[WordDetail 2-Stage] Total tokens used: ${totalTokens}`);
+    return {
+      data: fullResult.data,
+      tokensUsed: totalTokens,
+    };
   } catch (error) {
     logger.error('[WordDetail 2-Stage] Error:', error);
     throw error;
@@ -414,5 +494,59 @@ function tryParsePartialJSON(text: string): Partial<WordDetailResponse> | null {
     return JSON.parse(jsonText);
   } catch {
     return null;
+  }
+}
+
+/**
+ * 単語のヒント（特徴・ニュアンス）を生成
+ *
+ * 2-3行のテキストで、その単語の特徴やニュアンスを説明します。
+ *
+ * @param word - 単語
+ * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param definitions - 単語の意味リスト
+ * @returns ヒントテキスト（2-3行）
+ */
+export async function generateWordHint(
+  word: string,
+  targetLanguage: string = 'en',
+  definitions: string[] = []
+): Promise<string> {
+  const modelConfig = selectModel();
+
+  const definitionsText = definitions.length > 0
+    ? `\n意味: ${definitions.join('、')}`
+    : '';
+
+  const prompt = `${targetLanguage === 'en' ? '英' : targetLanguage}単語「${word}」について、日本語で2〜3行の簡潔なヒントを生成してください。${definitionsText}
+
+以下の内容を含めてください：
+- どのような場面で使われるか（日常会話・アカデミック・ビジネスなど）
+- 特徴的なニュアンスや使い方
+- 類似語との違いがあれば簡単に
+
+例：
+「日常・アカデミック両方で使える基礎語です。主にスタディーという意味がありこういった使い方ができます。」
+
+重要：
+- 2〜3行で簡潔に
+- 自然で読みやすい日本語
+- ヒントのテキストのみを返す（説明文は不要）`;
+
+  try {
+    const result = await generateText(prompt, modelConfig);
+
+    // テキストのクリーンアップ
+    const cleanedHint = result
+      .trim()
+      .replace(/^["']|["']$/g, '') // 前後の引用符を削除
+      .replace(/^\s*ヒント[：:]\s*/i, '') // 「ヒント：」などのプレフィックスを削除
+      .trim();
+
+    logger.info(`[WordHint] Generated hint for "${word}": ${cleanedHint.substring(0, 50)}...`);
+    return cleanedHint;
+  } catch (error) {
+    logger.error('[WordHint] Error generating hint:', error);
+    return '';
   }
 }

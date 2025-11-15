@@ -66,7 +66,7 @@ export function FrequencyBar({
               style={[
                 styles.barFill,
                 animatedStyle,
-                { backgroundColor: type === 'difficulty' ? '#00AA69' : '#00AA69' },
+                { backgroundColor: type === 'difficulty' ? '#111111' : '#111111' },
               ]}
             />
           )}
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#00AA69',
+    backgroundColor: '#111111',
     transform: [{ translateX: -6 }],
     zIndex: 10,
   },

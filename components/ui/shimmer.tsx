@@ -188,6 +188,19 @@ export function ShimmerExamples() {
 }
 
 /**
+ * WordHint用のシマー
+ */
+export function ShimmerHint() {
+  return (
+    <View style={styles.hintShimmer}>
+      <Shimmer width="95%" height={22} style={styles.hintLine} />
+      <Shimmer width="92%" height={22} style={styles.hintLine} />
+      <Shimmer width="70%" height={22} />
+    </View>
+  );
+}
+
+/**
  * サジェストカード用のシマー（日本語検索結果）
  * WordCardの構造に完全に一致
  */
@@ -285,6 +298,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   shimmerItem: {
+    marginBottom: 4,
+  },
+  hintShimmer: {
+    backgroundColor: '#F8F8F8',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    gap: 4,
+  },
+  hintLine: {
     marginBottom: 4,
   },
   suggestionsShimmer: {

@@ -17,12 +17,16 @@ import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import type { SearchError } from '@/types/search';
 import { logger } from '@/utils/logger';
+import { isSentence } from '@/utils/text-detector';
+import { useQuestionCount } from '@/hooks/use-question-count';
 
 export function useSearch() {
   const router = useRouter();
   const { currentLanguage, nativeLanguage } = useLearningLanguages();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Supabaseから質問回数とプランを取得
+  const { canAskQuestion, incrementQuestionCount, getRemainingQuestions, questionCount } = useQuestionCount();
 
   /**
    * 検索を実行してページ遷移
@@ -38,12 +42,26 @@ export function useSearch() {
       return false;
     }
 
+    // 2. 質問回数制限チェック
+    if (!canAskQuestion()) {
+      const remaining = getRemainingQuestions();
+      setError(`本日の質問回数が上限に達しました。明日また${remaining === 0 ? '10回' : remaining + '回'}質問できます。`);
+      return false;
+    }
+
     setError(null);
     setIsLoading(true);
 
     try {
       // 2. 正規化
       const normalizedQuery = normalizeQuery(query);
+
+      // 2.5. 文章検出 - 文章の場合は翻訳モードとして遷移
+      if (isSentence(normalizedQuery)) {
+        logger.info('[Search] Detected sentence, navigating to translate mode');
+        await searchAndNavigateToTranslate(normalizedQuery);
+        return true;
+      }
 
       // 3. 言語判定
       const detectedLang = detectLang(normalizedQuery);
@@ -79,6 +97,9 @@ export function useSearch() {
         // 履歴保存に失敗しても検索は成功とみなす
         logger.error('Failed to save search history:', historyError);
       }
+
+      // 7. 質問回数をインクリメント
+      await incrementQuestionCount();
 
       return true;
     } catch (err) {
@@ -120,6 +141,31 @@ export function useSearch() {
         word,
         targetLanguage, // タブで選択された言語を渡す
         // dataパラメータなし = ページ上でAPI呼び出し
+      },
+    });
+  };
+
+  /**
+   * 文章を翻訳モードで表示（即座に遷移、ページ上で翻訳表示）
+   *
+   * @param text - 翻訳する文章
+   */
+  const searchAndNavigateToTranslate = async (text: string) => {
+    // 言語を判定
+    const detectedLang = detectLang(text);
+    const sourceLang = resolveLanguageCode(detectedLang, currentLanguage.code, nativeLanguage.code);
+
+    // 翻訳先言語を決定（ソース言語が母語なら学習言語、それ以外なら母語）
+    const targetLang = sourceLang === nativeLanguage.code ? currentLanguage.code : nativeLanguage.code;
+
+    router.push({
+      pathname: '/(tabs)/word-detail',
+      params: {
+        word: text,
+        targetLanguage: currentLanguage.code,
+        mode: 'translate',
+        sourceLang,
+        targetLang,
       },
     });
   };

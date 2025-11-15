@@ -7,21 +7,15 @@ import { router, type Href } from 'expo-router';
 interface SideMenuProps {
   visible: boolean;
   onClose: () => void;
+  menuButtonLayout?: { x: number; y: number; width: number; height: number };
 }
 
 // Icons
-function SettingsIcon({ size = 24, color = '#000000' }: { size?: number; color?: string }) {
+function BookmarkIcon({ size = 16, color = '#242424' }: { size?: number; color?: string }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 12 16" fill="none">
       <Path
-        d="M12 15a3 3 0 100-6 3 3 0 000 6z"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"
+        d="M11 15L6 11L1 15V3C1 2.46957 1.21071 1.96086 1.58579 1.58579C1.96086 1.21071 2.46957 1 3 1H9C9.53043 1 10.0391 1.21071 10.4142 1.58579C10.7893 1.96086 11 2.46957 11 3V15Z"
         stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
@@ -31,11 +25,11 @@ function SettingsIcon({ size = 24, color = '#000000' }: { size?: number; color?:
   );
 }
 
-function BookmarkIcon({ size = 24, color = '#000000' }: { size?: number; color?: string }) {
+function MessagePlusIcon({ size = 22, color = '#242424' }: { size?: number; color?: string }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 18 18" fill="none">
       <Path
-        d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"
+        d="M9 11V9M9 9V7M9 9H7M9 9H11M9.00012 17C7.65126 17 6.34577 16.6252 5.2344 15.9766C5.12472 15.9133 5.06981 15.8816 5.01852 15.8676C4.97113 15.8547 4.92935 15.8502 4.88013 15.8536C4.82732 15.8573 4.77252 15.8755 4.66363 15.9117L2.72156 16.5611L2.71989 16.5619C2.30818 16.6983 2.1019 16.7665 1.96568 16.7188C1.84759 16.6776 1.75398 16.5838 1.70777 16.4657C1.65477 16.3294 1.72412 16.1239 1.86282 15.7128L1.8637 15.7102L2.51346 13.7695L2.51513 13.765C2.55142 13.657 2.5698 13.6023 2.57474 13.5497C2.57945 13.5008 2.57501 13.4587 2.56252 13.4113C2.54917 13.3607 2.51827 13.307 2.45705 13.2004L2.45434 13.1962C1.80571 12.0849 1.43 10.8239 1.43 9.5C1.43 5.35751 4.76365 2 9 2C13.2363 2 16.57 5.35751 16.57 9.5C16.57 13.6425 13.2365 17 9.00012 17Z"
         stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
@@ -45,116 +39,42 @@ function BookmarkIcon({ size = 24, color = '#000000' }: { size?: number; color?:
   );
 }
 
-function HistoryIcon({ size = 24, color = '#000000' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M1 4v6h6M23 20v-6h-6"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function HelpIcon({ size = 24, color = '#000000' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M12 17h.01"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function InfoIcon({ size = 24, color = '#000000' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M12 16v-4M12 8h.01"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function CrownIcon({ size = 24, color = '#FFFFFF' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M2 5l5 5 5-7 5 7 5-5v14H2V5z"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function MessageIcon({ size = 24, color = '#000000' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-export function SideMenu({ visible, onClose }: SideMenuProps) {
-  const translateX = useSharedValue(-300);
+export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) {
+  const item1Opacity = useSharedValue(0);
+  const item1TranslateY = useSharedValue(-20);
+  const item2Opacity = useSharedValue(0);
+  const item2TranslateY = useSharedValue(-20);
 
   useEffect(() => {
-    translateX.value = withTiming(visible ? 0 : -300, {
-      duration: 50,
-    });
+    if (visible) {
+      // 1つ目のアイテム
+      item1Opacity.value = withTiming(1, { duration: 250 });
+      item1TranslateY.value = withTiming(0, { duration: 250 });
+
+      // 2つ目のアイテム（少し遅れて）
+      setTimeout(() => {
+        item2Opacity.value = withTiming(1, { duration: 250 });
+        item2TranslateY.value = withTiming(0, { duration: 250 });
+      }, 100);
+    } else {
+      item1Opacity.value = 0;
+      item1TranslateY.value = -20;
+      item2Opacity.value = 0;
+      item2TranslateY.value = -20;
+    }
   }, [visible]);
 
-  const animatedStyle = useAnimatedStyle(() => {
+  const item1AnimatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateX: translateX.value }],
+      opacity: item1Opacity.value,
+      transform: [{ translateY: item1TranslateY.value }],
+    };
+  });
+
+  const item2AnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: item2Opacity.value,
+      transform: [{ translateY: item2TranslateY.value }],
     };
   });
 
@@ -163,11 +83,17 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
     router.push(path);
   };
 
+  if (!visible) return null;
+
+  // ハンバーガーボタンの下に配置するための位置計算
+  const menuTop = menuButtonLayout ? menuButtonLayout.y + menuButtonLayout.height + 10 : 96;
+  const menuLeft = menuButtonLayout ? menuButtonLayout.x - 4 : 7;
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
     >
       <TouchableOpacity
@@ -175,62 +101,33 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
         activeOpacity={1}
         onPress={onClose}
       >
-        <Animated.View style={[styles.menuContainer, animatedStyle]}>
-          <TouchableOpacity activeOpacity={1} style={styles.menuContent}>
-            {/* App Name */}
-            <View style={styles.header}>
-              <Text style={styles.appName}>Lingooo</Text>
-              <Text style={styles.appTagline}>英語学習をもっと楽しく</Text>
-            </View>
+        <View style={[styles.menuContainer, { top: menuTop, left: menuLeft }]}>
+          {/* ブックマーク */}
+          <Animated.View style={item1AnimatedStyle}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleNavigation('/bookmarks')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconButton}>
+                <BookmarkIcon color="#242424" />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
 
-            {/* Menu Items - Top */}
-            <View style={styles.menuList}>
-              <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/bookmarks')}>
-                <BookmarkIcon size={24} color="#686868" />
-                <Text style={styles.menuText}>ブックマーク</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/custom-questions')}>
-                <MessageIcon size={24} color="#686868" />
-                <Text style={styles.menuText}>カスタム質問</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Menu Items - Bottom */}
-            <View style={styles.bottomMenuList}>
-              {/* Pro Plan Promotion */}
-              <TouchableOpacity style={styles.proMenuItem}>
-                <View style={styles.proContent}>
-                  <CrownIcon size={28} color="#00AA69" />
-                  <View style={styles.proText}>
-                    <Text style={styles.proTitle}>Pro版にアップグレード</Text>
-                    <Text style={styles.proDescription}>
-                      無制限の学習と高度な機能を利用
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/settings')}>
-                <SettingsIcon size={24} color="#686868" />
-                <Text style={styles.menuText}>設定</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/help')}>
-                <HelpIcon size={24} color="#686868" />
-                <Text style={styles.menuText}>ヘルプ・サポート</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/about')}>
-                <InfoIcon size={24} color="#686868" />
-                <Text style={styles.menuText}>アプリについて</Text>
-              </TouchableOpacity>
-
-              {/* Version */}
-              <Text style={styles.version}>Version 1.0.0</Text>
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
+          {/* カスタム質問 */}
+          <Animated.View style={item2AnimatedStyle}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleNavigation('/custom-questions')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconButton}>
+                <MessagePlusIcon color="#242424" />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
       </TouchableOpacity>
     </Modal>
   );
@@ -239,98 +136,35 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
   },
   menuContainer: {
     position: 'absolute',
-    left: 6,
-    top: 62,
-    bottom: 62,
-    width: 288,
-    backgroundColor: '#FAFCFB',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  menuContent: {
-    flex: 1,
-    paddingTop: 20,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  appName: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#00AA69',
-    marginBottom: 4,
-  },
-  appTagline: {
-    fontSize: 14,
-    color: '#686868',
-    fontWeight: '500',
-  },
-  proMenuItem: {
-    backgroundColor: '#DCF0E1',
-    borderRadius: 14,
-    padding: 16,
-    marginVertical: 4,
-  },
-  proContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  proText: {
-    flex: 1,
-  },
-  proTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#00AA69',
-    marginBottom: 3,
-  },
-  proDescription: {
-    fontSize: 13,
-    color: '#4A4A4A',
-    opacity: 0.95,
-  },
-  menuList: {
-    gap: 4,
-  },
-  bottomMenuList: {
-    gap: 4,
-    marginTop: 'auto',
+    paddingVertical: 0,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    gap: 14,
+    marginBottom: 8,
+  },
+  iconButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   menuText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#000000',
-    fontWeight: '500',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#EBEBEB',
-    marginVertical: 8,
-  },
-  version: {
-    fontSize: 12,
-    color: '#ACACAC',
-    textAlign: 'center',
-    paddingTop: 16,
+    fontWeight: '590',
+    letterSpacing: 1,
   },
 });

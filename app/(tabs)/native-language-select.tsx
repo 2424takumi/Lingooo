@@ -7,9 +7,10 @@ import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { AVAILABLE_LANGUAGES } from '@/types/language';
+import { useTranslation } from 'react-i18next';
 
 // Icons
-function CheckIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: string }) {
+function CheckIcon({ size = 24, color = '#111111' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -24,8 +25,14 @@ function CheckIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: st
 }
 
 export default function NativeLanguageSelectScreen() {
+  const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
   const { nativeLanguage, setNativeLanguage } = useLearningLanguages();
+
+  // 母国語として選択可能な言語（日本語、英語、ポルトガル語のみ）
+  const nativeLanguageOptions = AVAILABLE_LANGUAGES.filter(
+    (lang) => lang.id === 'japanese' || lang.id === 'english' || lang.id === 'portuguese'
+  );
 
   const handleLanguageSelect = async (languageId: string) => {
     await setNativeLanguage(languageId);
@@ -44,19 +51,18 @@ export default function NativeLanguageSelectScreen() {
         <View style={styles.headerContainer}>
           <UnifiedHeaderBar
             pageType="other"
-            title="母語"
+            title={t('settings.nativeLanguage.title')}
             onBackPress={() => router.back()}
           />
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <Text style={styles.description}>
-            あなたの母語（ネイティブ言語）を選択してください。{'\n'}
-            この言語で入力した場合、他の学習言語への翻訳を行います。
+            {t('settings.nativeLanguage.description')}
           </Text>
 
           <View style={styles.languageList}>
-            {AVAILABLE_LANGUAGES.map((language) => (
+            {nativeLanguageOptions.map((language) => (
               <TouchableOpacity
                 key={language.id}
                 style={[
@@ -70,7 +76,7 @@ export default function NativeLanguageSelectScreen() {
                   <Text style={styles.languageName}>{language.name}</Text>
                 </View>
                 {nativeLanguage.id === language.id && (
-                  <CheckIcon size={24} color="#00AA69" />
+                  <CheckIcon size={24} color="#111111" />
                 )}
               </TouchableOpacity>
             ))}
@@ -91,7 +97,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
@@ -120,8 +126,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   selectedLanguageItem: {
-    borderColor: '#00AA69',
-    backgroundColor: '#F0FBF7',
+    borderColor: '#111111',
+    backgroundColor: '#F8F8F8',
   },
   languageInfo: {
     flexDirection: 'row',

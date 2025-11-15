@@ -70,7 +70,7 @@ function BookmarkEmptyIcon({ size = 64, color = '#D1D1D1' }: { size?: number; co
   );
 }
 
-function PlusIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: string }) {
+function PlusIcon({ size = 24, color = '#111111' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -84,7 +84,7 @@ function PlusIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: str
   );
 }
 
-function CheckIcon({ size = 20, color = '#00AA69' }: { size?: number; color?: string }) {
+function CheckIcon({ size = 20, color = '#111111' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -122,7 +122,7 @@ function FolderCard({ folder, bookmarkCount, onPress, onLongPress }: FolderCardP
     <Pressable onPress={onPress} onLongPress={onLongPress} style={styles.folderCardPressable}>
       <View style={[styles.folderCard, { backgroundColor: cardBackground, borderColor }]}>
         <View style={styles.folderCardHeader}>
-          <FolderIcon size={24} color="#00AA69" />
+          <FolderIcon size={24} color="#111111" />
           <View style={styles.folderCardInfo}>
             <Text style={[styles.folderCardTitle, { color: titleColor }]}>{folder.name}</Text>
             <View style={styles.folderCardMeta}>
@@ -254,9 +254,11 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: Bookma
       >
         <QACard
           pair={{
+            id: bookmark.id,
             q: bookmark.question,
             a: bookmark.answer,
             status: 'completed',
+            followUpQAs: bookmark.followUpQAs,
           }}
           scope={bookmark.scope}
           identifier={bookmark.identifier}
@@ -773,7 +775,7 @@ export default function BookmarksScreen() {
                         onPress={() => handleAddBookmarkToFolder(undefined)}
                       >
                         <Text style={[styles.folderSelectItemText, { flex: 1 }]}>フォルダなし</Text>
-                        {isNoFolder && <CheckIcon size={20} color="#00AA69" />}
+                        {isNoFolder && <CheckIcon size={20} color="#111111" />}
                       </TouchableOpacity>
                     );
                   })()}
@@ -793,9 +795,9 @@ export default function BookmarksScreen() {
                           ]}
                           onPress={() => handleAddBookmarkToFolder(folder.id)}
                         >
-                          <FolderIcon size={20} color="#00AA69" />
+                          <FolderIcon size={20} color="#111111" />
                           <Text style={styles.folderSelectItemText}>{folder.name}</Text>
-                          {isCurrentFolder && <CheckIcon size={20} color="#00AA69" />}
+                          {isCurrentFolder && <CheckIcon size={20} color="#111111" />}
                         </TouchableOpacity>
                       );
                     })
@@ -853,7 +855,7 @@ export default function BookmarksScreen() {
                       style={[styles.folderSelectItem, styles.createFolderItem]}
                       onPress={() => setIsCreatingNewFolder(true)}
                     >
-                      <PlusIcon size={20} color="#00AA69" />
+                      <PlusIcon size={20} color="#111111" />
                       <Text style={[styles.folderSelectItemText, styles.createFolderText]}>
                         新しいフォルダを作成
                       </Text>
@@ -997,7 +999,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   tabBar: {
     flexDirection: 'row',
@@ -1145,7 +1147,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#00AA69',
+    backgroundColor: '#111111',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -1226,7 +1228,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#00AA69',
+    backgroundColor: '#111111',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1269,9 +1271,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   folderSelectItemActive: {
-    backgroundColor: '#E5F3E8',
+    backgroundColor: '#F1F1F1',
     borderWidth: 1,
-    borderColor: '#00AA69',
+    borderColor: '#111111',
   },
   folderSelectItemText: {
     fontSize: 16,
@@ -1280,11 +1282,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   createFolderItem: {
-    backgroundColor: '#E5F3E8',
+    backgroundColor: '#F1F1F1',
     marginTop: 8,
   },
   createFolderText: {
-    color: '#00AA69',
+    color: '#111111',
     fontWeight: '600',
   },
   folderMenuContainer: {

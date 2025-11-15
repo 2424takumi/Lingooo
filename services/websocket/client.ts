@@ -224,6 +224,19 @@ export class WebSocketClient {
   }
 
   /**
+   * ストリームをキャンセル
+   * コールバックを削除してメモリリークを防ぐ
+   */
+  cancelStream(requestId: string): void {
+    const deleted = this.callbacks.delete(requestId);
+    if (deleted) {
+      logger.info('[WebSocket] Cancelled stream and removed callbacks for:', requestId);
+    } else {
+      logger.warn('[WebSocket] No callbacks found to cancel for:', requestId);
+    }
+  }
+
+  /**
    * 待機中のコールバックをエラーでドレイン
    * WebSocket切断時に呼び出され、UIが永久に待機しないようにする
    */

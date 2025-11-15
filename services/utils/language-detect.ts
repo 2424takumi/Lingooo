@@ -31,30 +31,48 @@ export function detectLang(text: string): Language {
 
   // ひらがな: \u3040-\u309F
   // カタカナ: \u30A0-\u30FF
-  const hiraganaKatakanaRegex = /[\u3040-\u309F\u30A0-\u30FF]/;
+  const hiraganaKatakanaRegex = /[\u3040-\u309F\u30A0-\u30FF]/g;
 
   // 漢字: \u4E00-\u9FAF
-  const kanjiRegex = /[\u4E00-\u9FAF]/;
+  const kanjiRegex = /[\u4E00-\u9FAF]/g;
 
-  // アルファベット（スペース、ハイフン、アポストロフィを許可）
-  const alphabetRegex = /^[a-zA-Z\s'\-]+$/;
+  // アルファベット
+  const alphabetRegex = /[a-zA-Z]/g;
 
-  const hasHiraganaKatakana = hiraganaKatakanaRegex.test(trimmedText);
-  const hasKanji = kanjiRegex.test(trimmedText);
-  const isAlphabetOnly = alphabetRegex.test(trimmedText);
+  // 各文字種の出現回数をカウント
+  const hiraganaKatakanaMatches = trimmedText.match(hiraganaKatakanaRegex);
+  const kanjiMatches = trimmedText.match(kanjiRegex);
+  const alphabetMatches = trimmedText.match(alphabetRegex);
 
-  // ひらがな/カタカナを含む → 日本語として確定
-  if (hasHiraganaKatakana) {
-    return 'ja';
+  const hiraganaKatakanaCount = hiraganaKatakanaMatches ? hiraganaKatakanaMatches.length : 0;
+  const kanjiCount = kanjiMatches ? kanjiMatches.length : 0;
+  const alphabetCount = alphabetMatches ? alphabetMatches.length : 0;
+
+  const japaneseCharCount = hiraganaKatakanaCount + kanjiCount;
+  const totalCharCount = japaneseCharCount + alphabetCount;
+
+  // 文字がない場合
+  if (totalCharCount === 0) {
+    return 'alphabet';
   }
 
-  // 漢字のみ → 日本語か中国語か不明（タブや母語で判定）
-  if (hasKanji && !hasHiraganaKatakana) {
-    return 'kanji-only';
+  // 日本語文字の割合を計算
+  const japaneseRatio = japaneseCharCount / totalCharCount;
+
+  // 日本語文字が30%以上 → 日本語として判定
+  if (japaneseRatio >= 0.3) {
+    // ひらがな/カタカナを含む → 日本語として確定
+    if (hiraganaKatakanaCount > 0) {
+      return 'ja';
+    }
+    // 漢字のみ → 日本語か中国語か不明
+    if (kanjiCount > 0) {
+      return 'kanji-only';
+    }
   }
 
-  // アルファベットのみ → 言語不明（英語/スペイン語/ポルトガル語等）
-  if (isAlphabetOnly) {
+  // アルファベットが主体 → アルファベット
+  if (alphabetCount > 0 && japaneseRatio < 0.3) {
     return 'alphabet';
   }
 

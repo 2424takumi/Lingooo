@@ -11,7 +11,7 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 const THEME_STORAGE_KEY = '@lingooo_theme';
 
 // Icons
-function CheckIcon({ size = 24, color = '#00AA69' }: { size?: number; color?: string }) {
+function CheckIcon({ size = 24, color = '#111111' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -171,7 +171,7 @@ export default function ThemeSelectScreen() {
                     </View>
                   </View>
                   {selectedTheme === theme.name && (
-                    <CheckIcon size={24} color="#00AA69" />
+                    <CheckIcon size={24} color="#111111" />
                   )}
                 </View>
 
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
@@ -231,8 +231,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   selectedThemeItem: {
-    borderColor: '#00AA69',
-    backgroundColor: '#F0FBF7',
+    borderColor: '#111111',
+    backgroundColor: '#F8F8F8',
   },
   themeHeader: {
     flexDirection: 'row',

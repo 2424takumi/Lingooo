@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, Modal, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import Svg, { Path } from 'react-native-svg';
 
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { WordCard } from '@/components/ui/word-card';
 import { ChatSection } from '@/components/ui/chat-section';
 import { ShimmerSuggestions } from '@/components/ui/shimmer';
+import { BookmarkToast } from '@/components/ui/bookmark-toast';
+import { loadFolders, updateBookmarkFolder, addFolder, type BookmarkFolder } from '@/services/storage/bookmark-storage';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
@@ -18,6 +21,7 @@ import { getWordDetailStream, searchJaToEn } from '@/services/api/search';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
+import { getNuanceType } from '@/utils/nuance';
 import type { SuggestionItem } from '@/types/search';
 import { generateId } from '@/utils/id';
 import type { QAPair } from '@/types/chat';
@@ -26,7 +30,7 @@ export default function SearchScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { currentLanguage } = useLearningLanguages();
+  const { currentLanguage, nativeLanguage } = useLearningLanguages();
   const { aiDetailLevel, setAIDetailLevel } = useAISettings();
 
   const query = typeof params.query === 'string' ? params.query : '';
@@ -44,6 +48,14 @@ export default function SearchScreen() {
 
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>(initialResults);
   const [isLoading, setIsLoading] = useState(false);
+
+  // ブックマークトースト & フォルダ選択
+  const [toastVisible, setToastVisible] = useState(false);
+  const [selectedBookmarkId, setSelectedBookmarkId] = useState<string | null>(null);
+  const [isFolderSelectModalOpen, setIsFolderSelectModalOpen] = useState(false);
+  const [folders, setFolders] = useState<BookmarkFolder[]>([]);
+  const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
 
   // queryまたは言語が変わったら再検索
   useEffect(() => {
@@ -155,6 +167,92 @@ export default function SearchScreen() {
     });
   }, [chatMessages, chatError]);
 
+  // フォルダを読み込む
+  const fetchFolders = async () => {
+    try {
+      const data = await loadFolders();
+      setFolders(data);
+    } catch (error) {
+      logger.error('[Search] Failed to load folders:', error);
+    }
+  };
+
+  useEffect(() => {
+    void fetchFolders();
+  }, []);
+
+  // ブックマーク追加時のハンドラー
+  const handleBookmarkAdded = (bookmarkId: string) => {
+    setSelectedBookmarkId(bookmarkId);
+    setToastVisible(true);
+  };
+
+  // トースト終了時（selectedBookmarkIdはモーダルキャンセル時またはフォルダ追加完了時にクリア）
+  const handleToastDismiss = () => {
+    setToastVisible(false);
+  };
+
+  // フォルダ選択モーダルを開く
+  const handleOpenFolderSelect = () => {
+    setIsFolderSelectModalOpen(true);
+  };
+
+  // フォルダにブックマークを追加
+  const handleAddToFolder = async (folderId?: string) => {
+    if (!selectedBookmarkId) return;
+
+    try {
+      await updateBookmarkFolder(selectedBookmarkId, folderId);
+      setIsFolderSelectModalOpen(false);
+      setToastVisible(false);
+      setSelectedBookmarkId(null);
+      logger.debug('[Search] Bookmark added to folder:', folderId);
+    } catch (error) {
+      logger.error('[Search] Failed to add bookmark to folder:', error);
+    }
+  };
+
+  // 新規フォルダ作成モーダルを開く
+  const handleOpenCreateFolderModal = () => {
+    setIsFolderSelectModalOpen(false);
+    setIsCreateFolderModalOpen(true);
+  };
+
+  // 新規フォルダを作成してブックマークを追加
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) {
+      Alert.alert('エラー', 'フォルダ名を入力してください');
+      return;
+    }
+
+    if (!selectedBookmarkId) {
+      Alert.alert('エラー', 'ブックマークが選択されていません');
+      return;
+    }
+
+    try {
+      // 1. 新しいフォルダを作成
+      const newFolder = await addFolder(newFolderName.trim());
+      logger.debug('[Search] Created new folder:', newFolder.id, newFolder.name);
+
+      // 2. ブックマークを新しいフォルダに追加
+      await updateBookmarkFolder(selectedBookmarkId, newFolder.id);
+      logger.debug('[Search] Bookmark added to new folder:', selectedBookmarkId, newFolder.id);
+
+      // 3. フォルダリストを再読み込み
+      await fetchFolders();
+
+      // 4. モーダルを閉じてステートをリセット
+      setIsCreateFolderModalOpen(false);
+      setNewFolderName('');
+      setToastVisible(false);
+      setSelectedBookmarkId(null);
+    } catch (error) {
+      logger.error('[Search] Failed to create folder:', error);
+      Alert.alert('エラー', 'フォルダの作成に失敗しました');
+    }
+  };
+
   const handleBackPress = () => {
     if (router.canGoBack()) {
       router.back();
@@ -230,9 +328,10 @@ export default function SearchScreen() {
       const generator = sendFollowUpQuestionStream(
         {
           sessionId: generateId('session'),
-          scope: 'word',
+          scope: 'search',
           identifier: query,
           messages: [{ id: generateId('msg'), role: 'user', content: contextualQuestion, createdAt: Date.now() }],
+          context: chatContext,
           detailLevel: aiDetailLevel,
           targetLanguage: currentLanguage.code,
         },
@@ -293,27 +392,16 @@ export default function SearchScreen() {
   };
 
   const handleWordCardPress = async (item: SuggestionItem) => {
-    // 単語を検索履歴に保存（その言語の履歴に追加）
-    try {
-      await addSearchHistory(item.lemma, currentLanguage.code);
-      logger.info('[Search] Added word to search history:', {
-        word: item.lemma,
-        language: currentLanguage.code,
-      });
-    } catch (error) {
-      logger.error('[Search] Failed to add word to search history:', error);
-    }
+    // 単語詳細画面でデータ取得後にトークン数と一緒に検索履歴に保存されるため、
+    // ここでは保存しない
 
-    prefetchWordDetail(item.lemma, (onProgress) => getWordDetailStream(item.lemma, currentLanguage.code, onProgress));
+    prefetchWordDetail(item.lemma, (onProgress) => getWordDetailStream(item.lemma, currentLanguage.code, nativeLanguage.code, 'concise', onProgress));
 
     router.push({
       pathname: '/(tabs)/word-detail',
       params: {
         word: item.lemma,
         targetLanguage: currentLanguage.code, // 言語コードを渡す
-        fromPage: 'search',
-        searchQuery: query,
-        searchResults: JSON.stringify(suggestions),
       },
     });
   };
@@ -327,8 +415,7 @@ export default function SearchScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.content}>
+        <View style={styles.content}>
           {/* Header */}
           <View style={styles.headerContainer}>
             <UnifiedHeaderBar
@@ -341,40 +428,42 @@ export default function SearchScreen() {
           </View>
 
           {/* Word Cards */}
-          <View style={styles.searchResultView}>
-            {isLoading && suggestions.length === 0 ? (
-              <View style={styles.wordCardList}>
-                <ShimmerSuggestions />
-              </View>
-            ) : suggestions.length > 0 ? (
-              <View style={styles.wordCardList}>
-                {suggestions.map((item, index) => (
-                  <Pressable
-                    key={`${item.lemma}-${index}`}
-                    style={styles.wordCardPressable}
-                    accessibilityRole="button"
-                    onPress={() => handleWordCardPress(item)}
-                  >
-                    <WordCard
-                      word={item.lemma}
-                      posTags={item.pos}
-                      gender={item.gender}
-                      definitions={[item.shortSenseJa]}
-                      description={item.usageHint || ''}
-                    />
-                  </Pressable>
-                ))}
-              </View>
-            ) : (
-              <View style={styles.noResultsContainer}>
-                <Text style={styles.noResultsText}>
-                  「{query}」の検索結果が見つかりませんでした
-                </Text>
-              </View>
-            )}
-          </View>
-          </View>
-        </TouchableWithoutFeedback>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.searchResultView}>
+              {isLoading && suggestions.length === 0 ? (
+                <View style={styles.wordCardList}>
+                  <ShimmerSuggestions />
+                </View>
+              ) : suggestions.length > 0 ? (
+                <View style={styles.wordCardList}>
+                  {suggestions.map((item, index) => (
+                    <Pressable
+                      key={`${item.lemma}-${index}`}
+                      style={styles.wordCardPressable}
+                      accessibilityRole="button"
+                      onPress={() => handleWordCardPress(item)}
+                    >
+                      <WordCard
+                        word={item.lemma}
+                        posTags={item.pos}
+                        gender={item.gender}
+                        definitions={[item.shortSenseJa]}
+                        description={item.usageHint || ''}
+                        nuance={getNuanceType(item.nuance)}
+                      />
+                    </Pressable>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.noResultsContainer}>
+                  <Text style={styles.noResultsText}>
+                    「{query}」の検索結果が見つかりませんでした
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
       </ScrollView>
 
       {/* Chat Section - Fixed at bottom */}
@@ -397,10 +486,157 @@ export default function SearchScreen() {
             onDetailLevelChange={setAIDetailLevel}
             scope="search"
             identifier={query}
+            onBookmarkAdded={handleBookmarkAdded}
             onFollowUpQuestion={handleFollowUpQuestion}
           />
         </View>
       </KeyboardAvoidingView>
+
+      {/* Bookmark Toast */}
+      <BookmarkToast
+        visible={toastVisible}
+        onAddToFolder={handleOpenFolderSelect}
+        onDismiss={handleToastDismiss}
+      />
+
+      {/* Folder Select Modal */}
+      <Modal
+        visible={isFolderSelectModalOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setIsFolderSelectModalOpen(false);
+          setSelectedBookmarkId(null);
+        }}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => {
+            setIsFolderSelectModalOpen(false);
+            setSelectedBookmarkId(null);
+          }}
+        >
+          <View style={styles.folderSelectModalContainer} onStartShouldSetResponder={() => true}>
+            <Text style={styles.modalTitle}>フォルダに追加</Text>
+
+            <ScrollView style={styles.folderSelectList} showsVerticalScrollIndicator={false}>
+              {/* No folder option - only show if folders exist */}
+              {folders.length > 0 && (
+                <TouchableOpacity
+                  style={styles.folderSelectItem}
+                  onPress={() => handleAddToFolder(undefined)}
+                >
+                  <Text style={styles.folderSelectItemText}>フォルダなし</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Existing folders */}
+              {folders.map((folder) => (
+                <TouchableOpacity
+                  key={folder.id}
+                  style={styles.folderSelectItem}
+                  onPress={() => handleAddToFolder(folder.id)}
+                >
+                  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11z"
+                      stroke="#111111"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                  <Text style={styles.folderSelectItemText}>{folder.name}</Text>
+                </TouchableOpacity>
+              ))}
+
+              {/* Create new folder button */}
+              <TouchableOpacity
+                style={styles.createFolderButton}
+                onPress={handleOpenCreateFolderModal}
+              >
+                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M12 5v14M5 12h14"
+                    stroke="#111111"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </Svg>
+                <Text style={styles.createFolderButtonText}>新しくフォルダを作る</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.modalCancelButton}
+              onPress={() => {
+                setIsFolderSelectModalOpen(false);
+                setSelectedBookmarkId(null);
+              }}
+            >
+              <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Create Folder Modal */}
+      <Modal
+        visible={isCreateFolderModalOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setIsCreateFolderModalOpen(false);
+          setNewFolderName('');
+          setSelectedBookmarkId(null);
+        }}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => {
+            setIsCreateFolderModalOpen(false);
+            setNewFolderName('');
+            setSelectedBookmarkId(null);
+          }}
+        >
+          <View style={styles.createFolderModalContainer} onStartShouldSetResponder={() => true}>
+            <Text style={styles.modalTitle}>新しいフォルダを作成</Text>
+
+            <TextInput
+              style={styles.folderNameInput}
+              placeholder="フォルダ名"
+              placeholderTextColor="#999999"
+              value={newFolderName}
+              onChangeText={setNewFolderName}
+              autoFocus
+              maxLength={50}
+            />
+
+            <View style={styles.createFolderButtonContainer}>
+              <TouchableOpacity
+                style={styles.modalSecondaryButton}
+                onPress={() => {
+                  setIsCreateFolderModalOpen(false);
+                  setNewFolderName('');
+                  setSelectedBookmarkId(null);
+                }}
+              >
+                <Text style={styles.modalSecondaryButtonText}>キャンセル</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalPrimaryButton}
+                onPress={handleCreateFolder}
+              >
+                <Text style={styles.modalPrimaryButtonText}>作成</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ThemedView>
   );
 }
@@ -418,7 +654,7 @@ const styles = StyleSheet.create({
     paddingBottom: 220, // ChatSection分のスペースを確保（高さ116 + 余裕104）
   },
   headerContainer: {
-    marginBottom: 39,
+    marginBottom: 16,
   },
   searchResultView: {
     gap: 36,
@@ -438,8 +674,8 @@ const styles = StyleSheet.create({
   },
   chatContainerFixed: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 14,
+    paddingHorizontal: 8,
+    paddingBottom: 22,
     justifyContent: 'flex-end',
   },
   noResultsContainer: {
@@ -450,5 +686,142 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#686868',
     textAlign: 'center',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  folderSelectModalContainer: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '70%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+  },
+  folderSelectList: {
+    maxHeight: 300,
+  },
+  folderSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    marginBottom: 8,
+  },
+  folderSelectItemText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    flex: 1,
+  },
+  modalCancelButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#686868',
+  },
+  createFolderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#111111',
+    borderStyle: 'dashed',
+  },
+  createFolderButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111111',
+    flex: 1,
+  },
+  createFolderModalContainer: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    gap: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  folderNameInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#000000',
+    backgroundColor: '#F5F5F5',
+  },
+  createFolderButtonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalSecondaryButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalSecondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#686868',
+  },
+  modalPrimaryButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#111111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalPrimaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

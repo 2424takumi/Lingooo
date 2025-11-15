@@ -3,10 +3,13 @@ import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import * as Speech from 'expo-speech';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'expo-router';
 import { logger } from '@/utils/logger';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
-import Markdown from 'react-native-markdown-display';
 import { SPEECH_LANGUAGE_MAP, LANGUAGE_NAME_MAP } from '@/constants/languages';
+import { formatMarkdownText } from '@/utils/text-formatter';
+import { showTextSelectionMenu } from './text-selection-menu';
+import type { TextSelection } from '@/types/selection';
 
 interface TranslateCardProps {
   originalText: string;
@@ -58,12 +61,20 @@ export function TranslateCard({
   targetLang,
   isTranslating = false,
 }: TranslateCardProps) {
-  const { nativeLanguage } = useLearningLanguages();
+  const router = useRouter();
+  const { nativeLanguage, currentLanguage } = useLearningLanguages();
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
   const [isPlayingTranslated, setIsPlayingTranslated] = useState(false);
   const [isOriginalExpanded, setIsOriginalExpanded] = useState(false);
   const [showExpandButton, setShowExpandButton] = useState(false);
   const [hasCheckedLines, setHasCheckedLines] = useState(false);
+
+  // クリップボード監視用
+  const lastClipboardRef = useRef<string>('');
+  const clipboardCheckInterval = useRef<NodeJS.Timeout | null>(null);
+  const originalTextRef = useRef<string>(originalText);
+  const translatedTextRef = useRef<string>(translatedText);
+  const mountTimeRef = useRef<number>(Date.now());
 
   // アニメーション用の値
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -72,6 +83,12 @@ export function TranslateCard({
   // 母国語かどうかを判定
   const isOriginalNative = sourceLang === nativeLanguage.code;
   const isTranslatedNative = targetLang === nativeLanguage.code;
+
+  // refを最新の値で更新
+  useEffect(() => {
+    originalTextRef.current = originalText;
+    translatedTextRef.current = translatedText;
+  }, [originalText, translatedText]);
 
   // 翻訳文が変更されたらフェードインアニメーション
   useEffect(() => {
@@ -184,16 +201,133 @@ export function TranslateCard({
     }
   };
 
+  // クリップボード監視（選択されたテキストを検出）
+  useEffect(() => {
+    // 初期クリップボード内容を取得（これは無視する）
+    // また、originalTextとtranslatedTextもブラックリストに追加
+    const initClipboard = async () => {
+      try {
+        const initialClip = await Clipboard.getStringAsync();
+        lastClipboardRef.current = initialClip;
+
+        // 原文と翻訳文全体もクリップボードとして無視
+        // （検索画面でコピーされた内容が遷移後に検出されるのを防ぐ）
+        if (initialClip === originalText || initialClip === translatedText) {
+          logger.info('[TranslateCard] Ignoring original/translated text in clipboard');
+        }
+      } catch (error) {
+        logger.error('[TranslateCard] Failed to get initial clipboard:', error);
+      }
+    };
+
+    initClipboard();
+
+    const checkClipboard = async () => {
+      try {
+        // マウント後2秒間はチェックをスキップ（画面遷移直後の誤検知を防ぐ）
+        const timeSinceMount = Date.now() - mountTimeRef.current;
+        if (timeSinceMount < 2000) {
+          return;
+        }
+
+        const clipText = await Clipboard.getStringAsync();
+        const lastClip = lastClipboardRef.current;
+
+        // 新しいクリップボード内容かチェック
+        if (clipText && clipText !== lastClip && clipText.length > 0) {
+          // 原文または翻訳文に含まれているかチェック
+          const currentOriginal = originalTextRef.current;
+          const currentTranslated = translatedTextRef.current;
+
+          // クリップボードが原文または翻訳文全体と完全一致する場合は無視
+          // （検索画面からコピーされたテキストが遷移後に検出されるのを防ぐ）
+          if (clipText === currentOriginal || clipText === currentTranslated) {
+            lastClipboardRef.current = clipText;
+            return;
+          }
+
+          const isFromOriginal = currentOriginal.includes(clipText);
+          const isFromTranslated = currentTranslated.includes(clipText);
+
+          if (isFromOriginal || isFromTranslated) {
+            lastClipboardRef.current = clipText;
+
+            logger.info('[TranslateCard] Showing selection menu for:', clipText.substring(0, 30));
+
+            // 選択メニューを表示
+            const selection: TextSelection = {
+              text: clipText,
+              type: isFromOriginal ? 'original' : 'translated',
+            };
+
+            showTextSelectionMenu({
+              selection,
+              onAsk: handleAskAboutSelection,
+              onLookup: handleLookupSelection,
+            });
+          }
+        }
+      } catch (error) {
+        logger.error('[TranslateCard] Clipboard check error:', error);
+      }
+    };
+
+    // 500msごとにクリップボードをチェック
+    clipboardCheckInterval.current = setInterval(checkClipboard, 500);
+
+    return () => {
+      if (clipboardCheckInterval.current) {
+        clearInterval(clipboardCheckInterval.current);
+        clipboardCheckInterval.current = null;
+      }
+    };
+  }, []); // 空の依存配列で1回だけ実行
+
+  // 選択テキストについて質問
+  const handleAskAboutSelection = (text: string, type: 'original' | 'translated') => {
+    router.push({
+      pathname: '/(tabs)/chat',
+      params: {
+        context: JSON.stringify({
+          originalText,
+          translatedText,
+          sourceLang,
+          targetLang,
+          selectedText: text,
+          selectedType: type,
+        }),
+        scope: 'translate',
+        identifier: `${sourceLang}-${targetLang}`,
+      },
+    });
+  };
+
+  // 選択テキストを辞書/翻訳で調べる
+  const handleLookupSelection = (text: string, type: 'original' | 'translated') => {
+    router.push({
+      pathname: '/(tabs)/word-detail',
+      params: {
+        word: text,
+        targetLanguage: currentLanguage.code,
+      },
+    });
+  };
+
   return (
     <View style={styles.wrapper}>
       {/* Label - Outside of card */}
-      <Text style={styles.label}>{targetLanguageName}に翻訳しました</Text>
+      <Text style={styles.label}>
+        {isTranslating ? `${targetLanguageName}に翻訳しています` : `${targetLanguageName}に翻訳しました`}
+      </Text>
 
       {/* Card */}
       <View style={styles.container}>
         {/* Original Text Section */}
         <View style={styles.originalTextSection}>
           <Text
+            selectable={true}
+            selectionColor="#007AFF"
+            suppressHighlighting={false}
             style={styles.originalText}
             numberOfLines={!hasCheckedLines ? undefined : (isOriginalExpanded ? undefined : 3)}
             onTextLayout={(e) => {
@@ -211,7 +345,7 @@ export function TranslateCard({
           <View style={styles.originalActionsRow}>
             {!isOriginalNative && (
               <TouchableOpacity onPress={handlePlayOriginal} style={styles.speakerButton}>
-                <SpeakerIcon size={18} color={isPlayingOriginal ? '#00AA69' : '#686868'} />
+                <SpeakerIcon size={18} color={isPlayingOriginal ? '#111111' : '#686868'} />
               </TouchableOpacity>
             )}
 
@@ -268,11 +402,18 @@ export function TranslateCard({
             </View>
           ) : (
             <Animated.View style={{ opacity: fadeAnim, gap: 16 }}>
-              <Markdown style={markdownStyles}>{translatedText}</Markdown>
+              <Text
+                selectable={true}
+                selectionColor="#007AFF"
+                suppressHighlighting={false}
+                style={styles.translatedText}
+              >
+                {formatMarkdownText(translatedText)}
+              </Text>
               <View style={styles.translatedActions}>
                 {!isTranslatedNative && (
                   <TouchableOpacity onPress={handlePlayTranslated} style={styles.actionButton}>
-                    <SpeakerIcon size={18} color={isPlayingTranslated ? '#00AA69' : '#686868'} />
+                    <SpeakerIcon size={18} color={isPlayingTranslated ? '#111111' : '#686868'} />
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity onPress={handleCopy} style={styles.actionButton}>
@@ -286,74 +427,6 @@ export function TranslateCard({
     </View>
   );
 }
-
-const markdownStyles = StyleSheet.create({
-  body: {
-    fontSize: 14,
-    lineHeight: 24,
-    color: '#000000',
-    fontWeight: '400',
-    letterSpacing: 0.3,
-  },
-  heading1: {
-    fontSize: 18,
-    lineHeight: 26,
-    fontWeight: '700',
-    color: '#000000',
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  heading2: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
-    color: '#000000',
-    marginTop: 6,
-    marginBottom: 6,
-  },
-  paragraph: {
-    marginTop: 0,
-    marginBottom: 8,
-  },
-  bullet_list: {
-    marginTop: 4,
-    marginBottom: 4,
-  },
-  ordered_list: {
-    marginTop: 4,
-    marginBottom: 4,
-  },
-  list_item: {
-    marginTop: 2,
-    marginBottom: 2,
-  },
-  bullet_list_icon: {
-    fontSize: 14,
-    lineHeight: 24,
-    marginLeft: 0,
-    marginRight: 8,
-  },
-  strong: {
-    fontWeight: '700',
-  },
-  em: {
-    fontStyle: 'italic',
-  },
-  code_inline: {
-    backgroundColor: '#C8E6D1',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 3,
-    fontFamily: 'monospace',
-  },
-  code_block: {
-    backgroundColor: '#C8E6D1',
-    padding: 8,
-    borderRadius: 6,
-    marginTop: 4,
-    marginBottom: 4,
-  },
-});
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -371,7 +444,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#FFFFFF',
-    backgroundColor: '#FAFCFB',
+    backgroundColor: '#F8F8F8',
     paddingVertical: 12,
     paddingHorizontal: 12,
     gap: 12,
@@ -395,7 +468,7 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   translatedTextContainer: {
-    backgroundColor: '#E5F3E8',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 16,
     marginHorizontal: -8,
@@ -428,7 +501,7 @@ const styles = StyleSheet.create({
   },
   shimmerBar: {
     height: 16,
-    backgroundColor: '#C8E6D1',
+    backgroundColor: '#E0E0E0',
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -442,6 +515,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     padding: 2,
+    marginLeft: 'auto',
   },
   expandButtonText: {
     fontSize: 12,

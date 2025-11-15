@@ -1,0 +1,86 @@
+{
+  "common": {
+    "settings": "設定",
+    "back": "戻る",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "create": "作成",
+    "close": "閉じる",
+    "error": "エラー",
+    "loading": "読み込み中..."
+  },
+  "settings": {
+    "title": "設定",
+    "user": "ユーザー名",
+    "plan": {
+      "free": "無料プラン",
+      "plus": "プラスプラン"
+    },
+    "usage": {
+      "questions": "質問回数",
+      "tokens": "トークン使用量",
+      "monthly": "今月の使用量",
+      "limit": "制限",
+      "resetIn": "{{days}}日後にリセット"
+    },
+    "nativeLanguage": {
+      "title": "母語",
+      "description": "あなたの母語（ネイティブ言語）を選択してください。\nこの言語で入力した場合、他の学習言語への翻訳を行います。"
+    },
+    "learningLanguages": {
+      "title": "学習中の言語",
+      "description": "学習中の言語を選択してください。ここで選択した言語が検索画面やホーム画面で切り替えられるようになります。",
+      "add": "言語を追加",
+      "minOneRequired": "最低1つの言語を学習中にする必要があります",
+      "confirmDelete": "この言語を学習中リストから削除しますか？"
+    },
+    "defaultLanguage": {
+      "title": "デフォルト言語",
+      "description": "アプリ起動時に表示される言語を選択してください。"
+    },
+    "aiSettings": {
+      "title": "AI設定",
+      "detailLevel": {
+        "title": "詳細度",
+        "concise": "簡潔",
+        "balanced": "バランス",
+        "detailed": "詳細"
+      }
+    }
+  },
+  "search": {
+    "placeholder": "知りたい言葉や文章を入力...",
+    "noResults": "「{{query}}」の検索結果が見つかりませんでした",
+    "chatPlaceholder": "この単語について質問をする..."
+  },
+  "wordDetail": {
+    "bookmarked": "ブックマークに追加しました",
+    "examples": "例文",
+    "usageHint": "使い方のヒント",
+    "frequency": "頻出度",
+    "difficulty": "難易度",
+    "nuance": "ニュアンス"
+  },
+  "bookmarks": {
+    "title": "ブックマーク",
+    "addToFolder": "フォルダに追加",
+    "noFolder": "フォルダなし",
+    "createFolder": "新しくフォルダを作る",
+    "folderName": "フォルダ名",
+    "createNewFolder": "新しいフォルダを作成",
+    "folderNameRequired": "フォルダ名を入力してください",
+    "createFailed": "フォルダの作成に失敗しました"
+  },
+  "history": {
+    "title": "履歴",
+    "searchHistory": "検索履歴",
+    "clear": "履歴をクリア"
+  },
+  "chat": {
+    "send": "送信",
+    "retry": "再試行",
+    "followUpQuestion": "追加質問",
+    "askFollowUp": "さらに詳しく質問する"
+  }
+}

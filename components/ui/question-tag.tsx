@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface QuestionTagProps {
   label: string;
@@ -6,10 +7,13 @@ interface QuestionTagProps {
 }
 
 export function QuestionTag({ label, onPress }: QuestionTagProps) {
+  const backgroundColor = useThemeColor({}, 'questionTagBackground');
+  const textColor = useThemeColor({}, 'questionTagText');
+
   return (
     <TouchableOpacity onPress={onPress}>
-      <View style={styles.container}>
-        <Text style={styles.text}>{label}</Text>
+      <View style={[styles.container, { backgroundColor }]}>
+        <Text style={[styles.text, { color: textColor }]}>{label}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -17,18 +21,16 @@ export function QuestionTag({ label, onPress }: QuestionTagProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 25,
-    height: 30,
+    borderRadius: 12,
+    height: 28,
     paddingHorizontal: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   text: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#686868',
+    fontWeight: '500',
     textAlign: 'center',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
   },
 });

@@ -6,6 +6,7 @@
 
 import type { ModelConfig } from './model-selector';
 import { logger } from '@/utils/logger';
+import { authenticatedFetch } from '../api/client';
 
 // バックエンドサーバーのURL
 const BACKEND_URL = (() => {
@@ -50,11 +51,8 @@ export async function generateText(
   config: ModelConfig
 ): Promise<string> {
   try {
-    const response = await fetch(getApiUrl('/generate'), {
+    const response = await authenticatedFetch(getApiUrl('/generate'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ prompt, config }),
     });
 
@@ -132,13 +130,10 @@ export async function* generateTextStream(
 export async function generateJSON<T>(
   prompt: string,
   config: ModelConfig
-): Promise<T> {
+): Promise<{ data: T; tokensUsed: number }> {
   try {
-    const response = await fetch(getApiUrl('/generate-json'), {
+    const response = await authenticatedFetch(getApiUrl('/generate-json'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ prompt, config }),
     });
 
@@ -159,7 +154,10 @@ export async function generateJSON<T>(
     }
 
     const result = await response.json();
-    return result.data as T;
+    return {
+      data: result.data as T,
+      tokensUsed: result.tokensUsed || 0,
+    };
   } catch (error) {
     logger.error('[GeminiClient] Error in generateJSON:', error);
     throw error;
@@ -176,16 +174,13 @@ export async function generateJSONProgressive<T>(
   prompt: string,
   config: ModelConfig,
   onProgress: (progress: number, partialData?: Partial<T>) => void
-): Promise<T> {
+): Promise<{ data: T; tokensUsed: number }> {
   try {
     logger.info('[GeminiClient] Starting progressive generation');
 
     // タスクを開始
-    const startResponse = await fetch(getApiUrl('/generate-json-progressive'), {
+    const startResponse = await authenticatedFetch(getApiUrl('/generate-json-progressive'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ prompt, config }),
     });
 
@@ -206,7 +201,7 @@ export async function generateJSONProgressive<T>(
     while (true) {
       await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
 
-      const statusResponse = await fetch(getApiUrl(`/task/${taskId}`));
+      const statusResponse = await authenticatedFetch(getApiUrl(`/task/${taskId}`));
       if (!statusResponse.ok) {
         logger.error(`[GeminiClient] Task status fetch failed: ${statusResponse.status} ${statusResponse.statusText}`);
 
@@ -219,7 +214,10 @@ export async function generateJSONProgressive<T>(
           if (notFoundRetries >= MAX_RETRIES) {
             logger.info('[GeminiClient] Returning last partial data as completed');
             onProgress(100, lastPartialData);
-            return lastPartialData as T;
+            return {
+              data: lastPartialData as T,
+              tokensUsed: 0, // タスクが見つからないためトークン数は不明
+            };
           }
           // リトライを続ける
           continue;
@@ -258,7 +256,10 @@ export async function generateJSONProgressive<T>(
       // 完了
       if (task.status === 'completed') {
         logger.info('[GeminiClient] Task completed');
-        return task.partialData as T;
+        return {
+          data: task.partialData as T,
+          tokensUsed: task.tokensUsed || 0,
+        };
       }
 
       // エラー
@@ -281,13 +282,10 @@ export async function generateJSONProgressive<T>(
 export async function generateBasicInfo<T>(
   prompt: string,
   config: ModelConfig
-): Promise<T> {
+): Promise<{ data: T; tokensUsed: number }> {
   try {
-    const response = await fetch(getApiUrl('/generate-basic-info'), {
+    const response = await authenticatedFetch(getApiUrl('/generate-basic-info'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ prompt, config }),
     });
 
@@ -308,7 +306,10 @@ export async function generateBasicInfo<T>(
     }
 
     const result = await response.json();
-    return result.data as T;
+    return {
+      data: result.data as T,
+      tokensUsed: result.tokensUsed || 0,
+    };
   } catch (error) {
     logger.error('[GeminiClient] Error in generateBasicInfo:', error);
     throw error;
@@ -326,11 +327,8 @@ export async function generateSuggestionsArray<T>(
   config: ModelConfig
 ): Promise<T[]> {
   try {
-    const response = await fetch(getApiUrl('/generate-suggestions'), {
+    const response = await authenticatedFetch(getApiUrl('/generate-suggestions'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ prompt, config }),
     });
 
@@ -373,14 +371,11 @@ export async function generateSuggestionsArray<T>(
 export async function generateSuggestionsArrayFast<T>(
   prompt: string,
   config: ModelConfig
-): Promise<T[]> {
+): Promise<{ data: T[]; tokensUsed: number }> {
   try {
     logger.info('[GeminiClient] Starting fast suggestions generation');
-    const response = await fetch(getApiUrl('/generate-suggestions-fast'), {
+    const response = await authenticatedFetch(getApiUrl('/generate-suggestions-fast'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ prompt, config }),
     });
 
@@ -404,11 +399,17 @@ export async function generateSuggestionsArrayFast<T>(
 
     if (!Array.isArray(result.data)) {
       logger.warn('[GeminiClient] Fast suggestions: result.data is not array, wrapping');
-      return [result.data] as T[];
+      return {
+        data: [result.data] as T[],
+        tokensUsed: result.tokensUsed || 0,
+      };
     }
 
     logger.info('[GeminiClient] Fast suggestions completed:', result.data.length);
-    return result.data as T[];
+    return {
+      data: result.data as T[],
+      tokensUsed: result.tokensUsed || 0,
+    };
   } catch (error) {
     logger.error('[GeminiClient] Error in generateSuggestionsArrayFast:', error);
     throw error;
@@ -427,11 +428,8 @@ export async function generateUsageHint(
 ): Promise<{ lemma: string; usageHint: string }> {
   try {
     logger.info(`[GeminiClient] Starting usage hint generation for: ${lemma}`);
-    const response = await fetch(getApiUrl('/generate-usage-hint'), {
+    const response = await authenticatedFetch(getApiUrl('/generate-usage-hint'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ lemma, japaneseQuery }),
     });
 
@@ -475,11 +473,8 @@ export async function generateUsageHints(
 ): Promise<Array<{ lemma: string; usageHint: string }>> {
   try {
     logger.info('[GeminiClient] Starting usage hints generation for:', lemmas);
-    const response = await fetch(getApiUrl('/generate-usage-hints'), {
+    const response = await authenticatedFetch(getApiUrl('/generate-usage-hints'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ lemmas, japaneseQuery }),
     });
 
@@ -519,7 +514,7 @@ export async function generateUsageHints(
  */
 export async function isGeminiConfigured(): Promise<boolean> {
   try {
-    const response = await fetch(getApiUrl('/status'));
+    const response = await authenticatedFetch(getApiUrl('/status'));
     if (!response.ok) {
       return false;
     }

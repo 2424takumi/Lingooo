@@ -11,7 +11,7 @@ export function DefinitionList({ definitions }: DefinitionListProps) {
         <Text
           key={index}
           selectable
-          selectionColor="#00AA69"
+          selectionColor="#111111"
           style={styles.definition}
         >
           <Text style={styles.bullet}>・</Text>
@@ -34,6 +34,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   bullet: {
-    color: '#00AA69',
+    color: '#111111',
   },
 });

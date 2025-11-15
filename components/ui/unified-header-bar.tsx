@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { MenuIcon } from './icons';
+import { useRef } from 'react';
+import { MenuIcon, SettingsIcon } from './icons';
 import Svg, { Path } from 'react-native-svg';
 import { PosTag } from './pos-tag';
 import { LanguageSwitcher } from './language-switcher';
@@ -61,18 +62,19 @@ function UserIcon({ size = 24 }: { size?: number }) {
   );
 }
 
-type PageType = 'home' | 'jpSearch' | 'wordDetail' | 'other';
+type PageType = 'home' | 'jpSearch' | 'wordDetail' | 'translate' | 'other';
 
 interface UnifiedHeaderBarProps {
   pageType?: PageType;
   // Home
-  onMenuPress?: () => void;
+  onMenuPress?: (layout: { x: number; y: number; width: number; height: number }) => void;
   onProfilePress?: () => void;
-  // JpSearch
+  onSettingsPress?: () => void;
+  // JpSearch & Translate
   title?: string;
   selectedFlag?: string;
   onLanguagePress?: () => void;
-  // JpSearch & WordDetail
+  // JpSearch & WordDetail & Translate
   onBackPress?: () => void;
   // WordDetail
   word?: string;
@@ -87,6 +89,7 @@ export function UnifiedHeaderBar({
   pageType = 'home',
   onMenuPress,
   onProfilePress,
+  onSettingsPress,
   title = '学習する',
   selectedFlag = '🇺🇸',
   onLanguagePress,
@@ -97,15 +100,29 @@ export function UnifiedHeaderBar({
   onPronouncePress,
   isOffline = false,
 }: UnifiedHeaderBarProps) {
+  const menuButtonRef = useRef<TouchableOpacity>(null);
+
+  const handleMenuPress = () => {
+    if (menuButtonRef.current && onMenuPress) {
+      menuButtonRef.current.measureInWindow((x, y, width, height) => {
+        onMenuPress({ x, y, width, height });
+      });
+    }
+  };
+
   // Home variant
   if (pageType === 'home') {
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={onMenuPress} style={styles.menuButton}>
-          <MenuIcon size={28} color="#000000" />
+        <TouchableOpacity
+          ref={menuButtonRef}
+          onPress={handleMenuPress}
+          style={styles.menuButton}
+        >
+          <MenuIcon size={22} color="#000000" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={onProfilePress} style={styles.profileButton}>
-          <UserIcon size={28} />
+        <TouchableOpacity onPress={onSettingsPress} style={styles.settingsButton}>
+          <UserIcon size={24} />
         </TouchableOpacity>
       </View>
     );
@@ -119,7 +136,7 @@ export function UnifiedHeaderBar({
           <ChevronLeftIcon size={28} />
         </TouchableOpacity>
 
-        <Text selectable selectionColor="#00AA69" style={styles.title}>
+        <Text selectable selectionColor="#111111" style={styles.title}>
           {title}
         </Text>
 
@@ -137,7 +154,7 @@ export function UnifiedHeaderBar({
             <ChevronLeftIcon size={28} />
           </TouchableOpacity>
 
-          <Text selectable selectionColor="#00AA69" style={styles.word}>
+          <Text selectable selectionColor="#111111" style={styles.word}>
             {word}
           </Text>
 
@@ -153,6 +170,21 @@ export function UnifiedHeaderBar({
             ))}
           </View>
         )}
+      </View>
+    );
+  }
+
+  // Translate variant
+  if (pageType === 'translate') {
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
+          <ChevronLeftIcon size={28} />
+        </TouchableOpacity>
+
+        <View style={styles.placeholder} />
+
+        <LanguageSwitcher />
       </View>
     );
   }
@@ -180,18 +212,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAFCFB',
+    backgroundColor: 'transparent',
     borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
     paddingHorizontal: 12,
     paddingVertical: 8,
     height: 52,
   },
   wordDetailContainer: {
-    backgroundColor: '#FAFCFB',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderRadius: 18,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -205,6 +233,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileButton: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingsButton: {
     width: 36,
     height: 36,
     justifyContent: 'center',
@@ -249,7 +283,7 @@ const styles = StyleSheet.create({
   },
   word: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#000000',
     textAlign: 'center',
     letterSpacing: 1,
@@ -260,7 +294,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 11,
-    backgroundColor: '#00AA69',
+    backgroundColor: '#111111',
     justifyContent: 'center',
     alignItems: 'center',
   },

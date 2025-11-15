@@ -4,11 +4,12 @@ import React, {
   useContext,
   useMemo,
   useReducer,
+  useRef,
   type ReactNode,
 } from 'react';
 
 import { clearChatSession, getChatSession, setChatSession } from '@/services/cache/chat-cache';
-import { sendChatMessage, sendChatMessageStream, sendChatMessageStreamWebSocket } from '@/services/api/chat';
+import { sendChatMessage, sendChatMessageStream, sendChatMessageStreamWebSocket, ChatStreamController } from '@/services/api/chat';
 import type {
   ChatMessage,
   ChatRequestContext,
@@ -41,6 +42,7 @@ interface ChatContextValue {
     }
   ) => Promise<void>;
   clearSession: (key: ChatSessionKey) => void;
+  cancelStream: (key: ChatSessionKey) => void;
 }
 
 type SessionsState = Record<string, ChatSessionState>;
@@ -116,6 +118,9 @@ function createAssistantPlaceholder(): ChatMessage {
 
 export function ChatProvider({ children }: ChatProviderProps) {
   const [sessions, dispatch] = useReducer(reducer, {});
+
+  // ストリームコントローラーを保持（セッションキーごと）
+  const streamControllers = useRef<Record<string, ChatStreamController>>({});
 
   const ensureSession = useCallback(
     (key: ChatSessionKey): ChatSessionState => {
@@ -217,6 +222,19 @@ export function ChatProvider({ children }: ChatProviderProps) {
     clearChatSession(key);
   }, []);
 
+  const cancelStream = useCallback((key: ChatSessionKey) => {
+    const mapKey = toKey(key);
+    const controller = streamControllers.current[mapKey];
+
+    if (controller) {
+      logger.info('[ChatContext] Cancelling stream for session:', mapKey);
+      controller.cancel();
+      delete streamControllers.current[mapKey];
+    } else {
+      logger.warn('[ChatContext] No active stream to cancel for session:', mapKey);
+    }
+  }, []);
+
   const sendMessage = useCallback<ChatContextValue['sendMessage']>(
     async ({ scope, identifier, text, context, streaming = true, detailLevel, targetLanguage }) => {
       const key: ChatSessionKey = { scope, identifier };
@@ -289,9 +307,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
             method: USE_WEBSOCKET_STREAMING ? 'WebSocket' : 'XHR',
           });
 
+          // ストリームコントローラーを作成
+          const controller = new ChatStreamController();
+          streamControllers.current[toKey(key)] = controller;
+
           const stream = USE_WEBSOCKET_STREAMING
             ? await sendChatMessageStreamWebSocket(request)
-            : sendChatMessageStream(request);
+            : sendChatMessageStream(request, controller);
           let completion = null;
 
           while (true) {
@@ -399,6 +421,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
         dispatch({ type: 'UPSERT', key: toKey(key), session: workingSession });
         finalizeSession(workingSession);
+      } finally {
+        // ストリームコントローラーをクリーンアップ
+        const mapKey = toKey(key);
+        if (streamControllers.current[mapKey]) {
+          logger.info('[ChatContext] Cleaning up stream controller for session:', mapKey);
+          delete streamControllers.current[mapKey];
+        }
       }
     },
     [ensureSession]
@@ -409,9 +438,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
       getSession,
       sendMessage,
       clearSession,
+      cancelStream,
       sessions,
     }),
-    [getSession, sendMessage, clearSession, sessions]
+    [getSession, sendMessage, clearSession, cancelStream, sessions]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

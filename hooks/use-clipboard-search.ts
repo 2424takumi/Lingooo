@@ -1,52 +1,50 @@
 /**
  * クリップボード監視フック
  *
- * アプリがフォアグラウンドになったときにクリップボードをチェックし、
- * 新しいテキストがあれば自動的に検索を実行する
+ * PDFの仕様に基づいた実装:
+ * 1. Clipboard.hasString()で事前チェック（iOS 14+の通知を回避）
+ * 2. ユーザーに確認ダイアログを表示
+ * 3. ユーザーが「貼り付け」を選択した場合のみClipboard.getString()で取得
+ * 4. AppStateの変化を監視してフォアグラウンド復帰時にもチェック
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { AppState, type AppStateStatus } from 'react-native';
+import { AppState, type AppStateStatus, Alert } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/utils/logger';
 
 const LAST_CLIPBOARD_KEY = '@lingooo/lastClipboard';
-const MAX_SEARCH_LENGTH = 100; // 検索可能な最大文字数
+const MAX_SEARCH_LENGTH = 500; // 検索可能な最大文字数
 const MIN_SEARCH_LENGTH = 1; // 検索可能な最小文字数
 
 interface UseClipboardSearchOptions {
   enabled?: boolean; // クリップボード監視を有効にするか
-  onSearch?: (text: string) => void; // 検索実行時のコールバック
-  autoSearch?: boolean; // 自動検索を有効にするか（falseの場合は通知のみ）
+  onPaste?: (text: string) => void; // ペースト実行時のコールバック
 }
 
 interface ClipboardSearchResult {
-  clipboardText: string | null; // 現在のクリップボードテキスト
-  shouldSearch: boolean; // 検索すべきかどうか
   isChecking: boolean; // チェック中かどうか
-  clearClipboard: () => Promise<void>; // クリップボードをクリア
 }
 
 export function useClipboardSearch(
   options: UseClipboardSearchOptions = {}
 ): ClipboardSearchResult {
-  const { enabled = true, onSearch, autoSearch = true } = options;
+  const { enabled = true, onPaste } = options;
 
-  const [clipboardText, setClipboardText] = useState<string | null>(null);
-  const [shouldSearch, setShouldSearch] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
 
   const lastCheckedText = useRef<string>('');
   const appState = useRef(AppState.currentState);
+  const isPromptShowing = useRef(false); // ダイアログ表示中フラグ
 
-  // onSearchをrefで保持して、useEffect依存配列から除外
-  const onSearchRef = useRef(onSearch);
+  // onPasteをrefで保持して、useEffect依存配列から除外
+  const onPasteRef = useRef(onPaste);
 
-  // onSearchが変更されたら最新版をrefに保存
+  // onPasteが変更されたら最新版をrefに保存
   useEffect(() => {
-    onSearchRef.current = onSearch;
-  }, [onSearch]);
+    onPasteRef.current = onPaste;
+  }, [onPaste]);
 
   /**
    * クリップボードの内容が検索可能かチェック
@@ -61,14 +59,6 @@ export function useClipboardSearch(
       return false;
     }
 
-    // URLや複数行テキストは除外
-    if (trimmed.includes('http://') || trimmed.includes('https://')) {
-      return false;
-    }
-    if (trimmed.includes('\n')) {
-      return false;
-    }
-
     // 特殊文字だけの場合は除外
     if (/^[^\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]+$/.test(trimmed)) {
       return false;
@@ -78,76 +68,115 @@ export function useClipboardSearch(
   };
 
   /**
-   * クリップボードをチェックして検索を実行
+   * 確認ダイアログを表示してクリップボードから貼り付け
    */
-  const checkClipboard = async () => {
-    if (!enabled) return;
+  const checkClipboardAndPrompt = async () => {
+    if (!enabled || isPromptShowing.current) return;
 
     try {
       setIsChecking(true);
       logger.info('[ClipboardSearch] Checking clipboard...');
 
-      // クリップボードから取得
-      const text = await Clipboard.getStringAsync();
+      // 1. hasStringAsync()でクリップボードにテキストがあるかチェック
+      //    iOS 14+では、この方法だと通知が表示されない
+      const hasContent = await Clipboard.hasStringAsync();
 
+      if (!hasContent) {
+        logger.info('[ClipboardSearch] Clipboard is empty or no string content');
+        setIsChecking(false);
+        return;
+      }
+
+      // 実際のクリップボード内容を取得して有効性をチェック
+      const clipboardText = await Clipboard.getStringAsync();
+      const text = clipboardText?.trim() ?? '';
+
+      // 内容が空の場合はスキップ
       if (!text) {
-        logger.info('[ClipboardSearch] Clipboard is empty');
+        logger.info('[ClipboardSearch] Clipboard content is empty');
         setIsChecking(false);
         return;
       }
 
-      // 前回チェックした内容と同じなら何もしない
+      // 前回と同じ内容ならスキップ
       if (text === lastCheckedText.current) {
-        logger.info('[ClipboardSearch] Same as last check, skipping');
-        setIsChecking(false);
-        return;
-      }
-
-      // AsyncStorageから前回保存した内容を取得
-      const lastSavedText = await AsyncStorage.getItem(LAST_CLIPBOARD_KEY);
-      if (text === lastSavedText) {
-        logger.info('[ClipboardSearch] Already processed this clipboard content');
-        lastCheckedText.current = text;
+        logger.info('[ClipboardSearch] Same as last processed text, skipping');
         setIsChecking(false);
         return;
       }
 
       // 検索可能なテキストかチェック
       if (!isValidSearchText(text)) {
-        logger.info('[ClipboardSearch] Invalid search text', { text: text.substring(0, 50) });
-        lastCheckedText.current = text;
-        await AsyncStorage.setItem(LAST_CLIPBOARD_KEY, text);
+        logger.info('[ClipboardSearch] Invalid search text, skipping');
         setIsChecking(false);
         return;
       }
 
-      // 検索実行
-      logger.info('[ClipboardSearch] New valid text found:', { text: text.substring(0, 50) });
-      setClipboardText(text.trim());
-      setShouldSearch(true);
+      // 2. 最後にダイアログを表示した時刻をチェック
+      const lastPromptTime = await AsyncStorage.getItem('@lingooo/lastPromptTime');
+      const now = Date.now();
 
-      // 保存して次回スキップ
-      lastCheckedText.current = text;
-      await AsyncStorage.setItem(LAST_CLIPBOARD_KEY, text);
-
-      // 自動検索が有効な場合はコールバック実行
-      if (autoSearch && onSearchRef.current) {
-        onSearchRef.current(text.trim());
+      if (lastPromptTime) {
+        const timeSinceLastPrompt = now - parseInt(lastPromptTime, 10);
+        if (timeSinceLastPrompt < 3000) { // 3秒以内なら再表示しない
+          logger.info('[ClipboardSearch] Prompt shown recently, skipping');
+          setIsChecking(false);
+          return;
+        }
       }
+
+      // ダイアログ表示中フラグを設定
+      isPromptShowing.current = true;
+      await AsyncStorage.setItem('@lingooo/lastPromptTime', now.toString());
+
+      // 3. 確認ダイアログを表示
+      Alert.alert(
+        'クリップボードから貼り付け',
+        `"${text.length > 50 ? text.substring(0, 50) + '...' : text}" を検索欄に貼り付けますか？`,
+        [
+          {
+            text: 'キャンセル',
+            style: 'cancel',
+            onPress: () => {
+              logger.info('[ClipboardSearch] User cancelled paste');
+              // キャンセルした場合、次回も同じ内容で表示しないように記録
+              lastCheckedText.current = text;
+              isPromptShowing.current = false;
+              setIsChecking(false);
+            },
+          },
+          {
+            text: '貼り付け',
+            onPress: async () => {
+              try {
+                logger.info('[ClipboardSearch] User approved paste:', text.substring(0, 50));
+
+                // テキスト入力に設定
+                lastCheckedText.current = text;
+                await AsyncStorage.setItem(LAST_CLIPBOARD_KEY, text);
+
+                if (onPasteRef.current) {
+                  onPasteRef.current(text);
+                }
+
+                isPromptShowing.current = false;
+                setIsChecking(false);
+              } catch (error) {
+                logger.error('[ClipboardSearch] Error setting clipboard text:', error);
+                isPromptShowing.current = false;
+                setIsChecking(false);
+              }
+            },
+          },
+        ]
+      );
 
       setIsChecking(false);
     } catch (error) {
       logger.error('[ClipboardSearch] Error checking clipboard:', error);
+      isPromptShowing.current = false;
       setIsChecking(false);
     }
-  };
-
-  /**
-   * クリップボードをクリア（ユーザーが明示的に閉じた場合）
-   */
-  const clearClipboard = async () => {
-    setClipboardText(null);
-    setShouldSearch(false);
   };
 
   /**
@@ -156,28 +185,40 @@ export function useClipboardSearch(
   useEffect(() => {
     if (!enabled) return;
 
+    // 初期化：前回処理したテキストをAsyncStorageから読み込む
+    const initialize = async () => {
+      try {
+        const lastText = await AsyncStorage.getItem(LAST_CLIPBOARD_KEY);
+        if (lastText) {
+          lastCheckedText.current = lastText;
+          logger.info('[ClipboardSearch] Initialized with last text:', lastText.substring(0, 50));
+        }
+      } catch (error) {
+        logger.error('[ClipboardSearch] Error loading last text:', error);
+      }
+
+      // 初回マウント時もチェック
+      checkClipboardAndPrompt();
+    };
+
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       // バックグラウンド → フォアグラウンドに移行したときにチェック
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
         logger.info('[ClipboardSearch] App became active, checking clipboard');
-        checkClipboard();
+        checkClipboardAndPrompt();
       }
 
       appState.current = nextAppState;
     });
 
-    // 初回マウント時もチェック
-    checkClipboard();
+    initialize();
 
     return () => {
       subscription.remove();
     };
-  }, [enabled, autoSearch]); // onSearchを依存配列から削除（refで管理）
+  }, [enabled]); // onPasteを依存配列から削除（refで管理）
 
   return {
-    clipboardText,
-    shouldSearch,
     isChecking,
-    clearClipboard,
   };
 }

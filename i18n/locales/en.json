@@ -1,0 +1,86 @@
+{
+  "common": {
+    "settings": "Settings",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "create": "Create",
+    "close": "Close",
+    "error": "Error",
+    "loading": "Loading..."
+  },
+  "settings": {
+    "title": "Settings",
+    "user": "Username",
+    "plan": {
+      "free": "Free Plan",
+      "plus": "Plus Plan"
+    },
+    "usage": {
+      "questions": "Questions",
+      "tokens": "Token Usage",
+      "monthly": "Monthly Usage",
+      "limit": "Limit",
+      "resetIn": "Resets in {{days}} days"
+    },
+    "nativeLanguage": {
+      "title": "Native Language",
+      "description": "Select your native language.\nWhen you input text in this language, it will be translated to your learning languages."
+    },
+    "learningLanguages": {
+      "title": "Learning Languages",
+      "description": "Select the languages you want to learn. These languages will be available in the search and home screens.",
+      "add": "Add Language",
+      "minOneRequired": "At least one language must be selected",
+      "confirmDelete": "Remove this language from your learning list?"
+    },
+    "defaultLanguage": {
+      "title": "Default Language",
+      "description": "Select the language to display when the app launches."
+    },
+    "aiSettings": {
+      "title": "AI Settings",
+      "detailLevel": {
+        "title": "Detail Level",
+        "concise": "Concise",
+        "balanced": "Balanced",
+        "detailed": "Detailed"
+      }
+    }
+  },
+  "search": {
+    "placeholder": "Enter a word or phrase to learn...",
+    "noResults": "No results found for \"{{query}}\"",
+    "chatPlaceholder": "Ask a question about this word..."
+  },
+  "wordDetail": {
+    "bookmarked": "Added to bookmarks",
+    "examples": "Examples",
+    "usageHint": "Usage Hint",
+    "frequency": "Frequency",
+    "difficulty": "Difficulty",
+    "nuance": "Nuance"
+  },
+  "bookmarks": {
+    "title": "Bookmarks",
+    "addToFolder": "Add to Folder",
+    "noFolder": "No Folder",
+    "createFolder": "Create New Folder",
+    "folderName": "Folder Name",
+    "createNewFolder": "Create New Folder",
+    "folderNameRequired": "Please enter a folder name",
+    "createFailed": "Failed to create folder"
+  },
+  "history": {
+    "title": "History",
+    "searchHistory": "Search History",
+    "clear": "Clear History"
+  },
+  "chat": {
+    "send": "Send",
+    "retry": "Retry",
+    "followUpQuestion": "Follow-up",
+    "askFollowUp": "Ask a follow-up question"
+  }
+}

@@ -19,6 +19,8 @@ export interface SuggestionItem {
   confidence: number;
   /** 使い分けガイド（この単語の使い方や特徴を簡潔に説明） */
   usageHint?: string;
+  /** ニュアンススコア (0=casual, 50=neutral, 100=formal) */
+  nuance?: number;
 }
 
 /**
