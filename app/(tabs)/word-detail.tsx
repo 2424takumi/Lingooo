@@ -47,6 +47,9 @@ export default function WordDetailScreen() {
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null); // 実際に見つかった言語
   const [showLanguageNotification, setShowLanguageNotification] = useState(false); // 通知表示フラグ
 
+  // ヘッダーの高さを測定
+  const [headerHeight, setHeaderHeight] = useState(88); // デフォルト値(wordDetailの最低高さ)
+
   // ブックマークトースト & フォルダ選択
   const [toastVisible, setToastVisible] = useState(false);
   const [selectedBookmarkId, setSelectedBookmarkId] = useState<string | null>(null);
@@ -85,6 +88,7 @@ export default function WordDetailScreen() {
         translatedText: translationData.translatedText,
         sourceLang: translationData.sourceLang,
         targetLang: translationData.targetLang,
+        selectedText: selectedText?.text, // 選択されたテキストを追加
       };
     }
 
@@ -102,7 +106,7 @@ export default function WordDetailScreen() {
           japanese: example.textDst,
         })) ?? [],
     };
-  }, [mode, translationData, wordData]);
+  }, [mode, translationData, wordData, selectedText]);
 
   // チャット識別子：翻訳モードの場合は原文を使用、単語モードの場合は正しい単語（headword.lemma）を使用
   const chatIdentifier = mode === 'translate'
@@ -128,6 +132,9 @@ export default function WordDetailScreen() {
 
   // QAPairsをstateとして管理（追加質問をサポートするため）
   const [qaPairs, setQAPairs] = useState<QAPair[]>([]);
+
+  // 選択テキスト管理（翻訳モード用）
+  const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
 
   // chatMessagesが変更されたときにqaPairsを更新
   useEffect(() => {
@@ -156,16 +163,27 @@ export default function WordDetailScreen() {
     },
   });
 
-  // チャット展開時の最大高さを計算（ヘッダーの下から画面下部まで）
+  // チャット展開時の最大高さを計算（ヘッダーの12px下から画面下部まで）
   const chatExpandedMaxHeight = useMemo(() => {
     const screenHeight = Dimensions.get('window').height;
-    const headerHeight = 52; // UnifiedHeaderBarの高さ
-    const chatClosedHeight = 116; // ChatSection閉じた状態の最低高さ
-    const padding = 36; // 余白（20 + 16px追加）
 
-    // 画面高さ - safeAreaTop - headerHeight - chatClosedHeight - bottomSafeArea - padding
-    return screenHeight - safeAreaInsets.top - headerHeight - chatClosedHeight - safeAreaInsets.bottom - padding;
-  }, [safeAreaInsets.top, safeAreaInsets.bottom]);
+    // ChatSection内部の固定スペース（実測値より少し少なめに設定してより伸ばす）
+    const containerPaddingTop = 8;
+    const containerPaddingBottom = 10;
+    const containerMarginBottom = 4;
+    const chatMessagesMarginBottom = 8;
+    const bottomSectionPaddingTop = 8;
+    const questionScrollViewHeight = 32;
+    const bottomSectionGap = 6;
+    const whiteContainerHeight = 55; // paddingTop 9 + minHeight 34 + paddingBottom 12
+
+    const fixedSpaces = containerPaddingTop + containerPaddingBottom + containerMarginBottom +
+                        chatMessagesMarginBottom + bottomSectionPaddingTop +
+                        questionScrollViewHeight + bottomSectionGap + whiteContainerHeight - 12; // -12でさらに伸ばす
+
+    // 画面高さ - safeAreaTop - headerHeight - 固定スペース - bottomSafeArea
+    return screenHeight - safeAreaInsets.top - headerHeight - fixedSpaces - safeAreaInsets.bottom;
+  }, [safeAreaInsets.top, safeAreaInsets.bottom, headerHeight]);
 
   // 検出された言語の情報を取得（選択中の言語と異なる場合のみ）
   const detectedLanguageInfo = useMemo(() => {
@@ -672,11 +690,25 @@ export default function WordDetailScreen() {
   };
 
   const handleQuestionPress = (question: string) => {
-    void sendQuickQuestion(question);
+    // 翻訳モードで選択テキストがある場合は、質問文に選択テキストを含める
+    let finalQuestion = question;
+    if (mode === 'translate' && selectedText?.text) {
+      finalQuestion = `「${selectedText.text}」について：${question}`;
+      // 質問送信後、選択を解除
+      setSelectedText(null);
+    }
+    void sendQuickQuestion(finalQuestion);
   };
 
   const handleChatSubmit = async (text: string) => {
-    await sendChatMessage(text);
+    // 翻訳モードで選択テキストがある場合は、質問文に選択テキストを含める
+    let finalQuestion = text;
+    if (mode === 'translate' && selectedText?.text) {
+      finalQuestion = `「${selectedText.text}」について：${text}`;
+      // 質問送信後、選択を解除
+      setSelectedText(null);
+    }
+    await sendChatMessage(finalQuestion);
   };
 
   const handleChatRetry = () => {
@@ -815,6 +847,44 @@ export default function WordDetailScreen() {
     }
   };
 
+  // テキスト選択ハンドラ
+  const handleTextSelected = (text: string, type: 'original' | 'translated') => {
+    logger.debug('[WordDetail] Text selected:', { text, type });
+
+    // 単語かどうかを判定（スペースや句読点が含まれていない場合は単語とみなす）
+    const isSingleWord = /^[^\s.,!?;:。、！？；：]+$/.test(text.trim());
+
+    setSelectedText({ text: text.trim(), isSingleWord });
+  };
+
+  // 選択解除ハンドラ
+  const handleSelectionCleared = () => {
+    logger.debug('[WordDetail] Selection cleared');
+    setSelectedText(null);
+  };
+
+  // 辞書検索ハンドラ
+  const handleDictionaryLookup = () => {
+    if (!selectedText) return;
+
+    logger.info('[WordDetail] Dictionary lookup:', selectedText.text);
+
+    // 選択された単語で新しい単語検索を実行
+    router.push({
+      pathname: '/(tabs)/word-detail',
+      params: {
+        word: selectedText.text,
+        targetLanguage: mode === 'translate'
+          ? (translationData?.sourceLang || currentLanguage.code)
+          : targetLanguage,
+        mode: 'word',
+      },
+    });
+
+    // 選択状態をクリア
+    setSelectedText(null);
+  };
+
   if (error) {
     return (
       <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
@@ -842,7 +912,13 @@ export default function WordDetailScreen() {
           {mode === 'translate' ? (
             <>
               {/* Header - シンプルなバックボタンのみ */}
-              <View style={styles.headerContainer}>
+              <View
+                style={styles.headerContainer}
+                onLayout={(event) => {
+                  const { height } = event.nativeEvent.layout;
+                  setHeaderHeight(height);
+                }}
+              >
                 <UnifiedHeaderBar
                   pageType="translate"
                   title="翻訳"
@@ -859,6 +935,8 @@ export default function WordDetailScreen() {
                     sourceLang={translationData.sourceLang}
                     targetLang={translationData.targetLang}
                     isTranslating={isTranslating}
+                    onTextSelected={handleTextSelected}
+                    onSelectionCleared={handleSelectionCleared}
                   />
                 </View>
               ) : isTranslating ? (
@@ -871,7 +949,13 @@ export default function WordDetailScreen() {
             <>
               {/* Header - 最初に表示 */}
               {wordData?.headword ? (
-                <View style={styles.headerContainer}>
+                <View
+                  style={styles.headerContainer}
+                  onLayout={(event) => {
+                    const { height } = event.nativeEvent.layout;
+                    setHeaderHeight(height);
+                  }}
+                >
                   <UnifiedHeaderBar
                     pageType="wordDetail"
                     word={wordData.headword.lemma}
@@ -882,7 +966,13 @@ export default function WordDetailScreen() {
                   />
                 </View>
               ) : isLoading ? (
-                <View style={styles.headerContainer}>
+                <View
+                  style={styles.headerContainer}
+                  onLayout={(event) => {
+                    const { height } = event.nativeEvent.layout;
+                    setHeaderHeight(height);
+                  }}
+                >
                   <ShimmerHeader />
                 </View>
               ) : null}
@@ -974,6 +1064,8 @@ export default function WordDetailScreen() {
             onFollowUpQuestion={handleFollowUpQuestion}
             prefilledInputText={prefilledChatText}
             onPrefillConsumed={() => setPrefilledChatText(null)}
+            selectedText={mode === 'translate' ? selectedText : null}
+            onDictionaryLookup={mode === 'translate' ? handleDictionaryLookup : undefined}
           />
         </View>
       </KeyboardAvoidingView>
@@ -1195,7 +1287,8 @@ const styles = StyleSheet.create({
   },
   chatContainerFixed: {
     paddingHorizontal: 8,
-    paddingBottom: 22,
+    paddingBottom: 0,
+    marginBottom: 12,
     justifyContent: 'flex-end',
   },
   loadingContainer: {

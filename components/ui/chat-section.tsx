@@ -41,6 +41,8 @@ interface ChatSectionProps {
   onFollowUpQuestion?: (pairId: string, question: string) => Promise<void>;
   prefilledInputText?: string | null;
   onPrefillConsumed?: () => void;
+  selectedText?: { text: string; isSingleWord: boolean } | null; // 選択テキスト情報
+  onDictionaryLookup?: () => void; // 辞書で調べるボタンのコールバック
 }
 
 function ExpandIcon({ size = 18 }: { size?: number }) {
@@ -115,6 +117,20 @@ function PlusIcon({ size = 24 }: { size?: number }) {
   );
 }
 
+function ArrowRightIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M5 12h14M12 5l7 7-7 7"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 const DEFAULT_QUESTIONS = ['語源', '類義語', '対義語', '使用例'];
 
 export function ChatSection({
@@ -137,6 +153,8 @@ export function ChatSection({
   onFollowUpQuestion,
   prefilledInputText,
   onPrefillConsumed,
+  selectedText,
+  onDictionaryLookup,
 }: ChatSectionProps) {
   const { customQuestions, addCustomQuestion } = useAISettings();
   const containerBackground = useThemeColor({}, 'chatSectionBackground');
@@ -168,11 +186,10 @@ export function ChatSection({
   const lastPrefilledValueRef = useRef<string | null>(null);
 
   // 画面の高さを取得し、チャットメッセージの最大高さを計算
-  // JPsearchページの場合は上のマージンを72px、それ以外は98px
-  // ボトムセクション（約150px）+ その他マージン（約50px）を引いた値
+  // expandedMaxHeightが渡されている場合はそれを優先、なければ従来の計算を使用
   const screenHeight = Dimensions.get('window').height;
   const topMargin = scope === 'jpSearch' ? 72 : 98;
-  const calculatedMaxHeight = screenHeight - topMargin - 200;
+  const calculatedMaxHeight = expandedMaxHeight ?? (screenHeight - topMargin - 200);
 
   // アニメーション用の値
   const animatedHeight = useRef(new Animated.Value(0)).current;
@@ -364,7 +381,12 @@ export function ChatSection({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: containerBackground }, isOpen ? styles.containerOpen : styles.containerClosed]}>
+    <View style={[
+      styles.container,
+      { backgroundColor: containerBackground },
+      isOpen ? styles.containerOpen : styles.containerClosed,
+      scope === 'translate' && !isOpen && styles.containerTranslateClosed
+    ]}>
       <Animated.View
         style={{
           height: animatedHeight,
@@ -376,6 +398,7 @@ export function ChatSection({
           ref={scrollViewRef}
           style={[styles.chatMessages, { maxHeight: calculatedMaxHeight, minHeight: calculatedMaxHeight }]}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => {
             // コンテンツサイズが変更されたら最後のカードの位置にスクロール（ストリーミング中は即座に）
             if ((isStreaming || qaPairs.some(pair => pair.status === 'pending')) && lastCardYRef.current > 0) {
@@ -397,9 +420,10 @@ export function ChatSection({
                 onFollowUpQuestion={onFollowUpQuestion}
                 onScrollToFollowUpInput={() => {
                   // 追加質問のテキストインプットが表示されたときにスクロール
+                  // より長い遅延でスクロールを実行（キーボードアニメーション完了後）
                   setTimeout(() => {
                     scrollViewRef.current?.scrollToEnd({ animated: true });
-                  }, 200);
+                  }, 400);
                 }}
               />
             </View>
@@ -417,39 +441,68 @@ export function ChatSection({
         </ScrollView>
       </Animated.View>
 
-      {/* Spacer to push tags and input to bottom when open */}
-      {isOpen && <View style={styles.spacer} />}
+      {/* 翻訳モード時の選択テキスト/ヒント表示 */}
+      {scope === 'translate' && !isOpen && (
+        selectedText ? (
+          /* Selected Text Display (shown when text is selected) */
+          <View style={styles.selectedTextContainer}>
+            <Text style={styles.selectedTextLabel} numberOfLines={1} ellipsizeMode="tail">
+              {selectedText.text}
+            </Text>
+            {selectedText.isSingleWord && onDictionaryLookup && (
+              <TouchableOpacity
+                style={styles.dictionaryButton}
+                onPress={onDictionaryLookup}
+              >
+                <Text style={styles.dictionaryButtonText} numberOfLines={1}>単語を調べる</Text>
+                <ArrowRightIcon size={16} color="#242424" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          /* Hint text when no text is selected */
+          <View style={styles.hintTextContainer}>
+            <Text style={styles.hintText}>テキストを選択して質問をしてみましょう</Text>
+          </View>
+        )
+      )}
 
       {/* Bottom Section: Question Tags + Input */}
-      <View style={styles.bottomSection}>
-          {/* Question Tags */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.questionScrollView}
-            contentContainerStyle={styles.questionList}
-          >
-            {/* Plus button for adding custom questions */}
-            <TouchableOpacity
-              style={styles.plusButton}
-              onPress={() => setIsCustomQuestionModalOpen(true)}
+      <View style={[
+        styles.bottomSection,
+        scope === 'translate' && styles.bottomSectionTranslate,
+        scope === 'translate' && isOpen && styles.bottomSectionTranslateOpen
+      ]}>
+          {/* Question Tags - 翻訳モードでは非表示 */}
+          {scope !== 'translate' && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.questionScrollView}
+              contentContainerStyle={styles.questionList}
             >
-              <PlusIcon size={20} />
-            </TouchableOpacity>
+              {/* Plus button for adding custom questions */}
+              <TouchableOpacity
+                style={styles.plusButton}
+                onPress={() => setIsCustomQuestionModalOpen(true)}
+              >
+                <PlusIcon size={20} />
+              </TouchableOpacity>
 
-            {combinedQuestions.map((label, index) => (
-              <QuestionTag
-                key={`${label}-${index}`}
-                label={label}
-                onPress={() => {
-                  setIsOpen(true);
-                  // questionMapから実際の質問文を取得して送信
-                  const actualQuestion = questionMap.get(label) || label;
-                  onQuickQuestion?.(actualQuestion);
-                }}
-              />
-            ))}
-          </ScrollView>
+              {combinedQuestions.map((label, index) => (
+                <QuestionTag
+                  key={`${label}-${index}`}
+                  label={label}
+                  onPress={() => {
+                    setIsOpen(true);
+                    // questionMapから実際の質問文を取得して送信
+                    const actualQuestion = questionMap.get(label) || label;
+                    onQuickQuestion?.(actualQuestion);
+                  }}
+                />
+              ))}
+            </ScrollView>
+          )}
 
           {/* White Container: Settings Icon + Input + Action Button (1 row) */}
           <View style={[styles.whiteContainer, { backgroundColor: inputBackground }]}>
@@ -657,48 +710,63 @@ export function ChatSection({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 18,
-    paddingTop: 10,
+    borderRadius: 24,
     paddingHorizontal: 10,
-    paddingBottom: 10,
     overflow: 'hidden',
     alignSelf: 'stretch',
     flexShrink: 0,
   },
   containerClosed: {
-    minHeight: 116, // 最低でも閉じた高さは維持
     marginBottom: 4,
+    paddingTop: 8,
+    paddingBottom: 10,
   },
   containerOpen: {
+    paddingTop: 8,
     paddingBottom: 10,
     marginBottom: 4,
+  },
+  containerTranslateClosed: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingHorizontal: 8,
+    minHeight: 'auto' as any,
   },
   chatMessages: {
     flexGrow: 0,
     flexShrink: 1,
     maxHeight: 512,
-    marginBottom: 12,
+    marginBottom: 8,
     minHeight: 0,
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   qaCardList: {
     gap: 20,
-    paddingTop: 4,
+    paddingTop: 0,
   },
   spacer: {
     flex: 1,
   },
   bottomSection: {
     flexShrink: 0,
-    paddingTop: 0,
+    paddingTop: 8,
     flexDirection: 'column',
     alignItems: 'stretch',
-    gap: 10, // 質問タグとテキストインプットの間隔
+    gap: 6, // 質問タグとテキストインプットの間隔
+  },
+  bottomSectionTranslate: {
+    paddingTop: 0,
+    gap: 0,
+  },
+  bottomSectionTranslateOpen: {
+    paddingTop: 8,
   },
   questionScrollView: {
     flexGrow: 0,
     flexShrink: 0,
     marginBottom: 0,
-    marginTop: 8,
+    marginTop: 0,
     paddingBottom: 0,
     paddingTop: 0,
     height: 32,
@@ -710,7 +778,7 @@ const styles = StyleSheet.create({
   },
   whiteContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 15,
+    borderRadius: 14,
     paddingLeft: 8,
     paddingRight: 8,
     paddingTop: 9,
@@ -947,5 +1015,63 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  // Selected Text styles (Figma design)
+  selectedTextContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 8,
+    paddingRight: 0,
+    paddingVertical: 0,
+    minHeight: 38,
+    marginBottom: 8,
+    alignSelf: 'stretch',
+  },
+  selectedTextLabel: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 34,
+    color: '#CECECE',
+    fontWeight: '400',
+    letterSpacing: 1,
+    marginRight: 8,
+    flexShrink: 1,
+  },
+  hintTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 8,
+    paddingVertical: 0,
+    minHeight: 38,
+    marginBottom: 8,
+    alignSelf: 'stretch',
+  },
+  hintText: {
+    fontSize: 14,
+    lineHeight: 34,
+    color: '#ACACAC',
+    fontWeight: '400',
+    letterSpacing: 0.5,
+  },
+  dictionaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingLeft: 10,
+    paddingRight: 6,
+    paddingVertical: 4,
+    flexShrink: 0,
+    marginRight: 6,
+  },
+  dictionaryButtonText: {
+    fontSize: 11,
+    lineHeight: 22,
+    color: '#242424',
+    fontWeight: '400',
+    letterSpacing: 1,
+    marginRight: -2,
   },
 });

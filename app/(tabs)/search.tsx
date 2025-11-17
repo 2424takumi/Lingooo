@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, Modal, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, Modal, TouchableOpacity, TextInput, Alert, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { ThemedView } from '@/components/themed-view';
@@ -32,9 +33,13 @@ export default function SearchScreen() {
   const params = useLocalSearchParams();
   const { currentLanguage, nativeLanguage } = useLearningLanguages();
   const { aiDetailLevel, setAIDetailLevel } = useAISettings();
+  const safeAreaInsets = useSafeAreaInsets();
 
   const query = typeof params.query === 'string' ? params.query : '';
   const resultsParam = typeof params.results === 'string' ? params.results : '[]';
+
+  // ヘッダーの高さを測定
+  const [headerHeight, setHeaderHeight] = useState(52); // デフォルト値
 
   const initialResults = useMemo<SuggestionItem[]>(() => {
     try {
@@ -146,6 +151,28 @@ export default function SearchScreen() {
     context: chatContext,
     targetLanguage: currentLanguage.code,
   });
+
+  // チャット展開時の最大高さを計算（ヘッダーの12px下から画面下部まで）
+  const chatExpandedMaxHeight = useMemo(() => {
+    const screenHeight = Dimensions.get('window').height;
+
+    // ChatSection内部の固定スペース（実測値より少し少なめに設定してより伸ばす）
+    const containerPaddingTop = 8;
+    const containerPaddingBottom = 10;
+    const containerMarginBottom = 4;
+    const chatMessagesMarginBottom = 8;
+    const bottomSectionPaddingTop = 8;
+    const questionScrollViewHeight = 32;
+    const bottomSectionGap = 6;
+    const whiteContainerHeight = 55; // paddingTop 9 + minHeight 34 + paddingBottom 12
+
+    const fixedSpaces = containerPaddingTop + containerPaddingBottom + containerMarginBottom +
+                        chatMessagesMarginBottom + bottomSectionPaddingTop +
+                        questionScrollViewHeight + bottomSectionGap + whiteContainerHeight - 12; // -12でさらに伸ばす
+
+    // 画面高さ - safeAreaTop - headerHeight - 固定スペース - bottomSafeArea
+    return screenHeight - safeAreaInsets.top - headerHeight - fixedSpaces - safeAreaInsets.bottom;
+  }, [safeAreaInsets.top, safeAreaInsets.bottom, headerHeight]);
 
   // QAPairsをstateとして管理（追加質問をサポートするため）
   const [qaPairs, setQAPairs] = useState<QAPair[]>([]);
@@ -417,7 +444,13 @@ export default function SearchScreen() {
       >
         <View style={styles.content}>
           {/* Header */}
-          <View style={styles.headerContainer}>
+          <View
+            style={styles.headerContainer}
+            onLayout={(event) => {
+              const { height } = event.nativeEvent.layout;
+              setHeaderHeight(height);
+            }}
+          >
             <UnifiedHeaderBar
               pageType="jpSearch"
               title={query || '学習する'}
@@ -484,6 +517,7 @@ export default function SearchScreen() {
             onQuickQuestion={sendQuickQuestion}
             onRetryQuestion={handleQACardRetry}
             onDetailLevelChange={setAIDetailLevel}
+            expandedMaxHeight={chatExpandedMaxHeight}
             scope="search"
             identifier={query}
             onBookmarkAdded={handleBookmarkAdded}
@@ -667,15 +701,15 @@ const styles = StyleSheet.create({
   },
   keyboardAvoidingView: {
     position: 'absolute',
-    top: 141,
-    bottom: 0,
     left: 0,
     right: 0,
+    bottom: 0,
   },
   chatContainerFixed: {
     flex: 1,
     paddingHorizontal: 8,
-    paddingBottom: 22,
+    paddingBottom: 0,
+    marginBottom: 12,
     justifyContent: 'flex-end',
   },
   noResultsContainer: {

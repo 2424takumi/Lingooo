@@ -107,6 +107,8 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
   const [showFollowUpInput, setShowFollowUpInput] = useState(false);
   // テキストインプットのref
   const followUpInputRef = useRef<TextInput>(null);
+  // 前回の追加質問数を記録
+  const prevFollowUpCountRef = useRef(0);
 
   const showRetry = pair.status === 'error' && typeof onRetry === 'function';
   const showActions = pair.status === 'completed' && pair.a;
@@ -153,14 +155,40 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
     void checkBookmarkStatus();
   }, [pair.q, pair.a, pair.status]);
 
+  // 新しい追加質問が追加されたら自動的に展開
+  useEffect(() => {
+    const currentFollowUps = pair.followUpQAs || [];
+    const currentCount = currentFollowUps.length;
+
+    // 追加質問が追加された場合
+    if (currentCount > prevFollowUpCountRef.current) {
+      // 新しく追加された追加質問のIDを取得
+      const newFollowUps = currentFollowUps.slice(prevFollowUpCountRef.current);
+
+      // 新しい追加質問を展開状態にする
+      setExpandedFollowUps((prev) => {
+        const updated = { ...prev };
+        newFollowUps.forEach((followUp) => {
+          updated[followUp.id] = true;
+        });
+        return updated;
+      });
+    }
+
+    prevFollowUpCountRef.current = currentCount;
+  }, [pair.followUpQAs]);
+
   // テキストインプットのレイアウトハンドラー
   const handleFollowUpInputLayout = () => {
     // レイアウト完了後にフォーカスとスクロール
     setTimeout(() => {
-      followUpInputRef.current?.focus();
-      // スクロールをリクエスト
+      // まずスクロールをリクエスト
       onScrollToFollowUpInput?.();
-    }, 150);
+      // その後フォーカス（キーボードを表示）
+      setTimeout(() => {
+        followUpInputRef.current?.focus();
+      }, 100);
+    }, 100);
   };
 
   // コピー機能
@@ -473,7 +501,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     paddingVertical: 12,
     paddingHorizontal: 12,
@@ -493,8 +521,10 @@ const styles = StyleSheet.create({
   },
   answerContainer: {
     borderRadius: 8,
-    padding: 16,
-    gap: 10,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    gap: 5,
     marginHorizontal: -4,
     marginBottom: -4,
   },
@@ -578,7 +608,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   askQuestionSection: {
-    marginTop: 6,
+    marginTop: 3,
   },
   askQuestionButton: {
     flexDirection: 'row',

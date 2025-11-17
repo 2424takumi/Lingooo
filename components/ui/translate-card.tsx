@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View, Animated, Platform } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Animated } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import * as Speech from 'expo-speech';
@@ -8,8 +8,6 @@ import { logger } from '@/utils/logger';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { SPEECH_LANGUAGE_MAP, LANGUAGE_NAME_MAP } from '@/constants/languages';
 import { formatMarkdownText } from '@/utils/text-formatter';
-import { showTextSelectionMenu } from './text-selection-menu';
-import type { TextSelection } from '@/types/selection';
 import { SelectableText } from './selectable-text';
 
 interface TranslateCardProps {
@@ -18,6 +16,8 @@ interface TranslateCardProps {
   sourceLang: string;
   targetLang: string;
   isTranslating?: boolean;
+  onTextSelected?: (text: string, type: 'original' | 'translated') => void;
+  onSelectionCleared?: () => void;
 }
 
 function SpeakerIcon({ size = 20, color = '#686868' }: { size?: number; color?: string }) {
@@ -61,6 +61,8 @@ export function TranslateCard({
   sourceLang,
   targetLang,
   isTranslating = false,
+  onTextSelected,
+  onSelectionCleared,
 }: TranslateCardProps) {
   const router = useRouter();
   const { nativeLanguage, currentLanguage } = useLearningLanguages();
@@ -70,12 +72,6 @@ export function TranslateCard({
   const [showExpandButton, setShowExpandButton] = useState(false);
   const [hasCheckedLines, setHasCheckedLines] = useState(false);
 
-  // クリップボード監視用
-  const lastClipboardRef = useRef<string>('');
-  const clipboardCheckInterval = useRef<NodeJS.Timeout | null>(null);
-  const originalTextRef = useRef<string>(originalText);
-  const translatedTextRef = useRef<string>(translatedText);
-  const mountTimeRef = useRef<number>(Date.now());
 
   // アニメーション用の値
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -85,11 +81,6 @@ export function TranslateCard({
   const isOriginalNative = sourceLang === nativeLanguage.code;
   const isTranslatedNative = targetLang === nativeLanguage.code;
 
-  // refを最新の値で更新
-  useEffect(() => {
-    originalTextRef.current = originalText;
-    translatedTextRef.current = translatedText;
-  }, [originalText, translatedText]);
 
   // 翻訳文が変更されたらフェードインアニメーション
   useEffect(() => {
@@ -103,12 +94,13 @@ export function TranslateCard({
     }
   }, [translatedText, isTranslating]);
 
-  // 原文が変更されたら展開状態をリセット
+  // 原文が変更されたら展開状態と選択状態をリセット
   useEffect(() => {
     setIsOriginalExpanded(false);
     setShowExpandButton(false);
     setHasCheckedLines(false);
-  }, [originalText]);
+    onSelectionCleared?.();
+  }, [originalText]); // onSelectionClearedを依存配列から削除（originalTextが変わったときだけクリアする）
 
   // 翻訳中のシマーアニメーション
   useEffect(() => {
@@ -202,116 +194,15 @@ export function TranslateCard({
     }
   };
 
-  // クリップボード監視（選択されたテキストを検出）
-  useEffect(() => {
-    // 初期クリップボード内容を取得（これは無視する）
-    // また、originalTextとtranslatedTextもブラックリストに追加
-    const initClipboard = async () => {
-      try {
-        const initialClip = await Clipboard.getStringAsync();
-        lastClipboardRef.current = initialClip;
 
-        // 原文と翻訳文全体もクリップボードとして無視
-        // （検索画面でコピーされた内容が遷移後に検出されるのを防ぐ）
-        if (initialClip === originalText || initialClip === translatedText) {
-          logger.info('[TranslateCard] Ignoring original/translated text in clipboard');
-        }
-      } catch (error) {
-        logger.error('[TranslateCard] Failed to get initial clipboard:', error);
-      }
-    };
-
-    initClipboard();
-
-    const checkClipboard = async () => {
-      try {
-        // マウント後2秒間はチェックをスキップ（画面遷移直後の誤検知を防ぐ）
-        const timeSinceMount = Date.now() - mountTimeRef.current;
-        if (timeSinceMount < 2000) {
-          return;
-        }
-
-        const clipText = await Clipboard.getStringAsync();
-        const lastClip = lastClipboardRef.current;
-
-        // 新しいクリップボード内容かチェック
-        if (clipText && clipText !== lastClip && clipText.length > 0) {
-          // 原文または翻訳文に含まれているかチェック
-          const currentOriginal = originalTextRef.current;
-          const currentTranslated = translatedTextRef.current;
-
-          // クリップボードが原文または翻訳文全体と完全一致する場合は無視
-          // （検索画面からコピーされたテキストが遷移後に検出されるのを防ぐ）
-          if (clipText === currentOriginal || clipText === currentTranslated) {
-            lastClipboardRef.current = clipText;
-            return;
-          }
-
-          const isFromOriginal = currentOriginal.includes(clipText);
-          const isFromTranslated = currentTranslated.includes(clipText);
-
-          if (isFromOriginal || isFromTranslated) {
-            lastClipboardRef.current = clipText;
-
-            logger.info('[TranslateCard] Showing selection menu for:', clipText.substring(0, 30));
-
-            // 選択メニューを表示
-            const selection: TextSelection = {
-              text: clipText,
-              type: isFromOriginal ? 'original' : 'translated',
-            };
-
-            showTextSelectionMenu({
-              selection,
-              onAsk: handleAskAboutSelection,
-              onLookup: handleLookupSelection,
-            });
-          }
-        }
-      } catch (error) {
-        logger.error('[TranslateCard] Clipboard check error:', error);
-      }
-    };
-
-    // 500msごとにクリップボードをチェック
-    clipboardCheckInterval.current = setInterval(checkClipboard, 500);
-
-    return () => {
-      if (clipboardCheckInterval.current) {
-        clearInterval(clipboardCheckInterval.current);
-        clipboardCheckInterval.current = null;
-      }
-    };
-  }, []); // 空の依存配列で1回だけ実行
-
-  // 選択テキストについて質問
-  const handleAskAboutSelection = (text: string, type: 'original' | 'translated') => {
-    router.push({
-      pathname: '/(tabs)/chat',
-      params: {
-        context: JSON.stringify({
-          originalText,
-          translatedText,
-          sourceLang,
-          targetLang,
-          selectedText: text,
-          selectedType: type,
-        }),
-        scope: 'translate',
-        identifier: `${sourceLang}-${targetLang}`,
-      },
-    });
+  // 原文の選択ハンドラー
+  const handleOriginalSelection = (text: string) => {
+    onTextSelected?.(text, 'original');
   };
 
-  // 選択テキストを辞書/翻訳で調べる
-  const handleLookupSelection = (text: string, type: 'original' | 'translated') => {
-    router.push({
-      pathname: '/(tabs)/word-detail',
-      params: {
-        word: text,
-        targetLanguage: currentLanguage.code,
-      },
-    });
+  // 翻訳文の選択ハンドラー
+  const handleTranslatedSelection = (text: string) => {
+    onTextSelected?.(text, 'translated');
   };
 
   return (
@@ -325,29 +216,13 @@ export function TranslateCard({
       <View style={styles.container}>
         {/* Original Text Section */}
         <View style={styles.originalTextSection}>
-          {Platform.OS === 'ios' ? (
-            <SelectableText
-              text={originalText}
-              style={styles.originalText}
-            />
-          ) : (
-            <Text
-              selectable={true}
-              selectionColor="#007AFF"
-              suppressHighlighting={false}
-              style={styles.originalText}
-              numberOfLines={!hasCheckedLines ? undefined : (isOriginalExpanded ? undefined : 3)}
-              onTextLayout={(e) => {
-                const lines = e.nativeEvent.lines;
-                if (!hasCheckedLines && lines && lines.length > 3) {
-                  setShowExpandButton(true);
-                  setHasCheckedLines(true);
-                }
-              }}
-            >
-              {originalText}
-            </Text>
-          )}
+          <SelectableText
+            text={originalText}
+            style={styles.originalText}
+            onSelectionChange={handleOriginalSelection}
+            onSelectionCleared={onSelectionCleared}
+            numberOfLines={!hasCheckedLines ? undefined : (isOriginalExpanded ? undefined : 3)}
+          />
 
           {/* Action row with speaker icon and expand button */}
           <View style={styles.originalActionsRow}>
@@ -410,21 +285,13 @@ export function TranslateCard({
             </View>
           ) : (
             <Animated.View style={{ opacity: fadeAnim, gap: 16 }}>
-              {Platform.OS === 'ios' ? (
-                <SelectableText
-                  text={formatMarkdownText(translatedText)}
-                  style={styles.translatedText}
-                />
-              ) : (
-                <Text
-                  selectable={true}
-                  selectionColor="#007AFF"
-                  suppressHighlighting={false}
-                  style={styles.translatedText}
-                >
-                  {formatMarkdownText(translatedText)}
-                </Text>
-              )}
+              <SelectableText
+                text={formatMarkdownText(translatedText)}
+                style={styles.translatedText}
+                onSelectionChange={handleTranslatedSelection}
+                onSelectionCleared={onSelectionCleared}
+              />
+
               <View style={styles.translatedActions}>
                 {!isTranslatedNative && (
                   <TouchableOpacity onPress={handlePlayTranslated} style={styles.actionButton}>
@@ -439,6 +306,7 @@ export function TranslateCard({
           )}
         </View>
       </View>
+
     </View>
   );
 }
@@ -484,10 +352,10 @@ const styles = StyleSheet.create({
   },
   translatedTextContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 16,
     marginHorizontal: -8,
-    marginBottom: -10,
+    marginBottom: -9,
   },
   translatedText: {
     fontSize: 14,
