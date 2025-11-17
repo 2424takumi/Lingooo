@@ -27,8 +27,7 @@
       "distribution": "store",
       "ios": {
         "buildConfiguration": "Release",
-        "autoIncrement": true,
-        "appVersionSource": "local"
+        "autoIncrement": true
       },
       "env": {
         "EXPO_PUBLIC_ENV": "production",
