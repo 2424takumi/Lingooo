@@ -25,10 +25,10 @@
     },
     "production": {
       "distribution": "store",
-      "autoIncrement": true,
-      "appVersionSource": "local",
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "autoIncrement": true,
+        "appVersionSource": "local"
       },
       "env": {
         "EXPO_PUBLIC_ENV": "production",
