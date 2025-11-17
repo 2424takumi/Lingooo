@@ -2,6 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ChatBookmark, BookmarkFolder } from '@/types/bookmark';
 import { logger } from '@/utils/logger';
 
+// Re-export types for convenience
+export type { ChatBookmark, BookmarkFolder };
+
 const BOOKMARKS_KEY = '@lingooo_chat_bookmarks';
 const FOLDERS_KEY = '@lingooo_bookmark_folders';
 

@@ -74,7 +74,7 @@ export function getPendingPromise(word: string): Promise<WordDetailResponse> | u
  */
 export function prefetchWordDetail(
   word: string,
-  fetchFn: (onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void) => Promise<WordDetailResponse>
+  fetchFn: (onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void) => Promise<{ data: WordDetailResponse; tokensUsed: number }>
 ): void {
   // 既にキャッシュされている場合はスキップ
   if (cache.has(word)) {
@@ -84,7 +84,7 @@ export function prefetchWordDetail(
 
   logger.debug('[Cache] PRE-FLIGHT STARTED (2-stage):', word);
 
-  // 進捗コールバック付きでPromiseを開始
+  // 進捗コールバック付きでPromiseを開始して、dataプロパティを抽出
   const promise = fetchFn((progress, partialData) => {
     // 基本情報が来た瞬間にキャッシュを更新（0.2~0.3秒）
     if (progress >= 30 && partialData && partialData.headword) {
@@ -98,7 +98,7 @@ export function prefetchWordDetail(
         });
       }
     }
-  });
+  }).then(result => result.data);
 
   cache.set(word, {
     promise,

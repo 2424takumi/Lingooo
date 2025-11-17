@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View, Animated } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Animated, Platform } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import * as Speech from 'expo-speech';
@@ -10,6 +10,7 @@ import { SPEECH_LANGUAGE_MAP, LANGUAGE_NAME_MAP } from '@/constants/languages';
 import { formatMarkdownText } from '@/utils/text-formatter';
 import { showTextSelectionMenu } from './text-selection-menu';
 import type { TextSelection } from '@/types/selection';
+import { SelectableText } from './selectable-text';
 
 interface TranslateCardProps {
   originalText: string;
@@ -324,22 +325,29 @@ export function TranslateCard({
       <View style={styles.container}>
         {/* Original Text Section */}
         <View style={styles.originalTextSection}>
-          <Text
-            selectable={true}
-            selectionColor="#007AFF"
-            suppressHighlighting={false}
-            style={styles.originalText}
-            numberOfLines={!hasCheckedLines ? undefined : (isOriginalExpanded ? undefined : 3)}
-            onTextLayout={(e) => {
-              const lines = e.nativeEvent.lines;
-              if (!hasCheckedLines && lines && lines.length > 3) {
-                setShowExpandButton(true);
-                setHasCheckedLines(true);
-              }
-            }}
-          >
-            {originalText}
-          </Text>
+          {Platform.OS === 'ios' ? (
+            <SelectableText
+              text={originalText}
+              style={styles.originalText}
+            />
+          ) : (
+            <Text
+              selectable={true}
+              selectionColor="#007AFF"
+              suppressHighlighting={false}
+              style={styles.originalText}
+              numberOfLines={!hasCheckedLines ? undefined : (isOriginalExpanded ? undefined : 3)}
+              onTextLayout={(e) => {
+                const lines = e.nativeEvent.lines;
+                if (!hasCheckedLines && lines && lines.length > 3) {
+                  setShowExpandButton(true);
+                  setHasCheckedLines(true);
+                }
+              }}
+            >
+              {originalText}
+            </Text>
+          )}
 
           {/* Action row with speaker icon and expand button */}
           <View style={styles.originalActionsRow}>
@@ -402,14 +410,21 @@ export function TranslateCard({
             </View>
           ) : (
             <Animated.View style={{ opacity: fadeAnim, gap: 16 }}>
-              <Text
-                selectable={true}
-                selectionColor="#007AFF"
-                suppressHighlighting={false}
-                style={styles.translatedText}
-              >
-                {formatMarkdownText(translatedText)}
-              </Text>
+              {Platform.OS === 'ios' ? (
+                <SelectableText
+                  text={formatMarkdownText(translatedText)}
+                  style={styles.translatedText}
+                />
+              ) : (
+                <Text
+                  selectable={true}
+                  selectionColor="#007AFF"
+                  suppressHighlighting={false}
+                  style={styles.translatedText}
+                >
+                  {formatMarkdownText(translatedText)}
+                </Text>
+              )}
               <View style={styles.translatedActions}>
                 {!isTranslatedNative && (
                   <TouchableOpacity onPress={handlePlayTranslated} style={styles.actionButton}>

@@ -11,9 +11,10 @@ interface QACardListProps {
   onLastCardLayout?: (y: number) => void;
   onBookmarkAdded?: (bookmarkId: string) => void;
   onFollowUpQuestion?: (pairId: string, question: string) => Promise<void>;
+  onScrollToFollowUpInput?: () => void;
 }
 
-export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout, onBookmarkAdded, onFollowUpQuestion }: QACardListProps) {
+export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout, onBookmarkAdded, onFollowUpQuestion, onScrollToFollowUpInput }: QACardListProps) {
   if (!pairs.length) {
     return null;
   }
@@ -38,6 +39,7 @@ export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout
               identifier={identifier}
               onBookmarkAdded={onBookmarkAdded}
               onFollowUpQuestion={onFollowUpQuestion ? (question) => onFollowUpQuestion(pair.id, question) : undefined}
+              onScrollToFollowUpInput={onScrollToFollowUpInput}
             />
           </View>
         );

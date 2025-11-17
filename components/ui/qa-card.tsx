@@ -19,6 +19,7 @@ interface QACardProps {
   hideActions?: boolean;
   onBookmarkAdded?: (bookmarkId: string) => void;
   onFollowUpQuestion?: (question: string) => Promise<void>;
+  onScrollToFollowUpInput?: () => void;
 }
 
 function SendIcon({ size = 20, color = '#FFFFFF' }: { size?: number; color?: string }) {
@@ -63,7 +64,21 @@ function ChevronIcon({ size = 16, color = '#ACACAC', expanded = false }: { size?
   );
 }
 
-export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion }: QACardProps) {
+function CloseIcon({ size = 16, color = '#242424' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <Path
+        d="M4 4L12 12M12 4L4 12"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion, onScrollToFollowUpInput }: QACardProps) {
   // ブックマークページ用の配色（hideActions=trueの時）
   const cardBackground = useThemeColor(
     { light: hideActions ? '#F8F8F8' : '#FAFCFB', dark: '#1C1C1E' },
@@ -88,6 +103,10 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
   const [isSubmittingFollowUp, setIsSubmittingFollowUp] = useState(false);
   // 追加質問の開閉状態を管理（初期状態は全て閉じている）
   const [expandedFollowUps, setExpandedFollowUps] = useState<Record<string, boolean>>({});
+  // 追加質問入力欄の表示/非表示を管理
+  const [showFollowUpInput, setShowFollowUpInput] = useState(false);
+  // テキストインプットのref
+  const followUpInputRef = useRef<TextInput>(null);
 
   const showRetry = pair.status === 'error' && typeof onRetry === 'function';
   const showActions = pair.status === 'completed' && pair.a;
@@ -133,6 +152,16 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
     }
     void checkBookmarkStatus();
   }, [pair.q, pair.a, pair.status]);
+
+  // テキストインプットのレイアウトハンドラー
+  const handleFollowUpInputLayout = () => {
+    // レイアウト完了後にフォーカスとスクロール
+    setTimeout(() => {
+      followUpInputRef.current?.focus();
+      // スクロールをリクエスト
+      onScrollToFollowUpInput?.();
+    }, 150);
+  };
 
   // コピー機能
   const handleCopy = async () => {
@@ -294,109 +323,148 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
             <Text style={[styles.retryText, { color: primaryColor }]}>再試行</Text>
           </Pressable>
         )}
-      </View>
 
-      {/* 追加質問セクション */}
-      {pair.status === 'completed' && pair.a && (pair.followUpQAs?.length || onFollowUpQuestion) && (
-        <View style={styles.followUpSection}>
-          {/* 追加質問のQAペアを表示 */}
-          {pair.followUpQAs && pair.followUpQAs.length > 0 && (
-            <View style={styles.followUpList}>
-              {pair.followUpQAs.map((followUp, index) => {
-                const isExpanded = expandedFollowUps[followUp.id] || false;
+        {/* 追加質問ボタン - 回答完了後、アンサーボックス内に表示 */}
+        {pair.status === 'completed' && pair.a && !hideActions && onFollowUpQuestion && (
+          <View style={styles.askQuestionSection}>
+            <View
+              style={[
+                styles.askQuestionButton,
+                showFollowUpInput && styles.askQuestionButtonActive,
+              ]}
+            >
+              <TouchableOpacity
+                onPress={() => setShowFollowUpInput(!showFollowUpInput)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="追加で質問"
+              >
+                <View style={styles.askQuestionButtonContent}>
+                  <MessagePlusIcon size={16} color="#000000" />
+                  <Text style={styles.askQuestionButtonText}>追加で質問</Text>
+                </View>
+              </TouchableOpacity>
 
-                return (
-                  <View key={followUp.id} style={styles.followUpItem}>
-                    {/* フォローアップのQA */}
-                    <View style={styles.followUpContent}>
-                      <TouchableOpacity
-                        style={styles.followUpQuestionRow}
-                        onPress={() => toggleFollowUp(followUp.id)}
-                        activeOpacity={0.7}
-                      >
-                        {/* 左側の破線 */}
-                        <View style={styles.followUpLineContainer}>
-                          <Svg width={2} height={20} style={styles.followUpLineSvg}>
-                            <Path
-                              d="M1 0 L1 20"
-                              stroke="#E0E0E0"
-                              strokeWidth={2}
-                              strokeDasharray="4,4"
-                            />
-                          </Svg>
-                        </View>
-                        <Text style={[styles.followUpQuestionText, { color: questionColor }]}>
-                          {followUp.q}
-                        </Text>
-                        <ChevronIcon size={16} color={iconColor} expanded={isExpanded} />
-                      </TouchableOpacity>
-
-                      {/* 回答はアコーディオンで表示 */}
-                      {isExpanded && (
-                        <View style={[styles.followUpAnswerContainer, { backgroundColor: answerBackground }]}>
-                          {followUp.status === 'pending' ? (
-                            <View style={styles.followUpPendingContainer}>
-                              {followUp.a ? (
-                                <Text style={[styles.answerText, { color: answerTextColor }]}>
-                                  {followUp.a}
-                                </Text>
-                              ) : null}
-                              <TypingIndicator color="#2C2C2C" dotSize={6} />
-                            </View>
-                          ) : (
-                            <Text style={[styles.answerText, { color: answerTextColor }]}>
-                              {followUp.a ?? (followUp.status === 'error' ? '回答を取得できませんでした。' : '')}
-                            </Text>
-                          )}
-
-                          {followUp.status === 'error' && followUp.errorMessage && (
-                            <Text style={[styles.errorText, { color: errorColor }]}>
-                              {followUp.errorMessage}
-                            </Text>
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
-          {/* 追加質問入力 - hideActionsがfalseの場合のみ表示 */}
-          {!hideActions && onFollowUpQuestion && (
-          <View style={styles.followUpInputSection}>
-            <View style={[styles.followUpInputContainer, { backgroundColor: inputBackground }]}>
-              <TextInput
-                style={[styles.followUpInput, { color: answerTextColor }]}
-                placeholder="追加で質問をする..."
-                placeholderTextColor={placeholderColor}
-                value={followUpText}
-                onChangeText={setFollowUpText}
-                editable={!isSubmittingFollowUp}
-                multiline
-                scrollEnabled={false}
-                maxLength={500}
-              />
-
-              {/* 送信ボタン - テキストがある場合のみ表示 */}
-              {followUpText.trim().length > 0 && (
+              {/* ×ボタン - テキスト入力欄が開いている時のみ表示 */}
+              {showFollowUpInput && (
                 <TouchableOpacity
-                  onPress={handleFollowUpSubmit}
-                  disabled={isSubmittingFollowUp}
-                  style={[
-                    styles.followUpSendButton,
-                    isSubmittingFollowUp && styles.followUpSendButtonDisabled,
-                  ]}
+                  onPress={() => {
+                    setShowFollowUpInput(false);
+                    setFollowUpText('');
+                  }}
+                  hitSlop={8}
+                  style={styles.closeButton}
                   accessibilityRole="button"
-                  accessibilityLabel="送信"
+                  accessibilityLabel="閉じる"
                 >
-                  <SendIcon size={16} color="#FFFFFF" />
+                  <CloseIcon size={14} color="#242424" />
                 </TouchableOpacity>
               )}
             </View>
           </View>
-          )}
+        )}
+      </View>
+
+      {/* 追加質問のQAペアを表示 */}
+      {pair.status === 'completed' && pair.a && pair.followUpQAs && pair.followUpQAs.length > 0 && (
+        <View style={styles.followUpSection}>
+          <View style={styles.followUpList}>
+            {pair.followUpQAs.map((followUp, index) => {
+              const isExpanded = expandedFollowUps[followUp.id] || false;
+
+              return (
+                <View key={followUp.id} style={styles.followUpItem}>
+                  {/* フォローアップのQA */}
+                  <View style={styles.followUpContent}>
+                    <TouchableOpacity
+                      style={styles.followUpQuestionRow}
+                      onPress={() => toggleFollowUp(followUp.id)}
+                      activeOpacity={0.7}
+                    >
+                      {/* 左側の破線 */}
+                      <View style={styles.followUpLineContainer}>
+                        <Svg width={2} height={20} style={styles.followUpLineSvg}>
+                          <Path
+                            d="M1 0 L1 20"
+                            stroke="#E0E0E0"
+                            strokeWidth={2}
+                            strokeDasharray="4,4"
+                          />
+                        </Svg>
+                      </View>
+                      <Text style={[styles.followUpQuestionText, { color: questionColor }]}>
+                        {followUp.q}
+                      </Text>
+                      <ChevronIcon size={16} color={iconColor} expanded={isExpanded} />
+                    </TouchableOpacity>
+
+                    {/* 回答はアコーディオンで表示 */}
+                    {isExpanded && (
+                      <View style={[styles.followUpAnswerContainer, { backgroundColor: answerBackground }]}>
+                        {followUp.status === 'pending' ? (
+                          <View style={styles.followUpPendingContainer}>
+                            {followUp.a ? (
+                              <Text style={[styles.answerText, { color: answerTextColor }]}>
+                                {followUp.a}
+                              </Text>
+                            ) : null}
+                            <TypingIndicator color="#2C2C2C" dotSize={6} />
+                          </View>
+                        ) : (
+                          <Text style={[styles.answerText, { color: answerTextColor }]}>
+                            {followUp.a ?? (followUp.status === 'error' ? '回答を取得できませんでした。' : '')}
+                          </Text>
+                        )}
+
+                        {followUp.status === 'error' && followUp.errorMessage && (
+                          <Text style={[styles.errorText, { color: errorColor }]}>
+                            {followUp.errorMessage}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
+
+      {/* 追加質問の入力欄 - 回答ボックスの外側に表示 */}
+      {pair.status === 'completed' && pair.a && !hideActions && onFollowUpQuestion && showFollowUpInput && (
+        <View style={styles.followUpInputSection}>
+          <View style={styles.followUpInputContainer}>
+            <TextInput
+              ref={followUpInputRef}
+              style={[styles.followUpInput, { color: answerTextColor }]}
+              placeholder="追加で質問をする..."
+              placeholderTextColor={placeholderColor}
+              value={followUpText}
+              onChangeText={setFollowUpText}
+              editable={!isSubmittingFollowUp}
+              multiline
+              scrollEnabled={false}
+              maxLength={500}
+              onLayout={handleFollowUpInputLayout}
+            />
+
+            {/* 送信ボタン - テキストがある場合のみ表示 */}
+            {followUpText.trim().length > 0 && (
+              <TouchableOpacity
+                onPress={handleFollowUpSubmit}
+                disabled={isSubmittingFollowUp}
+                style={[
+                  styles.followUpSendButton,
+                  isSubmittingFollowUp && styles.followUpSendButtonDisabled,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="送信"
+              >
+                <SendIcon size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       )}
     </View>
@@ -505,8 +573,58 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   followUpInputSection: {
-    marginHorizontal: -8,
+    marginHorizontal: -4,
     marginBottom: -4,
+    marginTop: 4,
+  },
+  askQuestionSection: {
+    marginTop: 6,
+  },
+  askQuestionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
+  },
+  askQuestionButtonActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  closeButton: {
+    padding: 2,
+    marginLeft: 6,
+  },
+  askQuestionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  askQuestionButtonText: {
+    fontSize: 12,
+    lineHeight: 22,
+    letterSpacing: 1,
+    color: '#000000',
+  },
+  followUpInputWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingTop: 3,
+    paddingBottom: 6,
+    gap: 3,
+  },
+  followUpInputHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  askQuestionHeaderText: {
+    fontSize: 10,
+    lineHeight: 22,
+    letterSpacing: 1,
+    color: '#242424',
   },
   followUpInputContainer: {
     flexDirection: 'row',
@@ -518,13 +636,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 0.5,
     borderColor: '#EBEBEB',
-    minHeight: 38,
+    backgroundColor: '#FFFFFF',
+    minHeight: 42,
   },
   followUpInput: {
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
-    paddingVertical: 10,
+    paddingTop: 10,
+    paddingBottom: 12,
     maxHeight: 80,
     textAlignVertical: 'center',
     letterSpacing: 0.5,
@@ -533,7 +653,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 9,
-    backgroundColor: '#686868',
+    backgroundColor: '#242424',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 5,

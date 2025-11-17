@@ -395,6 +395,12 @@ export function ChatSection({
                 }}
                 onBookmarkAdded={onBookmarkAdded}
                 onFollowUpQuestion={onFollowUpQuestion}
+                onScrollToFollowUpInput={() => {
+                  // 追加質問のテキストインプットが表示されたときにスクロール
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 200);
+                }}
               />
             </View>
           )}
@@ -692,7 +698,7 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     flexShrink: 0,
     marginBottom: 0,
-    marginTop: 0,
+    marginTop: 8,
     paddingBottom: 0,
     paddingTop: 0,
     height: 32,

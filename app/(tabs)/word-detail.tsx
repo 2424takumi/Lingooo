@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
-import * as Clipboard from 'expo-clipboard';
 import { Audio } from 'expo-av';
 import Svg, { Path } from 'react-native-svg';
 import { ThemedView } from '@/components/themed-view';
@@ -147,46 +146,15 @@ export default function WordDetailScreen() {
     });
   }, [chatMessages, chatError]);
 
-  // クリップボード監視 - word-detailでは手動でペースト確認
-  const { clipboardText, shouldSearch: shouldPaste, clearClipboard, rejectClipboard } = useClipboardSearch({
-    enabled: true,
-    autoSearch: false, // 自動検索は無効、手動でペースト確認
-  });
+  // クリップボード監視 - word-detailではチャット入力に貼り付け
   const [prefilledChatText, setPrefilledChatText] = useState<string | null>(null);
-
-  // クリップボードテキストが検出されたら確認ダイアログを表示
-  useEffect(() => {
-    if (shouldPaste && clipboardText) {
-      // Alert表示時点でテキストをキャプチャ（クロージャ問題を回避）
-      const capturedText = clipboardText;
-
-      Alert.alert(
-        'クリップボードからペースト',
-        `コピーしたテキストをチャットに入力しますか？\n\n「${capturedText.substring(0, 50)}${capturedText.length > 50 ? '...' : ''}」`,
-        [
-          {
-            text: '許可しない',
-            style: 'cancel',
-            onPress: async () => {
-              // キャプチャしたテキストを拒否リストに追加（今後このテキストでポップアップを表示しない）
-              await rejectClipboard(capturedText);
-              // クリップボードをクリア（iOSのシステムポップアップを防ぐ）
-              await Clipboard.setStringAsync('');
-              logger.info('[WordDetail] Clipboard cleared after rejection');
-            },
-          },
-          {
-            text: 'ペースト',
-            onPress: async () => {
-              setPrefilledChatText(capturedText);
-              await clearClipboard();
-              logger.info('[WordDetail] Clipboard text set to input and marked as processed');
-            },
-          },
-        ]
-      );
-    }
-  }, [shouldPaste, clipboardText, clearClipboard, rejectClipboard]);
+  const { isChecking } = useClipboardSearch({
+    enabled: true,
+    onPaste: (text) => {
+      setPrefilledChatText(text);
+      logger.info('[WordDetail] Clipboard text set to chat input');
+    },
+  });
 
   // チャット展開時の最大高さを計算（ヘッダーの下から画面下部まで）
   const chatExpandedMaxHeight = useMemo(() => {
@@ -268,16 +236,16 @@ export default function WordDetailScreen() {
   useEffect(() => {
     const loadWordData = async () => {
       try {
-        // wordが変わった瞬間に前のデータをクリア
-        setWordData(null);
-        setIsLoading(true);
-        setLoadingProgress(0);
-        setError(null);
-        setDetectedLanguage(null); // 検出言語もリセット
-        setShowLanguageNotification(false); // 通知もリセット
-
         // 翻訳モードの場合は翻訳APIを呼び出す
         if (mode === 'translate') {
+          // 状態をリセット
+          setWordData(null);
+          setIsLoading(true);
+          setLoadingProgress(0);
+          setError(null);
+          setDetectedLanguage(null);
+          setShowLanguageNotification(false);
+
           setIsTranslating(true);
 
           // 原文だけ先に表示するため、空の翻訳文でカードを表示
@@ -308,17 +276,31 @@ export default function WordDetailScreen() {
           setWordData(data);
           setLoadingProgress(100);
           setIsLoading(false);
+          setError(null);
+          setDetectedLanguage(null);
+          setShowLanguageNotification(false);
         } else if (word) {
-          // キャッシュをチェック
+          // キャッシュをチェック（状態リセット前に）
           const cachedData = getCachedWordDetail(word);
           if (cachedData) {
-            // キャッシュヒット：即座に表示
+            // キャッシュヒット：即座に表示（状態をリセットせずに）
             logger.debug('[WordDetail] USING CACHED DATA');
             setWordData(cachedData);
             setLoadingProgress(100);
             setIsLoading(false);
+            setError(null);
+            setDetectedLanguage(null);
+            setShowLanguageNotification(false);
             return;
           }
+
+          // キャッシュなし：状態をリセット
+          setWordData(null);
+          setIsLoading(true);
+          setLoadingProgress(0);
+          setError(null);
+          setDetectedLanguage(null);
+          setShowLanguageNotification(false);
 
           // 実行中のPre-flight requestをチェック
           const pendingPromise = getPendingPromise(word);
