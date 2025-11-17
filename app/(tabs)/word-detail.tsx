@@ -76,6 +76,9 @@ export default function WordDetailScreen() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [selectedTranslateTargetLang, setSelectedTranslateTargetLang] = useState(initialTargetLang);
 
+  // 選択テキスト管理（翻訳モード用）
+  const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
+
   const chatContext = useMemo(() => {
     // 翻訳モードの場合
     if (mode === 'translate') {
@@ -132,9 +135,6 @@ export default function WordDetailScreen() {
 
   // QAPairsをstateとして管理（追加質問をサポートするため）
   const [qaPairs, setQAPairs] = useState<QAPair[]>([]);
-
-  // 選択テキスト管理（翻訳モード用）
-  const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
 
   // chatMessagesが変更されたときにqaPairsを更新
   useEffect(() => {
