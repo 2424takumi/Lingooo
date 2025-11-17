@@ -7,6 +7,9 @@ Lingoooは、AI駆動型の言語学習モバイルアプリケーションで�
 ### 主な機能
 - 日本語→英語の単語検索（Gemini AI使用）
 - AI生成による単語詳細情報（定義、例文、メトリクス）
+- **AI翻訳機能**: リアルタイム翻訳とテキスト選択機能
+- **テキスト選択とAI質問**: 翻訳文の一部を選択して質問可能
+- **コンテキスト対応チャット**: 選択されたテキストを優先的に回答
 - ブックマーク、履歴管理
 - 学習設定（言語、テーマ、フォントサイズ）
 - ストリーミング対応の高速レスポンス
@@ -29,6 +32,13 @@ Lingoooは、AI駆動型の言語学習モバイルアプリケーションで�
 - **react-native-reanimated**: アニメーション
 - **react-native-svg**: SVGアイコン
 - **expo-speech**: 音声合成（発音機能）
+- **expo-clipboard**: クリップボード操作
+
+### 重要なUIコンポーネント
+- **SelectableText**: テキスト選択検出コンポーネント（TextInputベース）
+- **TranslateCard**: 翻訳表示とテキスト選択UI
+- **ChatSection**: コンテキスト対応チャットUI（翻訳/単語モード切替）
+- **QACard**: AI回答表示カード
 
 ## 3. ディレクトリ構成
 
@@ -251,6 +261,20 @@ types/ (Model層: データ構造)
 - データは極力パラメータではなくAPIで再取得
 - 検索結果など大きいデータはJSON文字列化
 
+### テキスト選択機能
+- **TextInput + editable={false}** を使用してネイティブ選択UIを実装
+- 選択状態は親コンポーネントで管理（state lifting）
+- 選択されたテキストは明示的に質問に含める（`「選択テキスト」について：質問`）
+- 質問送信後は選択を自動解除
+- useEffect依存配列に注意：`onSelectionCleared`は依存に含めない（無限ループ防止）
+
+### チャット機能（翻訳/単語モード）
+- **scope**: `translate` または `word` でモードを切り替え
+- **翻訳モード**: 原文・翻訳文・選択テキストをコンテキストとして渡す
+- **単語モード**: 単語詳細情報をコンテキストとして渡す
+- **条件付きUI**: isOpenとscopeで表示内容を制御
+- ヒントテキストはClosed状態かつ翻訳モードでのみ表示
+
 ### 色とテーマ
 - プライマリカラー: `#00AA69`（緑）
 - 背景色: `#FAFCFB`（ライトグレー）
@@ -263,6 +287,50 @@ types/ (Model層: データ構造)
 - `viewBox`は元のサイズを保持
 
 ## 8. よくある実装パターン
+
+### テキスト選択機能（SelectableText）
+```typescript
+// components/ui/selectable-text.tsx
+// TextInputのeditable={false}を使用してネイティブ選択UIを有効化
+<TextInput
+  value={text}
+  editable={false}
+  multiline
+  onSelectionChange={(e) => {
+    const { start, end } = e.nativeEvent.selection;
+    if (start !== end) {
+      const selectedText = text.substring(start, end);
+      onSelectionChange?.(selectedText);
+    } else {
+      onSelectionCleared?.();
+    }
+  }}
+  contextMenuHidden={false} // ネイティブ選択UIを有効化
+/>
+
+// 親コンポーネントで使用
+const [selectedText, setSelectedText] = useState<string | null>(null);
+
+<SelectableText
+  text={content}
+  onSelectionChange={(text) => setSelectedText(text)}
+  onSelectionCleared={() => setSelectedText(null)}
+/>
+```
+
+### 選択テキストを優先するAI質問
+```typescript
+// word-detail.tsx
+const handleQuestionPress = (question: string) => {
+  let finalQuestion = question;
+  if (mode === 'translate' && selectedText?.text) {
+    // 選択されたテキストを明示的に質問に含める
+    finalQuestion = `「${selectedText.text}」について：${question}`;
+    setSelectedText(null); // 質問送信後に選択を解除
+  }
+  void sendQuickQuestion(finalQuestion);
+};
+```
 
 ### 設定画面
 ```typescript
