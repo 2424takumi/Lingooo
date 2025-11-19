@@ -110,7 +110,7 @@ export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) 
               activeOpacity={0.7}
             >
               <View style={styles.iconButton}>
-                <BookmarkIcon color="#242424" />
+                <BookmarkIcon size={18} color="#242424" />
               </View>
             </TouchableOpacity>
           </Animated.View>
@@ -123,7 +123,9 @@ export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) 
               activeOpacity={0.7}
             >
               <View style={styles.iconButton}>
-                <MessagePlusIcon color="#242424" />
+                <View style={{ transform: [{ translateX: 0.5 }, { translateY: -1 }] }}>
+                  <MessagePlusIcon color="#242424" />
+                </View>
               </View>
             </TouchableOpacity>
           </Animated.View>
@@ -136,7 +138,7 @@ export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
   },
   menuContainer: {
     position: 'absolute',
@@ -157,14 +159,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
     elevation: 5,
   },
   menuText: {
     fontSize: 15,
     color: '#000000',
-    fontWeight: '590',
+    fontWeight: '600',
     letterSpacing: 1,
   },
 });

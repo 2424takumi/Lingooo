@@ -9,10 +9,11 @@ import mockDictionary from '@/data/mock-dictionary.json';
 import type { SuggestionItem, SuggestionResponse, WordDetailResponse, SearchError } from '@/types/search';
 import { generateWordDetail, generateWordDetailStream, generateSuggestions, generateWordDetailTwoStage, generateSuggestionsFast, addUsageHintsParallel } from '@/services/ai/dictionary-generator';
 import { isGeminiConfigured } from '@/services/ai/gemini-client';
-import { setCachedSuggestions, getCachedSuggestions } from '@/services/cache/suggestion-cache';
+import { setCachedSuggestions, getCachedSuggestions, getCachedSuggestionsSync } from '@/services/cache/suggestion-cache';
 import { logger } from '@/utils/logger';
 
 const SUGGESTION_TIMEOUT_MS = 10000; // 10秒に延長（AI生成に時間がかかるため）
+// @ts-ignore - Mock data type compatibility
 const jaToEnDictionary = mockDictionary.ja_to_en as Record<string, SuggestionItem[]>;
 const jaToEnEntries = Object.entries(jaToEnDictionary);
 
@@ -23,14 +24,27 @@ function findMockSuggestions(query: string): SuggestionItem[] {
     return [];
   }
 
+  // データを配列形式に正規化するヘルパー関数
+  const normalizeItem = (item: any): SuggestionItem => {
+    // shortSenseJaが文字列の場合は配列に変換（後方互換性）
+    const shortSenseJa = Array.isArray(item.shortSenseJa)
+      ? item.shortSenseJa
+      : [item.shortSenseJa].filter(Boolean);
+
+    return {
+      ...item,
+      shortSenseJa,
+    };
+  };
+
   const exactMatches = jaToEnDictionary[trimmed];
   if (exactMatches?.length) {
-    return exactMatches.slice(0, 10);
+    return exactMatches.map(normalizeItem).slice(0, 10);
   }
 
   for (const [key, value] of jaToEnEntries) {
     if (key.includes(trimmed) && value?.length) {
-      return value.slice(0, 10);
+      return value.map(normalizeItem).slice(0, 10);
     }
   }
 
@@ -113,8 +127,8 @@ async function tryGenerateAiSuggestionsTwoStage(
 
         // 並列生成：各ヒントが完成次第、キャッシュを更新
         await addUsageHintsParallel(lemmas, query, (hint) => {
-          // 1つのヒントが完成したら即座にキャッシュ更新
-          const currentItems = getCachedSuggestions(query, targetLanguage) || basicItems;
+          // 1つのヒントが完成したら即座にキャッシュ更新（同期版を使用）
+          const currentItems = getCachedSuggestionsSync(query, targetLanguage) || basicItems;
           const updatedItems = currentItems.map(item =>
             item.lemma === hint.lemma ? { ...item, usageHint: hint.usageHint } : item
           );
@@ -155,18 +169,18 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en',
     };
   }
 
-  // オフライン時: キャッシュ → モックデータの順に検索
+  // 🚀 CACHE-FIRST OPTIMIZATION: まずキャッシュをチェック（オフライン・オンライン共通）
+  // AsyncStorageから永続化されたキャッシュもチェック
+  const cachedItems = await getCachedSuggestions(trimmedQuery, targetLanguage);
+  if (cachedItems && cachedItems.length > 0) {
+    logger.info('[searchJaToEn] ⚡ Returning cached suggestions (instant)');
+    return { items: cachedItems };
+  }
+
+  // オフライン時: モックデータを使用
   if (isOffline) {
-    logger.info('[searchJaToEn] Offline mode: checking cache and mock data');
+    logger.info('[searchJaToEn] Offline mode: using mock data');
 
-    // キャッシュをチェック
-    const cachedItems = getCachedSuggestions(trimmedQuery, targetLanguage);
-    if (cachedItems && cachedItems.length > 0) {
-      logger.info('[searchJaToEn] Returning cached suggestions (offline)');
-      return { items: cachedItems };
-    }
-
-    // キャッシュがない場合はモックデータ
     const mockItems = findMockSuggestions(trimmedQuery);
     logger.info(`[searchJaToEn] Returning ${mockItems.length} mock suggestions (offline)`);
     if (mockItems.length > 0) {
@@ -186,8 +200,25 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en',
     };
   }
 
-  // 2段階生成（並列版）を開始
-  logger.info(`[searchJaToEn] Starting 2-stage parallel generation for: ${trimmedQuery} (${targetLanguage})`);
+  // 🚀 LOCAL-FIRST OPTIMIZATION: ローカル辞書を先にチェック（高速化）
+  const localItems = findMockSuggestions(trimmedQuery);
+  if (localItems.length > 0) {
+    logger.info(`[searchJaToEn] ✨ Found ${localItems.length} items in local dictionary (instant)`);
+
+    // ローカル辞書の結果を即座に返す（キャッシュにも保存）
+    setCachedSuggestions(trimmedQuery, localItems, targetLanguage);
+
+    // 背景でAIによるusageHint追加を実行（オプション）
+    // TODO: 必要に応じてバックグラウンドでAI強化を追加
+    // tryEnhanceWithAiInBackground(trimmedQuery, targetLanguage, localItems);
+
+    return {
+      items: localItems,
+    };
+  }
+
+  // ローカル辞書になければ、2段階生成（並列版）を開始
+  logger.info(`[searchJaToEn] Not in local dictionary, starting AI generation for: ${trimmedQuery} (${targetLanguage})`);
   const result = await tryGenerateAiSuggestionsTwoStage(trimmedQuery, targetLanguage);
 
   if (result && result.basic.length > 0) {
@@ -235,6 +266,7 @@ export async function getWordDetail(
     logger.info('[getWordDetail] Offline mode: using mock data only');
     await new Promise(resolve => setTimeout(resolve, 100));
 
+    // @ts-ignore - Mock data type compatibility
     const enDetails = mockDictionary.en_details as Record<string, WordDetailResponse>;
     const detail = enDetails[word.toLowerCase()];
 
@@ -254,7 +286,7 @@ export async function getWordDetail(
   // AI生成を使用（Gemini API設定済みの場合）
   if (await isGeminiConfigured()) {
     try {
-      const result = await generateWordDetail(word, targetLanguage, detailLevel);
+      const result = await generateWordDetail(word, targetLanguage);
       return result;
     } catch (error) {
       logger.error('AI生成エラー、モックデータにフォールバック:', error);
@@ -265,6 +297,7 @@ export async function getWordDetail(
   // フォールバック: モックデータを使用（英語のみ）
   await new Promise(resolve => setTimeout(resolve, 300));
 
+  // @ts-ignore - Mock data type compatibility
   const enDetails = mockDictionary.en_details as Record<string, WordDetailResponse>;
   const detail = enDetails[word.toLowerCase()];
 
@@ -315,6 +348,7 @@ export async function getWordDetailStream(
       await new Promise(resolve => setTimeout(resolve, 50));
     }
 
+    // @ts-ignore - Mock data type compatibility
     const enDetails = mockDictionary.en_details as Record<string, WordDetailResponse>;
     const detail = enDetails[word.toLowerCase()];
 
@@ -381,6 +415,7 @@ export async function getWordDetailStream(
  * @returns 候補のリスト
  */
 export function getTypoSuggestions(word: string): string[] {
+  // @ts-ignore - Mock data type compatibility
   const enDetails = mockDictionary.en_details as Record<string, WordDetailResponse>;
   const allWords = Object.keys(enDetails);
 

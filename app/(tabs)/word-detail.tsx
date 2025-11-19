@@ -1,11 +1,10 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Modal, Dimensions, Alert, TextInput } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
-import Svg, { Path } from 'react-native-svg';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { DefinitionList } from '@/components/ui/definition-list';
@@ -14,10 +13,10 @@ import { ExampleCard } from '@/components/ui/example-card';
 import { ChatSection } from '@/components/ui/chat-section';
 import { ShimmerHeader, ShimmerDefinitions, ShimmerMetrics, ShimmerExamples, ShimmerHint } from '@/components/ui/shimmer';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
-import { TranslateCard } from '@/components/ui/translate-card';
-import { loadFolders, updateBookmarkFolder, addFolder, type BookmarkFolder } from '@/services/storage/bookmark-storage';
-import { translateText } from '@/services/api/translate';
+import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
+import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { useChatSession } from '@/hooks/use-chat-session';
+import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
@@ -46,17 +45,28 @@ export default function WordDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null); // 実際に見つかった言語
   const [showLanguageNotification, setShowLanguageNotification] = useState(false); // 通知表示フラグ
+  const [isLoadingAdditional, setIsLoadingAdditional] = useState(false); // 追加データ（例文など）の読み込み中
 
   // ヘッダーの高さを測定
   const [headerHeight, setHeaderHeight] = useState(88); // デフォルト値(wordDetailの最低高さ)
 
-  // ブックマークトースト & フォルダ選択
-  const [toastVisible, setToastVisible] = useState(false);
-  const [selectedBookmarkId, setSelectedBookmarkId] = useState<string | null>(null);
-  const [isFolderSelectModalOpen, setIsFolderSelectModalOpen] = useState(false);
-  const [folders, setFolders] = useState<BookmarkFolder[]>([]);
-  const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
+  // ブックマーク管理
+  const {
+    toastVisible,
+    isFolderSelectModalOpen,
+    folders,
+    isCreateFolderModalOpen,
+    newFolderName,
+    setNewFolderName,
+    handleBookmarkAdded,
+    handleToastDismiss,
+    handleOpenFolderSelect,
+    handleAddToFolder,
+    handleOpenCreateFolderModal,
+    handleCreateFolder,
+    handleCloseFolderSelectModal,
+    handleCloseCreateFolderModal,
+  } = useBookmarkManagement({ logPrefix: 'WordDetail' });
 
   // パラメータから単語を取得
   const word = params.word as string || '';
@@ -66,36 +76,7 @@ export default function WordDetailScreen() {
   const searchQuery = params.searchQuery as string;
   const searchResults = params.searchResults as string;
 
-  // 翻訳モード用のパラメータ
-  const mode = (params.mode as string) || 'word';
-  const initialSourceLang = (params.sourceLang as string) || 'en';
-  const initialTargetLang = (params.targetLang as string) || 'ja';
-
-  // 翻訳データと選択された翻訳先言語
-  const [translationData, setTranslationData] = useState<{ originalText: string; translatedText: string; sourceLang: string; targetLang: string } | null>(null);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [selectedTranslateTargetLang, setSelectedTranslateTargetLang] = useState(initialTargetLang);
-
-  // 選択テキスト管理（翻訳モード用）
-  const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
-
   const chatContext = useMemo(() => {
-    // 翻訳モードの場合
-    if (mode === 'translate') {
-      if (!translationData) {
-        return undefined;
-      }
-
-      return {
-        originalText: translationData.originalText,
-        translatedText: translationData.translatedText,
-        sourceLang: translationData.sourceLang,
-        targetLang: translationData.targetLang,
-        selectedText: selectedText?.text, // 選択されたテキストを追加
-      };
-    }
-
-    // 単語モードの場合
     if (!wordData?.headword) {
       return undefined;
     }
@@ -109,15 +90,10 @@ export default function WordDetailScreen() {
           japanese: example.textDst,
         })) ?? [],
     };
-  }, [mode, translationData, wordData, selectedText]);
+  }, [wordData]);
 
-  // チャット識別子：翻訳モードの場合は原文を使用、単語モードの場合は正しい単語（headword.lemma）を使用
-  const chatIdentifier = mode === 'translate'
-    ? translationData?.originalText || word
-    : wordData?.headword?.lemma || word;
-
-  // チャットスコープ：翻訳モードか単語モードか
-  const chatScope = mode === 'translate' ? 'translate' : 'word';
+  // チャット識別子：正しい単語（headword.lemma）を使用
+  const chatIdentifier = wordData?.headword?.lemma || word;
 
   const {
     messages: chatMessages,
@@ -127,7 +103,7 @@ export default function WordDetailScreen() {
     sendMessage: sendChatMessage,
     sendQuickQuestion,
   } = useChatSession({
-    scope: chatScope,
+    scope: 'word',
     identifier: chatIdentifier,
     context: chatContext,
     targetLanguage,
@@ -167,7 +143,7 @@ export default function WordDetailScreen() {
   const chatExpandedMaxHeight = useMemo(() => {
     const screenHeight = Dimensions.get('window').height;
 
-    // ChatSection内部の固定スペース（実測値より少し少なめに設定してより伸ばす）
+    // ChatSection内部の固定スペース
     const containerPaddingTop = 8;
     const containerPaddingBottom = 10;
     const containerMarginBottom = 4;
@@ -176,24 +152,26 @@ export default function WordDetailScreen() {
     const questionScrollViewHeight = 32;
     const bottomSectionGap = 6;
     const whiteContainerHeight = 55; // paddingTop 9 + minHeight 34 + paddingBottom 12
+    const topMargin = 10; // ヘッダーとの間隔
 
     const fixedSpaces = containerPaddingTop + containerPaddingBottom + containerMarginBottom +
                         chatMessagesMarginBottom + bottomSectionPaddingTop +
-                        questionScrollViewHeight + bottomSectionGap + whiteContainerHeight - 12; // -12でさらに伸ばす
+                        questionScrollViewHeight + bottomSectionGap + whiteContainerHeight + topMargin;
 
-    // 画面高さ - safeAreaTop - headerHeight - 固定スペース - bottomSafeArea
-    return screenHeight - safeAreaInsets.top - headerHeight - fixedSpaces - safeAreaInsets.bottom;
+    // 画面高さ - safeAreaTop - headerHeight - 固定スペース
+    // bottomSafeAreaは引かない（キーボードとの間隔を狭めるため）
+    return screenHeight - safeAreaInsets.top - headerHeight - fixedSpaces;
   }, [safeAreaInsets.top, safeAreaInsets.bottom, headerHeight]);
 
   // 検出された言語の情報を取得（選択中の言語と異なる場合のみ）
   const detectedLanguageInfo = useMemo(() => {
-    if (!detectedLanguage || detectedLanguage === targetLanguage || mode === 'translate') {
+    if (!detectedLanguage || detectedLanguage === targetLanguage || detectedLanguage === currentLanguage.code) {
       return null;
     }
 
     const language = AVAILABLE_LANGUAGES.find(lang => lang.code === detectedLanguage);
     return language;
-  }, [detectedLanguage, targetLanguage, mode]);
+  }, [detectedLanguage, targetLanguage, currentLanguage.code]);
 
   // 検出言語が変更されたときに通知を表示し、3秒後に自動的に隠す
   useEffect(() => {
@@ -231,63 +209,17 @@ export default function WordDetailScreen() {
     configureAudio();
   }, []);
 
-  // 翻訳先言語を決定するロジック
-  const determineTranslateTargetLang = (sourceLang: string): string => {
-    // 母国語以外の文章 → 母国語に翻訳
-    if (sourceLang !== nativeLanguage.code) {
-      return nativeLanguage.code;
-    }
-    // 母国語の文章 → 選択された学習言語に翻訳
-    return currentLanguage.code;
-  };
-
-  // 言語切り替えを監視して再翻訳
-  useEffect(() => {
-    if (mode === 'translate' && currentLanguage) {
-      const newTargetLang = determineTranslateTargetLang(initialSourceLang);
-      if (newTargetLang !== selectedTranslateTargetLang) {
-        setSelectedTranslateTargetLang(newTargetLang);
-      }
-    }
-  }, [currentLanguage, mode, initialSourceLang, nativeLanguage.code]);
 
   useEffect(() => {
+    logger.info('[WordDetail] useEffect triggered:', {
+      word,
+      hasDataParam: !!dataParam,
+      dataParamLength: dataParam?.length || 0,
+      targetLanguage,
+    });
+
     const loadWordData = async () => {
       try {
-        // 翻訳モードの場合は翻訳APIを呼び出す
-        if (mode === 'translate') {
-          // 状態をリセット
-          setWordData(null);
-          setIsLoading(true);
-          setLoadingProgress(0);
-          setError(null);
-          setDetectedLanguage(null);
-          setShowLanguageNotification(false);
-
-          setIsTranslating(true);
-
-          // 原文だけ先に表示するため、空の翻訳文でカードを表示
-          setTranslationData({
-            originalText: word,
-            translatedText: '',
-            sourceLang: initialSourceLang,
-            targetLang: selectedTranslateTargetLang,
-          });
-          setIsLoading(false);
-
-          try {
-            const result = await translateText(word, initialSourceLang, selectedTranslateTargetLang);
-            setTranslationData(result);
-            setLoadingProgress(100);
-          } catch (error) {
-            logger.error('[WordDetail] Translation failed:', error);
-            setError('翻訳に失敗しました');
-          } finally {
-            setIsTranslating(false);
-          }
-          return;
-        }
-
         // パラメータでデータが渡されている場合はそれを使用
         if (dataParam) {
           const data = JSON.parse(dataParam);
@@ -297,6 +229,48 @@ export default function WordDetailScreen() {
           setError(null);
           setDetectedLanguage(null);
           setShowLanguageNotification(false);
+          setIsLoadingAdditional(true); // 🚀 追加データを読み込み中
+          logger.info('[WordDetail] Using dataParam for instant display (basic info only)');
+
+          // 🚀 バックグラウンドでフルデータ（例文など）を取得
+          (async () => {
+            // まずプリフェッチの完了を待つ
+            const pendingPromise = getPendingPromise(word);
+            if (pendingPromise) {
+              try {
+                logger.info('[WordDetail] Waiting for prefetch to complete...');
+                const fullData = await pendingPromise;
+                if (fullData.examples && fullData.examples.length > 0) {
+                  logger.info('[WordDetail] Enriching with prefetched full data');
+                  // 🚀 基本データのsensesを保持してマージ（検索結果の意味を優先）
+                  setWordData(prev => ({
+                    ...fullData,
+                    senses: prev?.senses || fullData.senses, // 基本データの意味を保持
+                  }));
+                  setIsLoadingAdditional(false); // 完了
+                }
+                return;
+              } catch (err) {
+                logger.warn('[WordDetail] Prefetch failed, checking cache');
+              }
+            }
+
+            // プリフェッチがない場合はキャッシュをチェック
+            const cachedData = getCachedWordDetail(word);
+            if (cachedData && cachedData.examples && cachedData.examples.length > 0) {
+              logger.info('[WordDetail] Enriching with cached full data');
+              // 🚀 基本データのsensesを保持してマージ
+              setWordData(prev => ({
+                ...cachedData,
+                senses: prev?.senses || cachedData.senses, // 基本データの意味を保持
+              }));
+            } else {
+              logger.info('[WordDetail] No full data available, showing basic info only');
+            }
+            setIsLoadingAdditional(false); // 完了（データがあってもなくても）
+          })();
+
+          return; // 基本情報は即座に表示完了
         } else if (word) {
           // キャッシュをチェック（状態リセット前に）
           const cachedData = getCachedWordDetail(word);
@@ -399,7 +373,24 @@ export default function WordDetailScreen() {
                   // 部分データが来たらすぐに表示（段階的レンダリング）
                   if (partialData) {
                     logger.debug('[WordDetail] Partial data received, updating UI');
-                    setWordData(partialData);
+
+                    // 🚀 データをマージして蓄積（一度受信したデータは削除しない）
+                    setWordData(prev => {
+                      if (!prev) return partialData;
+
+                      // 既存データと新規データをマージ
+                      return {
+                        ...prev,
+                        ...partialData,
+                        // 配列フィールドは既存のものを保持（新規データがある場合は上書き）
+                        senses: partialData.senses && partialData.senses.length > 0
+                          ? partialData.senses
+                          : prev.senses,
+                        examples: partialData.examples && partialData.examples.length > 0
+                          ? partialData.examples
+                          : prev.examples,
+                      };
+                    });
 
                     // 完了したらローディング状態を解除
                     if (progress === 100) {
@@ -472,7 +463,7 @@ export default function WordDetailScreen() {
     };
 
     loadWordData();
-  }, [word, dataParam, targetLanguage, mode, initialSourceLang, selectedTranslateTargetLang]);
+  }, [word, dataParam, targetLanguage]);
 
   // 検索履歴を正しい単語で更新（誤字の場合）
   useEffect(() => {
@@ -521,91 +512,6 @@ export default function WordDetailScreen() {
     void updateSearchHistoryWithCorrectWord();
   }, [wordData, word, detectedLanguage, isLoading]);
 
-  // フォルダを読み込む
-  const fetchFolders = async () => {
-    try {
-      const data = await loadFolders();
-      setFolders(data);
-    } catch (error) {
-      logger.error('[WordDetail] Failed to load folders:', error);
-    }
-  };
-
-  useEffect(() => {
-    void fetchFolders();
-  }, []);
-
-  // ブックマーク追加時のハンドラー
-  const handleBookmarkAdded = (bookmarkId: string) => {
-    setSelectedBookmarkId(bookmarkId);
-    setToastVisible(true);
-  };
-
-  // トースト終了時（selectedBookmarkIdはモーダルキャンセル時またはフォルダ追加完了時にクリア）
-  const handleToastDismiss = () => {
-    setToastVisible(false);
-  };
-
-  // フォルダ選択モーダルを開く
-  const handleOpenFolderSelect = () => {
-    setIsFolderSelectModalOpen(true);
-  };
-
-  // フォルダにブックマークを追加
-  const handleAddToFolder = async (folderId?: string) => {
-    if (!selectedBookmarkId) return;
-
-    try {
-      await updateBookmarkFolder(selectedBookmarkId, folderId);
-      setIsFolderSelectModalOpen(false);
-      setToastVisible(false);
-      setSelectedBookmarkId(null);
-      logger.debug('[WordDetail] Bookmark added to folder:', folderId);
-    } catch (error) {
-      logger.error('[WordDetail] Failed to add bookmark to folder:', error);
-    }
-  };
-
-  // 新規フォルダ作成モーダルを開く
-  const handleOpenCreateFolderModal = () => {
-    setIsFolderSelectModalOpen(false);
-    setIsCreateFolderModalOpen(true);
-  };
-
-  // 新規フォルダを作成してブックマークを追加
-  const handleCreateFolder = async () => {
-    if (!newFolderName.trim()) {
-      Alert.alert('エラー', 'フォルダ名を入力してください');
-      return;
-    }
-
-    if (!selectedBookmarkId) {
-      Alert.alert('エラー', 'ブックマークが選択されていません');
-      return;
-    }
-
-    try {
-      // 1. 新しいフォルダを作成
-      const newFolder = await addFolder(newFolderName.trim());
-      logger.debug('[WordDetail] Created new folder:', newFolder.id, newFolder.name);
-
-      // 2. ブックマークを新しいフォルダに追加
-      await updateBookmarkFolder(selectedBookmarkId, newFolder.id);
-      logger.debug('[WordDetail] Bookmark added to new folder:', selectedBookmarkId, newFolder.id);
-
-      // 3. フォルダリストを再読み込み
-      await fetchFolders();
-
-      // 4. モーダルを閉じてステートをリセット
-      setIsCreateFolderModalOpen(false);
-      setNewFolderName('');
-      setToastVisible(false);
-      setSelectedBookmarkId(null);
-    } catch (error) {
-      logger.error('[WordDetail] Failed to create folder:', error);
-      Alert.alert('エラー', 'フォルダの作成に失敗しました');
-    }
-  };
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -690,25 +596,11 @@ export default function WordDetailScreen() {
   };
 
   const handleQuestionPress = (question: string) => {
-    // 翻訳モードで選択テキストがある場合は、質問文に選択テキストを含める
-    let finalQuestion = question;
-    if (mode === 'translate' && selectedText?.text) {
-      finalQuestion = `「${selectedText.text}」について：${question}`;
-      // 質問送信後、選択を解除
-      setSelectedText(null);
-    }
-    void sendQuickQuestion(finalQuestion);
+    void sendQuickQuestion(question);
   };
 
   const handleChatSubmit = async (text: string) => {
-    // 翻訳モードで選択テキストがある場合は、質問文に選択テキストを含める
-    let finalQuestion = text;
-    if (mode === 'translate' && selectedText?.text) {
-      finalQuestion = `「${selectedText.text}」について：${text}`;
-      // 質問送信後、選択を解除
-      setSelectedText(null);
-    }
-    await sendChatMessage(finalQuestion);
+    await sendChatMessage(text);
   };
 
   const handleChatRetry = () => {
@@ -847,43 +739,6 @@ export default function WordDetailScreen() {
     }
   };
 
-  // テキスト選択ハンドラ
-  const handleTextSelected = (text: string, type: 'original' | 'translated') => {
-    logger.debug('[WordDetail] Text selected:', { text, type });
-
-    // 単語かどうかを判定（スペースや句読点が含まれていない場合は単語とみなす）
-    const isSingleWord = /^[^\s.,!?;:。、！？；：]+$/.test(text.trim());
-
-    setSelectedText({ text: text.trim(), isSingleWord });
-  };
-
-  // 選択解除ハンドラ
-  const handleSelectionCleared = () => {
-    logger.debug('[WordDetail] Selection cleared');
-    setSelectedText(null);
-  };
-
-  // 辞書検索ハンドラ
-  const handleDictionaryLookup = () => {
-    if (!selectedText) return;
-
-    logger.info('[WordDetail] Dictionary lookup:', selectedText.text);
-
-    // 選択された単語で新しい単語検索を実行
-    router.push({
-      pathname: '/(tabs)/word-detail',
-      params: {
-        word: selectedText.text,
-        targetLanguage: mode === 'translate'
-          ? (translationData?.sourceLang || currentLanguage.code)
-          : targetLanguage,
-        mode: 'word',
-      },
-    });
-
-    // 選択状態をクリア
-    setSelectedText(null);
-  };
 
   if (error) {
     return (
@@ -906,12 +761,9 @@ export default function WordDetailScreen() {
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
       <StatusBar style="auto" />
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          {/* 翻訳モードの場合 */}
-          {mode === 'translate' ? (
-            <>
-              {/* Header - シンプルなバックボタンのみ */}
+      <View style={[styles.content, { paddingTop: safeAreaInsets.top }]}>
+        {/* Header - Fixed */}
+            {wordData?.headword ? (
               <View
                 style={styles.headerContainer}
                 onLayout={(event) => {
@@ -920,134 +772,96 @@ export default function WordDetailScreen() {
                 }}
               >
                 <UnifiedHeaderBar
-                  pageType="translate"
-                  title="翻訳"
+                  pageType="wordDetail"
+                  word={wordData.headword.lemma}
+                  posTags={wordData.headword.pos || []}
+                  gender={wordData.headword.gender}
                   onBackPress={handleBackPress}
+                  onPronouncePress={handlePronouncePress}
                 />
               </View>
+            ) : isLoading ? (
+              <View
+                style={styles.headerContainer}
+                onLayout={(event) => {
+                  const { height } = event.nativeEvent.layout;
+                  setHeaderHeight(height);
+                }}
+              >
+                <ShimmerHeader />
+              </View>
+            ) : null}
 
-              {/* Translation Card */}
-              {translationData ? (
-                <View style={styles.translateCardContainer}>
-                  <TranslateCard
-                    originalText={translationData.originalText}
-                    translatedText={translationData.translatedText}
-                    sourceLang={translationData.sourceLang}
-                    targetLang={translationData.targetLang}
-                    isTranslating={isTranslating}
-                    onTextSelected={handleTextSelected}
-                    onSelectionCleared={handleSelectionCleared}
-                  />
+            {/* 言語検出通知 - Fixed */}
+            {detectedLanguageInfo && showLanguageNotification && (
+              <View style={styles.languageNotificationContainer}>
+                <View style={styles.languageNotificationContent}>
+                  <Text style={styles.languageNotificationText}>
+                    {detectedLanguageInfo.name}で見つかりました
+                  </Text>
                 </View>
-              ) : isTranslating ? (
-                <View style={styles.translateCardContainer}>
-                  <Text style={styles.loadingText}>翻訳中...</Text>
-                </View>
-              ) : null}
-            </>
-          ) : (
-            <>
-              {/* Header - 最初に表示 */}
-              {wordData?.headword ? (
-                <View
-                  style={styles.headerContainer}
-                  onLayout={(event) => {
-                    const { height } = event.nativeEvent.layout;
-                    setHeaderHeight(height);
-                  }}
-                >
-                  <UnifiedHeaderBar
-                    pageType="wordDetail"
-                    word={wordData.headword.lemma}
-                    posTags={wordData.headword.pos || []}
-                    gender={wordData.headword.gender}
-                    onBackPress={handleBackPress}
-                    onPronouncePress={handlePronouncePress}
+              </View>
+            )}
+
+            {/* Content - Scrollable */}
+            <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
+              {/* Definitions - 2番目に表示 */}
+              {wordData?.senses && wordData.senses.length > 0 ? (
+                <View style={styles.definitionsContainer}>
+                  <DefinitionList
+                    definitions={wordData.senses.map(s => s.glossShort)}
                   />
                 </View>
               ) : isLoading ? (
-                <View
-                  style={styles.headerContainer}
-                  onLayout={(event) => {
-                    const { height } = event.nativeEvent.layout;
-                    setHeaderHeight(height);
-                  }}
-                >
-                  <ShimmerHeader />
+                <View style={styles.definitionsContainer}>
+                  <ShimmerDefinitions />
                 </View>
               ) : null}
 
-              {/* 言語検出通知 */}
-              {detectedLanguageInfo && showLanguageNotification && (
-                <View style={styles.languageNotificationContainer}>
-                  <View style={styles.languageNotificationContent}>
-                    <Text style={styles.languageNotificationText}>
-                      {detectedLanguageInfo.name}で見つかりました
-                    </Text>
+              {/* Word Hint - 3番目に表示 */}
+              {wordData?.hint?.text ? (
+                <View style={styles.hintContainer}>
+                  <WordHint hint={wordData.hint.text} />
+                </View>
+              ) : (isLoading || isLoadingAdditional) ? (
+                <View style={styles.hintContainer}>
+                  <ShimmerHint />
+                </View>
+              ) : null}
+
+              {/* Examples Section - 最後に表示 */}
+              {wordData?.examples && wordData.examples.length > 0 ? (
+                <View style={styles.examplesSection}>
+                  <Text style={styles.sectionTitle}>例文</Text>
+                  <View style={styles.examplesList}>
+                    {wordData.examples.map((example, index) => (
+                      <ExampleCard
+                        key={index}
+                        english={example.textSrc}
+                        japanese={example.textDst}
+                      />
+                    ))}
                   </View>
                 </View>
-              )}
-
-              {/* Definitions - 2番目に表示 */}
-          {wordData?.senses && wordData.senses.length > 0 ? (
-            <View style={styles.definitionsContainer}>
-              <DefinitionList
-                definitions={wordData.senses.map(s => s.glossShort)}
-              />
-            </View>
-          ) : isLoading ? (
-            <View style={styles.definitionsContainer}>
-              <ShimmerDefinitions />
-            </View>
-          ) : null}
-
-          {/* Word Hint - 3番目に表示 */}
-          {wordData?.hint?.text ? (
-            <View style={styles.hintContainer}>
-              <WordHint hint={wordData.hint.text} />
-            </View>
-          ) : isLoading ? (
-            <View style={styles.hintContainer}>
-              <ShimmerHint />
-            </View>
-          ) : null}
-
-          {/* Examples Section - 最後に表示 */}
-          {wordData?.examples && wordData.examples.length > 0 ? (
-            <View style={styles.examplesSection}>
-              <Text style={styles.sectionTitle}>例文</Text>
-              <View style={styles.examplesList}>
-                {wordData.examples.map((example, index) => (
-                  <ExampleCard
-                    key={index}
-                    english={example.textSrc}
-                    japanese={example.textDst}
-                  />
-                ))}
-              </View>
-            </View>
-          ) : isLoading ? (
-            <View style={styles.examplesSection}>
-              <Text style={styles.sectionTitle}>例文</Text>
-              <ShimmerExamples />
-            </View>
-          ) : null}
-            </>
-          )}
-
-        </View>
-      </ScrollView>
+              ) : (isLoading || isLoadingAdditional) ? (
+                <View style={styles.examplesSection}>
+                  <Text style={styles.sectionTitle}>例文</Text>
+                  <ShimmerExamples />
+                </View>
+              ) : null}
+            </ScrollView>
+      </View>
 
       {/* Chat Section - Fixed at bottom */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={safeAreaInsets.bottom}
+        keyboardVerticalOffset={0}
       >
         <View pointerEvents="box-none" style={styles.chatContainerFixed}>
           <ChatSection
             key={chatIdentifier} // Reset chat state when navigating to a different word
-            placeholder={mode === 'translate' ? 'この文章について質問をする...' : 'この単語について質問をする...'}
+            placeholder="この単語について質問をする..."
             qaPairs={qaPairs}
             followUps={followUps}
             isStreaming={isChatStreaming}
@@ -1057,15 +871,13 @@ export default function WordDetailScreen() {
             onQuickQuestion={handleQuestionPress}
             onRetryQuestion={handleQACardRetry}
             onDetailLevelChange={setAIDetailLevel}
-            scope={mode === 'translate' ? 'translate' : 'word'}
+            scope="word"
             identifier={chatIdentifier}
             onBookmarkAdded={handleBookmarkAdded}
             expandedMaxHeight={chatExpandedMaxHeight}
             onFollowUpQuestion={handleFollowUpQuestion}
             prefilledInputText={prefilledChatText}
             onPrefillConsumed={() => setPrefilledChatText(null)}
-            selectedText={mode === 'translate' ? selectedText : null}
-            onDictionaryLookup={mode === 'translate' ? handleDictionaryLookup : undefined}
           />
         </View>
       </KeyboardAvoidingView>
@@ -1078,143 +890,22 @@ export default function WordDetailScreen() {
       />
 
       {/* Folder Select Modal */}
-      <Modal
+      <FolderSelectModal
         visible={isFolderSelectModalOpen}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => {
-          setIsFolderSelectModalOpen(false);
-          setSelectedBookmarkId(null);
-        }}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => {
-            setIsFolderSelectModalOpen(false);
-            setSelectedBookmarkId(null);
-          }}
-        >
-          <View style={styles.folderSelectModalContainer} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>フォルダに追加</Text>
-
-            <ScrollView style={styles.folderSelectList} showsVerticalScrollIndicator={false}>
-              {/* No folder option - only show if folders exist */}
-              {folders.length > 0 && (
-                <TouchableOpacity
-                  style={styles.folderSelectItem}
-                  onPress={() => handleAddToFolder(undefined)}
-                >
-                  <Text style={styles.folderSelectItemText}>フォルダなし</Text>
-                </TouchableOpacity>
-              )}
-
-              {/* Existing folders */}
-              {folders.map((folder) => (
-                <TouchableOpacity
-                  key={folder.id}
-                  style={styles.folderSelectItem}
-                  onPress={() => handleAddToFolder(folder.id)}
-                >
-                  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11z"
-                      stroke="#111111"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
-                  <Text style={styles.folderSelectItemText}>{folder.name}</Text>
-                </TouchableOpacity>
-              ))}
-
-              {/* Create new folder button */}
-              <TouchableOpacity
-                style={styles.createFolderButton}
-                onPress={handleOpenCreateFolderModal}
-              >
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M12 5v14M5 12h14"
-                    stroke="#111111"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-                <Text style={styles.createFolderButtonText}>新しくフォルダを作る</Text>
-              </TouchableOpacity>
-            </ScrollView>
-
-            <TouchableOpacity
-              style={styles.modalCancelButton}
-              onPress={() => {
-                setIsFolderSelectModalOpen(false);
-                setSelectedBookmarkId(null);
-              }}
-            >
-              <Text style={styles.modalCancelButtonText}>キャンセル</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        folders={folders}
+        onSelectFolder={handleAddToFolder}
+        onCreateNew={handleOpenCreateFolderModal}
+        onClose={handleCloseFolderSelectModal}
+      />
 
       {/* Create Folder Modal */}
-      <Modal
+      <CreateFolderModal
         visible={isCreateFolderModalOpen}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => {
-          setIsCreateFolderModalOpen(false);
-          setNewFolderName('');
-          setSelectedBookmarkId(null);
-        }}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => {
-            setIsCreateFolderModalOpen(false);
-            setNewFolderName('');
-            setSelectedBookmarkId(null);
-          }}
-        >
-          <View style={styles.createFolderModalContainer} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>新しいフォルダを作成</Text>
-
-            <TextInput
-              style={styles.folderNameInput}
-              placeholder="フォルダ名"
-              placeholderTextColor="#999999"
-              value={newFolderName}
-              onChangeText={setNewFolderName}
-              autoFocus
-              maxLength={50}
-            />
-
-            <View style={styles.createFolderButtonContainer}>
-              <TouchableOpacity
-                style={styles.modalSecondaryButton}
-                onPress={() => {
-                  setIsCreateFolderModalOpen(false);
-                  setNewFolderName('');
-                  setSelectedBookmarkId(null);
-                }}
-              >
-                <Text style={styles.modalSecondaryButtonText}>キャンセル</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalPrimaryButton}
-                onPress={handleCreateFolder}
-              >
-                <Text style={styles.modalPrimaryButtonText}>作成</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        folderName={newFolderName}
+        onChangeFolderName={setNewFolderName}
+        onCreate={handleCreateFolder}
+        onClose={handleCloseCreateFolderModal}
+      />
     </ThemedView>
   );
 }
@@ -1223,19 +914,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollView: {
+  content: {
     flex: 1,
   },
-  content: {
-    paddingTop: 62,
-    paddingHorizontal: 16,
-    paddingBottom: 220, // ChatSection分のスペースを確保（高さ116 + 余裕104）
-  },
   headerContainer: {
+    paddingHorizontal: 16,
     marginBottom: 12,
   },
   languageNotificationContainer: {
+    paddingHorizontal: 16,
     marginBottom: 12,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 220, // ChatSection分のスペースを確保（高さ116 + 余裕104）
   },
   languageNotificationContent: {
     flexDirection: 'row',
@@ -1288,7 +983,7 @@ const styles = StyleSheet.create({
   chatContainerFixed: {
     paddingHorizontal: 8,
     paddingBottom: 0,
-    marginBottom: 12,
+    marginBottom: 16,
     justifyContent: 'flex-end',
   },
   loadingContainer: {

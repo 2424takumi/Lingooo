@@ -19,7 +19,8 @@ interface QACardProps {
   hideActions?: boolean;
   onBookmarkAdded?: (bookmarkId: string) => void;
   onFollowUpQuestion?: (question: string) => Promise<void>;
-  onScrollToFollowUpInput?: () => void;
+  onEnterFollowUpMode?: (pairId: string, question: string) => void;
+  isFollowUpActive?: boolean;
 }
 
 function SendIcon({ size = 20, color = '#FFFFFF' }: { size?: number; color?: string }) {
@@ -78,7 +79,7 @@ function CloseIcon({ size = 16, color = '#242424' }: { size?: number; color?: st
   );
 }
 
-export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion, onScrollToFollowUpInput }: QACardProps) {
+export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion, onEnterFollowUpMode, isFollowUpActive = false }: QACardProps) {
   // ブックマークページ用の配色（hideActions=trueの時）
   const cardBackground = useThemeColor(
     { light: hideActions ? '#F8F8F8' : '#FAFCFB', dark: '#1C1C1E' },
@@ -99,14 +100,8 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
 
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isCheckingBookmark, setIsCheckingBookmark] = useState(true);
-  const [followUpText, setFollowUpText] = useState('');
-  const [isSubmittingFollowUp, setIsSubmittingFollowUp] = useState(false);
   // 追加質問の開閉状態を管理（初期状態は全て閉じている）
   const [expandedFollowUps, setExpandedFollowUps] = useState<Record<string, boolean>>({});
-  // 追加質問入力欄の表示/非表示を管理
-  const [showFollowUpInput, setShowFollowUpInput] = useState(false);
-  // テキストインプットのref
-  const followUpInputRef = useRef<TextInput>(null);
   // 前回の追加質問数を記録
   const prevFollowUpCountRef = useRef(0);
 
@@ -178,19 +173,6 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
     prevFollowUpCountRef.current = currentCount;
   }, [pair.followUpQAs]);
 
-  // テキストインプットのレイアウトハンドラー
-  const handleFollowUpInputLayout = () => {
-    // レイアウト完了後にフォーカスとスクロール
-    setTimeout(() => {
-      // まずスクロールをリクエスト
-      onScrollToFollowUpInput?.();
-      // その後フォーカス（キーボードを表示）
-      setTimeout(() => {
-        followUpInputRef.current?.focus();
-      }, 100);
-    }, 100);
-  };
-
   // コピー機能
   const handleCopy = async () => {
     if (!pair.a) return;
@@ -246,22 +228,6 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
     } catch (error) {
       logger.error('[QACard] Failed to bookmark:', error);
       Alert.alert('エラー', 'ブックマークの操作に失敗しました');
-    }
-  };
-
-  // 追加質問送信
-  const handleFollowUpSubmit = async () => {
-    if (!followUpText.trim() || !onFollowUpQuestion || isSubmittingFollowUp) return;
-
-    setIsSubmittingFollowUp(true);
-    try {
-      await onFollowUpQuestion(followUpText.trim());
-      setFollowUpText('');
-    } catch (error) {
-      logger.error('[QACard] Failed to send follow-up question:', error);
-      Alert.alert('エラー', '追加質問の送信に失敗しました');
-    } finally {
-      setIsSubmittingFollowUp(false);
     }
   };
 
@@ -353,16 +319,16 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
         )}
 
         {/* 追加質問ボタン - 回答完了後、アンサーボックス内に表示 */}
-        {pair.status === 'completed' && pair.a && !hideActions && onFollowUpQuestion && (
+        {pair.status === 'completed' && pair.a && !hideActions && onEnterFollowUpMode && (
           <View style={styles.askQuestionSection}>
             <View
               style={[
                 styles.askQuestionButton,
-                showFollowUpInput && styles.askQuestionButtonActive,
+                isFollowUpActive && styles.askQuestionButtonActive,
               ]}
             >
               <TouchableOpacity
-                onPress={() => setShowFollowUpInput(!showFollowUpInput)}
+                onPress={() => onEnterFollowUpMode(pair.id, pair.q)}
                 activeOpacity={0.7}
                 accessibilityRole="button"
                 accessibilityLabel="追加で質問"
@@ -373,13 +339,10 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                 </View>
               </TouchableOpacity>
 
-              {/* ×ボタン - テキスト入力欄が開いている時のみ表示 */}
-              {showFollowUpInput && (
+              {/* ×ボタン - アクティブ時のみ表示 */}
+              {isFollowUpActive && (
                 <TouchableOpacity
-                  onPress={() => {
-                    setShowFollowUpInput(false);
-                    setFollowUpText('');
-                  }}
+                  onPress={() => onEnterFollowUpMode(pair.id, pair.q)}
                   hitSlop={8}
                   style={styles.closeButton}
                   accessibilityRole="button"
@@ -439,7 +402,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                             <TypingIndicator color="#2C2C2C" dotSize={6} />
                           </View>
                         ) : (
-                          <Text style={[styles.answerText, { color: answerTextColor }]}>
+                          <Text style={[styles.answerText, { color: answerTextColor, marginBottom: -10 }]}>
                             {followUp.a ?? (followUp.status === 'error' ? '回答を取得できませんでした。' : '')}
                           </Text>
                         )}
@@ -455,43 +418,6 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                 </View>
               );
             })}
-          </View>
-        </View>
-      )}
-
-      {/* 追加質問の入力欄 - 回答ボックスの外側に表示 */}
-      {pair.status === 'completed' && pair.a && !hideActions && onFollowUpQuestion && showFollowUpInput && (
-        <View style={styles.followUpInputSection}>
-          <View style={styles.followUpInputContainer}>
-            <TextInput
-              ref={followUpInputRef}
-              style={[styles.followUpInput, { color: answerTextColor }]}
-              placeholder="追加で質問をする..."
-              placeholderTextColor={placeholderColor}
-              value={followUpText}
-              onChangeText={setFollowUpText}
-              editable={!isSubmittingFollowUp}
-              multiline
-              scrollEnabled={false}
-              maxLength={500}
-              onLayout={handleFollowUpInputLayout}
-            />
-
-            {/* 送信ボタン - テキストがある場合のみ表示 */}
-            {followUpText.trim().length > 0 && (
-              <TouchableOpacity
-                onPress={handleFollowUpSubmit}
-                disabled={isSubmittingFollowUp}
-                style={[
-                  styles.followUpSendButton,
-                  isSubmittingFollowUp && styles.followUpSendButtonDisabled,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="送信"
-              >
-                <SendIcon size={16} color="#FFFFFF" />
-              </TouchableOpacity>
-            )}
           </View>
         </View>
       )}
@@ -563,7 +489,7 @@ const styles = StyleSheet.create({
   },
   followUpList: {
     gap: 16,
-    marginBottom: 8,
+    marginBottom: -4,
   },
   followUpItem: {
     flexDirection: 'row',
@@ -595,17 +521,14 @@ const styles = StyleSheet.create({
   },
   followUpAnswerContainer: {
     borderRadius: 8,
-    padding: 16,
-    gap: 10,
+    paddingTop: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 6,
+    gap: 5,
     marginHorizontal: -4,
   },
   followUpPendingContainer: {
     gap: 8,
-  },
-  followUpInputSection: {
-    marginHorizontal: -4,
-    marginBottom: -4,
-    marginTop: 4,
   },
   askQuestionSection: {
     marginTop: 3,
@@ -615,7 +538,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderRadius: 12,
-    paddingHorizontal: 10,
+    paddingLeft: 10,
+    paddingRight: 6,
     paddingVertical: 4,
     alignSelf: 'flex-start',
   },
@@ -624,7 +548,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 2,
-    marginLeft: 6,
+    marginLeft: 3,
   },
   askQuestionButtonContent: {
     flexDirection: 'row',
@@ -636,59 +560,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     letterSpacing: 1,
     color: '#000000',
-  },
-  followUpInputWrapper: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingTop: 3,
-    paddingBottom: 6,
-    gap: 3,
-  },
-  followUpInputHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  askQuestionHeaderText: {
-    fontSize: 10,
-    lineHeight: 22,
-    letterSpacing: 1,
-    color: '#242424',
-  },
-  followUpInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 6,
-    paddingLeft: 12,
-    paddingRight: 8,
-    paddingVertical: 0,
-    borderRadius: 12,
-    borderWidth: 0.5,
-    borderColor: '#EBEBEB',
-    backgroundColor: '#FFFFFF',
-    minHeight: 42,
-  },
-  followUpInput: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-    paddingTop: 10,
-    paddingBottom: 12,
-    maxHeight: 80,
-    textAlignVertical: 'center',
-    letterSpacing: 0.5,
-  },
-  followUpSendButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 9,
-    backgroundColor: '#242424',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  followUpSendButtonDisabled: {
-    opacity: 0.4,
   },
 });

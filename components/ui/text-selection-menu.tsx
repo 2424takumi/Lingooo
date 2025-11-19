@@ -23,7 +23,7 @@ export function showTextSelectionMenu({
   const displayText = text.length > 30 ? text.substring(0, 30) + '...' : text;
   const isSingle = isSingleWord(text);
 
-  const buttons = [
+  const buttons: Array<{ text: string; onPress: () => void; style?: 'default' | 'cancel' | 'destructive' }> = [
     {
       text: '💬 質問する',
       onPress: () => onAsk(text, type),
@@ -39,8 +39,8 @@ export function showTextSelectionMenu({
     },
     {
       text: 'キャンセル',
-      onPress: () => {}, // キャンセルボタンにも onPress を追加
-      style: 'cancel' as const,
+      onPress: () => {},
+      style: 'cancel',
     },
   ];
 

@@ -38,7 +38,7 @@ export interface ChatRequestContext {
   headword?: string;
   senses?: string[];
   examples?: Array<{ english: string; japanese: string }>; // 簡易表現
-  searchSuggestions?: Array<{ lemma: string; shortSenseJa: string }>;
+  searchSuggestions?: Array<{ lemma: string; shortSenseJa: string[] }>;
 
   // 翻訳コンテキスト
   originalText?: string;

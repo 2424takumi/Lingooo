@@ -2,7 +2,7 @@ import { StyleSheet, Text, TouchableOpacity, View, Animated } from 'react-native
 import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import * as Speech from 'expo-speech';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { logger } from '@/utils/logger';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
@@ -69,8 +69,6 @@ export function TranslateCard({
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
   const [isPlayingTranslated, setIsPlayingTranslated] = useState(false);
   const [isOriginalExpanded, setIsOriginalExpanded] = useState(false);
-  const [showExpandButton, setShowExpandButton] = useState(false);
-  const [hasCheckedLines, setHasCheckedLines] = useState(false);
 
 
   // アニメーション用の値
@@ -97,10 +95,8 @@ export function TranslateCard({
   // 原文が変更されたら展開状態と選択状態をリセット
   useEffect(() => {
     setIsOriginalExpanded(false);
-    setShowExpandButton(false);
-    setHasCheckedLines(false);
     onSelectionCleared?.();
-  }, [originalText]); // onSelectionClearedを依存配列から削除（originalTextが変わったときだけクリアする）
+  }, [originalText]);
 
   // 翻訳中のシマーアニメーション
   useEffect(() => {
@@ -121,6 +117,14 @@ export function TranslateCard({
   // 言語名を取得
   const sourceLanguageName = LANGUAGE_NAME_MAP[sourceLang] || sourceLang;
   const targetLanguageName = LANGUAGE_NAME_MAP[targetLang] || targetLang;
+
+  // 原文が3行を超える可能性があるかチェック
+  const shouldShowExpandButton = useMemo(() => {
+    // 改行の数をチェック
+    const newlineCount = (originalText.match(/\n/g) || []).length;
+    // 3行以上の改行がある、または文字数が150文字以上の場合
+    return newlineCount >= 2 || originalText.length > 150;
+  }, [originalText]);
 
   const handlePlayOriginal = async () => {
     try {
@@ -221,7 +225,7 @@ export function TranslateCard({
             style={styles.originalText}
             onSelectionChange={handleOriginalSelection}
             onSelectionCleared={onSelectionCleared}
-            numberOfLines={!hasCheckedLines ? undefined : (isOriginalExpanded ? undefined : 3)}
+            numberOfLines={isOriginalExpanded ? undefined : 3}
           />
 
           {/* Action row with speaker icon and expand button */}
@@ -232,7 +236,7 @@ export function TranslateCard({
               </TouchableOpacity>
             )}
 
-            {showExpandButton && (
+            {shouldShowExpandButton && (
               <TouchableOpacity
                 onPress={() => setIsOriginalExpanded(!isOriginalExpanded)}
                 style={styles.expandButton}
@@ -313,13 +317,13 @@ export function TranslateCard({
 
 const styles = StyleSheet.create({
   wrapper: {
-    gap: 8,
+    gap: 4,
   },
   label: {
     fontSize: 12,
     lineHeight: 16,
     color: '#ACACAC',
-    fontWeight: '600',
+    fontWeight: '400',
     letterSpacing: 0.5,
     marginLeft: 4,
   },

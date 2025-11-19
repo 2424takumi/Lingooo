@@ -7,6 +7,7 @@ import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SideMenu } from '@/components/ui/side-menu';
 import { SettingsBottomSheet } from '@/components/ui/settings-bottom-sheet';
+import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { SearchHistoryList } from '@/components/ui/search-history-list';
 import { PenIcon } from '@/components/ui/icons';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -15,10 +16,12 @@ import { useClipboardSearch } from '@/hooks/use-clipboard-search';
 
 export default function HomeScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const titleColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'text');
   const { handleSearch, isLoading, error } = useSearch();
   const [searchText, setSearchText] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [subscriptionVisible, setSubscriptionVisible] = useState(false);
   const [menuButtonLayout, setMenuButtonLayout] = useState<{ x: number; y: number; width: number; height: number } | undefined>(undefined);
 
   const handleMenuPress = (layout: { x: number; y: number; width: number; height: number }) => {
@@ -28,6 +31,12 @@ export default function HomeScreen() {
 
   const handleSettingsPress = () => {
     setSettingsVisible(true);
+  };
+
+  const handleUpgradePress = () => {
+    setSettingsVisible(false);
+    // アニメーション完了後に課金シートを開く
+    setTimeout(() => setSubscriptionVisible(true), 300);
   };
 
   const onSearch = async (text: string) => {
@@ -60,41 +69,47 @@ export default function HomeScreen() {
           />
         </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <View style={styles.searchContainer}>
-            <SearchBar
-              placeholder="知りたい単語を検索..."
-              onSearch={onSearch}
-              value={searchText}
-              onChangeText={setSearchText}
-            />
+        {/* Search Section - Fixed */}
+        <View style={styles.searchContainer}>
+          <SearchBar
+            placeholder="知りたい単語を検索..."
+            onSearch={onSearch}
+            value={searchText}
+            onChangeText={setSearchText}
+          />
 
-            {/* Hint Text */}
-            {!searchText && !isLoading && !error && (
-              <View style={styles.hintContainer}>
-                <PenIcon size={14} color="#B9B9B9" />
-                <Text style={styles.hintText}>長文を入力すると自動で翻訳機能に切り替わります</Text>
-              </View>
-            )}
+          {/* Hint Text */}
+          {!searchText && !isLoading && !error && (
+            <View style={styles.hintContainer}>
+              <PenIcon size={14} color="#B9B9B9" />
+              <Text style={styles.hintText}>長文を入力すると自動で翻訳機能に切り替わります</Text>
+            </View>
+          )}
 
-            {/* Loading Indicator */}
-            {isLoading && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#111111" />
-                <Text style={styles.loadingText}>検索中...</Text>
-              </View>
-            )}
+          {/* Loading Indicator */}
+          {isLoading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#111111" />
+              <Text style={styles.loadingText}>検索中...</Text>
+            </View>
+          )}
 
-            {/* Error Message */}
-            {error && !isLoading && (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-          </View>
+          {/* Error Message */}
+          {error && !isLoading && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+        </View>
 
-          {/* Search History */}
-          <SearchHistoryList onItemPress={onSearch} maxItems={20} />
+        {/* Search History Title - Fixed */}
+        <Text style={[styles.historyTitle, { color: titleColor }]}>
+          最近の検索
+        </Text>
+
+        {/* Search History - Scrollable */}
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
+          <SearchHistoryList onItemPress={onSearch} maxItems={20} showTitle={false} />
         </ScrollView>
       </View>
 
@@ -102,7 +117,17 @@ export default function HomeScreen() {
       <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} menuButtonLayout={menuButtonLayout} />
 
       {/* Settings Bottom Sheet */}
-      <SettingsBottomSheet visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
+      <SettingsBottomSheet
+        visible={settingsVisible}
+        onClose={() => setSettingsVisible(false)}
+        onUpgradePress={handleUpgradePress}
+      />
+
+      {/* Subscription Bottom Sheet */}
+      <SubscriptionBottomSheet
+        visible={subscriptionVisible}
+        onClose={() => setSubscriptionVisible(false)}
+      />
     </ThemedView>
   );
 }
@@ -121,9 +146,21 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    marginTop: 8,
+  },
+  scrollViewContent: {
+    paddingBottom: 24,
   },
   searchContainer: {
     marginHorizontal: 0,
+    marginBottom: 0,
+  },
+  historyTitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 24,
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
   hintContainer: {
     flexDirection: 'row',

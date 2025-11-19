@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Dimensions, Switch, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Dimensions, Switch, ScrollView, Alert } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import { SettingsIcon, TokenIcon, LanguageIcon, ChevronRightIcon, CloseIcon, MessageCircleIcon } from './icons';
@@ -8,14 +8,31 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { useQuestionCount } from '@/hooks/use-question-count';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useAISettings } from '@/contexts/ai-settings-context';
+import { useSubscription } from '@/contexts/subscription-context';
 import { AVAILABLE_LANGUAGES, Language } from '@/types/language';
+import Svg, { Path } from 'react-native-svg';
+
+// Star Icon for premium features
+function StarIcon({ size = 16 }: { size?: number }) {
+  return (
+    <View style={{ width: size, height: size, backgroundColor: '#FFE44D', borderRadius: size / 2, justifyContent: 'center', alignItems: 'center' }}>
+      <Svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24" fill="none">
+        <Path
+          d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+          fill="#FFFFFF"
+        />
+      </Svg>
+    </View>
+  );
+}
 
 interface SettingsBottomSheetProps {
   visible: boolean;
   onClose: () => void;
+  onUpgradePress?: () => void;
 }
 
-export function SettingsBottomSheet({ visible, onClose }: SettingsBottomSheetProps) {
+export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: SettingsBottomSheetProps) {
   const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   const pageBackground = useThemeColor({}, 'pageBackground');
   const text = useThemeColor({}, 'text');
@@ -32,6 +49,7 @@ export function SettingsBottomSheet({ visible, onClose }: SettingsBottomSheetPro
     removeLearningLanguage,
   } = useLearningLanguages();
   const { aiDetailLevel, setAIDetailLevel } = useAISettings();
+  const { isPremium } = useSubscription();
 
   useEffect(() => {
     if (visible) {
@@ -93,6 +111,18 @@ export function SettingsBottomSheet({ visible, onClose }: SettingsBottomSheetPro
     }
   };
 
+  const handleAIDetailLevelChange = (value: boolean) => {
+    const newLevel = value ? 'detailed' : 'concise';
+
+    // Free users cannot enable detailed mode
+    if (newLevel === 'detailed' && !isPremium) {
+      onUpgradePress?.();
+      return;
+    }
+
+    setAIDetailLevel(newLevel);
+  };
+
   return (
     <Modal
       visible={visible}
@@ -141,7 +171,7 @@ export function SettingsBottomSheet({ visible, onClose }: SettingsBottomSheetPro
                   styles.planBadgeText,
                   { color: plan === 'free' ? '#666666' : '#FFFFFF' }
                 ]}>
-                  {plan === 'free' ? '無料プラン' : 'プラスプラン'}
+                  {plan === 'free' ? '無料プラン' : 'プレミアムプラン'}
                 </Text>
               </View>
             </View>
@@ -195,15 +225,11 @@ export function SettingsBottomSheet({ visible, onClose }: SettingsBottomSheetPro
             <View style={styles.upgradeButtonContainer}>
               <TouchableOpacity
                 style={styles.upgradeButton}
-                onPress={() => {
-                  onClose();
-                  // TODO: プラン変更画面に遷移
-                  // router.push('/upgrade');
-                }}
+                onPress={() => onUpgradePress?.()}
               >
-                <Text style={styles.upgradeButtonText}>7日間無料でプラスプランを試す</Text>
+                <Text style={styles.upgradeButtonText}>7日間無料でプレミアムプランを試す</Text>
                 <Text style={styles.upgradeButtonSubtext}>
-                  その後、月500円で月間1000万トークン・1日100回質問可能
+                  その後、月500円で月間1,000回質問・最大50,000文字翻訳可能
                 </Text>
               </TouchableOpacity>
             </View>
@@ -239,14 +265,17 @@ export function SettingsBottomSheet({ visible, onClose }: SettingsBottomSheetPro
               <Text style={styles.sectionTitle}>AI設定</Text>
               <View style={styles.aiSettingItem}>
                 <View style={styles.aiSettingInfo}>
-                  <Text style={styles.aiSettingLabel}>AI返答の詳細度</Text>
+                  <View style={styles.aiSettingLabelRow}>
+                    <Text style={styles.aiSettingLabel}>AI返答の詳細度</Text>
+                    {!isPremium && <StarIcon size={16} />}
+                  </View>
                   <Text style={styles.aiSettingDescription}>
                     {aiDetailLevel === 'concise' ? '簡潔（デフォルト）' : '詳細（語源・追加例文含む）'}
                   </Text>
                 </View>
                 <Switch
                   value={aiDetailLevel === 'detailed'}
-                  onValueChange={(value) => setAIDetailLevel(value ? 'detailed' : 'concise')}
+                  onValueChange={handleAIDetailLevelChange}
                   trackColor={{ false: '#D1D1D1', true: '#111111' }}
                   thumbColor="#FFFFFF"
                 />
@@ -454,11 +483,16 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
+  aiSettingLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
   aiSettingLabel: {
     fontSize: 15,
     fontWeight: '500',
     color: '#111111',
-    marginBottom: 4,
   },
   aiSettingDescription: {
     fontSize: 13,

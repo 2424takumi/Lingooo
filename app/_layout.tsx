@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '@/contexts/auth-context';
+import { SubscriptionProvider } from '@/contexts/subscription-context';
 import { LearningLanguagesProvider } from '@/contexts/learning-languages-context';
 import { ChatProvider } from '@/contexts/chat-context';
 import { AISettingsProvider } from '@/contexts/ai-settings-context';
@@ -23,19 +24,21 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
         <AuthProvider>
-          <AISettingsProvider>
-            <LearningLanguagesProvider>
-              <ChatProvider>
-                <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                  <Stack>
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-                  </Stack>
-                  <StatusBar style="auto" />
-                </ThemeProvider>
-              </ChatProvider>
-            </LearningLanguagesProvider>
-          </AISettingsProvider>
+          <SubscriptionProvider>
+            <AISettingsProvider>
+              <LearningLanguagesProvider>
+                <ChatProvider>
+                  <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                    <Stack>
+                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+                    </Stack>
+                    <StatusBar style="auto" />
+                  </ThemeProvider>
+                </ChatProvider>
+              </LearningLanguagesProvider>
+            </AISettingsProvider>
+          </SubscriptionProvider>
         </AuthProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>

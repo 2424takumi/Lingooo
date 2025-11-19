@@ -20,6 +20,9 @@ export function WordCard({ word, posTags, gender, definitions, description, nuan
   const secondaryText = useThemeColor({}, 'icon');
   const accent = useThemeColor({}, 'primary');
 
+  // 配列であることを保証（後方互換性のため）
+  const definitionsArray = Array.isArray(definitions) ? definitions : [definitions].filter(Boolean);
+
   return (
     <View style={[styles.container, { backgroundColor: cardBackground, borderColor }]}>
 
@@ -38,18 +41,13 @@ export function WordCard({ word, posTags, gender, definitions, description, nuan
       </View>
 
       <View style={styles.contentSection}>
-        <View style={styles.definitionList}>
-          {definitions.map((def, index) => (
-            <Text
-              key={index}
-              selectable
-              selectionColor={accent}
-              style={[styles.definition, { color: primaryText }]}
-            >
-              {def}
-            </Text>
-          ))}
-        </View>
+        <Text
+          selectable
+          selectionColor={accent}
+          style={[styles.definition, { color: primaryText }]}
+        >
+          {definitionsArray.join('、')}
+        </Text>
 
         {description ? (
           <Text selectable selectionColor={accent} style={[styles.description, { color: secondaryText }]}>
@@ -100,9 +98,6 @@ const styles = StyleSheet.create({
   },
   contentSection: {
     gap: 4,
-  },
-  definitionList: {
-    gap: 0,
   },
   definition: {
     fontSize: 16,

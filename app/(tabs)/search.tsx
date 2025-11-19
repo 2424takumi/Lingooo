@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, Modal, TouchableOpacity, TextInput, Alert, Dimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
@@ -11,8 +10,10 @@ import { WordCard } from '@/components/ui/word-card';
 import { ChatSection } from '@/components/ui/chat-section';
 import { ShimmerSuggestions } from '@/components/ui/shimmer';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
-import { loadFolders, updateBookmarkFolder, addFolder, type BookmarkFolder } from '@/services/storage/bookmark-storage';
+import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
+import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { useChatSession } from '@/hooks/use-chat-session';
+import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useAISettings } from '@/contexts/ai-settings-context';
@@ -54,13 +55,23 @@ export default function SearchScreen() {
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>(initialResults);
   const [isLoading, setIsLoading] = useState(false);
 
-  // ブックマークトースト & フォルダ選択
-  const [toastVisible, setToastVisible] = useState(false);
-  const [selectedBookmarkId, setSelectedBookmarkId] = useState<string | null>(null);
-  const [isFolderSelectModalOpen, setIsFolderSelectModalOpen] = useState(false);
-  const [folders, setFolders] = useState<BookmarkFolder[]>([]);
-  const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
+  // ブックマーク管理
+  const {
+    toastVisible,
+    isFolderSelectModalOpen,
+    folders,
+    isCreateFolderModalOpen,
+    newFolderName,
+    setNewFolderName,
+    handleBookmarkAdded,
+    handleToastDismiss,
+    handleOpenFolderSelect,
+    handleAddToFolder,
+    handleOpenCreateFolderModal,
+    handleCreateFolder,
+    handleCloseFolderSelectModal,
+    handleCloseCreateFolderModal,
+  } = useBookmarkManagement({ logPrefix: 'Search' });
 
   // queryまたは言語が変わったら再検索
   useEffect(() => {
@@ -78,17 +89,18 @@ export default function SearchScreen() {
     }
     setIsLoading(true);
 
-    // キャッシュチェック
-    const cached = getCachedSuggestions(query, currentLanguage.code);
-    if (cached && cached.length > 0) {
-      logger.debug('[Search] Using cached suggestions');
-      setSuggestions(cached);
-      setIsLoading(false);
-      return;
-    }
-
-    // API呼び出し
+    // キャッシュチェック + API呼び出し
     const fetchSuggestions = async () => {
+      // まずキャッシュを確認
+      const cached = await getCachedSuggestions(query, currentLanguage.code);
+      if (cached && cached.length > 0) {
+        logger.debug('[Search] Using cached suggestions');
+        setSuggestions(cached);
+        setIsLoading(false);
+        return;
+      }
+
+      // キャッシュになければAPI呼び出し
       try {
         logger.info(`[Search] Fetching ${currentLanguage.code} suggestions for:`, query);
         const result = await searchJaToEn(query, currentLanguage.code);
@@ -194,91 +206,6 @@ export default function SearchScreen() {
     });
   }, [chatMessages, chatError]);
 
-  // フォルダを読み込む
-  const fetchFolders = async () => {
-    try {
-      const data = await loadFolders();
-      setFolders(data);
-    } catch (error) {
-      logger.error('[Search] Failed to load folders:', error);
-    }
-  };
-
-  useEffect(() => {
-    void fetchFolders();
-  }, []);
-
-  // ブックマーク追加時のハンドラー
-  const handleBookmarkAdded = (bookmarkId: string) => {
-    setSelectedBookmarkId(bookmarkId);
-    setToastVisible(true);
-  };
-
-  // トースト終了時（selectedBookmarkIdはモーダルキャンセル時またはフォルダ追加完了時にクリア）
-  const handleToastDismiss = () => {
-    setToastVisible(false);
-  };
-
-  // フォルダ選択モーダルを開く
-  const handleOpenFolderSelect = () => {
-    setIsFolderSelectModalOpen(true);
-  };
-
-  // フォルダにブックマークを追加
-  const handleAddToFolder = async (folderId?: string) => {
-    if (!selectedBookmarkId) return;
-
-    try {
-      await updateBookmarkFolder(selectedBookmarkId, folderId);
-      setIsFolderSelectModalOpen(false);
-      setToastVisible(false);
-      setSelectedBookmarkId(null);
-      logger.debug('[Search] Bookmark added to folder:', folderId);
-    } catch (error) {
-      logger.error('[Search] Failed to add bookmark to folder:', error);
-    }
-  };
-
-  // 新規フォルダ作成モーダルを開く
-  const handleOpenCreateFolderModal = () => {
-    setIsFolderSelectModalOpen(false);
-    setIsCreateFolderModalOpen(true);
-  };
-
-  // 新規フォルダを作成してブックマークを追加
-  const handleCreateFolder = async () => {
-    if (!newFolderName.trim()) {
-      Alert.alert('エラー', 'フォルダ名を入力してください');
-      return;
-    }
-
-    if (!selectedBookmarkId) {
-      Alert.alert('エラー', 'ブックマークが選択されていません');
-      return;
-    }
-
-    try {
-      // 1. 新しいフォルダを作成
-      const newFolder = await addFolder(newFolderName.trim());
-      logger.debug('[Search] Created new folder:', newFolder.id, newFolder.name);
-
-      // 2. ブックマークを新しいフォルダに追加
-      await updateBookmarkFolder(selectedBookmarkId, newFolder.id);
-      logger.debug('[Search] Bookmark added to new folder:', selectedBookmarkId, newFolder.id);
-
-      // 3. フォルダリストを再読み込み
-      await fetchFolders();
-
-      // 4. モーダルを閉じてステートをリセット
-      setIsCreateFolderModalOpen(false);
-      setNewFolderName('');
-      setToastVisible(false);
-      setSelectedBookmarkId(null);
-    } catch (error) {
-      logger.error('[Search] Failed to create folder:', error);
-      Alert.alert('エラー', 'フォルダの作成に失敗しました');
-    }
-  };
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -422,6 +349,29 @@ export default function SearchScreen() {
     // 単語詳細画面でデータ取得後にトークン数と一緒に検索履歴に保存されるため、
     // ここでは保存しない
 
+    // 🚀 INSTANT DISPLAY: 基本情報を即座に渡してヘッダーとキーワードを一瞬で表示
+    const basicData = {
+      headword: {
+        lemma: item.lemma,
+        lang: currentLanguage.code,
+        pos: item.pos,
+        gender: item.gender,
+      },
+      senses: item.shortSenseJa.map((meaning, index) => ({
+        id: String(index + 1),
+        glossShort: meaning,
+      })),
+      examples: [], // 例文は後でAI生成
+      wordHint: item.usageHint || undefined, // 使い分けヒントがあれば表示
+    };
+
+    logger.info('[Search] Passing basicData to word-detail:', {
+      lemma: item.lemma,
+      dataLength: JSON.stringify(basicData).length,
+      hasUsageHint: !!item.usageHint,
+    });
+
+    // バックグラウンドでAI詳細（例文など）をプリフェッチ
     prefetchWordDetail(item.lemma, (onProgress) => getWordDetailStream(item.lemma, currentLanguage.code, nativeLanguage.code, 'concise', onProgress));
 
     router.push({
@@ -429,6 +379,7 @@ export default function SearchScreen() {
       params: {
         word: item.lemma,
         targetLanguage: currentLanguage.code, // 言語コードを渡す
+        data: JSON.stringify(basicData), // ✅ 基本情報を渡して即座に表示
       },
     });
   };
@@ -437,30 +388,31 @@ export default function SearchScreen() {
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
       <StatusBar style="auto" />
 
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.content}>
-          {/* Header */}
-          <View
-            style={styles.headerContainer}
-            onLayout={(event) => {
-              const { height } = event.nativeEvent.layout;
-              setHeaderHeight(height);
-            }}
-          >
-            <UnifiedHeaderBar
-              pageType="jpSearch"
-              title={query || '学習する'}
-              selectedFlag="🇺🇸"
-              onLanguagePress={handleLanguagePress}
-              onBackPress={handleBackPress}
-            />
-          </View>
+      <View style={styles.content}>
+        {/* Header - Fixed */}
+        <View
+          style={styles.headerContainer}
+          onLayout={(event) => {
+            const { height } = event.nativeEvent.layout;
+            setHeaderHeight(height);
+          }}
+        >
+          <UnifiedHeaderBar
+            pageType="jpSearch"
+            title={query || '学習する'}
+            selectedFlag="🇺🇸"
+            onLanguagePress={handleLanguagePress}
+            onBackPress={handleBackPress}
+          />
+        </View>
 
-          {/* Word Cards */}
+        {/* Word Cards - Scrollable */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.searchResultView}>
               {isLoading && suggestions.length === 0 ? (
@@ -480,7 +432,7 @@ export default function SearchScreen() {
                         word={item.lemma}
                         posTags={item.pos}
                         gender={item.gender}
-                        definitions={[item.shortSenseJa]}
+                        definitions={item.shortSenseJa}
                         description={item.usageHint || ''}
                         nuance={getNuanceType(item.nuance)}
                       />
@@ -496,8 +448,8 @@ export default function SearchScreen() {
               )}
             </View>
           </TouchableWithoutFeedback>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
 
       {/* Chat Section - Fixed at bottom */}
       <KeyboardAvoidingView
@@ -534,143 +486,22 @@ export default function SearchScreen() {
       />
 
       {/* Folder Select Modal */}
-      <Modal
+      <FolderSelectModal
         visible={isFolderSelectModalOpen}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => {
-          setIsFolderSelectModalOpen(false);
-          setSelectedBookmarkId(null);
-        }}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => {
-            setIsFolderSelectModalOpen(false);
-            setSelectedBookmarkId(null);
-          }}
-        >
-          <View style={styles.folderSelectModalContainer} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>フォルダに追加</Text>
-
-            <ScrollView style={styles.folderSelectList} showsVerticalScrollIndicator={false}>
-              {/* No folder option - only show if folders exist */}
-              {folders.length > 0 && (
-                <TouchableOpacity
-                  style={styles.folderSelectItem}
-                  onPress={() => handleAddToFolder(undefined)}
-                >
-                  <Text style={styles.folderSelectItemText}>フォルダなし</Text>
-                </TouchableOpacity>
-              )}
-
-              {/* Existing folders */}
-              {folders.map((folder) => (
-                <TouchableOpacity
-                  key={folder.id}
-                  style={styles.folderSelectItem}
-                  onPress={() => handleAddToFolder(folder.id)}
-                >
-                  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11z"
-                      stroke="#111111"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
-                  <Text style={styles.folderSelectItemText}>{folder.name}</Text>
-                </TouchableOpacity>
-              ))}
-
-              {/* Create new folder button */}
-              <TouchableOpacity
-                style={styles.createFolderButton}
-                onPress={handleOpenCreateFolderModal}
-              >
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M12 5v14M5 12h14"
-                    stroke="#111111"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-                <Text style={styles.createFolderButtonText}>新しくフォルダを作る</Text>
-              </TouchableOpacity>
-            </ScrollView>
-
-            <TouchableOpacity
-              style={styles.modalCancelButton}
-              onPress={() => {
-                setIsFolderSelectModalOpen(false);
-                setSelectedBookmarkId(null);
-              }}
-            >
-              <Text style={styles.modalCancelButtonText}>キャンセル</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        folders={folders}
+        onSelectFolder={handleAddToFolder}
+        onCreateNew={handleOpenCreateFolderModal}
+        onClose={handleCloseFolderSelectModal}
+      />
 
       {/* Create Folder Modal */}
-      <Modal
+      <CreateFolderModal
         visible={isCreateFolderModalOpen}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => {
-          setIsCreateFolderModalOpen(false);
-          setNewFolderName('');
-          setSelectedBookmarkId(null);
-        }}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => {
-            setIsCreateFolderModalOpen(false);
-            setNewFolderName('');
-            setSelectedBookmarkId(null);
-          }}
-        >
-          <View style={styles.createFolderModalContainer} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>新しいフォルダを作成</Text>
-
-            <TextInput
-              style={styles.folderNameInput}
-              placeholder="フォルダ名"
-              placeholderTextColor="#999999"
-              value={newFolderName}
-              onChangeText={setNewFolderName}
-              autoFocus
-              maxLength={50}
-            />
-
-            <View style={styles.createFolderButtonContainer}>
-              <TouchableOpacity
-                style={styles.modalSecondaryButton}
-                onPress={() => {
-                  setIsCreateFolderModalOpen(false);
-                  setNewFolderName('');
-                  setSelectedBookmarkId(null);
-                }}
-              >
-                <Text style={styles.modalSecondaryButtonText}>キャンセル</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalPrimaryButton}
-                onPress={handleCreateFolder}
-              >
-                <Text style={styles.modalPrimaryButtonText}>作成</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        folderName={newFolderName}
+        onChangeFolderName={setNewFolderName}
+        onCreate={handleCreateFolder}
+        onClose={handleCloseCreateFolderModal}
+      />
     </ThemedView>
   );
 }
@@ -679,16 +510,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  content: {
+    flex: 1,
+    paddingTop: 62,
+  },
+  headerContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
   scrollView: {
     flex: 1,
   },
-  content: {
-    paddingTop: 61,
+  scrollViewContent: {
     paddingHorizontal: 16,
     paddingBottom: 220, // ChatSection分のスペースを確保（高さ116 + 余裕104）
-  },
-  headerContainer: {
-    marginBottom: 16,
   },
   searchResultView: {
     gap: 36,
@@ -709,7 +544,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 8,
     paddingBottom: 0,
-    marginBottom: 12,
+    marginBottom: 16,
     justifyContent: 'flex-end',
   },
   noResultsContainer: {

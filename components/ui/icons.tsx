@@ -166,3 +166,87 @@ export function MessageCircleIcon({ size = 24, color = '#000000' }: IconProps) {
     </Svg>
   );
 }
+
+export function MicIcon({ size = 24, color = '#000000' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 1C10.3431 1 9 2.34315 9 4V12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12V4C15 2.34315 13.6569 1 12 1Z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M19 10V12C19 15.866 15.866 19 12 19M5 10V12C5 15.866 8.13401 19 12 19M12 19V23M8 23H16"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function TranslateIcon({ size = 24, color = '#000000' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M5 8H13M9 2V4M3 12H7M11 12H17M13.5 16.5L19 22L13.5 16.5ZM19 22L15 18L19 22ZM9 7C9 8.65685 8.15429 10.5 7.5 12C6.84571 13.5 6 15.3431 6 17M12 7C12 8.65685 12.8457 10.5 13.5 12C14.1543 13.5 15 15.3431 15 17"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function ReloadIcon({ size = 24, color = '#000000' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M21.8883 9.5C21.4323 7.04844 20.0942 4.83849 18.1213 3.28587C16.1485 1.73326 13.6766 0.944019 11.1542 1.07614C8.63183 1.20826 6.25423 2.25233 4.46816 4.0046C2.68208 5.75688 1.61046 8.11502 1.4502 10.6353"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M17 9.5H21.8883V4.6146"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M2.11168 14.5C2.56767 16.9516 3.90585 19.1615 5.87869 20.7141C7.85154 22.2667 10.3234 23.056 12.8458 22.9239C15.3682 22.7917 17.7458 21.7477 19.5318 19.9954C21.3179 18.2431 22.3895 15.885 22.5498 13.3647"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M7 14.5H2.11168V19.3854"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function CloseSmallIcon({ size = 24, color = '#000000' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M8 8L16 16M16 8L8 16"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}

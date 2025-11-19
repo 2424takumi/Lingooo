@@ -100,11 +100,12 @@ export function UnifiedHeaderBar({
   onPronouncePress,
   isOffline = false,
 }: UnifiedHeaderBarProps) {
-  const menuButtonRef = useRef<TouchableOpacity>(null);
+  const menuButtonRef = useRef<any>(null);
 
   const handleMenuPress = () => {
     if (menuButtonRef.current && onMenuPress) {
-      menuButtonRef.current.measureInWindow((x, y, width, height) => {
+      // @ts-ignore - measureInWindow exists on TouchableOpacity but not in type definition
+      menuButtonRef.current.measureInWindow((x: number, y: number, width: number, height: number) => {
         onMenuPress({ x, y, width, height });
       });
     }

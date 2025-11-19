@@ -13,8 +13,8 @@ export interface SuggestionItem {
   pos: string[];
   /** 文法上の性別（名詞の場合） */
   gender?: 'm' | 'f' | 'n' | 'mf';
-  /** 短義（日本語） */
-  shortSenseJa: string;
+  /** 短義（日本語）- 複数の意味を含む配列 */
+  shortSenseJa: string[];
   /** 信頼度スコア (0.0-1.0) */
   confidence: number;
   /** 使い分けガイド（この単語の使い方や特徴を簡潔に説明） */

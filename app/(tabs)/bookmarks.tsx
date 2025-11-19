@@ -1,30 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { QACard } from '@/components/ui/qa-card';
+import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { router } from 'expo-router';
 import { loadBookmarks, removeBookmark, loadFolders, addFolder, updateBookmarkFolder, removeFolder, updateFolderName, type ChatBookmark, type BookmarkFolder } from '@/services/storage/bookmark-storage';
 import { CopyIcon } from '@/components/icons/copy-icon';
 import Svg, { Path } from 'react-native-svg';
 import { logger } from '@/utils/logger';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
+import { useSubscription } from '@/contexts/subscription-context';
+import { detectLang, resolveLanguageCode } from '@/services/utils/language-detect';
 
 // Icons
-function LockIcon({ size = 16, color = '#686868' }: { size?: number; color?: string }) {
+function StarIcon({ size = 16 }: { size?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2zM7 11V7a5 5 0 0110 0v4"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
+    <View style={{ width: size, height: size, backgroundColor: '#FFE44D', borderRadius: size / 2, justifyContent: 'center', alignItems: 'center' }}>
+      <Svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24" fill="none">
+        <Path
+          d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+          fill="#FFFFFF"
+        />
+      </Svg>
+    </View>
   );
 }
 
@@ -273,7 +275,8 @@ export default function BookmarksScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const tabTextColor = useThemeColor({ light: '#686868', dark: '#8E8E93' }, 'icon');
   const activeTabColor = useThemeColor({}, 'primary');
-  const { currentLanguage } = useLearningLanguages();
+  const { currentLanguage, nativeLanguage } = useLearningLanguages();
+  const { isPremium } = useSubscription();
 
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [bookmarks, setBookmarks] = useState<ChatBookmark[]>([]);
@@ -290,6 +293,7 @@ export default function BookmarksScreen() {
   const [editFolderName, setEditFolderName] = useState('');
   const [isCreatingNewFolder, setIsCreatingNewFolder] = useState(false);
   const [newFolderNameInline, setNewFolderNameInline] = useState('');
+  const [isSubscriptionSheetOpen, setIsSubscriptionSheetOpen] = useState(false);
 
   // Load bookmarks and folders
   const fetchBookmarks = useCallback(async () => {
@@ -343,8 +347,12 @@ export default function BookmarksScreen() {
     }
   };
 
-  // Handle folder tab press (development mode)
+  // Handle folder tab press (premium only)
   const handleFolderTabPress = () => {
+    if (!isPremium) {
+      setIsSubscriptionSheetOpen(true);
+      return;
+    }
     setActiveTab('folders');
   };
 
@@ -377,8 +385,20 @@ export default function BookmarksScreen() {
     }
   };
 
-  // Handle open folder select modal
+  // Handle open folder select modal (premium only)
   const handleOpenFolderSelect = async (bookmarkId: string) => {
+    if (!isPremium) {
+      Alert.alert(
+        'プレミアム機能',
+        'フォルダ機能はプレミアムプラン限定です。\n\nブックマークを整理してより効率的に学習しましょう。',
+        [
+          { text: 'キャンセル' },
+          { text: 'プレミアムを見る', onPress: () => setIsSubscriptionSheetOpen(true) },
+        ]
+      );
+      return;
+    }
+
     logger.debug('[Bookmarks] Opening folder select modal for bookmark:', bookmarkId);
     setSelectedBookmarkId(bookmarkId);
 
@@ -496,7 +516,7 @@ export default function BookmarksScreen() {
     );
   };
 
-  // Handle bookmark card press (navigate to word detail page)
+  // Handle bookmark card press (navigate to word detail or translate page)
   const handleCardPress = useCallback((bookmark: ChatBookmark) => {
     if (bookmark.scope === 'word') {
       logger.debug('[Bookmarks] Navigating to word detail:', bookmark.identifier);
@@ -507,10 +527,27 @@ export default function BookmarksScreen() {
           targetLanguage: currentLanguage.id,
         },
       });
+    } else if (bookmark.scope === 'translate') {
+      logger.debug('[Bookmarks] Navigating to translate:', bookmark.identifier);
+
+      // Detect language and determine source/target
+      const detectedLang = detectLang(bookmark.identifier);
+      const sourceLang = resolveLanguageCode(detectedLang, currentLanguage.id, nativeLanguage.id);
+      const targetLang = sourceLang === nativeLanguage.id ? currentLanguage.id : nativeLanguage.id;
+
+      router.push({
+        pathname: '/(tabs)/translate',
+        params: {
+          word: bookmark.identifier,
+          sourceLang,
+          targetLang,
+        },
+      });
     }
-  }, [currentLanguage.id]);
+  }, [currentLanguage.id, nativeLanguage.id]);
 
   return (
+    <>
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
       <StatusBar style="auto" />
 
@@ -551,15 +588,18 @@ export default function BookmarksScreen() {
             ]}
             onPress={handleFolderTabPress}
           >
-            <Text
-              style={[
-                styles.tabText,
-                { color: tabTextColor },
-                activeTab === 'folders' && [styles.activeTabText, { color: activeTabColor }],
-              ]}
-            >
-              フォルダ
-            </Text>
+            <View style={styles.tabWithIcon}>
+              <Text
+                style={[
+                  styles.tabText,
+                  { color: tabTextColor },
+                  activeTab === 'folders' && [styles.activeTabText, { color: activeTabColor }],
+                ]}
+              >
+                フォルダ
+              </Text>
+              {!isPremium && <StarIcon size={16} />}
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -656,8 +696,8 @@ export default function BookmarksScreen() {
           </View>
         )}
 
-        {/* Floating Action Button - Only show on folders tab */}
-        {activeTab === 'folders' && (
+        {/* Floating Action Button - Only show on folders tab for premium users */}
+        {activeTab === 'folders' && isPremium && (
           <TouchableOpacity
             style={styles.fab}
             onPress={() => setIsCreateFolderModalOpen(true)}
@@ -986,6 +1026,13 @@ export default function BookmarksScreen() {
         </Modal>
       </View>
     </ThemedView>
+
+    {/* Subscription Bottom Sheet - ThemedView外に配置 */}
+    <SubscriptionBottomSheet
+      visible={isSubscriptionSheetOpen}
+      onClose={() => setIsSubscriptionSheetOpen(false)}
+    />
+  </>
   );
 }
 

@@ -116,14 +116,14 @@ export async function generateWordDetail(
 export async function generateSuggestions(
   japaneseQuery: string,
   targetLanguage: string = 'en'
-): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number; usageHint: string; nuance?: number }>> {
+): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string[]; confidence: number; usageHint: string; nuance?: number }>> {
   const modelConfig = selectModel();
 
   // 多言語対応プロンプト生成
   const prompt = createSuggestionsPrompt(japaneseQuery, targetLanguage);
 
   try {
-    const result = await generateSuggestionsArray<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number; usageHint: string; nuance?: number }>(prompt, modelConfig);
+    const result = await generateSuggestionsArray<{ lemma: string; pos: string[]; shortSenseJa: string[]; confidence: number; usageHint: string; nuance?: number }>(prompt, modelConfig);
 
     if (!Array.isArray(result)) {
       logger.error('[generateSuggestions] Result is not array:', typeof result);
@@ -155,7 +155,7 @@ export async function generateSuggestions(
 export async function generateSuggestionsFast(
   japaneseQuery: string,
   targetLanguage: string = 'en'
-): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number; nuance?: number }>> {
+): Promise<Array<{ lemma: string; pos: string[]; shortSenseJa: string[]; confidence: number; nuance?: number }>> {
   const modelConfig = selectModel();
 
   // 性別が必要な言語かチェック
@@ -163,22 +163,24 @@ export async function generateSuggestionsFast(
   const needsGender = genderLanguages.includes(targetLanguage);
   const genderField = needsGender ? ', "gender": "m/f/n（名詞のみ）"' : '';
 
-  // 基本情報のみのプロンプト（usageHintなし、ニュアンスあり）
+  // 基本情報のみのプロンプト（usageHintなし、ニュアンスあり、shortSenseJaは配列）
   const prompt = `日本語"${japaneseQuery}"に対応する${targetLanguage === 'en' ? '英' : targetLanguage}単語を3~5個、以下のJSON配列構造で生成：
 
 [
-  {"lemma": "単語1", "pos": ["品詞"], "shortSenseJa": "簡潔な意味（10文字以内）", "confidence": 関連性スコア0-1, "nuance": ニュアンススコア0-100${genderField}},
-  {"lemma": "単語2", "pos": ["品詞"], "shortSenseJa": "意味2", "confidence": スコア, "nuance": ニュアンススコア${genderField}}
+  {"lemma": "単語1", "pos": ["品詞"], "shortSenseJa": ["意味1", "意味2", "意味3"], "confidence": 関連性スコア0-1, "nuance": ニュアンススコア0-100${genderField}},
+  {"lemma": "単語2", "pos": ["品詞"], "shortSenseJa": ["意味1", "意味2", "意味3"], "confidence": スコア, "nuance": ニュアンススコア${genderField}}
 ]
 
 要件:
 - 必ず3個以上の候補を返すこと
+- shortSenseJaは各単語に対して3つの日本語の意味を配列で返すこと（各10文字以内）
+- 意味は使用頻度が高い順に並べる
 - 関連性の高い順にソート
 - confidenceは最も関連性が高いものを1.0とする
 - nuanceは単語のフォーマル度を示すスコア（0=非常にカジュアル・スラング, 30=カジュアル, 50=中立的, 70=フォーマル, 100=非常にフォーマル・学術的）`;
 
   try {
-    const result = await generateSuggestionsArrayFast<{ lemma: string; pos: string[]; shortSenseJa: string; confidence: number; nuance?: number }>(prompt, modelConfig);
+    const result = await generateSuggestionsArrayFast<{ lemma: string; pos: string[]; shortSenseJa: string[]; confidence: number; nuance?: number }>(prompt, modelConfig);
 
     if (!Array.isArray(result.data)) {
       logger.error('[generateSuggestionsFast] Result is not array:', typeof result.data);
@@ -303,11 +305,13 @@ export async function generateWordDetailStream(
       }
     );
 
+    // @ts-ignore - Type inference issue with generateJSONProgressive
     if (!result.headword || !result.headword.lemma) {
       throw new Error(`「${word}」の生成に失敗しました。`);
     }
 
     logger.info('[WordDetail API] TRUE streaming complete');
+    // @ts-ignore - Type inference issue with generateJSONProgressive
     return result;
   } catch (error) {
     logger.error('[WordDetail API] Error in generateWordDetailStream:', error);

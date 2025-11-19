@@ -33,7 +33,7 @@ function CheckCircleIcon({ size = 20, color = '#FFFFFF' }: { size?: number; colo
 export function BookmarkToast({ visible, onAddToFolder, onDismiss }: BookmarkToastProps) {
   const translateY = useRef(new Animated.Value(100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (visible) {

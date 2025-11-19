@@ -396,7 +396,8 @@ export function ChatSection({
       >
         <ScrollView
           ref={scrollViewRef}
-          style={[styles.chatMessages, { maxHeight: calculatedMaxHeight, minHeight: calculatedMaxHeight }]}
+          style={styles.chatMessages}
+          contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => {
@@ -733,13 +734,9 @@ const styles = StyleSheet.create({
     minHeight: 'auto' as any,
   },
   chatMessages: {
-    flexGrow: 0,
-    flexShrink: 1,
-    maxHeight: 512,
+    flex: 1,
     marginBottom: 8,
-    minHeight: 0,
     borderRadius: 14,
-    overflow: 'hidden',
   },
   qaCardList: {
     gap: 20,

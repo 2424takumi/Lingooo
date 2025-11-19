@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   },
   japanese: {
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '300',
     lineHeight: 20,
     letterSpacing: 0.5,
   },

@@ -87,39 +87,12 @@ export function useQuestionCount() {
       });
 
       if (error) {
-        // RPCが存在しない場合は従来の方法にフォールバック
-        // ただし、競合状態の可能性は残る
-        console.warn('RPC not available, falling back to non-atomic increment:', error);
-
-        // 最新の値をデータベースから取得
-        const { data: userData, error: fetchError } = await supabase
-          .from('users')
-          .select('monthly_question_count')
-          .eq('id', user.id)
-          .single();
-
-        if (fetchError || !userData) {
-          console.error('Failed to fetch current count:', fetchError);
-          return false;
-        }
-
-        const newCount = (userData.monthly_question_count || 0) + 1;
-
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ monthly_question_count: newCount })
-          .eq('id', user.id);
-
-        if (updateError) {
-          console.error('Failed to increment question count:', updateError);
-          return false;
-        }
-
-        setQuestionCount((prev) => ({
-          ...prev,
-          monthly: newCount,
-        }));
-        return true;
+        // RPC関数が失敗した場合はエラーを返す
+        // フォールバックは使用しない（競合状態を避けるため）
+        // increment_question_count RPC関数がSupabaseに正しく設定されている必要があります
+        console.error('Failed to increment question count (RPC function required):', error);
+        console.error('Please ensure the increment_question_count RPC function is created in Supabase');
+        return false;
       }
 
       // RPC成功時は返された新しいカウントを使用

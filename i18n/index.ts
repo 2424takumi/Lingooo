@@ -11,7 +11,7 @@ import pt from './locales/pt.json';
 i18n
   .use(initReactI18next)
   .init({
-    compatibilityJSON: 'v3', // React Native対応
+    compatibilityJSON: 'v4', // React Native対応
     resources: {
       ja: { translation: ja },
       en: { translation: en },

@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { Alert } from 'react-native';
 import {
   detectLang,
   normalizeQuery,
@@ -14,15 +15,18 @@ import {
 } from '@/services/utils/language-detect';
 import { searchJaToEn, getWordDetail } from '@/services/api/search';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
+import { useSubscription } from '@/contexts/subscription-context';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import type { SearchError } from '@/types/search';
 import { logger } from '@/utils/logger';
 import { isSentence } from '@/utils/text-detector';
 import { useQuestionCount } from '@/hooks/use-question-count';
+import { getMaxTextLength } from '@/constants/validation';
 
 export function useSearch() {
   const router = useRouter();
   const { currentLanguage, nativeLanguage } = useLearningLanguages();
+  const { isPremium } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Supabaseから質問回数とプランを取得
@@ -59,6 +63,25 @@ export function useSearch() {
       // 2.5. 文章検出 - 文章の場合は翻訳モードとして遷移
       if (isSentence(normalizedQuery)) {
         logger.info('[Search] Detected sentence, navigating to translate mode');
+
+        // 文字数制限チェック
+        const maxLength = getMaxTextLength(isPremium);
+        if (normalizedQuery.length > maxLength) {
+          const upgradeText = isPremium
+            ? ''
+            : '\n\nプレミアムプランなら50,000文字まで翻訳できます。';
+
+          Alert.alert(
+            '文字数制限',
+            `翻訳は${maxLength.toLocaleString()}文字以内にしてください。${upgradeText}`,
+            [
+              { text: 'OK' },
+              ...(!isPremium ? [{ text: 'プレミアムを見る', onPress: () => router.push('/subscription') }] : []),
+            ]
+          );
+          return false;
+        }
+
         await searchAndNavigateToTranslate(normalizedQuery);
         return true;
       }
@@ -159,11 +182,9 @@ export function useSearch() {
     const targetLang = sourceLang === nativeLanguage.code ? currentLanguage.code : nativeLanguage.code;
 
     router.push({
-      pathname: '/(tabs)/word-detail',
+      pathname: '/(tabs)/translate',
       params: {
         word: text,
-        targetLanguage: currentLanguage.code,
-        mode: 'translate',
         sourceLang,
         targetLang,
       },

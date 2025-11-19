@@ -3,10 +3,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
+import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useAISettings } from '@/contexts/ai-settings-context';
+import { useSubscription } from '@/contexts/subscription-context';
 import type { CustomQuestion } from '@/types/settings';
 
 // Icons
@@ -52,15 +54,38 @@ function TrashIcon({ size = 20, color = '#FF4444' }: { size?: number; color?: st
   );
 }
 
+function StarIcon({ size = 16 }: { size?: number }) {
+  return (
+    <View style={{ width: size, height: size, backgroundColor: '#FFE44D', borderRadius: size / 2, justifyContent: 'center', alignItems: 'center' }}>
+      <Svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24" fill="none">
+        <Path
+          d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+          fill="#FFFFFF"
+        />
+      </Svg>
+    </View>
+  );
+}
+
 export default function CustomQuestionsScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const { customQuestions, addCustomQuestion, removeCustomQuestion } = useAISettings();
+  const { isPremium } = useSubscription();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubscriptionSheetOpen, setIsSubscriptionSheetOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<CustomQuestion | null>(null);
   const [titleInput, setTitleInput] = useState('');
   const [questionInput, setQuestionInput] = useState('');
 
+  const FREE_LIMIT = 3;
+
   const handleAddNew = () => {
+    // 無料ユーザーで3個以上の場合
+    if (!isPremium && customQuestions.length >= FREE_LIMIT) {
+      setIsSubscriptionSheetOpen(true);
+      return;
+    }
+
     setEditingQuestion(null);
     setTitleInput('');
     setQuestionInput('');
@@ -144,7 +169,14 @@ export default function CustomQuestionsScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>登録済みの質問</Text>
-              <Text style={styles.questionCount}>{customQuestions.length}件</Text>
+              <View style={styles.countContainer}>
+                <Text style={styles.questionCount}>
+                  {isPremium
+                    ? `${customQuestions.length}個使用中`
+                    : `${customQuestions.length}/${FREE_LIMIT}個使用中`}
+                </Text>
+                {!isPremium && <StarIcon size={16} />}
+              </View>
             </View>
 
             {customQuestions.length === 0 ? (
@@ -275,6 +307,12 @@ export default function CustomQuestionsScreen() {
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Subscription Bottom Sheet */}
+      <SubscriptionBottomSheet
+        visible={isSubscriptionSheetOpen}
+        onClose={() => setIsSubscriptionSheetOpen(false)}
+      />
     </ThemedView>
   );
 }
@@ -320,6 +358,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#000000',
+  },
+  countContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   questionCount: {
     fontSize: 14,

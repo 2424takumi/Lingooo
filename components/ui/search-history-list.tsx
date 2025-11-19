@@ -10,9 +10,10 @@ import { logger } from '@/utils/logger';
 interface SearchHistoryListProps {
   onItemPress: (query: string) => void;
   maxItems?: number; // 表示する最大件数
+  showTitle?: boolean; // タイトルを表示するか（デフォルト: true）
 }
 
-export function SearchHistoryList({ onItemPress, maxItems = 20 }: SearchHistoryListProps) {
+export function SearchHistoryList({ onItemPress, maxItems = 20, showTitle = true }: SearchHistoryListProps) {
   const { currentLanguage } = useLearningLanguages();
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
   const titleColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'text');
@@ -63,9 +64,11 @@ export function SearchHistoryList({ onItemPress, maxItems = 20 }: SearchHistoryL
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: titleColor }]}>
-        最近の検索
-      </Text>
+      {showTitle && (
+        <Text style={[styles.title, { color: titleColor }]}>
+          最近の検索
+        </Text>
+      )}
       <FlatList
         data={history}
         renderItem={renderItem}
@@ -79,7 +82,7 @@ export function SearchHistoryList({ onItemPress, maxItems = 20 }: SearchHistoryL
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 24,
+    marginTop: 0,
   },
   title: {
     fontSize: 13,

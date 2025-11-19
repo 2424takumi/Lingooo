@@ -113,24 +113,26 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === languageId);
     if (!language) return;
 
-    const newLearningLanguages = [...learningLanguages];
-    if (!newLearningLanguages.find((lang) => lang.id === languageId)) {
-      newLearningLanguages.push(language);
-      setLearningLanguages(newLearningLanguages);
+    // すでに学習中の言語の場合は何もしない
+    if (learningLanguages.find((lang) => lang.id === languageId)) {
+      return;
+    }
 
-      try {
-        const ids = newLearningLanguages.map((lang) => lang.id);
-        const { error } = await supabase
-          .from('users')
-          .update({ learning_languages: ids })
-          .eq('id', user.id);
+    const newLearningLanguages = [...learningLanguages, language];
+    setLearningLanguages(newLearningLanguages);
 
-        if (error) {
-          logger.error('Failed to save learning languages:', error);
-        }
-      } catch (error) {
+    try {
+      const ids = newLearningLanguages.map((lang) => lang.id);
+      const { error } = await supabase
+        .from('users')
+        .update({ learning_languages: ids })
+        .eq('id', user.id);
+
+      if (error) {
         logger.error('Failed to save learning languages:', error);
       }
+    } catch (error) {
+      logger.error('Failed to save learning languages:', error);
     }
   };
 

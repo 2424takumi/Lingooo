@@ -2,6 +2,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
   useRef,
@@ -424,14 +425,35 @@ export function ChatProvider({ children }: ChatProviderProps) {
       } finally {
         // ストリームコントローラーをクリーンアップ
         const mapKey = toKey(key);
-        if (streamControllers.current[mapKey]) {
+        const controller = streamControllers.current[mapKey];
+        if (controller) {
           logger.info('[ChatContext] Cleaning up stream controller for session:', mapKey);
+          controller.cancel(); // ストリームを確実にキャンセル
           delete streamControllers.current[mapKey];
         }
       }
     },
     [ensureSession]
   );
+
+  // コンポーネントのアンマウント時にすべてのアクティブストリームをキャンセル
+  useEffect(() => {
+    return () => {
+      // クリーンアップ: すべてのアクティブストリームをキャンセル
+      const activeStreams = Object.keys(streamControllers.current);
+      if (activeStreams.length > 0) {
+        logger.info('[ChatContext] Cancelling all active streams on unmount:', activeStreams.length);
+        activeStreams.forEach((key) => {
+          const controller = streamControllers.current[key];
+          if (controller) {
+            controller.cancel();
+          }
+        });
+        // すべてクリア
+        streamControllers.current = {};
+      }
+    };
+  }, []);
 
   const value: ChatContextValueInternal = useMemo(
     () => ({

@@ -154,6 +154,7 @@ export function useClipboardSearch(
                 // テキスト入力に設定
                 lastCheckedText.current = text;
                 await AsyncStorage.setItem(LAST_CLIPBOARD_KEY, text);
+                await AsyncStorage.setItem(`${LAST_CLIPBOARD_KEY}_time`, Date.now().toString());
 
                 if (onPasteRef.current) {
                   onPasteRef.current(text);
@@ -189,9 +190,20 @@ export function useClipboardSearch(
     const initialize = async () => {
       try {
         const lastText = await AsyncStorage.getItem(LAST_CLIPBOARD_KEY);
-        if (lastText) {
-          lastCheckedText.current = lastText;
-          logger.info('[ClipboardSearch] Initialized with last text:', lastText.substring(0, 50));
+        const lastTextTime = await AsyncStorage.getItem(`${LAST_CLIPBOARD_KEY}_time`);
+
+        // 前回のテキストが24時間以内のものなら使用
+        if (lastText && lastTextTime) {
+          const timeSinceLastText = Date.now() - parseInt(lastTextTime, 10);
+          if (timeSinceLastText < 24 * 60 * 60 * 1000) { // 24時間
+            lastCheckedText.current = lastText;
+            logger.info('[ClipboardSearch] Initialized with last text (within 24h):', lastText.substring(0, 50));
+          } else {
+            // 24時間以上経過している場合はクリア
+            logger.info('[ClipboardSearch] Last text is too old, clearing');
+            await AsyncStorage.removeItem(LAST_CLIPBOARD_KEY);
+            await AsyncStorage.removeItem(`${LAST_CLIPBOARD_KEY}_time`);
+          }
         }
       } catch (error) {
         logger.error('[ClipboardSearch] Error loading last text:', error);
