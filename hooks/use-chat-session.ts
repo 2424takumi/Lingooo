@@ -25,8 +25,8 @@ export function useChatSession({ scope, identifier, context, targetLanguage }: U
   const session = normalizedIdentifier ? chat.getSession(sessionKey) : null;
 
   const sendMessage = useCallback(
-    async (text: string) => {
-      logger.info('[useChatSession] sendMessage called:', { text, scope, identifier: normalizedIdentifier, detailLevel: aiDetailLevel });
+    async (text: string, displayText?: string) => {
+      logger.info('[useChatSession] sendMessage called:', { text, displayText, scope, identifier: normalizedIdentifier, detailLevel: aiDetailLevel });
 
       if (!normalizedIdentifier || !text.trim()) {
         logger.warn('[useChatSession] Skipping: empty identifier or text');
@@ -38,6 +38,7 @@ export function useChatSession({ scope, identifier, context, targetLanguage }: U
         scope,
         identifier: normalizedIdentifier,
         text,
+        displayText,
         context,
         streaming: true,
         detailLevel: aiDetailLevel,
@@ -49,8 +50,8 @@ export function useChatSession({ scope, identifier, context, targetLanguage }: U
   );
 
   const sendQuickQuestion = useCallback(
-    (question: string) => {
-      return sendMessage(question);
+    (question: string, displayQuestion?: string) => {
+      return sendMessage(question, displayQuestion);
     },
     [sendMessage]
   );

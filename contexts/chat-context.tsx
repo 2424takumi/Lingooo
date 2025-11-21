@@ -36,6 +36,7 @@ interface ChatContextValue {
       scope: ChatScope;
       identifier: string;
       text: string;
+      displayText?: string; // UI表示用のテキスト
       context?: ChatRequestContext;
       streaming?: boolean;
       detailLevel?: 'concise' | 'detailed';
@@ -97,11 +98,12 @@ function createEmptySession(key: ChatSessionKey): ChatSessionState {
   };
 }
 
-function createUserMessage(text: string): ChatMessage {
+function createUserMessage(text: string, displayText?: string): ChatMessage {
   return {
     id: generateId('msg'),
     role: 'user',
     content: text,
+    displayContent: displayText, // UI表示用のテキスト
     createdAt: Date.now(),
     status: 'completed',
   };
@@ -237,7 +239,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   }, []);
 
   const sendMessage = useCallback<ChatContextValue['sendMessage']>(
-    async ({ scope, identifier, text, context, streaming = true, detailLevel, targetLanguage }) => {
+    async ({ scope, identifier, text, displayText, context, streaming = true, detailLevel, targetLanguage }) => {
       const key: ChatSessionKey = { scope, identifier };
       const sessionBefore = ensureSession(key);
 
@@ -245,11 +247,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
         scope,
         identifier,
         text,
+        displayText,
         detailLevel,
         sessionBeforeMessageCount: sessionBefore.messages.length,
       });
 
-      const userMessage = createUserMessage(text);
+      const userMessage = createUserMessage(text, displayText);
       const assistantPlaceholder = createAssistantPlaceholder();
 
       let workingSession = {

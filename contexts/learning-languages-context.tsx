@@ -35,7 +35,7 @@ interface LearningLanguagesProviderProps {
 }
 
 export function LearningLanguagesProvider({ children }: LearningLanguagesProviderProps) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, needsInitialSetup } = useAuth();
   const [learningLanguages, setLearningLanguages] = useState<Language[]>([
     AVAILABLE_LANGUAGES[0], // デフォルトは英語
   ]);
@@ -49,12 +49,12 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     AVAILABLE_LANGUAGES[1] // デフォルトは日本語
   );
 
-  // 初期化（userが取得されたら実行）
+  // 初期化（userが取得されたら、かつ初期設定が完了していたら実行）
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !needsInitialSetup) {
       loadSettings();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, needsInitialSetup]);
 
   const loadSettings = async () => {
     if (!user) return;
@@ -68,7 +68,10 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
         .single();
 
       if (error) {
-        logger.error('Failed to load language settings:', error);
+        // PGRST116: レコードが0件の場合は初期設定前なので静かに処理
+        if (error.code !== 'PGRST116') {
+          logger.error('Failed to load language settings:', error);
+        }
         return;
       }
 
@@ -186,11 +189,26 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     }
   };
 
-  const setCurrentLanguage = async (languageId: string) => {
-    const language = learningLanguages.find((lang) => lang.id === languageId);
-    if (!language) return;
+  const setCurrentLanguage = async (languageIdOrCode: string) => {
+    // まず学習言語リストから検索（IDまたはコードで）
+    let language = learningLanguages.find(
+      (lang) => lang.id === languageIdOrCode || lang.code === languageIdOrCode
+    );
+
+    // 学習言語リストにない場合は、全言語から検索（翻訳時の一時表示用）
+    if (!language) {
+      language = AVAILABLE_LANGUAGES.find(
+        (lang) => lang.id === languageIdOrCode || lang.code === languageIdOrCode
+      );
+    }
+
+    if (!language) {
+      logger.warn('[LearningLanguages] Language not found:', languageIdOrCode);
+      return;
+    }
 
     // 現在の言語は一時的な選択なのでローカル状態のみ
+    logger.info('[LearningLanguages] Setting current language:', languageIdOrCode, '->', language.name);
     setCurrentLanguageState(language);
   };
 

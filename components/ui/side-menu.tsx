@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
-import Animated, { useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated';
 import { useEffect } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { router, type Href } from 'expo-router';
@@ -41,26 +41,26 @@ function MessagePlusIcon({ size = 22, color = '#242424' }: { size?: number; colo
 
 export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) {
   const item1Opacity = useSharedValue(0);
-  const item1TranslateY = useSharedValue(-20);
+  const item1TranslateY = useSharedValue(-10);
   const item2Opacity = useSharedValue(0);
-  const item2TranslateY = useSharedValue(-20);
+  const item2TranslateY = useSharedValue(-10);
 
   useEffect(() => {
     if (visible) {
-      // 1つ目のアイテム
-      item1Opacity.value = withTiming(1, { duration: 250 });
-      item1TranslateY.value = withTiming(0, { duration: 250 });
+      // シンプルなフェードインアニメーション
+      item1Opacity.value = withSpring(1, { damping: 20, stiffness: 200 });
+      item1TranslateY.value = withSpring(0, { damping: 20, stiffness: 200 });
 
-      // 2つ目のアイテム（少し遅れて）
+      // 2つ目のアイテム（ごく短い遅延）
       setTimeout(() => {
-        item2Opacity.value = withTiming(1, { duration: 250 });
-        item2TranslateY.value = withTiming(0, { duration: 250 });
-      }, 100);
+        item2Opacity.value = withSpring(1, { damping: 20, stiffness: 200 });
+        item2TranslateY.value = withSpring(0, { damping: 20, stiffness: 200 });
+      }, 40);
     } else {
       item1Opacity.value = 0;
-      item1TranslateY.value = -20;
+      item1TranslateY.value = -10;
       item2Opacity.value = 0;
-      item2TranslateY.value = -20;
+      item2TranslateY.value = -10;
     }
   }, [visible]);
 
@@ -110,8 +110,9 @@ export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) 
               activeOpacity={0.7}
             >
               <View style={styles.iconButton}>
-                <BookmarkIcon size={18} color="#242424" />
+                <BookmarkIcon size={20} color="#242424" />
               </View>
+              <Text style={styles.menuText}>ブックマーク</Text>
             </TouchableOpacity>
           </Animated.View>
 
@@ -124,9 +125,10 @@ export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) 
             >
               <View style={styles.iconButton}>
                 <View style={{ transform: [{ translateX: 0.5 }, { translateY: -1 }] }}>
-                  <MessagePlusIcon color="#242424" />
+                  <MessagePlusIcon size={24} color="#242424" />
                 </View>
               </View>
+              <Text style={styles.menuText}>カスタム質問</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -138,7 +140,7 @@ export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   menuContainer: {
     position: 'absolute',
@@ -148,25 +150,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    marginBottom: 8,
+    marginBottom: 14,
+    paddingRight: 18,
+    paddingVertical: 4,
   },
   iconButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   menuText: {
-    fontSize: 15,
-    color: '#000000',
+    fontSize: 16,
+    color: '#FFFFFF',
     fontWeight: '600',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 });

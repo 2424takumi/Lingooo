@@ -1,7 +1,22 @@
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Dimensions } from 'react-native';
+import { useState, useRef } from 'react';
 import { Language } from '@/types/language';
-import { ChevronRightIcon } from './icons';
+import Svg, { Path } from 'react-native-svg';
+
+// 下矢印アイコン
+function ChevronDownIcon({ size = 18, color = '#999999' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M6 9l6 6 6-6"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 interface LanguageDropdownProps {
   label: string;
@@ -24,6 +39,8 @@ export function LanguageDropdown({
 }: LanguageDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [tempSelected, setTempSelected] = useState<Language[]>(selectedLanguages);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef<View>(null);
 
   const handleSelect = (language: Language) => {
     if (multiSelect) {
@@ -55,37 +72,57 @@ export function LanguageDropdown({
     if (multiSelect) {
       setTempSelected(selectedLanguages);
     }
-    setIsOpen(true);
+    // トリガーの位置を測定
+    triggerRef.current?.measureInWindow((x, y, width, height) => {
+      setDropdownPosition({
+        top: y + height,
+        left: x,
+        width: width,
+      });
+      setIsOpen(true);
+    });
   };
 
   return (
     <>
-      <TouchableOpacity style={styles.container} onPress={handleOpen}>
+      <View ref={triggerRef} collapsable={false}>
+        <TouchableOpacity style={styles.container} onPress={handleOpen}>
         <Text style={styles.label}>{label}</Text>
         {multiSelect ? (
           // 複数選択: 国旗のみを横並び
           <View style={styles.flagsContainer}>
-            {selectedLanguages.map((lang) => (
-              <Text key={lang.id} style={styles.flagMulti}>
-                {lang.flag}
-              </Text>
-            ))}
-            <ChevronRightIcon size={18} color="#999999" />
+            {selectedLanguages.length > 0 ? (
+              selectedLanguages.map((lang) => (
+                <Text key={lang.id} style={styles.flagMulti}>
+                  {lang.flag}
+                </Text>
+              ))
+            ) : (
+              <Text style={styles.placeholder}>選択してください</Text>
+            )}
+            <ChevronDownIcon size={18} color="#999999" />
           </View>
         ) : (
           // 単一選択: 名前と国旗
           <View style={styles.valueContainer}>
-            <Text style={styles.value}>{selectedLanguage?.name}</Text>
-            <Text style={styles.flag}>{selectedLanguage?.flag}</Text>
-            <ChevronRightIcon size={18} color="#999999" />
+            {selectedLanguage ? (
+              <>
+                <Text style={styles.value}>{selectedLanguage.name}</Text>
+                <Text style={styles.flag}>{selectedLanguage.flag}</Text>
+              </>
+            ) : (
+              <Text style={styles.placeholder}>選択してください</Text>
+            )}
+            <ChevronDownIcon size={18} color="#999999" />
           </View>
         )}
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
 
       <Modal
         visible={isOpen}
         transparent
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => setIsOpen(false)}
       >
         <TouchableOpacity
@@ -93,16 +130,27 @@ export function LanguageDropdown({
           activeOpacity={1}
           onPress={() => setIsOpen(false)}
         >
-          <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{label}</Text>
-              {multiSelect && (
+          <View
+            style={[
+              styles.dropdownMenu,
+              {
+                position: 'absolute',
+                top: dropdownPosition.top,
+                left: dropdownPosition.left,
+                width: dropdownPosition.width,
+              }
+            ]}
+            onStartShouldSetResponder={() => true}
+          >
+            {multiSelect && (
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{label}</Text>
                 <TouchableOpacity onPress={handleDone}>
                   <Text style={styles.doneButton}>完了</Text>
                 </TouchableOpacity>
-              )}
-            </View>
-            <ScrollView style={styles.scrollView}>
+              </View>
+            )}
+            <ScrollView style={styles.scrollView} nestedScrollEnabled>
               {availableLanguages.map((language) => {
                 const isSelected = multiSelect
                   ? tempSelected.some((lang) => lang.id === language.id)
@@ -134,6 +182,8 @@ export function LanguageDropdown({
     </>
   );
 }
+
+const { height: screenHeight } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -169,17 +219,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#666666',
   },
+  placeholder: {
+    fontSize: 15,
+    color: '#AAAAAA',
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
-  modalContent: {
+  dropdownMenu: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    width: '80%',
-    maxHeight: '70%',
+    borderRadius: 12,
+    maxHeight: screenHeight * 0.4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: 'hidden',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -201,7 +258,7 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
   },
   scrollView: {
-    maxHeight: 400,
+    maxHeight: screenHeight * 0.35,
   },
   option: {
     flexDirection: 'row',

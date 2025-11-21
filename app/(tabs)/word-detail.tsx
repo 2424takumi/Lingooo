@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
-import { Audio } from 'expo-av';
+import { setAudioModeAsync, AudioMode } from 'expo-audio';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { DefinitionList } from '@/components/ui/definition-list';
@@ -15,11 +15,13 @@ import { ShimmerHeader, ShimmerDefinitions, ShimmerMetrics, ShimmerExamples, Shi
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
+import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
+import { useSubscription } from '@/contexts/subscription-context';
 import { useClipboardSearch } from '@/hooks/use-clipboard-search';
 import { getWordDetailStream } from '@/services/api/search';
 import type { WordDetailResponse } from '@/types/search';
@@ -37,6 +39,7 @@ export default function WordDetailScreen() {
   const params = useLocalSearchParams();
   const { aiDetailLevel, setAIDetailLevel } = useAISettings();
   const { currentLanguage, nativeLanguage, learningLanguages } = useLearningLanguages();
+  const { isPremium } = useSubscription();
   const safeAreaInsets = useSafeAreaInsets();
 
   const [wordData, setWordData] = useState<Partial<WordDetailResponse> | null>(null);
@@ -57,7 +60,9 @@ export default function WordDetailScreen() {
     folders,
     isCreateFolderModalOpen,
     newFolderName,
+    isSubscriptionModalOpen,
     setNewFolderName,
+    setIsSubscriptionModalOpen,
     handleBookmarkAdded,
     handleToastDismiss,
     handleOpenFolderSelect,
@@ -111,6 +116,7 @@ export default function WordDetailScreen() {
 
   // QAPairsをstateとして管理（追加質問をサポートするため）
   const [qaPairs, setQAPairs] = useState<QAPair[]>([]);
+  const [activeFollowUpPairId, setActiveFollowUpPairId] = useState<string | undefined>(undefined);
 
   // chatMessagesが変更されたときにqaPairsを更新
   useEffect(() => {
@@ -155,8 +161,8 @@ export default function WordDetailScreen() {
     const topMargin = 10; // ヘッダーとの間隔
 
     const fixedSpaces = containerPaddingTop + containerPaddingBottom + containerMarginBottom +
-                        chatMessagesMarginBottom + bottomSectionPaddingTop +
-                        questionScrollViewHeight + bottomSectionGap + whiteContainerHeight + topMargin;
+      chatMessagesMarginBottom + bottomSectionPaddingTop +
+      questionScrollViewHeight + bottomSectionGap + whiteContainerHeight + topMargin;
 
     // 画面高さ - safeAreaTop - headerHeight - 固定スペース
     // bottomSafeAreaは引かない（キーボードとの間隔を狭めるため）
@@ -191,15 +197,11 @@ export default function WordDetailScreen() {
   useEffect(() => {
     const configureAudio = async () => {
       try {
-        await Audio.setAudioModeAsync({
+        await setAudioModeAsync({
           playsInSilentModeIOS: true, // iOSのサイレントモードでも再生
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-          // Playbackカテゴリを使用（YouTubeと同じ）
-          allowsRecordingIOS: false,
-          interruptionModeIOS: 1, // DoNotMix
-          interruptionModeAndroid: 1, // DoNotMix
-        });
+          shouldPlayInBackground: false,
+          shouldReduceOtherAudioVolume: true,
+        } as Partial<AudioMode>);
         logger.info('[Audio] Audio mode configured successfully');
       } catch (error) {
         logger.error('[Audio] Failed to configure audio mode:', error);
@@ -297,17 +299,55 @@ export default function WordDetailScreen() {
           // 実行中のPre-flight requestをチェック
           const pendingPromise = getPendingPromise(word);
           if (pendingPromise) {
-            // Pre-flight requestが実行中：それを待つ
+            // Pre-flight requestが実行中：まずキャッシュから部分データを取得
             logger.debug('[WordDetail] WAITING FOR PRE-FLIGHT');
+
+            // 既に基本情報が来ているかチェック
+            let cachedPartialData = getCachedWordDetail(word);
+            if (cachedPartialData && cachedPartialData.headword) {
+              // 基本情報が既にある場合は即座に表示
+              logger.info('[WordDetail] Showing partial data from prefetch immediately');
+              setWordData(cachedPartialData);
+              setLoadingProgress(30);
+              setIsLoading(true); // まだ完全には完了していない
+            }
+
+            // キャッシュをポーリングして、部分データ・完全データが来たら即座に表示
+            const pollInterval = setInterval(() => {
+              const updatedData = getCachedWordDetail(word);
+              if (updatedData && updatedData.headword) {
+                // 新しい部分データまたは完全データが来た場合
+                if (!cachedPartialData) {
+                  logger.info('[WordDetail] Partial data arrived during polling');
+                  setWordData(updatedData);
+                  setLoadingProgress(30);
+                  setIsLoading(true);
+                  cachedPartialData = updatedData;
+                } else if (updatedData.examples && updatedData.examples.length > 0 &&
+                           (!cachedPartialData.examples || cachedPartialData.examples.length === 0)) {
+                  // 完全データ（例文あり）が来た場合
+                  logger.info('[WordDetail] Full data arrived during polling');
+                  setWordData(updatedData);
+                  setLoadingProgress(100);
+                  setIsLoading(false);
+                  clearInterval(pollInterval);
+                }
+              }
+            }, 100); // 100msごとにチェック
+
             try {
-              const data = await pendingPromise;
+              // 完全なデータを待つ（バックグラウンド）
+              const fullData = await pendingPromise;
+              clearInterval(pollInterval);
               logger.debug('[WordDetail] PRE-FLIGHT DATA RECEIVED');
-              setWordData(data);
+              setWordData(fullData);
               setLoadingProgress(100);
               setIsLoading(false);
-              return;
+              return; // プリフェッチ成功したので早期リターン
             } catch (err) {
+              clearInterval(pollInterval);
               logger.warn('[WordDetail] Pre-flight failed, using normal fetch');
+              // プリフェッチ失敗時は通常のフローに進む（言語検出含む）
             }
           }
 
@@ -532,14 +572,11 @@ export default function WordDetailScreen() {
 
       // オーディオモードを再確認（念のため）
       try {
-        await Audio.setAudioModeAsync({
+        await setAudioModeAsync({
           playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-          allowsRecordingIOS: false,
-          interruptionModeIOS: 1, // DoNotMix
-          interruptionModeAndroid: 1, // DoNotMix
-        });
+          shouldPlayInBackground: false,
+          shouldReduceOtherAudioVolume: true,
+        } as Partial<AudioMode>);
         logger.info('[Pronounce] Audio mode reconfigured');
       } catch (audioError) {
         logger.warn('[Pronounce] Failed to reconfigure audio mode:', audioError);
@@ -739,6 +776,14 @@ export default function WordDetailScreen() {
     }
   };
 
+  const handleEnterFollowUpMode = (pairId: string, question: string) => {
+    if (activeFollowUpPairId === pairId) {
+      setActiveFollowUpPairId(undefined);
+    } else {
+      setActiveFollowUpPairId(pairId);
+    }
+  };
+
 
   if (error) {
     return (
@@ -763,93 +808,93 @@ export default function WordDetailScreen() {
 
       <View style={[styles.content, { paddingTop: safeAreaInsets.top }]}>
         {/* Header - Fixed */}
-            {wordData?.headword ? (
-              <View
-                style={styles.headerContainer}
-                onLayout={(event) => {
-                  const { height } = event.nativeEvent.layout;
-                  setHeaderHeight(height);
-                }}
-              >
-                <UnifiedHeaderBar
-                  pageType="wordDetail"
-                  word={wordData.headword.lemma}
-                  posTags={wordData.headword.pos || []}
-                  gender={wordData.headword.gender}
-                  onBackPress={handleBackPress}
-                  onPronouncePress={handlePronouncePress}
-                />
-              </View>
-            ) : isLoading ? (
-              <View
-                style={styles.headerContainer}
-                onLayout={(event) => {
-                  const { height } = event.nativeEvent.layout;
-                  setHeaderHeight(height);
-                }}
-              >
-                <ShimmerHeader />
-              </View>
-            ) : null}
+        {wordData?.headword ? (
+          <View
+            style={styles.headerContainer}
+            onLayout={(event) => {
+              const { height } = event.nativeEvent.layout;
+              setHeaderHeight(height);
+            }}
+          >
+            <UnifiedHeaderBar
+              pageType="wordDetail"
+              word={wordData.headword.lemma}
+              posTags={wordData.headword.pos || []}
+              gender={wordData.headword.gender}
+              onBackPress={handleBackPress}
+              onPronouncePress={handlePronouncePress}
+            />
+          </View>
+        ) : isLoading ? (
+          <View
+            style={styles.headerContainer}
+            onLayout={(event) => {
+              const { height } = event.nativeEvent.layout;
+              setHeaderHeight(height);
+            }}
+          >
+            <ShimmerHeader />
+          </View>
+        ) : null}
 
-            {/* 言語検出通知 - Fixed */}
-            {detectedLanguageInfo && showLanguageNotification && (
-              <View style={styles.languageNotificationContainer}>
-                <View style={styles.languageNotificationContent}>
-                  <Text style={styles.languageNotificationText}>
-                    {detectedLanguageInfo.name}で見つかりました
-                  </Text>
-                </View>
-              </View>
-            )}
+        {/* 言語検出通知 - Fixed */}
+        {detectedLanguageInfo && showLanguageNotification && (
+          <View style={styles.languageNotificationContainer}>
+            <View style={styles.languageNotificationContent}>
+              <Text style={styles.languageNotificationText}>
+                {detectedLanguageInfo.name}で見つかりました
+              </Text>
+            </View>
+          </View>
+        )}
 
-            {/* Content - Scrollable */}
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-              {/* Definitions - 2番目に表示 */}
-              {wordData?.senses && wordData.senses.length > 0 ? (
-                <View style={styles.definitionsContainer}>
-                  <DefinitionList
-                    definitions={wordData.senses.map(s => s.glossShort)}
+        {/* Content - Scrollable */}
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
+          {/* Definitions - 2番目に表示 */}
+          {wordData?.senses && wordData.senses.length > 0 ? (
+            <View style={styles.definitionsContainer}>
+              <DefinitionList
+                definitions={wordData.senses.map(s => s.glossShort)}
+              />
+            </View>
+          ) : isLoading ? (
+            <View style={styles.definitionsContainer}>
+              <ShimmerDefinitions />
+            </View>
+          ) : null}
+
+          {/* Word Hint - 3番目に表示 */}
+          {wordData?.hint?.text ? (
+            <View style={styles.hintContainer}>
+              <WordHint hint={wordData.hint.text} />
+            </View>
+          ) : (isLoading || isLoadingAdditional) ? (
+            <View style={styles.hintContainer}>
+              <ShimmerHint />
+            </View>
+          ) : null}
+
+          {/* Examples Section - 最後に表示 */}
+          {wordData?.examples && wordData.examples.length > 0 ? (
+            <View style={styles.examplesSection}>
+              <Text style={styles.sectionTitle}>例文</Text>
+              <View style={styles.examplesList}>
+                {wordData.examples.map((example, index) => (
+                  <ExampleCard
+                    key={index}
+                    english={example.textSrc}
+                    japanese={example.textDst}
                   />
-                </View>
-              ) : isLoading ? (
-                <View style={styles.definitionsContainer}>
-                  <ShimmerDefinitions />
-                </View>
-              ) : null}
-
-              {/* Word Hint - 3番目に表示 */}
-              {wordData?.hint?.text ? (
-                <View style={styles.hintContainer}>
-                  <WordHint hint={wordData.hint.text} />
-                </View>
-              ) : (isLoading || isLoadingAdditional) ? (
-                <View style={styles.hintContainer}>
-                  <ShimmerHint />
-                </View>
-              ) : null}
-
-              {/* Examples Section - 最後に表示 */}
-              {wordData?.examples && wordData.examples.length > 0 ? (
-                <View style={styles.examplesSection}>
-                  <Text style={styles.sectionTitle}>例文</Text>
-                  <View style={styles.examplesList}>
-                    {wordData.examples.map((example, index) => (
-                      <ExampleCard
-                        key={index}
-                        english={example.textSrc}
-                        japanese={example.textDst}
-                      />
-                    ))}
-                  </View>
-                </View>
-              ) : (isLoading || isLoadingAdditional) ? (
-                <View style={styles.examplesSection}>
-                  <Text style={styles.sectionTitle}>例文</Text>
-                  <ShimmerExamples />
-                </View>
-              ) : null}
-            </ScrollView>
+                ))}
+              </View>
+            </View>
+          ) : (isLoading || isLoadingAdditional) ? (
+            <View style={styles.examplesSection}>
+              <Text style={styles.sectionTitle}>例文</Text>
+              <ShimmerExamples />
+            </View>
+          ) : null}
+        </ScrollView>
       </View>
 
       {/* Chat Section - Fixed at bottom */}
@@ -876,6 +921,8 @@ export default function WordDetailScreen() {
             onBookmarkAdded={handleBookmarkAdded}
             expandedMaxHeight={chatExpandedMaxHeight}
             onFollowUpQuestion={handleFollowUpQuestion}
+            onEnterFollowUpMode={handleEnterFollowUpMode}
+            activeFollowUpPairId={activeFollowUpPairId}
             prefilledInputText={prefilledChatText}
             onPrefillConsumed={() => setPrefilledChatText(null)}
           />
@@ -887,6 +934,7 @@ export default function WordDetailScreen() {
         visible={toastVisible}
         onAddToFolder={handleOpenFolderSelect}
         onDismiss={handleToastDismiss}
+        showFolderButton={isPremium}
       />
 
       {/* Folder Select Modal */}
@@ -905,6 +953,12 @@ export default function WordDetailScreen() {
         onChangeFolderName={setNewFolderName}
         onCreate={handleCreateFolder}
         onClose={handleCloseCreateFolderModal}
+      />
+
+      {/* Subscription Bottom Sheet */}
+      <SubscriptionBottomSheet
+        visible={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
       />
     </ThemedView>
   );

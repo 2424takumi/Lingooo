@@ -25,7 +25,11 @@ const LANGUAGE_NAMES_JA: Record<string, string> = {
 /**
  * 言語コードから日本語名を取得
  */
-function getLanguageNameJa(languageCode: string): string {
+function getLanguageNameJa(languageCode: string | undefined): string {
+  if (!languageCode) {
+    console.warn('[PromptGenerator] languageCode is undefined, defaulting to "en"');
+    return '英語';
+  }
   return LANGUAGE_NAMES_JA[languageCode] || languageCode.toUpperCase();
 }
 
@@ -46,7 +50,7 @@ export function createBasicInfoPrompt(word: string, targetLanguage: string = 'en
   const langName = getLanguageNameJa(targetLanguage);
   const nativeLangName = getLanguageNameJa(nativeLanguage);
 
-  return `${langName}の単語"${word}"の基本情報を以下のJSON構造で生成してください：
+  return `${langName}の単語"${word}"の基本情報を以下のJSON構造で最小限のトークンで生成：
 
 {
   "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["品詞（英語、例: verb, noun）"]},
@@ -54,8 +58,9 @@ export function createBasicInfoPrompt(word: string, targetLanguage: string = 'en
 }
 
 要件:
-- sensesは2-3個、主要な意味のみ
-- ${nativeLangName}の説明は簡潔で分かりやすく`;
+- sensesは2-3個、主要な意味のみ（各10文字以内）
+- ${nativeLangName}の説明は簡潔で分かりやすく
+- 超高速レスポンス用のため最小限の情報のみ`;
 }
 
 /**
@@ -86,7 +91,7 @@ export function createDictionaryPrompt(
 {
   "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["品詞（英語、例: verb, noun）"]${genderField}},
   "senses": [{"id": "1", "glossShort": "簡潔な${nativeLangName}の意味（10文字以内）"}, {"id": "2", "glossShort": "意味2"}],
-  "hint": {"text": "この単語の特徴を2つのトピックまでに絞って2〜3文で${nativeLangName}で簡潔に説明（例: ニュアンスと語源、使用上の注意点と発音、文法的特徴とよくある間違い、など）"},
+  "hint": {"text": "${nativeLangName}で2〜3文の簡潔な説明（使用場面・ニュアンス・類似語との違いなど、学習に最も重要な特徴2点）"},
   "metrics": {"frequency": 頻出度0-100, "difficulty": 難易度0-100, "nuance": ニュアンスの強さ0-100},
   "examples": [
     {"textSrc": "自然な${langName}の例文", "textDst": "自然な${nativeLangName}訳"},
@@ -96,13 +101,12 @@ export function createDictionaryPrompt(
 }
 
 要件:
-- この順序（headword → senses → hint → metrics → examples）で生成してください
-- hintは必ず${nativeLangName}で、2つのトピックまでに絞り、2〜3文で簡潔に記載。その単語を理解・使用する上で最も重要な2つの特徴を選んでください（例: ニュアンス+語源、発音+使用上の注意、文法的特徴+よくある間違い、など）
-- 例文は3-5個、実用的で自然な文を
-- sensesは2-3個、主要な意味のみ
-- ${nativeLangName}の説明は自然で分かりやすく
+- この順序（headword → senses → hint → metrics → examples）で必ず生成
+- hintは${nativeLangName}で2〜3文、学習に最も重要な2つの特徴（使用場面・ニュアンス・文法・類似語との違いなど）
+- sensesは2-3個、主要な意味のみ（各10文字以内）
+- 例文は3-5個、実用的で自然な${langName}の文
 - metricsは実際の使用頻度を反映
-- ${langName}の例文は自然で実用的なものを`;
+- ${nativeLangName}の説明は自然で分かりやすく`;
 }
 
 /**
@@ -135,15 +139,9 @@ export function createSuggestionsPrompt(japaneseQuery: string, targetLanguage: s
 ]
 
 要件:
-- 必ず3個以上の候補を返すこと
-- 文脈やニュアンスの違いを考慮した候補を選ぶこと
-  例（英語の場合）: "あいさつ" → greeting（一般的）, salutation（正式）, hello（カジュアル）, regards（書面）
-  例（スペイン語の場合）: "あいさつ" → saludo（一般的）, salutación（正式）, hola（カジュアル）
-  例（ポルトガル語の場合）: "あいさつ" → saudação（一般的）, cumprimento（正式）, olá（カジュアル）
-  例（中国語の場合）: "あいさつ" → 问候（一般的）, 致意（正式）, 你好（カジュアル）
-- 関連性の高い順にソート
-- confidenceは最も関連性が高いものを1.0とする
-- usageHintは単語名を繰り返さず、その単語の特徴や使い方を一文で自然に説明すること（20-30文字程度）
-  例: "日常会話で気軽に使える基本語", "ビジネスや公式な場で使う丁寧な表現", "友達同士のカジュアルな会話向け", "学術的な文章で使われる専門的な言葉"
-- nuanceは単語のフォーマル度を示すスコア（0=非常にカジュアル・スラング, 30=カジュアル, 50=中立的, 70=フォーマル, 100=非常にフォーマル・学術的）`;
+- 必ず3個以上の候補（文脈・ニュアンスの違いを考慮）
+- 関連性の高い順にソート、confidenceは最高を1.0
+- usageHintは20-30文字で使用場面・特徴を簡潔に（単語名は繰り返さない）
+  例: "日常会話向けの基本語", "ビジネス・公式向け", "カジュアルな会話向け", "学術的な専門用語"
+- nuanceスコア: 0=カジュアル/スラング, 30=カジュアル, 50=中立, 70=フォーマル, 100=学術的`;
 }

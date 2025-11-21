@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, TouchableOpacity, Switch, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
@@ -6,6 +6,8 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useAISettings } from '@/contexts/ai-settings-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/lib/supabase';
 
 // Icons
 function ChevronRightIcon({ size = 24, color = '#686868' }: { size?: number; color?: string }) {
@@ -28,6 +30,44 @@ export default function SettingsScreen() {
     aiDetailLevel,
     setAIDetailLevel,
   } = useAISettings();
+
+  // 開発用: アプリをリセットして初回起動状態に戻す
+  const handleResetApp = () => {
+    Alert.alert(
+      '開発用: アプリをリセット',
+      'AsyncStorageとSupabase認証をクリアして、初回起動状態に戻します。アプリが再起動されます。',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: 'リセット',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // AsyncStorageをクリア
+              await AsyncStorage.clear();
+
+              // Supabase認証をサインアウト
+              await supabase.auth.signOut();
+
+              // 完了メッセージ
+              Alert.alert(
+                '完了',
+                'AsyncStorageと認証をクリアしました。アプリを再起動してください（ターミナルで"r"キーを押す）。',
+                [
+                  {
+                    text: 'OK',
+                  },
+                ]
+              );
+            } catch (error) {
+              console.error('リセットエラー:', error);
+              Alert.alert('エラー', 'リセットに失敗しました');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
@@ -92,7 +132,9 @@ export default function SettingsScreen() {
           </View>
 
           {/* About */}
-          <View style={[styles.section, styles.lastSection]}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>情報</Text>
+
             <TouchableOpacity
               style={styles.settingItem}
               onPress={() => router.push('/privacy-policy')}
@@ -119,6 +161,23 @@ export default function SettingsScreen() {
               </View>
               <Text style={styles.versionText}>1.0.0</Text>
             </View>
+          </View>
+
+          {/* Developer Tools */}
+          <View style={[styles.section, styles.lastSection]}>
+            <Text style={styles.sectionTitle}>開発者ツール</Text>
+
+            <TouchableOpacity
+              style={[styles.settingItem, styles.dangerItem]}
+              onPress={handleResetApp}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.dangerLabel}>アプリをリセット</Text>
+                <Text style={styles.settingDescription}>
+                  初回起動状態に戻す（AsyncStorage + 認証クリア）
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </View>
@@ -189,5 +248,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#686868',
     fontWeight: '500',
+  },
+  dangerItem: {
+    borderWidth: 1,
+    borderColor: '#FFE0E0',
+    backgroundColor: '#FFF5F5',
+  },
+  dangerLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FF4444',
+    marginBottom: 4,
   },
 });

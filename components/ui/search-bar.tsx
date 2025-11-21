@@ -8,6 +8,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { getMaxTextLength } from '@/constants/validation';
 import { isSentence } from '@/utils/text-detector';
 import { useVoiceInput } from '@/hooks/use-voice-input';
+import { logger } from '@/utils/logger';
 
 const LINE_HEIGHT = 22;
 const MAX_LINES = 5;
@@ -29,7 +30,7 @@ export function SearchBar({
   value: externalValue,
   onChangeText: externalOnChangeText,
 }: SearchBarProps) {
-  const { learningLanguages, currentLanguage, setCurrentLanguage } = useLearningLanguages();
+  const { learningLanguages, currentLanguage, defaultLanguage, setCurrentLanguage } = useLearningLanguages();
   const { isPremium } = useSubscription();
   const [internalValue, setInternalValue] = useState('');
   const inputRef = useRef<TextInput>(null);
@@ -41,6 +42,14 @@ export function SearchBar({
   const buttonBackground = useThemeColor({}, 'buttonGray');
   const buttonIconColor = useThemeColor({}, 'buttonText');
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
+
+  // デフォルト言語が設定されたらcurrentLanguageを初期化
+  useEffect(() => {
+    if (defaultLanguage && currentLanguage.id !== defaultLanguage.id) {
+      setCurrentLanguage(defaultLanguage.id);
+      logger.info('[SearchBar] Initialized with default language:', defaultLanguage.id);
+    }
+  }, [defaultLanguage.id]);
 
   // プランに応じた文字数制限
   const maxLength = useMemo(() => getMaxTextLength(isPremium), [isPremium]);

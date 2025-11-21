@@ -18,6 +18,7 @@ export interface ChatMessage {
   createdAt: number;
   status?: ChatMessageStatus;
   error?: string;
+  displayContent?: string; // UI表示用のコンテンツ（プロンプト指示を除いたもの）
 }
 
 export interface ChatSessionKey {

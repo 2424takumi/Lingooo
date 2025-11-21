@@ -51,12 +51,21 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     if (!user) return;
 
     try {
+      // APIキーが設定されていない場合はスキップ
+      const apiKey = Platform.select({
+        ios: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS,
+        android: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID,
+      });
+
+      if (!apiKey) {
+        logger.info('[Subscription] RevenueCat API key not configured, skipping initialization');
+        setIsLoading(false);
+        return;
+      }
+
       // RevenueCat初期化
       await Purchases.configure({
-        apiKey: Platform.select({
-          ios: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS!,
-          android: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID!,
-        })!,
+        apiKey,
         appUserID: user.id,
       });
 
@@ -71,8 +80,14 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
 
       // サブスク状態チェック
       await checkSubscriptionStatus();
-    } catch (error) {
-      logger.error('[Subscription] Failed to initialize:', error);
+    } catch (error: any) {
+      // Expo GoではStoreKitが動作しないためエラーになる - 警告レベルに抑制
+      if (error?.message?.includes('None of the products') ||
+          error?.message?.includes('offerings')) {
+        logger.warn('[Subscription] Could not fetch offerings (expected in Expo Go)');
+      } else {
+        logger.error('[Subscription] Failed to initialize:', error);
+      }
     } finally {
       setIsLoading(false);
     }

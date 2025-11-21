@@ -9,6 +9,8 @@ import { SideMenu } from '@/components/ui/side-menu';
 import { SettingsBottomSheet } from '@/components/ui/settings-bottom-sheet';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { SearchHistoryList } from '@/components/ui/search-history-list';
+import { TranslationHistoryList } from '@/components/ui/translation-history-list';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { PenIcon } from '@/components/ui/icons';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSearch } from '@/hooks/use-search';
@@ -23,6 +25,7 @@ export default function HomeScreen() {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [subscriptionVisible, setSubscriptionVisible] = useState(false);
   const [menuButtonLayout, setMenuButtonLayout] = useState<{ x: number; y: number; width: number; height: number } | undefined>(undefined);
+  const [selectedHistoryTab, setSelectedHistoryTab] = useState(0); // 0: 単語, 1: 翻訳
 
   const handleMenuPress = (layout: { x: number; y: number; width: number; height: number }) => {
     setMenuButtonLayout(layout);
@@ -102,14 +105,22 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Search History Title - Fixed */}
-        <Text style={[styles.historyTitle, { color: titleColor }]}>
-          最近の検索
-        </Text>
+        {/* History Tab Control */}
+        <View style={styles.tabContainer}>
+          <SegmentedControl
+            segments={['単語履歴', '翻訳履歴']}
+            selectedIndex={selectedHistoryTab}
+            onIndexChange={setSelectedHistoryTab}
+          />
+        </View>
 
-        {/* Search History - Scrollable */}
+        {/* History List - Scrollable */}
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-          <SearchHistoryList onItemPress={onSearch} maxItems={20} showTitle={false} />
+          {selectedHistoryTab === 0 ? (
+            <SearchHistoryList onItemPress={onSearch} maxItems={20} showTitle={false} />
+          ) : (
+            <TranslationHistoryList onItemPress={onSearch} maxItems={20} showTitle={false} />
+          )}
         </ScrollView>
       </View>
 
@@ -155,12 +166,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
     marginBottom: 0,
   },
-  historyTitle: {
-    fontSize: 13,
-    fontWeight: '500',
+  tabContainer: {
     marginTop: 24,
     marginBottom: 8,
-    paddingHorizontal: 4,
   },
   hintContainer: {
     flexDirection: 'row',

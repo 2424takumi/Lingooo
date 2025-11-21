@@ -21,6 +21,7 @@ interface QACardProps {
   onFollowUpQuestion?: (question: string) => Promise<void>;
   onEnterFollowUpMode?: (pairId: string, question: string) => void;
   isFollowUpActive?: boolean;
+  onScrollToFollowUpInput?: () => void;
 }
 
 function SendIcon({ size = 20, color = '#FFFFFF' }: { size?: number; color?: string }) {
@@ -79,7 +80,7 @@ function CloseIcon({ size = 16, color = '#242424' }: { size?: number; color?: st
   );
 }
 
-export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion, onEnterFollowUpMode, isFollowUpActive = false }: QACardProps) {
+export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion, onEnterFollowUpMode, isFollowUpActive = false, onScrollToFollowUpInput }: QACardProps) {
   // ブックマークページ用の配色（hideActions=trueの時）
   const cardBackground = useThemeColor(
     { light: hideActions ? '#F8F8F8' : '#FAFCFB', dark: '#1C1C1E' },
@@ -100,7 +101,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
 
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isCheckingBookmark, setIsCheckingBookmark] = useState(true);
-  // 追加質問の開閉状態を管理（初期状態は全て閉じている）
+  // 追加質問の開閉状態を管理（初期状態は全て開いている）
   const [expandedFollowUps, setExpandedFollowUps] = useState<Record<string, boolean>>({});
   // 前回の追加質問数を記録
   const prevFollowUpCountRef = useRef(0);
@@ -168,10 +169,24 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
         });
         return updated;
       });
+    } else if (currentCount > 0 && Object.keys(expandedFollowUps).length === 0) {
+      // 初期表示時に既存のフォローアップがあれば全て開く
+      const initialExpanded: Record<string, boolean> = {};
+      currentFollowUps.forEach(fu => {
+        initialExpanded[fu.id] = true;
+      });
+      setExpandedFollowUps(initialExpanded);
     }
 
     prevFollowUpCountRef.current = currentCount;
   }, [pair.followUpQAs]);
+
+  // 追加質問モードがアクティブになったらスクロール
+  useEffect(() => {
+    if (isFollowUpActive && onScrollToFollowUpInput) {
+      onScrollToFollowUpInput();
+    }
+  }, [isFollowUpActive, onScrollToFollowUpInput]);
 
   // コピー機能
   const handleCopy = async () => {
@@ -356,17 +371,16 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
         )}
       </View>
 
-      {/* 追加質問のQAペアを表示 */}
+      {/* 追加質問のQAペアを表示 - カード内部に移動 */}
       {pair.status === 'completed' && pair.a && pair.followUpQAs && pair.followUpQAs.length > 0 && (
-        <View style={styles.followUpSection}>
-          <View style={styles.followUpList}>
-            {pair.followUpQAs.map((followUp, index) => {
-              const isExpanded = expandedFollowUps[followUp.id] || false;
+          <View style={styles.followUpSection}>
+            <View style={styles.followUpList}>
+              {pair.followUpQAs.map((followUp, index) => {
+                const isExpanded = expandedFollowUps[followUp.id] !== false; // デフォルトはtrue
 
-              return (
-                <View key={followUp.id} style={styles.followUpItem}>
-                  {/* フォローアップのQA */}
-                  <View style={styles.followUpContent}>
+                return (
+                  <View key={followUp.id} style={styles.followUpItem}>
+                    {/* フォローアップの質問（破線と横並び） */}
                     <TouchableOpacity
                       style={styles.followUpQuestionRow}
                       onPress={() => toggleFollowUp(followUp.id)}
@@ -383,13 +397,14 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                           />
                         </Svg>
                       </View>
+
                       <Text style={[styles.followUpQuestionText, { color: questionColor }]}>
                         {followUp.q}
                       </Text>
                       <ChevronIcon size={16} color={iconColor} expanded={isExpanded} />
                     </TouchableOpacity>
 
-                    {/* 回答はアコーディオンで表示 */}
+                    {/* 回答はアコーディオンで表示（通常の回答と同じ横幅） */}
                     {isExpanded && (
                       <View style={[styles.followUpAnswerContainer, { backgroundColor: answerBackground }]}>
                         {followUp.status === 'pending' ? (
@@ -415,150 +430,143 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                       </View>
                     )}
                   </View>
-                </View>
-              );
-            })}
+                );
+              })}
+            </View>
           </View>
-        </View>
-      )}
-    </View>
+        )}
+      </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    gap: 12,
+        container: {
+        borderRadius: 14,
+      borderWidth: 1,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      gap: 12,
   },
-  questionRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 8,
+      questionRow: {
+        flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: 8,
   },
-  questionText: {
-    flex: 1,
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '500',
+      questionText: {
+        flex: 1,
+      fontSize: 15,
+      lineHeight: 22,
+      fontWeight: '500',
   },
-  answerContainer: {
-    borderRadius: 8,
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    gap: 5,
-    marginHorizontal: -4,
-    marginBottom: -4,
+      answerContainer: {
+        borderRadius: 8,
+      paddingTop: 16,
+      paddingHorizontal: 16,
+      paddingBottom: 8,
+      gap: 5,
+      marginHorizontal: -4,
+      marginBottom: -4,
   },
-  answerText: {
-    fontSize: 14,
-    lineHeight: 24,
-    fontWeight: '400',
-    letterSpacing: 0.3,
+      answerText: {
+        fontSize: 14,
+      lineHeight: 24,
+      fontWeight: '400',
+      letterSpacing: 0.3,
   },
-  errorText: {
-    fontSize: 12,
-    marginTop: 8,
+      errorText: {
+        fontSize: 12,
+      marginTop: 8,
   },
-  pendingContainer: {
-    gap: 8,
+      pendingContainer: {
+        gap: 8,
   },
-  retryButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginTop: 8,
+      retryButton: {
+        paddingHorizontal: 8,
+      paddingVertical: 4,
+      marginTop: 8,
   },
-  retryText: {
-    fontSize: 12,
-    fontWeight: '600',
+      retryText: {
+        fontSize: 12,
+      fontWeight: '600',
   },
-  actionsContainer: {
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
+      actionsContainer: {
+        flexDirection: 'row',
+      gap: 4,
+      alignItems: 'center',
   },
-  actionButton: {
-    padding: 2,
+      actionButton: {
+        padding: 2,
   },
-  followUpSection: {
-    marginTop: 8,
+      followUpSection: {
+        marginTop: 8,
   },
-  followUpList: {
-    gap: 16,
-    marginBottom: -4,
+      followUpList: {
+        gap: 16,
+      marginBottom: -4,
   },
-  followUpItem: {
-    flexDirection: 'row',
-    position: 'relative',
+      followUpItem: {
+        gap: 8,
   },
-  followUpContent: {
-    flex: 1,
-    gap: 12,
+      followUpQuestionRow: {
+        flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
   },
-  followUpQuestionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+      followUpLineContainer: {
+        width: 2,
+      paddingTop: 2,
   },
-  followUpLineContainer: {
-    width: 2,
-    height: 20,
+      followUpLineSvg: {
+        width: 2,
   },
-  followUpLineSvg: {
-    width: 2,
-    height: 20,
+      followUpQuestionText: {
+        flex: 1,
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: '400',
+      letterSpacing: 0.5,
   },
-  followUpQuestionText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '400',
-    letterSpacing: 0.5,
+      followUpAnswerContainer: {
+        borderRadius: 8,
+      paddingTop: 12,
+      paddingHorizontal: 16,
+      paddingBottom: 6,
+      gap: 5,
+      marginHorizontal: -4,
   },
-  followUpAnswerContainer: {
-    borderRadius: 8,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 6,
-    gap: 5,
-    marginHorizontal: -4,
+      followUpPendingContainer: {
+        gap: 8,
   },
-  followUpPendingContainer: {
-    gap: 8,
+      askQuestionSection: {
+        marginTop: 3,
   },
-  askQuestionSection: {
-    marginTop: 3,
+      askQuestionButton: {
+        flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderRadius: 12,
+      paddingLeft: 10,
+      paddingRight: 6,
+      paddingVertical: 4,
+      alignSelf: 'flex-start',
   },
-  askQuestionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 12,
-    paddingLeft: 10,
-    paddingRight: 6,
-    paddingVertical: 4,
-    alignSelf: 'flex-start',
+      askQuestionButtonActive: {
+        backgroundColor: '#FFFFFF',
   },
-  askQuestionButtonActive: {
-    backgroundColor: '#FFFFFF',
+      closeButton: {
+        padding: 2,
+      marginLeft: 3,
   },
-  closeButton: {
-    padding: 2,
-    marginLeft: 3,
+      askQuestionButtonContent: {
+        flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
   },
-  askQuestionButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  askQuestionButtonText: {
-    fontSize: 12,
-    lineHeight: 22,
-    letterSpacing: 1,
-    color: '#000000',
+      askQuestionButtonText: {
+        fontSize: 12,
+      lineHeight: 22,
+      letterSpacing: 1,
+      color: '#000000',
   },
 });

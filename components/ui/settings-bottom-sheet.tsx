@@ -10,7 +10,11 @@ import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useSubscription } from '@/contexts/subscription-context';
 import { AVAILABLE_LANGUAGES, Language } from '@/types/language';
+import { getUsageStats } from '@/services/api/usage';
+import { logger } from '@/utils/logger';
 import Svg, { Path } from 'react-native-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/lib/supabase';
 
 // Star Icon for premium features
 function StarIcon({ size = 16 }: { size?: number }) {
@@ -36,7 +40,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
   const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   const pageBackground = useThemeColor({}, 'pageBackground');
   const text = useThemeColor({}, 'text');
-  const [tokenUsage, setTokenUsage] = useState({ used: 12500, total: 50000 });
+  const [tokenUsage, setTokenUsage] = useState({ used: 0, total: 50000 });
   // Supabaseから質問回数とプランを取得
   const { questionCount, plan } = useQuestionCount();
   const {
@@ -68,15 +72,35 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
     }
   }, [visible]);
 
-  // TODO: 実際のトークン使用量を取得する処理を実装
+  // 実際の使用量を取得
   useEffect(() => {
     if (visible) {
-      // ここでAPIから取得
-      // const fetchTokenUsage = async () => {
-      //   const data = await api.getTokenUsage();
-      //   setTokenUsage(data);
-      //   setPlan(data.plan);
-      // };
+      console.log('[SettingsBottomSheet] Bottom sheet opened, fetching usage stats...');
+      const fetchUsageStats = async () => {
+        try {
+          console.log('[SettingsBottomSheet] Calling getUsageStats()...');
+          const stats = await getUsageStats();
+          console.log('[SettingsBottomSheet] getUsageStats() returned:', stats);
+          if (stats) {
+            setTokenUsage({
+              used: stats.translationTokens.used,
+              total: stats.translationTokens.limit,
+            });
+            logger.info('[SettingsBottomSheet] Usage stats loaded:', stats);
+            console.log('[SettingsBottomSheet] Token usage updated:', {
+              used: stats.translationTokens.used,
+              total: stats.translationTokens.limit,
+            });
+          } else {
+            logger.warn('[SettingsBottomSheet] Failed to load usage stats, using default values');
+            console.warn('[SettingsBottomSheet] Failed to load usage stats, using default values');
+          }
+        } catch (error) {
+          logger.error('[SettingsBottomSheet] Error fetching usage stats:', error);
+          console.error('[SettingsBottomSheet] Error fetching usage stats:', error);
+        }
+      };
+      fetchUsageStats();
     }
   }, [visible]);
 
@@ -121,6 +145,47 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
     }
 
     setAIDetailLevel(newLevel);
+  };
+
+  // 開発用: アプリをリセットして初回起動状態に戻す
+  const handleResetApp = () => {
+    Alert.alert(
+      '開発用: アプリをリセット',
+      'AsyncStorageとSupabase認証をクリアして、初回起動状態に戻します。',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: 'リセット',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // AsyncStorageをクリア
+              await AsyncStorage.clear();
+
+              // Supabase認証をサインアウト
+              await supabase.auth.signOut();
+
+              // ボトムシートを閉じる
+              onClose();
+
+              // 完了メッセージ
+              Alert.alert(
+                '完了',
+                'AsyncStorageと認証をクリアしました。アプリを再起動してください（ターミナルで"r"キーを押す）。',
+                [
+                  {
+                    text: 'OK',
+                  },
+                ]
+              );
+            } catch (error) {
+              console.error('リセットエラー:', error);
+              Alert.alert('エラー', 'リセットに失敗しました');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -280,6 +345,20 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                   thumbColor="#FFFFFF"
                 />
               </View>
+            </View>
+
+            {/* Developer Tools */}
+            <View style={styles.developerToolsContainer}>
+              <Text style={styles.sectionTitle}>開発者ツール</Text>
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={handleResetApp}
+              >
+                <Text style={styles.resetButtonText}>アプリをリセット</Text>
+                <Text style={styles.resetButtonSubtext}>
+                  初回起動状態に戻す（AsyncStorage + 認証クリア）
+                </Text>
+              </TouchableOpacity>
             </View>
 
             {/* Footer Links */}
@@ -523,5 +602,27 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 11,
     color: '#CCCCCC',
+  },
+  developerToolsContainer: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+  },
+  resetButton: {
+    backgroundColor: '#FFF5F5',
+    borderWidth: 1,
+    borderColor: '#FFE0E0',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  resetButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FF4444',
+    marginBottom: 4,
+  },
+  resetButtonSubtext: {
+    fontSize: 12,
+    color: '#666666',
   },
 });

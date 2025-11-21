@@ -4,7 +4,7 @@
  * プレミアムプラン購入のボトムシート
  */
 
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Dimensions, ScrollView, ActivityIndicator, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Dimensions, ScrollView, ActivityIndicator, Alert, Linking, TouchableWithoutFeedback } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSubscription } from '@/contexts/subscription-context';
@@ -221,40 +221,41 @@ export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottom
           activeOpacity={1}
           onPress={onClose}
         >
-          <Animated.View
-            style={[
-              styles.container,
-              {
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
-            onStartShouldSetResponder={() => true}
-          >
-            <View style={styles.handleBar} />
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
+          <TouchableWithoutFeedback onPress={() => { }}>
+            <Animated.View
+              style={[
+                styles.container,
+                {
+                  transform: [{ translateY: slideAnim }],
+                },
+              ]}
             >
-              <View style={styles.premiumStatusContainer}>
-                <Text style={[styles.premiumStatusTitle, { color: textColor }]}>
-                  プレミアム会員
-                </Text>
-                <Text style={[styles.premiumStatusDescription, { color: subTextColor }]}>
-                  すべての機能をご利用いただけます
-                </Text>
-                {customerInfo?.expirationDate && (
-                  <Text style={[styles.expiryText, { color: subTextColor }]}>
-                    次回更新日: {formatExpiryDate()}
+              <View style={styles.handleBar} />
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.premiumStatusContainer}>
+                  <Text style={[styles.premiumStatusTitle, { color: textColor }]}>
+                    プレミアム会員
                   </Text>
-                )}
-              </View>
-            </ScrollView>
-          </Animated.View>
+                  <Text style={[styles.premiumStatusDescription, { color: subTextColor }]}>
+                    すべての機能をご利用いただけます
+                  </Text>
+                  {customerInfo?.expirationDate && (
+                    <Text style={[styles.expiryText, { color: subTextColor }]}>
+                      次回更新日: {formatExpiryDate()}
+                    </Text>
+                  )}
+                </View>
+              </ScrollView>
+            </Animated.View>
+          </TouchableWithoutFeedback>
         </TouchableOpacity>
       </Modal>
     );
@@ -272,208 +273,209 @@ export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottom
         activeOpacity={1}
         onPress={onClose}
       >
-        <Animated.View
-          style={[
-            styles.container,
-            {
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-          onStartShouldSetResponder={() => true}
-        >
-          {/* Handle Bar */}
-          <View style={styles.handleBar} />
-
-          {/* Close Button */}
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>✕</Text>
-          </TouchableOpacity>
-
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
+        <TouchableWithoutFeedback onPress={() => { }}>
+          <Animated.View
+            style={[
+              styles.container,
+              {
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
           >
-            {/* Title */}
-            <View style={styles.titleContainer}>
-              <Text style={[styles.title, { color: textColor }]}>
-                プレミアムプランで
-              </Text>
-              <Text style={[styles.title, { color: textColor }]}>
-                もっと快適な学習体験を
-              </Text>
-            </View>
+            {/* Handle Bar */}
+            <View style={styles.handleBar} />
 
-            {/* Subtitle */}
-            <Text style={[styles.subtitle, { color: subTextColor }]}>
-              ７日間無料で開始して、いつでもキャンセルできます
-            </Text>
+            {/* Close Button */}
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
 
-            {/* Segmented Control */}
-            <View style={styles.segmentContainer}>
-              <View style={styles.segmentedControl}>
-                <TouchableOpacity
-                  style={[
-                    styles.segmentButton,
-                    selectedPlan === 'yearly' && styles.segmentButtonSelected,
-                  ]}
-                  onPress={() => setSelectedPlan('yearly')}
-                >
-                  <Text
-                    style={[
-                      styles.segmentButtonText,
-                      selectedPlan === 'yearly' && styles.segmentButtonTextSelected,
-                    ]}
-                  >
-                    年間プラン
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.segmentButton,
-                    selectedPlan === 'monthly' && styles.segmentButtonSelected,
-                  ]}
-                  onPress={() => setSelectedPlan('monthly')}
-                >
-                  <Text
-                    style={[
-                      styles.segmentButtonText,
-                      selectedPlan === 'monthly' && styles.segmentButtonTextSelected,
-                    ]}
-                  >
-                    月間プラン
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {selectedPlan === 'yearly' && (
-                <Text style={styles.savingsText}>月約412円で2ヶ月分お得</Text>
-              )}
-            </View>
-
-            {/* Plan Card */}
-            <View style={styles.planCard}>
-              <Text style={[styles.planTitle, { color: textColor }]}>Premiumプラン</Text>
-
-              {/* Price */}
-              <View style={styles.priceContainer}>
-                <Text style={[styles.price, { color: textColor }]}>
-                  {selectedPlan === 'yearly' ? '¥5,000' : '¥500'}
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Title */}
+              <View style={styles.titleContainer}>
+                <Text style={[styles.title, { color: textColor }]}>
+                  プレミアムプランで
                 </Text>
-                <Text style={[styles.pricePeriod, { color: subTextColor }]}>
-                  {selectedPlan === 'yearly' ? ' 年払い' : ' 月払い'}
+                <Text style={[styles.title, { color: textColor }]}>
+                  もっと快適な学習体験を
                 </Text>
               </View>
 
-              {/* Purchase Button */}
+              {/* Subtitle */}
+              <Text style={[styles.subtitle, { color: subTextColor }]}>
+                ７日間無料で開始して、いつでもキャンセルできます
+              </Text>
+
+              {/* Segmented Control */}
+              <View style={styles.segmentContainer}>
+                <View style={styles.segmentedControl}>
+                  <TouchableOpacity
+                    style={[
+                      styles.segmentButton,
+                      selectedPlan === 'yearly' && styles.segmentButtonSelected,
+                    ]}
+                    onPress={() => setSelectedPlan('yearly')}
+                  >
+                    <Text
+                      style={[
+                        styles.segmentButtonText,
+                        selectedPlan === 'yearly' && styles.segmentButtonTextSelected,
+                      ]}
+                    >
+                      年間プラン
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.segmentButton,
+                      selectedPlan === 'monthly' && styles.segmentButtonSelected,
+                    ]}
+                    onPress={() => setSelectedPlan('monthly')}
+                  >
+                    <Text
+                      style={[
+                        styles.segmentButtonText,
+                        selectedPlan === 'monthly' && styles.segmentButtonTextSelected,
+                      ]}
+                    >
+                      月間プラン
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {selectedPlan === 'yearly' && (
+                  <Text style={styles.savingsText}>月約412円で2ヶ月分お得</Text>
+                )}
+              </View>
+
+              {/* Plan Card */}
+              <View style={styles.planCard}>
+                <Text style={[styles.planTitle, { color: textColor }]}>Premiumプラン</Text>
+
+                {/* Price */}
+                <View style={styles.priceContainer}>
+                  <Text style={[styles.price, { color: textColor }]}>
+                    {selectedPlan === 'yearly' ? '¥5,000' : '¥500'}
+                  </Text>
+                  <Text style={[styles.pricePeriod, { color: subTextColor }]}>
+                    {selectedPlan === 'yearly' ? ' 年払い' : ' 月払い'}
+                  </Text>
+                </View>
+
+                {/* Purchase Button */}
+                <TouchableOpacity
+                  style={[
+                    styles.purchaseButton,
+                    (isPurchasing || isLoading) && styles.purchaseButtonDisabled,
+                  ]}
+                  onPress={handlePurchase}
+                  disabled={isPurchasing || isLoading}
+                >
+                  {isPurchasing ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.purchaseButtonText}>無料で体験する</Text>
+                  )}
+                </TouchableOpacity>
+
+                {/* Features */}
+                <View style={styles.featuresContainer}>
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIconContainer}>
+                      <ChatIcon size={16} color="#FFFFFF" />
+                    </View>
+                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                      月間1000回の質問
+                    </Text>
+                  </View>
+
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIconContainer}>
+                      <GlobeIcon size={16} color="#FFFFFF" />
+                    </View>
+                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                      最大50,000文字の翻訳
+                    </Text>
+                  </View>
+
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIconContainer}>
+                      <FolderIcon size={16} color="#FFFFFF" />
+                    </View>
+                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                      ブックマークをフォルダで整理
+                    </Text>
+                  </View>
+
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIconContainer}>
+                      <CustomQuestionIcon size={16} color="#FFFFFF" />
+                    </View>
+                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                      無制限のカスタム質問
+                    </Text>
+                  </View>
+
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIconContainer}>
+                      <SparklesIcon size={16} color="#FFFFFF" />
+                    </View>
+                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                      より高性能なAIによる回答
+                    </Text>
+                  </View>
+
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIconContainer}>
+                      <BellIcon size={16} color="#FFFFFF" />
+                    </View>
+                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                      最新機能の優先使用
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Restore Button */}
               <TouchableOpacity
-                style={[
-                  styles.purchaseButton,
-                  (isPurchasing || isLoading) && styles.purchaseButtonDisabled,
-                ]}
-                onPress={handlePurchase}
-                disabled={isPurchasing || isLoading}
+                style={styles.restoreButton}
+                onPress={handleRestore}
+                disabled={isRestoring || isLoading}
               >
-                {isPurchasing ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                {isRestoring ? (
+                  <ActivityIndicator color={subTextColor} size="small" />
                 ) : (
-                  <Text style={styles.purchaseButtonText}>無料で体験する</Text>
+                  <Text style={[styles.restoreButtonText, { color: subTextColor }]}>
+                    購入を復元する
+                  </Text>
                 )}
               </TouchableOpacity>
 
-              {/* Features */}
-              <View style={styles.featuresContainer}>
-                <View style={styles.featureItem}>
-                  <View style={styles.featureIconContainer}>
-                    <ChatIcon size={16} color="#FFFFFF" />
-                  </View>
-                  <Text style={[styles.featureText, { color: '#414141' }]}>
-                    月間1000回の質問
-                  </Text>
-                </View>
-
-                <View style={styles.featureItem}>
-                  <View style={styles.featureIconContainer}>
-                    <GlobeIcon size={16} color="#FFFFFF" />
-                  </View>
-                  <Text style={[styles.featureText, { color: '#414141' }]}>
-                    最大50,000文字の翻訳
-                  </Text>
-                </View>
-
-                <View style={styles.featureItem}>
-                  <View style={styles.featureIconContainer}>
-                    <FolderIcon size={16} color="#FFFFFF" />
-                  </View>
-                  <Text style={[styles.featureText, { color: '#414141' }]}>
-                    ブックマークをフォルダで整理
-                  </Text>
-                </View>
-
-                <View style={styles.featureItem}>
-                  <View style={styles.featureIconContainer}>
-                    <CustomQuestionIcon size={16} color="#FFFFFF" />
-                  </View>
-                  <Text style={[styles.featureText, { color: '#414141' }]}>
-                    無制限のカスタム質問
-                  </Text>
-                </View>
-
-                <View style={styles.featureItem}>
-                  <View style={styles.featureIconContainer}>
-                    <SparklesIcon size={16} color="#FFFFFF" />
-                  </View>
-                  <Text style={[styles.featureText, { color: '#414141' }]}>
-                    より高性能なAIによる回答
-                  </Text>
-                </View>
-
-                <View style={styles.featureItem}>
-                  <View style={styles.featureIconContainer}>
-                    <BellIcon size={16} color="#FFFFFF" />
-                  </View>
-                  <Text style={[styles.featureText, { color: '#414141' }]}>
-                    最新機能の優先使用
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Restore Button */}
-            <TouchableOpacity
-              style={styles.restoreButton}
-              onPress={handleRestore}
-              disabled={isRestoring || isLoading}
-            >
-              {isRestoring ? (
-                <ActivityIndicator color={subTextColor} size="small" />
-              ) : (
-                <Text style={[styles.restoreButtonText, { color: subTextColor }]}>
-                  購入を復元する
+              {/* Terms */}
+              <View style={styles.termsContainer}>
+                <Text style={[styles.termsText, { color: subTextColor }]}>
+                  • 無料期間終了の24時間前までにキャンセルしない場合、{'\n'}
+                  {'  '}自動的に¥500/月（または¥5,000/年）が請求されます{'\n'}
+                  {'  '}• サブスクリプションは自動更新されます{'\n'}
+                  {'  '}• 期間終了の24時間前までにキャンセルすれば課金されません
                 </Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Terms */}
-            <View style={styles.termsContainer}>
-              <Text style={[styles.termsText, { color: subTextColor }]}>
-                • 無料期間終了の24時間前までにキャンセルしない場合、{'\n'}
-                {'  '}自動的に¥500/月（または¥5,000/年）が請求されます{'\n'}
-                {'  '}• サブスクリプションは自動更新されます{'\n'}
-                {'  '}• 期間終了の24時間前までにキャンセルすれば課金されません
-              </Text>
-              <View style={styles.linksContainer}>
-                <TouchableOpacity onPress={openTerms}>
-                  <Text style={[styles.linkText, { color: subTextColor }]}>利用規約</Text>
-                </TouchableOpacity>
-                <Text style={[styles.linkSeparator, { color: subTextColor }]}> • </Text>
-                <TouchableOpacity onPress={openPrivacyPolicy}>
-                  <Text style={[styles.linkText, { color: subTextColor }]}>プライバシーポリシー</Text>
-                </TouchableOpacity>
+                <View style={styles.linksContainer}>
+                  <TouchableOpacity onPress={openTerms}>
+                    <Text style={[styles.linkText, { color: subTextColor }]}>利用規約</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.linkSeparator, { color: subTextColor }]}> • </Text>
+                  <TouchableOpacity onPress={openPrivacyPolicy}>
+                    <Text style={[styles.linkText, { color: subTextColor }]}>プライバシーポリシー</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          </ScrollView>
-        </Animated.View>
+            </ScrollView>
+          </Animated.View>
+        </TouchableWithoutFeedback>
       </TouchableOpacity>
     </Modal>
   );

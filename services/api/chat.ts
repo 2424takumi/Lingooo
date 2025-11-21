@@ -451,6 +451,10 @@ export async function* sendFollowUpQuestionStream(
     const newText = xhr.responseText.substring(lastProcessedIndex);
     lastProcessedIndex = xhr.responseText.length;
 
+    if (newText.length > 0) {
+      logger.debug('[Chat API] Progress event, new text length:', newText.length);
+    }
+
     buffer += newText;
 
     const lines = buffer.split('\n');
@@ -461,6 +465,7 @@ export async function* sendFollowUpQuestionStream(
         const data = line.slice(6);
 
         if (data === '[DONE]') {
+          logger.info('[Chat API] Received [DONE] signal');
           continue;
         }
 
@@ -469,8 +474,10 @@ export async function* sendFollowUpQuestionStream(
 
           if (event.type === 'content') {
             accumulatedContent += event.content;
+            logger.debug('[Chat API] Content event, accumulated length:', accumulatedContent.length);
             onContent(event.content);
           } else if (event.type === 'error') {
+            logger.error('[Chat API] Error event:', event.error);
             onError(new Error(event.error));
             return;
           }
@@ -482,6 +489,7 @@ export async function* sendFollowUpQuestionStream(
   };
 
   xhr.onload = () => {
+    logger.info('[Chat API] XHR onload, status:', xhr.status, 'accumulated length:', accumulatedContent.length);
     if (xhr.status >= 200 && xhr.status < 300) {
       onComplete(accumulatedContent);
     } else {
@@ -509,5 +517,6 @@ export async function* sendFollowUpQuestionStream(
     onError(new Error('Network error'));
   };
 
+  logger.info('[Chat API] Sending XHR request');
   xhr.send(JSON.stringify(requestBody));
 }

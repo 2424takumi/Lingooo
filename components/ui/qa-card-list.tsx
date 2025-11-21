@@ -13,9 +13,10 @@ interface QACardListProps {
   onFollowUpQuestion?: (pairId: string, question: string) => Promise<void>;
   onEnterFollowUpMode?: (pairId: string, question: string) => void;
   activeFollowUpPairId?: string;
+  onScrollToFollowUpInput?: () => void;
 }
 
-export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout, onBookmarkAdded, onFollowUpQuestion, onEnterFollowUpMode, activeFollowUpPairId }: QACardListProps) {
+export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout, onBookmarkAdded, onFollowUpQuestion, onEnterFollowUpMode, activeFollowUpPairId, onScrollToFollowUpInput }: QACardListProps) {
   if (!pairs.length) {
     return null;
   }
@@ -42,6 +43,7 @@ export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout
               onFollowUpQuestion={onFollowUpQuestion ? (question) => onFollowUpQuestion(pair.id, question) : undefined}
               onEnterFollowUpMode={onEnterFollowUpMode}
               isFollowUpActive={activeFollowUpPairId === pair.id}
+              onScrollToFollowUpInput={onScrollToFollowUpInput}
             />
           </View>
         );

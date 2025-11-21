@@ -10,12 +10,19 @@ import { BookmarkToast } from '@/components/ui/bookmark-toast';
 import { TranslateCard } from '@/components/ui/translate-card';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
+import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { translateText } from '@/services/api/translate';
+import { getWordDetailStream } from '@/services/api/search';
+import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
+import { addSearchHistory } from '@/services/storage/search-history-storage';
+import { detectLang, resolveLanguageCode } from '@/services/utils/language-detect';
+import { detectWordLanguage } from '@/services/ai/dictionary-generator';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
+import { useSubscription } from '@/contexts/subscription-context';
 import { useClipboardSearch } from '@/hooks/use-clipboard-search';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
@@ -28,12 +35,25 @@ export default function TranslateScreen() {
   const params = useLocalSearchParams();
   const safeAreaInsets = useSafeAreaInsets();
   const { aiDetailLevel, setAIDetailLevel } = useAISettings();
-  const { currentLanguage, nativeLanguage } = useLearningLanguages();
+  const { currentLanguage, nativeLanguage, setCurrentLanguage } = useLearningLanguages();
+  const { isPremium } = useSubscription();
 
   // パラメータから文章と言語を取得
   const text = (params.word as string) || '';
-  const sourceLang = (params.sourceLang as string) || 'en';
+  const initialSourceLang = (params.sourceLang as string) || 'en';
   const initialTargetLang = (params.targetLang as string) || 'ja';
+  const needsAiDetection = (params.needsAiDetection as string) === 'true';
+
+  // AI検出によって言語が変わる可能性があるため、sourceLangをstateで管理
+  const [sourceLang, setSourceLang] = useState(initialSourceLang);
+
+  // AI言語検出中の状態（needsAiDetectionがtrueなら最初から検出中）
+  const [isDetectingLanguage, setIsDetectingLanguage] = useState(needsAiDetection);
+
+  // デバッグログ
+  useEffect(() => {
+    logger.info('[Translate] isDetectingLanguage state changed:', isDetectingLanguage);
+  }, [isDetectingLanguage]);
 
   // ヘッダーの高さを測定
   const [headerHeight, setHeaderHeight] = useState(52);
@@ -45,7 +65,9 @@ export default function TranslateScreen() {
     folders,
     isCreateFolderModalOpen,
     newFolderName,
+    isSubscriptionModalOpen,
     setNewFolderName,
+    setIsSubscriptionModalOpen,
     handleBookmarkAdded,
     handleToastDismiss,
     handleOpenFolderSelect,
@@ -117,14 +139,15 @@ export default function TranslateScreen() {
     const topMargin = 10;
 
     const fixedSpaces = containerPaddingTop + containerPaddingBottom + containerMarginBottom +
-                        chatMessagesMarginBottom + bottomSectionPaddingTop +
-                        questionScrollViewHeight + bottomSectionGap + whiteContainerHeight + topMargin;
+      chatMessagesMarginBottom + bottomSectionPaddingTop +
+      questionScrollViewHeight + bottomSectionGap + whiteContainerHeight + topMargin;
 
     return screenHeight - safeAreaInsets.top - headerHeight - fixedSpaces;
   }, [safeAreaInsets.top, headerHeight]);
 
   // QAPairsをstateとして管理
   const [qaPairs, setQAPairs] = useState<QAPair[]>([]);
+  const [activeFollowUpPairId, setActiveFollowUpPairId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const newPairs = toQAPairs(chatMessages, { fallbackError: chatError });
@@ -147,6 +170,50 @@ export default function TranslateScreen() {
     return currentLanguage.code;
   };
 
+  // AI言語検出（バックグラウンド）
+  useEffect(() => {
+    if (needsAiDetection && text) {
+      logger.info('[Translate] Starting AI language detection for:', text.substring(0, 50));
+      setIsDetectingLanguage(true);
+
+      detectWordLanguage(text.trim(), [
+        'en', 'pt', 'es', 'fr', 'de', 'it', 'zh', 'ko', 'vi', 'id'
+      ]).then(async (aiDetectedLang) => {
+        logger.info('[Translate] AI detection completed:', aiDetectedLang, 'initial sourceLang:', sourceLang, 'current tab:', currentLanguage.code);
+
+        if (aiDetectedLang) {
+          // 言語を更新（検出された言語がsourceLangと違う場合）
+          if (aiDetectedLang !== sourceLang) {
+            logger.info('[Translate] Updating source language from', sourceLang, 'to', aiDetectedLang);
+            setSourceLang(aiDetectedLang);
+
+            // 翻訳先言語を再計算
+            const newTargetLang = determineTranslateTargetLang(aiDetectedLang);
+            setSelectedTranslateTargetLang(newTargetLang);
+            logger.info('[Translate] Updated target lang to:', newTargetLang);
+          }
+
+          // ヘッダーの言語タブを自動切り替え（検出された言語が現在のタブと違い、かつ母語でない場合）
+          if (aiDetectedLang !== nativeLanguage.code && aiDetectedLang !== currentLanguage.code) {
+            logger.info('[Translate] Auto-switching language tab from', currentLanguage.code, 'to', aiDetectedLang);
+            await setCurrentLanguage(aiDetectedLang);
+          } else {
+            logger.info('[Translate] Language tab unchanged:', currentLanguage.code);
+          }
+        } else {
+          logger.info('[Translate] AI detection returned no result');
+        }
+
+        // 検出完了（言語が変わっても変わらなくても）
+        setIsDetectingLanguage(false);
+        logger.info('[Translate] Detection shimmer stopped');
+      }).catch((error) => {
+        logger.error('[Translate] AI language detection failed:', error);
+        setIsDetectingLanguage(false);
+      });
+    }
+  }, [needsAiDetection, text]); // 初回のみ実行
+
   // 言語切り替えを監視して再翻訳
   useEffect(() => {
     if (currentLanguage) {
@@ -160,6 +227,20 @@ export default function TranslateScreen() {
   // 翻訳実行
   useEffect(() => {
     const performTranslation = async () => {
+      // AI検出中は翻訳を開始しない（トークン節約）
+      if (isDetectingLanguage) {
+        logger.info('[Translate] Waiting for AI detection before translating');
+        setIsTranslating(true);
+        // 原文だけ先に表示
+        setTranslationData({
+          originalText: text,
+          translatedText: '',
+          sourceLang: sourceLang,
+          targetLang: selectedTranslateTargetLang,
+        });
+        return;
+      }
+
       setIsTranslating(true);
       setError(null);
 
@@ -171,9 +252,34 @@ export default function TranslateScreen() {
         targetLang: selectedTranslateTargetLang,
       });
 
+      logger.info('[Translate] Translating text:', {
+        sourceLang,
+        targetLang: selectedTranslateTargetLang,
+        textLength: text.length
+      });
+
       try {
         const result = await translateText(text, sourceLang, selectedTranslateTargetLang);
         setTranslationData(result);
+
+        // 翻訳履歴を保存
+        try {
+          // sourceLangとtargetLangのうち、母語でない方（学習言語）を履歴の言語として使用
+          // これにより、英日・日英どちらの翻訳も学習中の言語タブに表示される
+          const historyLanguage = sourceLang === nativeLanguage.code ? selectedTranslateTargetLang : sourceLang;
+
+          logger.info('[Translate] Saving translation history:', {
+            text: text.substring(0, 50),
+            language: historyLanguage,
+            sourceLang,
+            targetLang: selectedTranslateTargetLang,
+            textLength: text.length
+          });
+          await addSearchHistory(text, historyLanguage, result, undefined, 'translation');
+          logger.info('[Translate] Translation history saved successfully');
+        } catch (historyError) {
+          logger.error('[Translate] Failed to save translation history:', historyError);
+        }
       } catch (err) {
         logger.error('[Translate] Translation failed:', err);
         setError('翻訳に失敗しました');
@@ -185,7 +291,7 @@ export default function TranslateScreen() {
     if (text) {
       performTranslation();
     }
-  }, [text, sourceLang, selectedTranslateTargetLang]);
+  }, [text, sourceLang, selectedTranslateTargetLang, isDetectingLanguage]);
 
   // 追加質問のハンドラー
   const handleFollowUpQuestion = async (pairId: string, question: string) => {
@@ -213,22 +319,42 @@ export default function TranslateScreen() {
     await sendChatMessage(question);
   };
 
+  const handleEnterFollowUpMode = (pairId: string, question: string) => {
+    if (activeFollowUpPairId === pairId) {
+      setActiveFollowUpPairId(undefined);
+    } else {
+      setActiveFollowUpPairId(pairId);
+    }
+  };
+
   const handleChatSubmit = async (question: string) => {
     let finalQuestion = question;
+    let displayQuestion = question;
+
     if (selectedText?.text) {
-      finalQuestion = `「${selectedText.text}」について：${question}`;
+      // API用: 部分選択した箇所に焦点を当てた質問形式
+      finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${question}`;
+      // UI表示用: シンプルな形式
+      displayQuestion = `「${selectedText.text}」について：${question}`;
       setSelectedText(null);
     }
-    await sendChatMessage(finalQuestion);
+
+    await sendChatMessage(finalQuestion, displayQuestion);
   };
 
   const handleQuickQuestion = async (question: string) => {
     let finalQuestion = question;
+    let displayQuestion = question;
+
     if (selectedText?.text) {
-      finalQuestion = `「${selectedText.text}」について：${question}`;
+      // API用: 部分選択した箇所に焦点を当てた質問形式
+      finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${question}`;
+      // UI表示用: シンプルな形式
+      displayQuestion = `「${selectedText.text}」について：${question}`;
       setSelectedText(null);
     }
-    await sendQuickQuestion(finalQuestion);
+
+    await sendQuickQuestion(finalQuestion, displayQuestion);
   };
 
   const handleQACardRetry = (question: string) => {
@@ -247,16 +373,49 @@ export default function TranslateScreen() {
     // Determine if it's a single word (simple heuristic: no spaces)
     const isSingleWord = !text.includes(' ') && text.split(/\s+/).length === 1;
     setSelectedText({ text, isSingleWord });
+
+    // 単語の場合、プリフェッチを開始（辞書で調べるボタンを押す前に準備）
+    if (isSingleWord && text.trim()) {
+      // 選択されたテキストの言語を検出（翻訳用のロジック）
+      const detectedLang = detectLang(text.trim());
+      let targetLang: string;
+      if (detectedLang === 'ja') {
+        targetLang = 'ja';
+      } else if (detectedLang === 'kanji-only') {
+        targetLang = nativeLanguage.code; // 母語を優先
+      } else {
+        // alphabet or mixed の場合、英語をデフォルトとする
+        targetLang = 'en';
+      }
+      logger.info('[Translate] Pre-fetching word detail for selected text:', text, 'detected:', detectedLang, 'resolved:', targetLang);
+
+      prefetchWordDetail(text.trim(), (onProgress) => {
+        return getWordDetailStream(text.trim(), targetLang, nativeLanguage.code, 'concise', onProgress);
+      });
+    }
   };
 
   const handleDictionaryLookup = () => {
     if (!selectedText) return;
 
+    // 選択されたテキストの言語を検出（翻訳用のロジック）
+    const detectedLang = detectLang(selectedText.text);
+    let targetLang: string;
+    if (detectedLang === 'ja') {
+      targetLang = 'ja';
+    } else if (detectedLang === 'kanji-only') {
+      targetLang = nativeLanguage.code; // 母語を優先
+    } else {
+      // alphabet or mixed の場合、英語をデフォルトとする
+      targetLang = 'en';
+    }
+    logger.info('[Translate] Dictionary lookup for:', selectedText.text, 'detected:', detectedLang, 'resolved:', targetLang);
+
     router.push({
       pathname: '/(tabs)/word-detail',
       params: {
         word: selectedText.text,
-        targetLanguage: translationData?.sourceLang || currentLanguage.code,
+        targetLanguage: targetLang,
       },
     });
   };
@@ -276,7 +435,7 @@ export default function TranslateScreen() {
             }
           }}
         >
-          <UnifiedHeaderBar pageType="translate" onBackPress={handleBackPress} />
+          <UnifiedHeaderBar pageType="translate" onBackPress={handleBackPress} isDetectingLanguage={isDetectingLanguage} />
         </View>
 
         {/* Translation Card - Scrollable */}
@@ -320,6 +479,8 @@ export default function TranslateScreen() {
             onBookmarkAdded={handleBookmarkAdded}
             expandedMaxHeight={chatExpandedMaxHeight}
             onFollowUpQuestion={handleFollowUpQuestion}
+            onEnterFollowUpMode={handleEnterFollowUpMode}
+            activeFollowUpPairId={activeFollowUpPairId}
             prefilledInputText={prefilledChatText}
             onPrefillConsumed={() => setPrefilledChatText(null)}
             selectedText={selectedText}
@@ -333,6 +494,7 @@ export default function TranslateScreen() {
         visible={toastVisible}
         onAddToFolder={handleOpenFolderSelect}
         onDismiss={handleToastDismiss}
+        showFolderButton={isPremium}
       />
 
       {/* Folder Select Modal */}
@@ -351,6 +513,12 @@ export default function TranslateScreen() {
         onChangeFolderName={setNewFolderName}
         onCreate={handleCreateFolder}
         onClose={handleCloseCreateFolderModal}
+      />
+
+      {/* Subscription Bottom Sheet */}
+      <SubscriptionBottomSheet
+        visible={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
       />
     </ThemedView>
   );

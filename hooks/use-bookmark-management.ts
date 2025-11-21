@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { loadFolders, updateBookmarkFolder, addFolder, type BookmarkFolder } from '@/services/storage/bookmark-storage';
+import { useSubscription } from '@/contexts/subscription-context';
 import { logger } from '@/utils/logger';
 
 interface UseBookmarkManagementOptions {
@@ -18,6 +19,7 @@ interface UseBookmarkManagementOptions {
 
 export function useBookmarkManagement(options: UseBookmarkManagementOptions = {}) {
   const { logPrefix = 'BookmarkManagement' } = options;
+  const { isPremium } = useSubscription();
 
   // State
   const [toastVisible, setToastVisible] = useState(false);
@@ -26,6 +28,7 @@ export function useBookmarkManagement(options: UseBookmarkManagementOptions = {}
   const [folders, setFolders] = useState<BookmarkFolder[]>([]);
   const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
 
   // フォルダを読み込む
   const fetchFolders = async () => {
@@ -53,8 +56,14 @@ export function useBookmarkManagement(options: UseBookmarkManagementOptions = {}
     setToastVisible(false);
   };
 
-  // フォルダ選択モーダルを開く
+  // フォルダ選択モーダルを開く（プレミアム限定）
   const handleOpenFolderSelect = () => {
+    if (!isPremium) {
+      // 無料プランの場合はサブスクリプションモーダルを表示
+      setIsSubscriptionModalOpen(true);
+      setToastVisible(false);
+      return;
+    }
     setIsFolderSelectModalOpen(true);
   };
 
@@ -135,9 +144,11 @@ export function useBookmarkManagement(options: UseBookmarkManagementOptions = {}
     folders,
     isCreateFolderModalOpen,
     newFolderName,
+    isSubscriptionModalOpen,
 
     // State setters
     setNewFolderName,
+    setIsSubscriptionModalOpen,
 
     // Handlers
     handleBookmarkAdded,

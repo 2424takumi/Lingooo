@@ -12,13 +12,17 @@ import { authenticatedFetch } from '../api/client';
 const BACKEND_URL = (() => {
   const url = process.env.EXPO_PUBLIC_BACKEND_URL;
 
+  logger.info(`[GeminiClient] EXPO_PUBLIC_BACKEND_URL from env: ${url}`);
+
   // 環境変数が設定されている場合はそれを使用
   if (url) {
+    logger.info(`[GeminiClient] Using backend URL: ${url}`);
     return url;
   }
 
   // 開発環境のみlocalhostにフォールバック
   if (__DEV__) {
+    logger.info('[GeminiClient] Using fallback URL: http://localhost:3000');
     return 'http://localhost:3000';
   }
 
@@ -514,14 +518,23 @@ export async function generateUsageHints(
  */
 export async function isGeminiConfigured(): Promise<boolean> {
   try {
-    const response = await authenticatedFetch(getApiUrl('/status'));
+    const statusUrl = getApiUrl('/status');
+    logger.info(`[GeminiClient] Checking backend status at: ${statusUrl}`);
+
+    const response = await authenticatedFetch(statusUrl);
+    logger.info(`[GeminiClient] Status response: ${response.ok}, status: ${response.status}`);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      logger.warn(`[GeminiClient] Status check failed: ${errorText}`);
       return false;
     }
     const data = await response.json();
+    logger.info(`[GeminiClient] Backend configured: ${data.configured}`);
     return data.configured;
   } catch (error) {
     // バックエンドサーバーが起動していない場合はモックデータを使用（正常な動作）
+    logger.error('[GeminiClient] Backend server not available:', error);
     logger.debug('[GeminiClient] Backend server not available, using mock data');
     return false;
   }

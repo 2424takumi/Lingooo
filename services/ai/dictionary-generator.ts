@@ -43,15 +43,13 @@ export async function detectWordLanguage(
     .map(code => languageNames[code] || code)
     .join('、');
 
-  const prompt = `単語「${word}」はどの言語の単語ですか？
+  const prompt = `単語「${word}」の言語を判定。候補: ${candidateLanguageNames}
 
-候補言語: ${candidateLanguageNames}
-
-以下の条件に従って回答してください：
-1. 候補言語の中にこの単語が存在する言語があれば、その言語コード（例: en, pt, es）のみを返す
-2. 複数の候補言語に存在する場合は、最も一般的な言語を1つだけ返す
-3. 候補言語のいずれにも存在しない場合は「none」と返す
-4. 言語コード以外の説明や記号は一切含めない
+条件:
+1. 候補に該当する場合 → 言語コード（en, pt, es等）のみを返す
+2. 複数該当する場合 → 最も一般的な言語1つ
+3. 候補に該当しない場合 → none
+4. コード以外の説明・記号は一切含めない
 
 回答（言語コードのみ）:`;
 
@@ -522,20 +520,19 @@ export async function generateWordHint(
     ? `\n意味: ${definitions.join('、')}`
     : '';
 
-  const prompt = `${targetLanguage === 'en' ? '英' : targetLanguage}単語「${word}」について、日本語で2〜3行の簡潔なヒントを生成してください。${definitionsText}
+  const prompt = `${targetLanguage === 'en' ? '英' : targetLanguage}単語「${word}」の学習に役立つヒントを日本語で2〜3行で簡潔に。${definitionsText}
 
-以下の内容を含めてください：
-- どのような場面で使われるか（日常会話・アカデミック・ビジネスなど）
+含める内容:
+- 使用場面（日常会話・ビジネス・アカデミックなど）
 - 特徴的なニュアンスや使い方
-- 類似語との違いがあれば簡単に
+- 類似語との違い（あれば）
 
-例：
-「日常・アカデミック両方で使える基礎語です。主にスタディーという意味がありこういった使い方ができます。」
+例: 「日常・アカデミック両方で使える基礎語です。主にスタディーという意味があり、こういった使い方ができます。」
 
-重要：
+注意:
 - 2〜3行で簡潔に
 - 自然で読みやすい日本語
-- ヒントのテキストのみを返す（説明文は不要）`;
+- ヒント本文のみを返す（説明不要）`;
 
   try {
     const result = await generateText(prompt, modelConfig);

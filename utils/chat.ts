@@ -47,7 +47,7 @@ export function toQAPairs(
 
       pairs.push({
         id: `qa-${pendingUser.id}`,
-        q: pendingUser.content?.trim() ?? '',
+        q: pendingUser.displayContent?.trim() || pendingUser.content?.trim() || '', // displayContentを優先
         a: answerText.length > 0 ? answerText : undefined,
         status,
         errorMessage: status === 'error' ? message.error ?? fallbackError ?? undefined : undefined,
@@ -62,7 +62,7 @@ export function toQAPairs(
 
     pairs.push({
       id: `qa-${pendingUser.id}`,
-      q: pendingUser.content?.trim() ?? '',
+      q: pendingUser.displayContent?.trim() || pendingUser.content?.trim() || '', // displayContentを優先
       status,
       errorMessage: status === 'error' ? fallbackError ?? undefined : undefined,
     });

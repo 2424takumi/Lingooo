@@ -19,7 +19,7 @@ const PLAN_LIMITS: PlanLimits = {
 };
 
 export function useQuestionCount() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, needsInitialSetup } = useAuth();
   const [questionCount, setQuestionCount] = useState({
     monthly: 0,
     limit: 100, // デフォルトは無料プラン
@@ -37,7 +37,7 @@ export function useQuestionCount() {
 
   // Supabaseからデータを読み込む
   const loadQuestionCount = useCallback(async () => {
-    if (!user) {
+    if (!user || needsInitialSetup) {
       setIsLoading(false);
       return;
     }
@@ -50,7 +50,10 @@ export function useQuestionCount() {
         .single();
 
       if (error) {
-        console.error('Failed to load question count:', error);
+        // PGRST116: レコードが0件の場合は初期設定前なので静かに処理
+        if (error.code !== 'PGRST116') {
+          console.error('Failed to load question count:', error);
+        }
         setQuestionCount({
           monthly: 0,
           limit: 100,
@@ -144,12 +147,12 @@ export function useQuestionCount() {
     }
   }, [user]);
 
-  // 初期ロード（userが取得されたら実行）
+  // 初期ロード（userが取得されたら、かつ初期設定が完了していたら実行）
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !needsInitialSetup) {
       loadQuestionCount();
     }
-  }, [user, authLoading, loadQuestionCount]);
+  }, [user, authLoading, needsInitialSetup, loadQuestionCount]);
 
   return {
     questionCount,

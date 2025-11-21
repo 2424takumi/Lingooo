@@ -12,11 +12,13 @@ import { ShimmerSuggestions } from '@/components/ui/shimmer';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
+import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useAISettings } from '@/contexts/ai-settings-context';
+import { useSubscription } from '@/contexts/subscription-context';
 import { getCachedSuggestions, subscribeSuggestions } from '@/services/cache/suggestion-cache';
 import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { getWordDetailStream, searchJaToEn } from '@/services/api/search';
@@ -34,6 +36,7 @@ export default function SearchScreen() {
   const params = useLocalSearchParams();
   const { currentLanguage, nativeLanguage } = useLearningLanguages();
   const { aiDetailLevel, setAIDetailLevel } = useAISettings();
+  const { isPremium } = useSubscription();
   const safeAreaInsets = useSafeAreaInsets();
 
   const query = typeof params.query === 'string' ? params.query : '';
@@ -62,7 +65,9 @@ export default function SearchScreen() {
     folders,
     isCreateFolderModalOpen,
     newFolderName,
+    isSubscriptionModalOpen,
     setNewFolderName,
+    setIsSubscriptionModalOpen,
     handleBookmarkAdded,
     handleToastDismiss,
     handleOpenFolderSelect,
@@ -140,6 +145,25 @@ export default function SearchScreen() {
     return unsubscribe;
   }, [query, currentLanguage.code]);
 
+  // インテリジェントプリフェッチ: サジェストの最初の1件を先読み
+  useEffect(() => {
+    // 検索結果ページでは即座にプリフェッチ（デバウンス不要）
+    if (suggestions.length > 0) {
+      const topSuggestion = suggestions[0];
+      logger.info('[Search] 🚀 Pre-fetching top suggestion immediately:', topSuggestion.lemma);
+
+      prefetchWordDetail(topSuggestion.lemma, (onProgress) =>
+        getWordDetailStream(
+          topSuggestion.lemma,
+          currentLanguage.code,
+          nativeLanguage.code,
+          'concise',
+          onProgress
+        )
+      );
+    }
+  }, [suggestions, currentLanguage.code, nativeLanguage.code]);
+
   const chatContext = useMemo(
     () => ({
       searchSuggestions: suggestions.map((item) => ({
@@ -179,8 +203,8 @@ export default function SearchScreen() {
     const whiteContainerHeight = 55; // paddingTop 9 + minHeight 34 + paddingBottom 12
 
     const fixedSpaces = containerPaddingTop + containerPaddingBottom + containerMarginBottom +
-                        chatMessagesMarginBottom + bottomSectionPaddingTop +
-                        questionScrollViewHeight + bottomSectionGap + whiteContainerHeight - 12; // -12でさらに伸ばす
+      chatMessagesMarginBottom + bottomSectionPaddingTop +
+      questionScrollViewHeight + bottomSectionGap + whiteContainerHeight - 12; // -12でさらに伸ばす
 
     // 画面高さ - safeAreaTop - headerHeight - 固定スペース - bottomSafeArea
     return screenHeight - safeAreaInsets.top - headerHeight - fixedSpaces - safeAreaInsets.bottom;
@@ -188,6 +212,7 @@ export default function SearchScreen() {
 
   // QAPairsをstateとして管理（追加質問をサポートするため）
   const [qaPairs, setQAPairs] = useState<QAPair[]>([]);
+  const [activeFollowUpPairId, setActiveFollowUpPairId] = useState<string | undefined>(undefined);
 
   // chatMessagesが変更されたときにqaPairsを更新
   useEffect(() => {
@@ -278,6 +303,12 @@ export default function SearchScreen() {
     // 5. チャットコンテキストを経由せずに直接APIを呼び出し
     const { sendFollowUpQuestionStream } = await import('@/services/api/chat');
 
+    logger.info('[Search] Starting follow-up question API call:', {
+      pairId,
+      followUpId,
+      contextLength: contextualQuestion.length,
+    });
+
     try {
       const generator = sendFollowUpQuestionStream(
         {
@@ -291,6 +322,7 @@ export default function SearchScreen() {
         },
         // onContent: ストリーミング中の更新
         (content) => {
+          logger.debug('[Search] Follow-up content received:', content.substring(0, 50));
           setQAPairs(prev => prev.map(pair => {
             if (pair.id === pairId) {
               return {
@@ -305,6 +337,7 @@ export default function SearchScreen() {
         },
         // onComplete: 完了時
         (fullAnswer) => {
+          logger.info('[Search] Follow-up question completed, answer length:', fullAnswer.length);
           setQAPairs(prev => prev.map(pair => {
             if (pair.id === pairId) {
               return {
@@ -337,11 +370,21 @@ export default function SearchScreen() {
       );
 
       // ジェネレーターを開始（実際にはコールバックが処理する）
+      logger.info('[Search] Starting generator loop');
       for await (const _ of generator) {
         // コールバックで処理されるため、ここでは何もしない
       }
+      logger.info('[Search] Generator loop completed');
     } catch (error) {
       logger.error('[Search] Failed to send follow-up question:', error);
+    }
+  };
+
+  const handleEnterFollowUpMode = (pairId: string, question: string) => {
+    if (activeFollowUpPairId === pairId) {
+      setActiveFollowUpPairId(undefined);
+    } else {
+      setActiveFollowUpPairId(pairId);
     }
   };
 
@@ -372,6 +415,7 @@ export default function SearchScreen() {
     });
 
     // バックグラウンドでAI詳細（例文など）をプリフェッチ
+    logger.info('[Search] 🚀 Starting prefetch for:', item.lemma);
     prefetchWordDetail(item.lemma, (onProgress) => getWordDetailStream(item.lemma, currentLanguage.code, nativeLanguage.code, 'concise', onProgress));
 
     router.push({
@@ -474,6 +518,8 @@ export default function SearchScreen() {
             identifier={query}
             onBookmarkAdded={handleBookmarkAdded}
             onFollowUpQuestion={handleFollowUpQuestion}
+            onEnterFollowUpMode={handleEnterFollowUpMode}
+            activeFollowUpPairId={activeFollowUpPairId}
           />
         </View>
       </KeyboardAvoidingView>
@@ -483,6 +529,7 @@ export default function SearchScreen() {
         visible={toastVisible}
         onAddToFolder={handleOpenFolderSelect}
         onDismiss={handleToastDismiss}
+        showFolderButton={isPremium}
       />
 
       {/* Folder Select Modal */}
@@ -501,6 +548,12 @@ export default function SearchScreen() {
         onChangeFolderName={setNewFolderName}
         onCreate={handleCreateFolder}
         onClose={handleCloseCreateFolderModal}
+      />
+
+      {/* Subscription Bottom Sheet */}
+      <SubscriptionBottomSheet
+        visible={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
       />
     </ThemedView>
   );

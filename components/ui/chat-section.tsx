@@ -18,8 +18,10 @@ import type { QAPair } from '@/types/chat';
 import { QuestionTag } from './question-tag';
 import { QACardList } from './qa-card-list';
 import { useAISettings } from '@/contexts/ai-settings-context';
+import { useSubscription } from '@/contexts/subscription-context';
 import { logger } from '@/utils/logger';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 
 interface ChatSectionProps {
   placeholder?: string;
@@ -43,6 +45,8 @@ interface ChatSectionProps {
   onPrefillConsumed?: () => void;
   selectedText?: { text: string; isSingleWord: boolean } | null; // 選択テキスト情報
   onDictionaryLookup?: () => void; // 辞書で調べるボタンのコールバック
+  onEnterFollowUpMode?: (pairId: string, question: string) => void;
+  activeFollowUpPairId?: string;
 }
 
 function ExpandIcon({ size = 18 }: { size?: number }) {
@@ -131,7 +135,42 @@ function ArrowRightIcon({ size = 24, color = '#242424' }: { size?: number; color
   );
 }
 
-const DEFAULT_QUESTIONS = ['語源', '類義語', '対義語', '使用例'];
+function CloseIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M18 6L6 18M6 6l12 12"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function CornerDownRightIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 10l5 5-5 5"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M4 4v7a4 4 0 0 0 4 4h12"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+const DEFAULT_QUESTIONS = ['ニュアンス', '語源', '例文'];
 
 export function ChatSection({
   placeholder = 'この単語について質問をする...',
@@ -155,8 +194,11 @@ export function ChatSection({
   onPrefillConsumed,
   selectedText,
   onDictionaryLookup,
+  onEnterFollowUpMode,
+  activeFollowUpPairId,
 }: ChatSectionProps) {
   const { customQuestions, addCustomQuestion } = useAISettings();
+  const { isPremium } = useSubscription();
   const containerBackground = useThemeColor({}, 'chatSectionBackground');
   const inputBackground = useThemeColor({}, 'chatInputBackground');
   const placeholderColor = useThemeColor({}, 'textPlaceholder');
@@ -172,6 +214,7 @@ export function ChatSection({
   const [isCustomQuestionModalOpen, setIsCustomQuestionModalOpen] = useState(false);
   const [customQuestionTitle, setCustomQuestionTitle] = useState('');
   const [customQuestionText, setCustomQuestionText] = useState('');
+  const [isPremiumUpgradeModalOpen, setIsPremiumUpgradeModalOpen] = useState(false);
   const INPUT_LINE_HEIGHT = 22;
   const MAX_LINES = 5;
   const INPUT_TOP_PADDING = 6;
@@ -184,6 +227,8 @@ export function ChatSection({
   const lastCardYRef = useRef<number>(0);
   const prevIdentifierRef = useRef(identifier);
   const lastPrefilledValueRef = useRef<string | null>(null);
+  // フォローアップモードが解除されたことを即座に追跡するフラグ
+  const followUpModeDisabledRef = useRef(false);
 
   // 画面の高さを取得し、チャットメッセージの最大高さを計算
   // expandedMaxHeightが渡されている場合はそれを優先、なければ従来の計算を使用
@@ -302,7 +347,46 @@ export function ChatSection({
   }, [qaPairs, isStreaming, isOpen]);
 
   const handleSubmit = async (text: string) => {
-    if (!text.trim() || !onSend) {
+    if (!text.trim()) {
+      return;
+    }
+
+    logger.debug('[ChatSection] handleSubmit called:', {
+      text: text.substring(0, 50),
+      hasActiveFollowUpPair: !!activeFollowUpPair,
+      activeFollowUpPairId: activeFollowUpPair?.id,
+      hasOnFollowUpQuestion: !!onFollowUpQuestion,
+      followUpModeDisabled: followUpModeDisabledRef.current,
+    });
+
+    // フォローアップモード時は追加質問として送信（フラグでモードが解除されていないことを確認）
+    if (activeFollowUpPair && onFollowUpQuestion && onEnterFollowUpMode && !followUpModeDisabledRef.current) {
+      logger.info('[ChatSection] Sending as follow-up question to pair:', activeFollowUpPair.id);
+      const pairId = activeFollowUpPair.id;
+      const pairQuestion = activeFollowUpPair.q;
+
+      try {
+        setIsSubmitting(true);
+        setIsOpen(true);
+
+        // フラグを即座に設定（次の質問が通常質問になるように）
+        followUpModeDisabledRef.current = true;
+
+        // フォローアップモードを解除
+        onEnterFollowUpMode(pairId, pairQuestion);
+
+        // 追加質問を送信
+        await onFollowUpQuestion(pairId, text.trim());
+        setInputText('');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // 通常モード時は新しい質問として送信
+    logger.info('[ChatSection] Sending as new question (not follow-up)');
+    if (!onSend) {
       return;
     }
     try {
@@ -341,15 +425,10 @@ export function ChatSection({
   };
 
   const combinedQuestions = useMemo(() => {
-    // カスタム質問のタイトルを先頭に、次にデフォルト質問、最後にフォローアップ質問
-    const tags = [...customQuestions.map(cq => cq.title), ...questions];
-    for (const item of followUps) {
-      if (!tags.includes(item)) {
-        tags.push(item);
-      }
-    }
-    return tags;
-  }, [customQuestions, questions, followUps]);
+    // カスタム質問のタイトルを先頭に、次にデフォルト質問を表示
+    // フォローアップ質問（AIからの提案など）はタグとして表示しない
+    return [...customQuestions.map(cq => cq.title), ...questions];
+  }, [customQuestions, questions]);
 
   // タイトルと実際の質問文のマッピングを作成
   const questionMap = useMemo(() => {
@@ -358,9 +437,20 @@ export function ChatSection({
     customQuestions.forEach(cq => {
       map.set(cq.title, cq.question);
     });
-    // デフォルト質問とフォローアップ質問はタイトル=質問文
-    questions.forEach(q => map.set(q, q));
-    followUps.forEach(q => map.set(q, q));
+
+    // デフォルト質問のマッピング
+    map.set('ニュアンス', 'この単語の持つニュアンスについて詳しく教えてください');
+    map.set('語源', 'この単語の語源や由来を教えてください');
+    map.set('例文', 'この単語を使った自然な例文をいくつか教えてください');
+
+    // その他の質問（フォローアップなど）はタイトル=質問文とするが、
+    // デフォルト質問に含まれていないものだけを追加
+    questions.forEach(q => {
+      if (!map.has(q)) map.set(q, q);
+    });
+    followUps.forEach(q => {
+      if (!map.has(q)) map.set(q, q);
+    });
     return map;
   }, [customQuestions, questions, followUps]);
 
@@ -379,6 +469,22 @@ export function ChatSection({
       logger.error('Failed to add custom question:', error);
     }
   };
+
+  // アクティブなフォローアップペアを取得
+  const activeFollowUpPair = useMemo(() => {
+    const pair = qaPairs.find(p => p.id === activeFollowUpPairId);
+    logger.debug('[ChatSection] activeFollowUpPair updated:', {
+      activeFollowUpPairId,
+      foundPair: !!pair,
+      pairId: pair?.id,
+      pairQuestion: pair?.q?.substring(0, 50),
+    });
+
+    // activeFollowUpPairIdが変わったらフラグをリセット
+    followUpModeDisabledRef.current = false;
+
+    return pair;
+  }, [qaPairs, activeFollowUpPairId]);
 
   return (
     <View style={[
@@ -419,6 +525,8 @@ export function ChatSection({
                 }}
                 onBookmarkAdded={onBookmarkAdded}
                 onFollowUpQuestion={onFollowUpQuestion}
+                onEnterFollowUpMode={onEnterFollowUpMode}
+                activeFollowUpPairId={activeFollowUpPairId}
                 onScrollToFollowUpInput={() => {
                   // 追加質問のテキストインプットが表示されたときにスクロール
                   // より長い遅延でスクロールを実行（キーボードアニメーション完了後）
@@ -472,239 +580,272 @@ export function ChatSection({
       <View style={[
         styles.bottomSection,
         scope === 'translate' && styles.bottomSectionTranslate,
-        scope === 'translate' && isOpen && styles.bottomSectionTranslateOpen
+        scope === 'translate' && isOpen && styles.bottomSectionTranslateOpen,
+        activeFollowUpPair && styles.bottomSectionFollowUp
       ]}>
-          {/* Question Tags - 翻訳モードでは非表示 */}
-          {scope !== 'translate' && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.questionScrollView}
-              contentContainerStyle={styles.questionList}
+        {/* Question Tags - 翻訳モードでは非表示、フォローアップモード時は非表示 */}
+        {scope !== 'translate' && !activeFollowUpPair && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.questionScrollView}
+            contentContainerStyle={styles.questionList}
+          >
+            {/* Plus button for adding custom questions */}
+            <TouchableOpacity
+              style={styles.plusButton}
+              onPress={() => setIsCustomQuestionModalOpen(true)}
             >
-              {/* Plus button for adding custom questions */}
+              <PlusIcon size={20} />
+            </TouchableOpacity>
+
+            {combinedQuestions.map((label, index) => (
+              <QuestionTag
+                key={`${label}-${index}`}
+                label={label}
+                onPress={() => {
+                  setIsOpen(true);
+                  // questionMapから実際の質問文を取得して送信
+                  const actualQuestion = questionMap.get(label) || label;
+                  onQuickQuestion?.(actualQuestion);
+                }}
+              />
+            ))}
+          </ScrollView>
+        )}
+
+        {/* Follow-up Context View - フォローアップモード時のみ表示 */}
+        {activeFollowUpPair && (
+          <View style={styles.followUpContextContainer}>
+            <View style={styles.followUpContextContent}>
+              <CornerDownRightIcon size={18} color="#CECECE" />
+              <Text style={styles.followUpContextLabel} numberOfLines={1}>
+                {activeFollowUpPair.q}
+              </Text>
               <TouchableOpacity
-                style={styles.plusButton}
-                onPress={() => setIsCustomQuestionModalOpen(true)}
+                style={styles.followUpContextCloseButton}
+                onPress={() => onEnterFollowUpMode?.(activeFollowUpPair.id, activeFollowUpPair.q)}
+                hitSlop={8}
               >
-                <PlusIcon size={20} />
-              </TouchableOpacity>
-
-              {combinedQuestions.map((label, index) => (
-                <QuestionTag
-                  key={`${label}-${index}`}
-                  label={label}
-                  onPress={() => {
-                    setIsOpen(true);
-                    // questionMapから実際の質問文を取得して送信
-                    const actualQuestion = questionMap.get(label) || label;
-                    onQuickQuestion?.(actualQuestion);
-                  }}
-                />
-              ))}
-            </ScrollView>
-          )}
-
-          {/* White Container: Settings Icon + Input + Action Button (1 row) */}
-          <View style={[styles.whiteContainer, { backgroundColor: inputBackground }]}>
-            <View style={styles.inputRow}>
-              {/* Settings Icon Button */}
-              <TouchableOpacity
-                style={styles.settingsButton}
-                onPress={() => setIsSettingsMenuOpen(true)}
-                disabled={isStreaming}
-              >
-                <SliderIcon size={20} />
-              </TouchableOpacity>
-
-              {/* Text Input */}
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  ref={inputRef}
-                  style={[
-                    styles.input,
-                    {
-                      lineHeight: INPUT_LINE_HEIGHT,
-                      paddingTop: INPUT_TOP_PADDING,
-                      paddingBottom: INPUT_BOTTOM_PADDING,
-                    },
-                  ]}
-                  placeholder={placeholder}
-                  placeholderTextColor={placeholderColor}
-                  value={inputText}
-                  onChangeText={setInputText}
-                  onFocus={() => {
-                    setIsInputFocused(true);
-                  }}
-                  onBlur={() => {
-                    setIsInputFocused(false);
-                  }}
-                  editable={!isStreaming}
-                  multiline
-                  textAlignVertical="top"
-                  scrollEnabled={false}
-                  selectionColor="#242424"
-                  selectTextOnFocus={false}
-                  contextMenuHidden={false}
-                />
-              </View>
-
-              {/* Action Button */}
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  (isStreaming || isSubmitting) && styles.buttonDisabled,
-                ]}
-                onPress={handleActionButtonPress}
-                disabled={isStreaming || isSubmitting}
-              >
-                {isInputFocused && inputText.trim().length > 0 ? (
-                  <SendIcon size={20} />
-                ) : isOpen ? (
-                  <ShrinkIcon size={22} />
-                ) : (
-                  <ExpandIcon size={18} />
-                )}
+                <CloseIcon size={18} color="#CECECE" />
               </TouchableOpacity>
             </View>
           </View>
+        )}
+
+        {/* White Container: Settings Icon + Input + Action Button (1 row) */}
+        <View style={[styles.whiteContainer, { backgroundColor: inputBackground }]}>
+          <View style={styles.inputRow}>
+            {/* Settings Icon Button */}
+            <TouchableOpacity
+              style={styles.settingsButton}
+              onPress={() => setIsSettingsMenuOpen(true)}
+              disabled={isStreaming}
+            >
+              <SliderIcon size={20} />
+            </TouchableOpacity>
+
+            {/* Text Input */}
+            <View style={styles.inputWrapper}>
+              <TextInput
+                ref={inputRef}
+                style={[
+                  styles.input,
+                  {
+                    lineHeight: INPUT_LINE_HEIGHT,
+                    paddingTop: INPUT_TOP_PADDING,
+                    paddingBottom: INPUT_BOTTOM_PADDING,
+                  },
+                ]}
+                placeholder={activeFollowUpPair ? 'この回答に追加で質問をする...' : placeholder}
+                placeholderTextColor={placeholderColor}
+                value={inputText}
+                onChangeText={setInputText}
+                onFocus={() => {
+                  setIsInputFocused(true);
+                }}
+                onBlur={() => {
+                  setIsInputFocused(false);
+                }}
+                editable={!isStreaming}
+                multiline
+                textAlignVertical="top"
+                scrollEnabled={false}
+                selectionColor="#242424"
+                selectTextOnFocus={false}
+                contextMenuHidden={false}
+              />
+            </View>
+
+            {/* Action Button */}
+            <TouchableOpacity
+              style={[
+                styles.button,
+                (isStreaming || isSubmitting) && styles.buttonDisabled,
+              ]}
+              onPress={handleActionButtonPress}
+              disabled={isStreaming || isSubmitting}
+            >
+              {isInputFocused && inputText.trim().length > 0 ? (
+                <SendIcon size={20} />
+              ) : isOpen ? (
+                <ShrinkIcon size={22} />
+              ) : (
+                <ExpandIcon size={18} />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
-        {/* Settings Menu Modal */}
-        <Modal
-          visible={isSettingsMenuOpen}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setIsSettingsMenuOpen(false)}
+      {/* Settings Menu Modal */}
+      <Modal
+        visible={isSettingsMenuOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsSettingsMenuOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsSettingsMenuOpen(false)}
+        >
+          <View style={styles.menuContainer} onStartShouldSetResponder={() => true}>
+            <Text style={styles.menuItemLabel}>詳細レベル</Text>
+            <View style={styles.toggleContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.toggleOption,
+                  detailLevel === 'concise' && styles.toggleOptionActive,
+                ]}
+                onPress={() => {
+                  onDetailLevelChange?.('concise');
+                }}
+              >
+                <Text
+                  style={[
+                    styles.toggleOptionText,
+                    detailLevel === 'concise' && styles.toggleOptionTextActive,
+                  ]}
+                >
+                  簡潔
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.toggleOption,
+                  detailLevel === 'detailed' && styles.toggleOptionActive,
+                ]}
+                onPress={() => {
+                  if (!isPremium && detailLevel !== 'detailed') {
+                    // プレミアムでない場合はアップグレードモーダルを表示
+                    setIsSettingsMenuOpen(false);
+                    setIsPremiumUpgradeModalOpen(true);
+                  } else {
+                    // プレミアムの場合は通常通り切り替え
+                    onDetailLevelChange?.('detailed');
+                  }
+                }}
+              >
+                <Text
+                  style={[
+                    styles.toggleOptionText,
+                    detailLevel === 'detailed' && styles.toggleOptionTextActive,
+                  ]}
+                >
+                  詳細
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Custom Question Modal */}
+      <Modal
+        visible={isCustomQuestionModalOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsCustomQuestionModalOpen(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
         >
           <TouchableOpacity
             style={styles.modalOverlay}
             activeOpacity={1}
-            onPress={() => setIsSettingsMenuOpen(false)}
+            onPress={() => {
+              setIsCustomQuestionModalOpen(false);
+              setCustomQuestionTitle('');
+              setCustomQuestionText('');
+            }}
           >
-            <View style={styles.menuContainer} onStartShouldSetResponder={() => true}>
-              <Text style={styles.menuItemLabel}>詳細レベル</Text>
-              <View style={styles.toggleContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.toggleOption,
-                    detailLevel === 'concise' && styles.toggleOptionActive,
-                  ]}
-                  onPress={() => {
-                    onDetailLevelChange?.('concise');
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.toggleOptionText,
-                      detailLevel === 'concise' && styles.toggleOptionTextActive,
-                    ]}
-                  >
-                    簡潔
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.toggleOption,
-                    detailLevel === 'detailed' && styles.toggleOptionActive,
-                  ]}
-                  onPress={() => {
-                    onDetailLevelChange?.('detailed');
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.toggleOptionText,
-                      detailLevel === 'detailed' && styles.toggleOptionTextActive,
-                    ]}
-                  >
-                    詳細
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
-        {/* Custom Question Modal */}
-        <Modal
-          visible={isCustomQuestionModalOpen}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setIsCustomQuestionModalOpen(false)}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.keyboardAvoidingView}
-          >
-            <TouchableOpacity
-              style={styles.modalOverlay}
-              activeOpacity={1}
-              onPress={() => {
-                setIsCustomQuestionModalOpen(false);
-                setCustomQuestionTitle('');
-                setCustomQuestionText('');
-              }}
+            <ScrollView
+              contentContainerStyle={styles.scrollViewContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
             >
-              <ScrollView
-                contentContainerStyle={styles.scrollViewContent}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-              >
-                <View style={styles.customQuestionModalContainer} onStartShouldSetResponder={() => true}>
-                  <Text style={styles.modalTitle}>カスタム質問を追加</Text>
+              <View style={styles.customQuestionModalContainer} onStartShouldSetResponder={() => true}>
+                <Text style={styles.modalTitle}>カスタム質問を追加</Text>
 
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>タイトル（タグに表示）</Text>
-                    <TextInput
-                      style={styles.customQuestionTitleInput}
-                      placeholder="例: 例文"
-                      placeholderTextColor="#ACACAC"
-                      value={customQuestionTitle}
-                      onChangeText={setCustomQuestionTitle}
-                      autoFocus
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>質問文</Text>
-                    <TextInput
-                      style={styles.customQuestionInput}
-                      placeholder="例: この単語の例文を3つ教えて"
-                      placeholderTextColor="#ACACAC"
-                      value={customQuestionText}
-                      onChangeText={setCustomQuestionText}
-                      multiline
-                    />
-                  </View>
-
-                  <View style={styles.modalButtonsRow}>
-                    <TouchableOpacity
-                      style={styles.modalCancelButton}
-                      onPress={() => {
-                        setIsCustomQuestionModalOpen(false);
-                        setCustomQuestionTitle('');
-                        setCustomQuestionText('');
-                      }}
-                    >
-                      <Text style={styles.modalCancelButtonText}>キャンセル</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.modalAddButton,
-                        (!customQuestionTitle.trim() || !customQuestionText.trim()) && styles.modalAddButtonDisabled,
-                      ]}
-                      onPress={handleAddCustomQuestion}
-                      disabled={!customQuestionTitle.trim() || !customQuestionText.trim()}
-                    >
-                      <Text style={styles.modalAddButtonText}>追加</Text>
-                    </TouchableOpacity>
-                  </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>タイトル（タグに表示）</Text>
+                  <TextInput
+                    style={styles.customQuestionTitleInput}
+                    placeholder="例: 例文"
+                    placeholderTextColor="#ACACAC"
+                    value={customQuestionTitle}
+                    onChangeText={setCustomQuestionTitle}
+                    autoFocus
+                  />
                 </View>
-              </ScrollView>
-            </TouchableOpacity>
-          </KeyboardAvoidingView>
-        </Modal>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>質問文</Text>
+                  <TextInput
+                    style={styles.customQuestionInput}
+                    placeholder="例: この単語の例文を3つ教えて"
+                    placeholderTextColor="#ACACAC"
+                    value={customQuestionText}
+                    onChangeText={setCustomQuestionText}
+                    multiline
+                  />
+                </View>
+
+                <View style={styles.modalButtonsRow}>
+                  <TouchableOpacity
+                    style={styles.modalCancelButton}
+                    onPress={() => {
+                      setIsCustomQuestionModalOpen(false);
+                      setCustomQuestionTitle('');
+                      setCustomQuestionText('');
+                    }}
+                  >
+                    <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.modalAddButton,
+                      (!customQuestionTitle.trim() || !customQuestionText.trim()) && styles.modalAddButtonDisabled,
+                    ]}
+                    onPress={handleAddCustomQuestion}
+                    disabled={!customQuestionTitle.trim() || !customQuestionText.trim()}
+                  >
+                    <Text style={styles.modalAddButtonText}>追加</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Subscription Bottom Sheet */}
+      <SubscriptionBottomSheet
+        visible={isPremiumUpgradeModalOpen}
+        onClose={() => setIsPremiumUpgradeModalOpen(false)}
+      />
     </View>
   );
 }
@@ -807,7 +948,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     paddingHorizontal: 0,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#000000',
     letterSpacing: 1,
     backgroundColor: 'transparent',
@@ -1070,5 +1211,32 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     letterSpacing: 1,
     marginRight: -2,
+  },
+  bottomSectionFollowUp: {
+    gap: 2,
+  },
+  followUpContextContainer: {
+    paddingHorizontal: 8,
+    marginBottom: 0,
+  },
+  followUpContextContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // backgroundColor: '#F5F5F5', // 背景色削除
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    gap: 8,
+  },
+  followUpContextLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: '#FFFFFF', // 文字色を白に
+    fontWeight: '500',
+  },
+  followUpContextCloseButton: {
+    padding: 4,
+    marginRight: 0,
   },
 });

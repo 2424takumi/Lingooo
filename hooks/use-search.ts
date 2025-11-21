@@ -13,8 +13,10 @@ import {
   validateSearchInput,
   resolveLanguageCode,
 } from '@/services/utils/language-detect';
-import { searchJaToEn, getWordDetail } from '@/services/api/search';
+import { searchJaToEn, getWordDetail, getWordDetailStream } from '@/services/api/search';
+import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
+import { detectWordLanguage } from '@/services/ai/dictionary-generator';
 import { useSubscription } from '@/contexts/subscription-context';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import type { SearchError } from '@/types/search';
@@ -138,6 +140,7 @@ export function useSearch() {
    * 日本語検索して候補ページに遷移（即座に遷移、ページ上でストリーミング表示）
    */
   const searchAndNavigateToJp = async (query: string) => {
+    logger.info('[Search] 🔍 Navigating to search page:', query);
     // データ取得を待たずに即座にページ遷移
     // ページ上でAPI呼び出しとストリーミング表示が開始される
     router.push({
@@ -156,8 +159,21 @@ export function useSearch() {
    * @param targetLanguage - ターゲット言語コード（タブで選択された言語）
    */
   const searchAndNavigateToWord = async (word: string, targetLanguage: string) => {
-    // データ取得を待たずに即座にページ遷移
-    // ページ上でストリーミング生成が開始される
+    logger.info('[Search] 🔍 Navigating to word-detail:', word, targetLanguage);
+
+    // 🚀 バックグラウンドでプリフェッチを開始（ページ遷移前）
+    logger.info('[Search] 🚀 Starting prefetch for:', word);
+
+    // プリフェッチを開始（非同期）
+    const prefetchPromise = prefetchWordDetail(word, (onProgress) =>
+      getWordDetailStream(word, targetLanguage, nativeLanguage.code, 'concise', onProgress)
+    );
+
+    // プリフェッチが確実に開始されるように、わずかな遅延を入れる（体感速度への影響は最小限）
+    // これにより、ページ遷移時にはプリフェッチが既に進行中となる
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    // ページ遷移（プリフェッチは継続中）
     router.push({
       pathname: '/(tabs)/word-detail',
       params: {
@@ -176,19 +192,54 @@ export function useSearch() {
   const searchAndNavigateToTranslate = async (text: string) => {
     // 言語を判定
     const detectedLang = detectLang(text);
-    const sourceLang = resolveLanguageCode(detectedLang, currentLanguage.code, nativeLanguage.code);
+
+    // 翻訳の場合は、単語検索と異なるロジックを使用
+    // - 日本語（ひらがな・カタカナ含む）→ 確実に日本語
+    // - 漢字のみ → 日本語または中国語（母語を優先）
+    // - アルファベット → 現在選択中の言語タブとしてページ遷移、バックグラウンドでAI判定
+    let sourceLang: string;
+    let needsAiDetection = false;
+
+    if (detectedLang === 'ja') {
+      sourceLang = 'ja';
+    } else if (detectedLang === 'kanji-only') {
+      sourceLang = nativeLanguage.code; // 母語を優先
+    } else {
+      // alphabet or mixed の場合、現在選択中の言語を初期値として即座にページ遷移
+      // AI検出で正確な言語を判定後、必要に応じて自動切り替え
+      sourceLang = currentLanguage.code;
+      needsAiDetection = true;
+    }
 
     // 翻訳先言語を決定（ソース言語が母語なら学習言語、それ以外なら母語）
     const targetLang = sourceLang === nativeLanguage.code ? currentLanguage.code : nativeLanguage.code;
 
+    // 即座にページ遷移（AI検出を待たない）
     router.push({
       pathname: '/(tabs)/translate',
       params: {
         word: text,
         sourceLang,
         targetLang,
+        needsAiDetection: needsAiDetection ? 'true' : 'false', // AI検出が必要かをページに伝える
       },
     });
+
+    // バックグラウンドでAI検出を開始（ページ遷移後も継続）
+    if (needsAiDetection) {
+      logger.info('[Search] Starting background AI language detection for:', text.substring(0, 50));
+      // 非同期で実行（awaitしない）
+      detectWordLanguage(text.trim(), [
+        'en', 'pt', 'es', 'fr', 'de', 'it', 'zh', 'ko', 'vi', 'id'
+      ]).then((aiDetectedLang) => {
+        if (aiDetectedLang) {
+          logger.info('[Search] Background AI detected language:', aiDetectedLang);
+          // 翻訳ページ側でこの結果を使用する（グローバル状態やイベントで通知）
+        }
+      }).catch((error) => {
+        logger.error('[Search] Background AI detection failed:', error);
+      });
+    }
   };
 
   /**

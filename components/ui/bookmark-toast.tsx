@@ -5,8 +5,9 @@ import Svg, { Path } from 'react-native-svg';
 
 interface BookmarkToastProps {
   visible: boolean;
-  onAddToFolder: () => void;
+  onAddToFolder?: () => void;
   onDismiss: () => void;
+  showFolderButton?: boolean; // プレミアム機能：フォルダに追加ボタンを表示するか
 }
 
 function CheckCircleIcon({ size = 20, color = '#FFFFFF' }: { size?: number; color?: string }) {
@@ -30,7 +31,7 @@ function CheckCircleIcon({ size = 20, color = '#FFFFFF' }: { size?: number; colo
   );
 }
 
-export function BookmarkToast({ visible, onAddToFolder, onDismiss }: BookmarkToastProps) {
+export function BookmarkToast({ visible, onAddToFolder, onDismiss, showFolderButton = true }: BookmarkToastProps) {
   const translateY = useRef(new Animated.Value(100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<number | undefined>(undefined);
@@ -124,13 +125,15 @@ export function BookmarkToast({ visible, onAddToFolder, onDismiss }: BookmarkToa
           <CheckCircleIcon size={20} color="#FFFFFF" />
           <Text style={styles.message}>ブックマークしました</Text>
         </View>
-        <TouchableOpacity
-          onPress={handleAddToFolder}
-          style={styles.button}
-          hitSlop={8}
-        >
-          <Text style={styles.buttonText}>フォルダに追加</Text>
-        </TouchableOpacity>
+        {showFolderButton && onAddToFolder && (
+          <TouchableOpacity
+            onPress={handleAddToFolder}
+            style={styles.button}
+            hitSlop={8}
+          >
+            <Text style={styles.buttonText}>フォルダに追加</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </Animated.View>
   );

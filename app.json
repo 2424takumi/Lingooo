@@ -76,7 +76,11 @@
           "microphonePermission": "音声入力機能を使用するためにマイクへのアクセスが必要です",
           "speechRecognitionPermission": "音声入力で単語や文章を検索できます"
         }
-      ]
+      ],
+      "expo-localization",
+      "expo-audio",
+      "expo-asset",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

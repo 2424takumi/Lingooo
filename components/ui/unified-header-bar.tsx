@@ -83,6 +83,8 @@ interface UnifiedHeaderBarProps {
   onPronouncePress?: () => void;
   // Network status
   isOffline?: boolean;
+  // Language detection
+  isDetectingLanguage?: boolean;
 }
 
 export function UnifiedHeaderBar({
@@ -98,6 +100,7 @@ export function UnifiedHeaderBar({
   posTags = [],
   gender,
   onPronouncePress,
+  isDetectingLanguage = false,
   isOffline = false,
 }: UnifiedHeaderBarProps) {
   const menuButtonRef = useRef<any>(null);
@@ -141,7 +144,7 @@ export function UnifiedHeaderBar({
           {title}
         </Text>
 
-        <LanguageSwitcher />
+        <LanguageSwitcher isDetectingLanguage={isDetectingLanguage} />
       </View>
     );
   }
@@ -185,7 +188,7 @@ export function UnifiedHeaderBar({
 
         <View style={styles.placeholder} />
 
-        <LanguageSwitcher />
+        <LanguageSwitcher isDetectingLanguage={isDetectingLanguage} />
       </View>
     );
   }

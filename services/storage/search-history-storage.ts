@@ -1,47 +1,55 @@
 /**
- * 検索履歴ストレージ（Supabase版）
+ * 検索履歴ストレージ（AsyncStorage版）
  *
  * 検索履歴の保存・取得・管理を行う
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { SearchHistoryItem } from '@/types/search';
 import { logger } from '@/utils/logger';
-import { supabase } from '@/lib/supabase';
 
-const MAX_HISTORY_ITEMS = 50; // 最大表示件数
+const STORAGE_KEY = '@lingooo_search_history';
+const MAX_HISTORY_ITEMS = 50; // 最大保存件数
+
+/**
+ * 全ての履歴をローカルストレージから読み込む
+ */
+async function loadAllHistory(): Promise<SearchHistoryItem[]> {
+  try {
+    const jsonString = await AsyncStorage.getItem(STORAGE_KEY);
+    if (!jsonString) {
+      return [];
+    }
+    const history = JSON.parse(jsonString) as SearchHistoryItem[];
+    return history;
+  } catch (error) {
+    logger.error('[SearchHistoryStorage] Failed to load history:', error);
+    return [];
+  }
+}
+
+/**
+ * 全ての履歴をローカルストレージに保存
+ */
+async function saveAllHistory(history: SearchHistoryItem[]): Promise<void> {
+  try {
+    const jsonString = JSON.stringify(history);
+    await AsyncStorage.setItem(STORAGE_KEY, jsonString);
+  } catch (error) {
+    logger.error('[SearchHistoryStorage] Failed to save history:', error);
+    throw error;
+  }
+}
 
 /**
  * 検索履歴を全件取得
  */
 export async function getSearchHistory(): Promise<SearchHistoryItem[]> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      logger.warn('[SearchHistoryStorage] No authenticated user');
-      return [];
-    }
-
-    const { data, error } = await supabase
-      .from('search_history')
-      .select('id, query, target_language, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(MAX_HISTORY_ITEMS);
-
-    if (error) {
-      logger.error('[SearchHistoryStorage] Failed to load search history:', error);
-      return [];
-    }
-
-    // SearchHistoryItem形式に変換
-    return (data || []).map((item) => ({
-      id: item.id,
-      query: item.query,
-      language: item.target_language,
-      timestamp: new Date(item.created_at).getTime(),
-    }));
+    const history = await loadAllHistory();
+    return history.slice(0, MAX_HISTORY_ITEMS);
   } catch (error) {
-    logger.error('[SearchHistoryStorage] Failed to load search history:', error);
+    logger.error('[SearchHistoryStorage] Failed to get search history:', error);
     return [];
   }
 }
@@ -51,99 +59,109 @@ export async function getSearchHistory(): Promise<SearchHistoryItem[]> {
  */
 export async function getSearchHistoryByLanguage(language: string): Promise<SearchHistoryItem[]> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      logger.warn('[SearchHistoryStorage] No authenticated user');
-      return [];
-    }
-
-    const { data, error } = await supabase
-      .from('search_history')
-      .select('id, query, target_language, created_at')
-      .eq('user_id', user.id)
-      .eq('target_language', language)
-      .order('created_at', { ascending: false })
-      .limit(MAX_HISTORY_ITEMS);
-
-    if (error) {
-      logger.error('[SearchHistoryStorage] Failed to load search history:', error);
-      return [];
-    }
-
-    return (data || []).map((item) => ({
-      id: item.id,
-      query: item.query,
-      language: item.target_language,
-      timestamp: new Date(item.created_at).getTime(),
-    }));
+    const history = await loadAllHistory();
+    const filtered = history
+      .filter(item => item.language === language)
+      .slice(0, MAX_HISTORY_ITEMS);
+    return filtered;
   } catch (error) {
-    logger.error('[SearchHistoryStorage] Failed to load search history by language:', error);
+    logger.error('[SearchHistoryStorage] Failed to get search history by language:', error);
+    return [];
+  }
+}
+
+/**
+ * 特定の言語の単語・フレーズ履歴を取得（翻訳を除外）
+ */
+export async function getWordHistoryByLanguage(language: string): Promise<SearchHistoryItem[]> {
+  try {
+    const history = await loadAllHistory();
+    const filtered = history
+      .filter(item =>
+        item.language === language &&
+        item.searchType &&
+        ['word', 'phrase'].includes(item.searchType)
+      )
+      .slice(0, MAX_HISTORY_ITEMS);
+    return filtered;
+  } catch (error) {
+    logger.error('[SearchHistoryStorage] Failed to get word history by language:', error);
+    return [];
+  }
+}
+
+/**
+ * 特定の言語の翻訳履歴を取得（長文翻訳のみ）
+ */
+export async function getTranslationHistoryByLanguage(language: string): Promise<SearchHistoryItem[]> {
+  try {
+    const history = await loadAllHistory();
+    logger.debug('[SearchHistoryStorage] All history items:', {
+      total: history.length,
+      items: history.map(item => ({ query: item.query.substring(0, 30), lang: item.language, type: item.searchType }))
+    });
+
+    const filtered = history
+      .filter(item =>
+        item.language === language &&
+        item.searchType === 'translation'
+      )
+      .slice(0, MAX_HISTORY_ITEMS);
+
+    logger.debug('[SearchHistoryStorage] Filtered translation history:', {
+      language,
+      count: filtered.length,
+      items: filtered.map(item => ({ query: item.query.substring(0, 30), type: item.searchType }))
+    });
+
+    return filtered;
+  } catch (error) {
+    logger.error('[SearchHistoryStorage] Failed to get translation history by language:', error);
     return [];
   }
 }
 
 /**
  * 検索履歴を追加
- * - AI応答とトークン数も一緒に保存
- * - トークン数が提供された場合、ユーザーの monthly_token_usage も更新
  */
 export async function addSearchHistory(
   query: string,
   language: string,
   aiResponse?: any,
-  tokensUsed?: number
+  tokensUsed?: number,
+  searchType?: 'word' | 'phrase' | 'translation'
 ): Promise<void> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      logger.warn('[SearchHistoryStorage] No authenticated user');
-      return;
-    }
+    // search_typeを推定（明示的に指定されていない場合のみ）
+    const finalSearchType: 'word' | 'phrase' | 'translation' = searchType ||
+      (query.length > 50 ? 'translation' : query.includes(' ') ? 'phrase' : 'word');
 
-    // search_typeを推定（簡易版）
-    const searchType = query.length > 50 ? 'translation' : query.includes(' ') ? 'phrase' : 'word';
+    const history = await loadAllHistory();
 
-    // 検索履歴を保存
-    const { error: historyError } = await supabase.from('search_history').insert({
-      user_id: user.id,
+    // 新しい履歴アイテムを作成
+    const newItem: SearchHistoryItem = {
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
       query,
-      target_language: language,
-      search_type: searchType,
-      ai_response: aiResponse || {},
-      tokens_used: tokensUsed || 0,
-    });
+      language,
+      timestamp: Date.now(),
+      searchType: finalSearchType,
+    };
 
-    if (historyError) {
-      logger.error('[SearchHistoryStorage] Failed to add search history:', historyError);
-      throw historyError;
-    }
+    // 同じクエリと言語の履歴があれば削除（重複を避ける）
+    const filteredHistory = history.filter(
+      item => !(item.query === query && item.language === language)
+    );
 
-    // トークン数が提供された場合、ユーザーのトークン使用量を更新
-    if (tokensUsed && tokensUsed > 0) {
-      const { data: userData, error: fetchError } = await supabase
-        .from('users')
-        .select('monthly_token_usage')
-        .eq('id', user.id)
-        .single();
+    // 新しいアイテムを先頭に追加
+    const updatedHistory = [newItem, ...filteredHistory].slice(0, MAX_HISTORY_ITEMS);
 
-      if (!fetchError && userData) {
-        const newTokenUsage = (userData.monthly_token_usage || 0) + tokensUsed;
-
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ monthly_token_usage: newTokenUsage })
-          .eq('id', user.id);
-
-        if (updateError) {
-          logger.error('[SearchHistoryStorage] Failed to update token usage:', updateError);
-        }
-      }
-    }
+    // 保存
+    await saveAllHistory(updatedHistory);
 
     logger.info('[SearchHistoryStorage] Added search history:', {
       query,
       language,
-      tokensUsed,
+      searchType: finalSearchType,
     });
   } catch (error) {
     logger.error('[SearchHistoryStorage] Failed to add search history:', error);
@@ -156,22 +174,7 @@ export async function addSearchHistory(
  */
 export async function clearSearchHistory(): Promise<void> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      logger.warn('[SearchHistoryStorage] No authenticated user');
-      return;
-    }
-
-    const { error } = await supabase
-      .from('search_history')
-      .delete()
-      .eq('user_id', user.id);
-
-    if (error) {
-      logger.error('[SearchHistoryStorage] Failed to clear search history:', error);
-      throw error;
-    }
-
+    await AsyncStorage.removeItem(STORAGE_KEY);
     logger.info('[SearchHistoryStorage] Cleared all search history');
   } catch (error) {
     logger.error('[SearchHistoryStorage] Failed to clear search history:', error);
@@ -184,23 +187,9 @@ export async function clearSearchHistory(): Promise<void> {
  */
 export async function removeSearchHistoryItem(id: string): Promise<void> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      logger.warn('[SearchHistoryStorage] No authenticated user');
-      return;
-    }
-
-    const { error } = await supabase
-      .from('search_history')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id); // セキュリティ: 自分の履歴のみ削除可能
-
-    if (error) {
-      logger.error('[SearchHistoryStorage] Failed to remove search history item:', error);
-      throw error;
-    }
-
+    const history = await loadAllHistory();
+    const filtered = history.filter(item => item.id !== id);
+    await saveAllHistory(filtered);
     logger.info('[SearchHistoryStorage] Removed search history item:', { id });
   } catch (error) {
     logger.error('[SearchHistoryStorage] Failed to remove search history item:', error);

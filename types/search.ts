@@ -113,4 +113,6 @@ export interface SearchHistoryItem {
   language: string;
   /** 検索日時（ミリ秒） */
   timestamp: number;
+  /** 検索タイプ (word, phrase, translation) */
+  searchType?: 'word' | 'phrase' | 'translation';
 }

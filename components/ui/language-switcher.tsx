@@ -3,11 +3,12 @@
  * 学習中の言語のみを表示
  */
 
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Animated } from 'react-native';
+import { useState, useRef, useEffect } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { logger } from '@/utils/logger';
 
 function CaretDownIcon({ size = 18, color = '#000000' }: { size?: number; color?: string }) {
   return (
@@ -37,13 +38,70 @@ function CheckIcon({ size = 20, color = '#111111' }: { size?: number; color?: st
   );
 }
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  isDetectingLanguage?: boolean;
+}
+
+export function LanguageSwitcher({ isDetectingLanguage = false }: LanguageSwitcherProps) {
   const { learningLanguages, currentLanguage, setCurrentLanguage } = useLearningLanguages();
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const buttonRef = useRef<View>(null);
   const textColor = useThemeColor({}, 'text');
   const dropdownBackground = useThemeColor({}, 'cardBackground');
   const accentColor = useThemeColor({}, 'primary');
+
+  // シマーエフェクトのアニメーション
+  const shimmerAnimation = useRef(new Animated.Value(0)).current;
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    logger.info('[LanguageSwitcher] isDetectingLanguage prop changed:', isDetectingLanguage);
+
+    if (isDetectingLanguage) {
+      // 既存のアニメーションを停止
+      if (animationRef.current) {
+        animationRef.current.stop();
+      }
+
+      // シマーエフェクトを開始
+      logger.info('[LanguageSwitcher] Starting shimmer animation');
+      animationRef.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmerAnimation, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shimmerAnimation, {
+            toValue: 0,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      animationRef.current.start();
+    } else {
+      // シマーエフェクトを停止してリセット
+      logger.info('[LanguageSwitcher] Stopping shimmer animation');
+      if (animationRef.current) {
+        animationRef.current.stop();
+        animationRef.current = null;
+      }
+      shimmerAnimation.setValue(0);
+    }
+
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop();
+        animationRef.current = null;
+      }
+    };
+  }, [isDetectingLanguage, shimmerAnimation]);
+
+  const shimmerOpacity = shimmerAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.15, 0.5], // 0.15〜0.5の範囲でより目立つグラデーション
+  });
 
   const handleLanguageSelect = async (languageId: string) => {
     await setCurrentLanguage(languageId);
@@ -57,7 +115,18 @@ export function LanguageSwitcher() {
           onPress={() => setDropdownVisible(!dropdownVisible)}
           style={styles.languageButton}
         >
-          <Text style={styles.flag}>{currentLanguage.flag}</Text>
+          {isDetectingLanguage ? (
+            <Animated.Text
+              style={[
+                styles.flag,
+                { opacity: shimmerOpacity },
+              ]}
+            >
+              {currentLanguage.flag}
+            </Animated.Text>
+          ) : (
+            <Text style={styles.flag}>{currentLanguage.flag}</Text>
+          )}
           <CaretDownIcon size={18} color={textColor} />
         </TouchableOpacity>
       </View>
