@@ -418,6 +418,9 @@ export default function TranslateScreen() {
         targetLanguage: targetLang,
       },
     });
+
+    // 検索実行後に選択を解除
+    setSelectedText(null);
   };
 
   return (

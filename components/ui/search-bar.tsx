@@ -1,7 +1,8 @@
-import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard, ScrollView, Text, Alert } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard, ScrollView, Text, Alert, Platform } from 'react-native';
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { SearchIcon, MicIcon, ReloadIcon } from './icons';
 import { LanguageTag } from './language-tag';
+import { KeyboardToolbar } from './keyboard-toolbar';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useSubscription } from '@/contexts/subscription-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -42,6 +43,9 @@ export function SearchBar({
   const buttonBackground = useThemeColor({}, 'buttonGray');
   const buttonIconColor = useThemeColor({}, 'buttonText');
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
+
+  // キーボードツールバー用のID
+  const keyboardAccessoryID = 'search-bar-input-accessory';
 
   // デフォルト言語が設定されたらcurrentLanguageを初期化
   useEffect(() => {
@@ -171,6 +175,7 @@ export function SearchBar({
             autoComplete="off"
             textContentType="none"
             importantForAutofill="no"
+            inputAccessoryViewID={Platform.OS === 'ios' ? keyboardAccessoryID : undefined}
           />
         </View>
         <View style={styles.actionArea}>
@@ -214,6 +219,12 @@ export function SearchBar({
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Keyboard Toolbar */}
+      <KeyboardToolbar
+        nativeID={keyboardAccessoryID}
+        onDone={() => inputRef.current?.blur()}
+      />
     </View>
   );
 }

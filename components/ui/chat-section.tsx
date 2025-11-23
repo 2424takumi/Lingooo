@@ -17,6 +17,7 @@ import Svg, { Path } from 'react-native-svg';
 import type { QAPair } from '@/types/chat';
 import { QuestionTag } from './question-tag';
 import { QACardList } from './qa-card-list';
+import { KeyboardToolbar } from './keyboard-toolbar';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useSubscription } from '@/contexts/subscription-context';
 import { logger } from '@/utils/logger';
@@ -203,6 +204,9 @@ export function ChatSection({
   const inputBackground = useThemeColor({}, 'chatInputBackground');
   const placeholderColor = useThemeColor({}, 'textPlaceholder');
 
+  // キーボードツールバー用のID
+  const keyboardAccessoryID = `chat-input-accessory-${scope || 'default'}-${identifier || 'default'}`;
+
   // questionPresetsをローカル変数として保持（依存配列で使用するため）
   const questions = questionPresets;
   const [isOpen, setIsOpen] = useState(false);
@@ -378,6 +382,9 @@ export function ChatSection({
         // 追加質問を送信
         await onFollowUpQuestion(pairId, text.trim());
         setInputText('');
+
+        // キーボードを閉じる
+        inputRef.current?.blur();
       } finally {
         setIsSubmitting(false);
       }
@@ -674,6 +681,7 @@ export function ChatSection({
                 selectionColor="#242424"
                 selectTextOnFocus={false}
                 contextMenuHidden={false}
+                inputAccessoryViewID={Platform.OS === 'ios' ? keyboardAccessoryID : undefined}
               />
             </View>
 
@@ -845,6 +853,12 @@ export function ChatSection({
       <SubscriptionBottomSheet
         visible={isPremiumUpgradeModalOpen}
         onClose={() => setIsPremiumUpgradeModalOpen(false)}
+      />
+
+      {/* Keyboard Toolbar */}
+      <KeyboardToolbar
+        nativeID={keyboardAccessoryID}
+        onDone={() => inputRef.current?.blur()}
       />
     </View>
   );
