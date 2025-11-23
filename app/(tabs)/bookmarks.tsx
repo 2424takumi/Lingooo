@@ -126,7 +126,9 @@ function FolderCard({ folder, bookmarkCount, onPress, onLongPress }: FolderCardP
         <View style={styles.folderCardHeader}>
           <FolderIcon size={24} color="#111111" />
           <View style={styles.folderCardInfo}>
-            <Text style={[styles.folderCardTitle, { color: titleColor }]}>{folder.name}</Text>
+            <Text style={[styles.folderCardTitle, { color: titleColor }]} numberOfLines={1} ellipsizeMode="tail">
+              {folder.name}
+            </Text>
             <View style={styles.folderCardMeta}>
               <Text style={[styles.folderCardCount, { color: subtitleColor }]}>
                 {bookmarkCount}件のブックマーク
@@ -938,7 +940,9 @@ export default function BookmarksScreen() {
             }}
           >
             <View style={styles.folderMenuContainer} onStartShouldSetResponder={() => true}>
-              <Text style={styles.folderMenuTitle}>{selectedFolder?.name}</Text>
+              <Text style={styles.folderMenuTitle} numberOfLines={1} ellipsizeMode="tail">
+                {selectedFolder?.name}
+              </Text>
 
               <TouchableOpacity
                 style={styles.folderMenuItem}

@@ -54,6 +54,7 @@ export function SelectableText({ text, style, onSelectionChange, onSelectionClea
       numberOfLines={numberOfLines}
       textAlignVertical="top"
       contextMenuHidden={false}
+      inputAccessoryViewID={undefined}
     />
   );
 }
