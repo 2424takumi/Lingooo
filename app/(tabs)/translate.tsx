@@ -295,28 +295,129 @@ export default function TranslateScreen() {
 
   // 追加質問のハンドラー
   const handleFollowUpQuestion = async (pairId: string, question: string) => {
-    const pair = qaPairs.find(p => p.id === pairId);
-    if (!pair || pair.status !== 'completed') return;
+    logger.debug('[Translate] handleFollowUpQuestion:', { pairId, question });
 
-    const newFollowUpId = generateId();
+    // 1. 対象のQAPairを見つける
+    const targetPair = qaPairs.find(p => p.id === pairId);
+    if (!targetPair) {
+      logger.error('[Translate] Target pair not found:', pairId);
+      return;
+    }
+
+    // 2. 新しい追加質問オブジェクトを作成（pending状態）
+    const followUpId = generateId('followup');
     const newFollowUp = {
-      id: newFollowUpId,
+      id: followUpId,
       q: question,
       a: '',
       status: 'pending' as const,
     };
 
-    setQAPairs(prevPairs => {
-      return prevPairs.map(p => {
-        if (p.id === pairId) {
-          const updatedFollowUps = [...(p.followUpQAs || []), newFollowUp];
-          return { ...p, followUpQAs: updatedFollowUps };
-        }
-        return p;
-      });
-    });
+    // 3. QAPairのfollowUpQAs配列に追加
+    setQAPairs(prev => prev.map(pair => {
+      if (pair.id === pairId) {
+        return {
+          ...pair,
+          followUpQAs: [...(pair.followUpQAs || []), newFollowUp],
+        };
+      }
+      return pair;
+    }));
 
-    await sendChatMessage(question);
+    // 4. 文脈を含めたメッセージを作成
+    let contextualQuestion = `[元の文章]\n${translationData?.originalText || ''}\n\n[翻訳]\n${translationData?.translatedText || ''}`;
+
+    contextualQuestion += `\n\n[前回の質問]\n${targetPair.q}\n\n[前回の回答]\n${targetPair.a}`;
+
+    // 以前の追加質問と回答があれば追加
+    if (targetPair.followUpQAs && targetPair.followUpQAs.length > 0) {
+      targetPair.followUpQAs.forEach((fu, index) => {
+        if (fu.status === 'completed' && fu.a) {
+          contextualQuestion += `\n\n[追加質問${index + 1}]\n${fu.q}\n\n[追加回答${index + 1}]\n${fu.a}`;
+        }
+      });
+    }
+
+    contextualQuestion += `\n\n[新しい追加質問]\n${question}`;
+
+    // 5. チャットコンテキストを経由せずに直接APIを呼び出し
+    const { sendFollowUpQuestionStream } = await import('@/services/api/chat');
+
+    try {
+      const generator = sendFollowUpQuestionStream(
+        {
+          sessionId: generateId('session'),
+          scope: 'translate',
+          identifier: translationData?.originalText || text,
+          messages: [{ id: generateId('msg'), role: 'user', content: contextualQuestion, createdAt: Date.now() }],
+          context: chatContext,
+          detailLevel: aiDetailLevel,
+          targetLanguage: currentLanguage.code,
+        },
+        // onContent: ストリーミング中の更新
+        (content) => {
+          setQAPairs(prev => prev.map(pair => {
+            if (pair.id === pairId) {
+              return {
+                ...pair,
+                followUpQAs: pair.followUpQAs?.map(fu =>
+                  fu.id === followUpId ? { ...fu, a: fu.a + content } : fu
+                ),
+              };
+            }
+            return pair;
+          }));
+        },
+        // onComplete: 完了時
+        (fullAnswer) => {
+          setQAPairs(prev => prev.map(pair => {
+            if (pair.id === pairId) {
+              return {
+                ...pair,
+                followUpQAs: pair.followUpQAs?.map(fu =>
+                  fu.id === followUpId ? { ...fu, a: fullAnswer, status: 'completed' as const } : fu
+                ),
+              };
+            }
+            return pair;
+          }));
+          logger.info('[Translate] Follow-up question completed');
+        },
+        // onError: エラー時
+        (error) => {
+          logger.error('[Translate] Follow-up question error:', error);
+          setQAPairs(prev => prev.map(pair => {
+            if (pair.id === pairId) {
+              return {
+                ...pair,
+                followUpQAs: pair.followUpQAs?.map(fu =>
+                  fu.id === followUpId ? { ...fu, status: 'error' as const, errorMessage: error.message } : fu
+                ),
+              };
+            }
+            return pair;
+          }));
+        }
+      );
+
+      // ジェネレーターを実行（必要に応じて）
+      for await (const _chunk of generator) {
+        // ストリーミング中は何もしない（onContentで処理済み）
+      }
+    } catch (error) {
+      logger.error('[Translate] Failed to send follow-up question:', error);
+      setQAPairs(prev => prev.map(pair => {
+        if (pair.id === pairId) {
+          return {
+            ...pair,
+            followUpQAs: pair.followUpQAs?.map(fu =>
+              fu.id === followUpId ? { ...fu, status: 'error' as const, errorMessage: 'Failed to send question' } : fu
+            ),
+          };
+        }
+        return pair;
+      }));
+    }
   };
 
   const handleEnterFollowUpMode = (pairId: string, question: string) => {
