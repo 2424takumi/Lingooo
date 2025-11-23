@@ -213,7 +213,7 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: Bookma
       {/* Label above card */}
       <View style={styles.labelRow}>
         <View style={styles.labelLeftSection}>
-          <Text style={[styles.scopeLabel, { color: labelColor }]}>{getScopeLabel()}</Text>
+          <Text style={[styles.scopeLabel, { color: labelColor }]} numberOfLines={1} ellipsizeMode="tail">{getScopeLabel()}</Text>
           <Text style={[styles.dateLabel, { color: labelColor }]}>{formatDate(bookmark.timestamp)}</Text>
         </View>
 
