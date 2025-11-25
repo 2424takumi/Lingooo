@@ -5,12 +5,11 @@ import { SettingsIcon, TokenIcon, LanguageIcon, ChevronRightIcon, CloseIcon, Mes
 import { CircularProgress } from './circular-progress';
 import { LanguageDropdown } from './language-dropdown';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { useQuestionCount } from '@/hooks/use-question-count';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useSubscription } from '@/contexts/subscription-context';
 import { AVAILABLE_LANGUAGES, Language } from '@/types/language';
-import { getUsageStats } from '@/services/api/usage';
+import { getUsageStats, UsageStats } from '@/services/api/usage';
 import { logger } from '@/utils/logger';
 import Svg, { Path } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -40,9 +39,11 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
   const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   const pageBackground = useThemeColor({}, 'pageBackground');
   const text = useThemeColor({}, 'text');
-  const [tokenUsage, setTokenUsage] = useState({ used: 0, total: 50000 });
-  // Supabaseから質問回数とプランを取得
-  const { questionCount, plan } = useQuestionCount();
+
+  // バックエンドAPIから全ての使用量を一括取得（単一のソース）
+  const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
+  const [isLoadingUsage, setIsLoadingUsage] = useState(false);
+
   const {
     nativeLanguage,
     defaultLanguage,
@@ -54,6 +55,11 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
   } = useLearningLanguages();
   const { aiDetailLevel, setAIDetailLevel } = useAISettings();
   const { isPremium } = useSubscription();
+
+  // 使用量のデフォルト値
+  const tokenUsage = usageStats?.translationTokens ?? { used: 0, limit: 50000 };
+  const questionCount = usageStats?.questionCount ?? { used: 0, limit: 100 };
+  const plan = usageStats?.isPremium ? 'plus' : 'free';
 
   useEffect(() => {
     if (visible) {
@@ -72,24 +78,23 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
     }
   }, [visible]);
 
-  // 実際の使用量を取得
+  // バックエンドAPIから使用量を一括取得
   useEffect(() => {
     if (visible) {
       console.log('[SettingsBottomSheet] Bottom sheet opened, fetching usage stats...');
       const fetchUsageStats = async () => {
+        setIsLoadingUsage(true);
         try {
           console.log('[SettingsBottomSheet] Calling getUsageStats()...');
           const stats = await getUsageStats();
           console.log('[SettingsBottomSheet] getUsageStats() returned:', stats);
           if (stats) {
-            setTokenUsage({
-              used: stats.translationTokens.used,
-              total: stats.translationTokens.limit,
-            });
+            setUsageStats(stats);
             logger.info('[SettingsBottomSheet] Usage stats loaded:', stats);
-            console.log('[SettingsBottomSheet] Token usage updated:', {
-              used: stats.translationTokens.used,
-              total: stats.translationTokens.limit,
+            console.log('[SettingsBottomSheet] Usage stats updated:', {
+              translationTokens: stats.translationTokens,
+              questionCount: stats.questionCount,
+              isPremium: stats.isPremium,
             });
           } else {
             logger.warn('[SettingsBottomSheet] Failed to load usage stats, using default values');
@@ -98,14 +103,16 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
         } catch (error) {
           logger.error('[SettingsBottomSheet] Error fetching usage stats:', error);
           console.error('[SettingsBottomSheet] Error fetching usage stats:', error);
+        } finally {
+          setIsLoadingUsage(false);
         }
       };
       fetchUsageStats();
     }
   }, [visible]);
 
-  const tokenPercentage = (tokenUsage.used / tokenUsage.total) * 100;
-  const questionPercentage = (questionCount.monthly / questionCount.limit) * 100;
+  const tokenPercentage = tokenUsage.limit > 0 ? (tokenUsage.used / tokenUsage.limit) * 100 : 0;
+  const questionPercentage = questionCount.limit > 0 ? (questionCount.used / questionCount.limit) * 100 : 0;
 
   // 月末までの残り日数を計算
   const getDaysUntilReset = () => {
@@ -257,7 +264,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                 <View style={styles.statTextContainer}>
                   <Text style={styles.statLabel}>トークン</Text>
                   <Text style={styles.statNumbers}>
-                    {tokenUsage.used.toLocaleString()} / {tokenUsage.total.toLocaleString()}
+                    {tokenUsage.used.toLocaleString()} / {tokenUsage.limit.toLocaleString()}
                   </Text>
                 </View>
               </View>
@@ -273,7 +280,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                 <View style={styles.statTextContainer}>
                   <Text style={styles.statLabel}>質問回数</Text>
                   <Text style={styles.statNumbers}>
-                    {questionCount.monthly} / {questionCount.limit}
+                    {questionCount.used} / {questionCount.limit}
                   </Text>
                 </View>
               </View>

@@ -22,7 +22,6 @@ import { addSearchHistory } from '@/services/storage/search-history-storage';
 import type { SearchError } from '@/types/search';
 import { logger } from '@/utils/logger';
 import { isSentence } from '@/utils/text-detector';
-import { useQuestionCount } from '@/hooks/use-question-count';
 import { getMaxTextLength } from '@/constants/validation';
 
 export function useSearch() {
@@ -31,8 +30,6 @@ export function useSearch() {
   const { isPremium } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Supabaseから質問回数とプランを取得
-  const { canAskQuestion, incrementQuestionCount, getRemainingQuestions, questionCount } = useQuestionCount();
 
   /**
    * 検索を実行してページ遷移
@@ -48,12 +45,8 @@ export function useSearch() {
       return false;
     }
 
-    // 2. 質問回数制限チェック
-    if (!canAskQuestion()) {
-      const remaining = getRemainingQuestions();
-      setError(`本日の質問回数が上限に達しました。明日また${remaining === 0 ? '10回' : remaining + '回'}質問できます。`);
-      return false;
-    }
+    // 質問回数制限はバックエンドで実施
+    // バックエンドが429を返した場合、該当ページでエラーハンドリングを行う
 
     setError(null);
     setIsLoading(true);
@@ -123,8 +116,8 @@ export function useSearch() {
         logger.error('Failed to save search history:', historyError);
       }
 
-      // 7. 質問回数をインクリメント
-      await incrementQuestionCount();
+      // 質問回数のインクリメントはバックエンドが自動的に実行する
+      // /api/chat エンドポイントが trackQuestionCount() を呼び出す
 
       return true;
     } catch (err) {

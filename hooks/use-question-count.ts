@@ -1,73 +1,62 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { supabase } from '@/lib/supabase';
+import { getUsageStats, UsageStats } from '@/services/api/usage';
 
 interface QuestionCountData {
   monthly: number;
   limit: number;
-  lastResetMonth: string;
 }
 
-interface PlanLimits {
-  free: number;
-  plus: number;
-}
-
-const PLAN_LIMITS: PlanLimits = {
-  free: 100,
-  plus: 1000,
-};
-
+/**
+ * 質問回数を管理するフック
+ *
+ * バックエンドのRedisを単一のソースとして使用します。
+ * フロントエンドはバックエンドAPIから読み取り専用で使用量を取得します。
+ * 質問回数のインクリメントはバックエンドの/api/chatエンドポイントが自動的に行います。
+ */
 export function useQuestionCount() {
   const { user, loading: authLoading, needsInitialSetup } = useAuth();
-  const [questionCount, setQuestionCount] = useState({
+  const [questionCount, setQuestionCount] = useState<QuestionCountData>({
     monthly: 0,
     limit: 100, // デフォルトは無料プラン
   });
-  const [plan, setPlan] = useState<'free' | 'plus'>('free');
+  const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const lastFetchRef = useRef<number>(0);
 
-  // 現在の月を YYYY-MM 形式で取得
-  const getCurrentMonthString = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
-  };
-
-  // Supabaseからデータを読み込む
+  // バックエンドAPIから使用量を取得
   const loadQuestionCount = useCallback(async () => {
     if (!user || needsInitialSetup) {
       setIsLoading(false);
       return;
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('monthly_question_count, plan')
-        .eq('id', user.id)
-        .single();
+    // 短時間での重複リクエストを防止（3秒以内）
+    const now = Date.now();
+    if (now - lastFetchRef.current < 3000) {
+      return;
+    }
+    lastFetchRef.current = now;
 
-      if (error) {
-        // PGRST116: レコードが0件の場合は初期設定前なので静かに処理
-        if (error.code !== 'PGRST116') {
-          console.error('Failed to load question count:', error);
-        }
+    try {
+      const stats = await getUsageStats();
+
+      if (stats) {
+        setQuestionCount({
+          monthly: stats.questionCount.used,
+          limit: stats.questionCount.limit,
+        });
+        setIsPremium(stats.isPremium);
+      } else {
+        // APIが失敗した場合はデフォルト値を使用
+        console.warn('[useQuestionCount] Failed to load from API, using default values');
         setQuestionCount({
           monthly: 0,
           limit: 100,
         });
-      } else if (data) {
-        const userPlan = data.plan as 'free' | 'plus';
-        setPlan(userPlan);
-        setQuestionCount({
-          monthly: data.monthly_question_count || 0,
-          limit: PLAN_LIMITS[userPlan],
-        });
       }
     } catch (error) {
-      console.error('Failed to load question count:', error);
+      console.error('[useQuestionCount] Error loading question count:', error);
       setQuestionCount({
         monthly: 0,
         limit: 100,
@@ -75,41 +64,14 @@ export function useQuestionCount() {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, needsInitialSetup]);
 
-  // 質問回数をインクリメント（アトミック操作で競合を回避）
-  const incrementQuestionCount = useCallback(async () => {
-    if (!user) return false;
-
-    try {
-      // アトミックなインクリメントのためにRPC関数を使用
-      // Supabaseには直接的なインクリメント構文がないため、
-      // 一旦現在の値を取得してからアトミックに更新する
-      const { data, error } = await supabase.rpc('increment_question_count', {
-        user_id: user.id,
-      });
-
-      if (error) {
-        // RPC関数が失敗した場合はエラーを返す
-        // フォールバックは使用しない（競合状態を避けるため）
-        // increment_question_count RPC関数がSupabaseに正しく設定されている必要があります
-        console.error('Failed to increment question count (RPC function required):', error);
-        console.error('Please ensure the increment_question_count RPC function is created in Supabase');
-        return false;
-      }
-
-      // RPC成功時は返された新しいカウントを使用
-      const newCount = data as number;
-      setQuestionCount((prev) => ({
-        ...prev,
-        monthly: newCount,
-      }));
-      return true;
-    } catch (error) {
-      console.error('Failed to increment question count:', error);
-      return false;
-    }
-  }, [user]);
+  // 使用量を再取得（チャット後に呼び出す用）
+  const refreshQuestionCount = useCallback(async () => {
+    // 強制的に再取得
+    lastFetchRef.current = 0;
+    await loadQuestionCount();
+  }, [loadQuestionCount]);
 
   // 質問可能かチェック
   const canAskQuestion = useCallback(() => {
@@ -121,32 +83,6 @@ export function useQuestionCount() {
     return Math.max(0, questionCount.limit - questionCount.monthly);
   }, [questionCount.monthly, questionCount.limit]);
 
-  // リセット（デバッグ用）
-  const resetQuestionCount = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({
-          monthly_question_count: 0,
-          usage_reset_month: getCurrentMonthString(),
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Failed to reset question count:', error);
-      } else {
-        setQuestionCount((prev) => ({
-          ...prev,
-          monthly: 0,
-        }));
-      }
-    } catch (error) {
-      console.error('Failed to reset question count:', error);
-    }
-  }, [user]);
-
   // 初期ロード（userが取得されたら、かつ初期設定が完了していたら実行）
   useEffect(() => {
     if (!authLoading && user && !needsInitialSetup) {
@@ -156,11 +92,10 @@ export function useQuestionCount() {
 
   return {
     questionCount,
-    plan,
+    isPremium,
     isLoading,
-    incrementQuestionCount,
     canAskQuestion,
     getRemainingQuestions,
-    resetQuestionCount,
+    refreshQuestionCount,
   };
 }

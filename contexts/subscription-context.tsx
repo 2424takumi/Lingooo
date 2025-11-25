@@ -127,7 +127,8 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     platform: string
   ) => {
     try {
-      const { error } = await supabase.rpc('update_subscription_status', {
+      // RPC関数でサブスクリプションステータスを更新
+      const { error: rpcError } = await supabase.rpc('update_subscription_status', {
         user_id: user?.id,
         status,
         expires_at: expiresAt?.toISOString(),
@@ -135,10 +136,23 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         platform,
       });
 
-      if (error) {
-        logger.error('[Subscription] Failed to sync to Supabase:', error);
+      if (rpcError) {
+        logger.error('[Subscription] Failed to sync to Supabase RPC:', rpcError);
       } else {
-        logger.info('[Subscription] Synced to Supabase:', status);
+        logger.info('[Subscription] Synced to Supabase RPC:', status);
+      }
+
+      // バックエンドが読み取るuser_metadataにisPremiumを設定
+      // これにより、バックエンドのauthミドルウェアがisPremiumを正しく取得できる
+      const isPremiumStatus = status === 'active';
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { isPremium: isPremiumStatus }
+      });
+
+      if (metadataError) {
+        logger.error('[Subscription] Failed to update user_metadata:', metadataError);
+      } else {
+        logger.info('[Subscription] user_metadata.isPremium updated to:', isPremiumStatus);
       }
     } catch (error) {
       logger.error('[Subscription] Sync error:', error);
