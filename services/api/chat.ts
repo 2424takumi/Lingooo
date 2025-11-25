@@ -439,6 +439,9 @@ export async function* sendFollowUpQuestionStream(
     firstMessagePreview: req.messages[0]?.content.substring(0, 100),
   });
 
+  // 認証ヘッダーを取得
+  const authHeaders = await getAuthHeaders();
+
   const xhr = new XMLHttpRequest();
   let accumulatedContent = '';
   let buffer = '';
@@ -446,6 +449,11 @@ export async function* sendFollowUpQuestionStream(
 
   xhr.open('POST', `${BACKEND_URL}/api/chat/stream`);
   xhr.setRequestHeader('Content-Type', 'application/json');
+
+  // 認証ヘッダーを設定
+  if (authHeaders.Authorization) {
+    xhr.setRequestHeader('Authorization', authHeaders.Authorization);
+  }
 
   xhr.onprogress = () => {
     const newText = xhr.responseText.substring(lastProcessedIndex);
