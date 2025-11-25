@@ -268,6 +268,17 @@ export default function SubscriptionScreen() {
                 {'\n\n'}
                 いつでも解約できます。無料体験や月極購読は、期間終了の24時間前までに解約しない限り自動的に更新されます。
               </Text>
+
+              {/* Legal Links */}
+              <View style={styles.legalLinks}>
+                <TouchableOpacity onPress={() => router.push('/terms-of-service')}>
+                  <Text style={[styles.linkText, { color: subTextColor }]}>利用規約</Text>
+                </TouchableOpacity>
+                <Text style={[styles.linkSeparator, { color: subTextColor }]}>  •  </Text>
+                <TouchableOpacity onPress={() => router.push('/privacy-policy')}>
+                  <Text style={[styles.linkText, { color: subTextColor }]}>プライバシーポリシー</Text>
+                </TouchableOpacity>
+              </View>
             </>
           )}
         </ScrollView>
@@ -477,5 +488,21 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     textAlign: 'center',
+  },
+
+  // Legal Links
+  legalLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  linkText: {
+    fontSize: 12,
+    textDecorationLine: 'underline',
+  },
+  linkSeparator: {
+    fontSize: 12,
   },
 });

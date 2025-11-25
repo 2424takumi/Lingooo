@@ -6,6 +6,7 @@
 
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Dimensions, ScrollView, ActivityIndicator, Alert, Linking, TouchableWithoutFeedback } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
+import { router } from 'expo-router';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSubscription } from '@/contexts/subscription-context';
 import Svg, { Path } from 'react-native-svg';
@@ -192,13 +193,19 @@ export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottom
   };
 
   const openTerms = () => {
-    // TODO: 利用規約ページへのリンク
-    Alert.alert('利用規約', '利用規約ページを開きます');
+    onClose();
+    // Wait for bottom sheet to close before navigating
+    setTimeout(() => {
+      router.push('/terms-of-service');
+    }, 300);
   };
 
   const openPrivacyPolicy = () => {
-    // TODO: プライバシーポリシーページへのリンク
-    Alert.alert('プライバシーポリシー', 'プライバシーポリシーページを開きます');
+    onClose();
+    // Wait for bottom sheet to close before navigating
+    setTimeout(() => {
+      router.push('/privacy-policy');
+    }, 300);
   };
 
   // Format expiry date
