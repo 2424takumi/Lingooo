@@ -34,7 +34,8 @@
         ],
         "ITSAppUsesNonExemptEncryption": false,
         "NSSpeechRecognitionUsageDescription": "音声入力で単語や文章を検索できます",
-        "NSMicrophoneUsageDescription": "音声入力機能を使用するためにマイクへのアクセスが必要です"
+        "NSMicrophoneUsageDescription": "音声入力機能を使用するためにマイクへのアクセスが必要です",
+        "NSPhotoLibraryUsageDescription": "プロフィール画像の設定や画像から文字を読み取るためにフォトライブラリへのアクセスが必要です"
       }
     },
     "android": {

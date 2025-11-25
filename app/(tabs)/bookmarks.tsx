@@ -212,42 +212,49 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: Bookma
     <View style={styles.bookmarkCardContainer}>
       {/* Label above card */}
       <View style={styles.labelRow}>
-        <View style={styles.labelLeftSection}>
-          <Text style={[styles.scopeLabel, { color: labelColor }]}>{getScopeLabel()}</Text>
+        <Text
+          style={[styles.scopeLabel, { color: labelColor }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {getScopeLabel()}
+        </Text>
+
+        <View style={styles.labelRightSection}>
           <Text style={[styles.dateLabel, { color: labelColor }]}>{formatDate(bookmark.timestamp)}</Text>
-        </View>
 
-        {/* Action buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="フォルダに追加"
-            onPress={handleAddToFolder}
-            style={styles.actionButton}
-            hitSlop={8}
-          >
-            <FolderIcon size={18} color={iconColor} />
-          </TouchableOpacity>
+          {/* Action buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="フォルダに追加"
+              onPress={handleAddToFolder}
+              style={styles.actionButton}
+              hitSlop={8}
+            >
+              <FolderIcon size={18} color={iconColor} />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="コピー"
-            onPress={handleCopy}
-            style={styles.actionButton}
-            hitSlop={8}
-          >
-            <CopyIcon size={18} color={iconColor} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="コピー"
+              onPress={handleCopy}
+              style={styles.actionButton}
+              hitSlop={8}
+            >
+              <CopyIcon size={18} color={iconColor} />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="削除"
-            onPress={handleDelete}
-            style={styles.actionButton}
-            hitSlop={8}
-          >
-            <TrashIcon size={18} color="#FF4444" />
-          </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="削除"
+              onPress={handleDelete}
+              style={styles.actionButton}
+              hitSlop={8}
+            >
+              <TrashIcon size={18} color="#FF4444" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -1096,16 +1103,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 4,
-  },
-  labelLeftSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
+    gap: 8,
   },
   scopeLabel: {
     fontSize: 13,
     fontWeight: '500',
+    flexShrink: 1,
+    maxWidth: '60%',
+  },
+  labelRightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 0,
   },
   dateLabel: {
     fontSize: 12,

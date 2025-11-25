@@ -12,18 +12,26 @@ export function isSentence(text: string): boolean {
   const hasSpaces = /\s/.test(trimmed);
   const hasPunctuation = /[.,!?;:、。！？；：]/.test(trimmed);
 
+  // 日本語助詞のチェック（は、の、が、を、に、へ、と、で、や、から、まで、より、ね、よ、か、な）
+  const hasJapaneseParticles = /[はのがをにへとでやねよかな]|から|まで|より/.test(trimmed);
+
   // 単語数をカウント
   const wordCount = trimmed.split(/\s+/).filter(word => word.length > 0).length;
 
   // 以下のいずれかに該当する場合は文章と判定
   // 1. 複数の単語がある（2語以上）
   // 2. 句読点が含まれている
-  // 3. 20文字以上（日本語の場合は短い文でも文章として扱う）
+  // 3. 日本語助詞が含まれている（は、の、が、を、に、へ、と、で、や、から、まで、より）
+  // 4. 20文字以上（日本語の場合は短い文でも文章として扱う）
   if (wordCount >= 2) {
     return true;
   }
 
   if (hasPunctuation) {
+    return true;
+  }
+
+  if (hasJapaneseParticles) {
     return true;
   }
 
