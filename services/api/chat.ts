@@ -56,6 +56,10 @@ export async function sendChatMessage(req: ChatRequest): Promise<ChatCompletion>
     });
 
     if (!response.ok) {
+      // 401エラーの場合は認証エラーとして扱う
+      if (response.status === 401) {
+        throw new Error('認証エラー: ログインし直してください');
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -132,6 +136,17 @@ export async function* sendChatMessageStream(
   // 認証ヘッダーを取得
   const authHeaders = await getAuthHeaders();
 
+  // 認証ヘッダーがない場合はエラー
+  if (!authHeaders.Authorization) {
+    logger.error('[Chat API] Authentication required for chat stream - no auth token available');
+    pushEvent({ type: 'error', error: new Error('認証エラー: ログインし直してください') });
+    isComplete = true;
+    // エラーをthrowして呼び出し元に伝える
+    throw new Error('認証エラー: ログインし直してください');
+  }
+
+  logger.info('[Chat API] Auth header obtained for chat stream');
+
   // XMLHttpRequestでストリーミングを受信
   const xhr = new XMLHttpRequest();
   let accumulatedContent = '';
@@ -146,11 +161,7 @@ export async function* sendChatMessageStream(
 
   xhr.open('POST', `${BACKEND_URL}/api/chat/stream`);
   xhr.setRequestHeader('Content-Type', 'application/json');
-
-  // 認証ヘッダーを設定
-  if (authHeaders.Authorization) {
-    xhr.setRequestHeader('Authorization', authHeaders.Authorization);
-  }
+  xhr.setRequestHeader('Authorization', authHeaders.Authorization);
 
   xhr.onprogress = () => {
     const newText = xhr.responseText.substring(lastProcessedIndex);
@@ -442,6 +453,16 @@ export async function* sendFollowUpQuestionStream(
   // 認証ヘッダーを取得
   const authHeaders = await getAuthHeaders();
 
+  // 認証ヘッダーがない場合はエラー
+  if (!authHeaders.Authorization) {
+    const error = new Error('認証エラー: ログインし直してください');
+    logger.error('[Chat API] Authentication required for follow-up questions - no auth token available');
+    onError(error);
+    return;
+  }
+
+  logger.info('[Chat API] Auth header obtained, sending request with auth');
+
   const xhr = new XMLHttpRequest();
   let accumulatedContent = '';
   let buffer = '';
@@ -449,11 +470,7 @@ export async function* sendFollowUpQuestionStream(
 
   xhr.open('POST', `${BACKEND_URL}/api/chat/stream`);
   xhr.setRequestHeader('Content-Type', 'application/json');
-
-  // 認証ヘッダーを設定
-  if (authHeaders.Authorization) {
-    xhr.setRequestHeader('Authorization', authHeaders.Authorization);
-  }
+  xhr.setRequestHeader('Authorization', authHeaders.Authorization);
 
   xhr.onprogress = () => {
     const newText = xhr.responseText.substring(lastProcessedIndex);
@@ -503,10 +520,20 @@ export async function* sendFollowUpQuestionStream(
     } else {
       // サーバーからのエラーメッセージを取得
       let errorMessage = `HTTP error! status: ${xhr.status}`;
+
+      // 401エラーの場合は認証エラーとして扱う
+      if (xhr.status === 401) {
+        logger.error('[Chat API] Authentication failed (401) - token might be expired or invalid');
+        errorMessage = '認証エラー: ログインし直してください';
+      }
+
       try {
         const errorData = JSON.parse(xhr.responseText);
         if (errorData.error) {
           errorMessage += ` - ${errorData.error}`;
+        }
+        if (errorData.message) {
+          errorMessage += ` - ${errorData.message}`;
         }
         if (errorData.details) {
           errorMessage += ` (${errorData.details})`;

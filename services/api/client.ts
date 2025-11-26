@@ -12,13 +12,19 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
       data: { session },
     } = await supabase.auth.getSession();
 
+    logger.debug('[API Client] getAuthHeaders called:', {
+      hasSession: !!session,
+      hasAccessToken: !!session?.access_token,
+      tokenPreview: session?.access_token?.substring(0, 20) + '...',
+    });
+
     if (session?.access_token) {
       return {
         Authorization: `Bearer ${session.access_token}`,
       };
     }
 
-    logger.warn('[API Client] No access token available');
+    logger.warn('[API Client] No access token available - session:', session);
     return {};
   } catch (error) {
     logger.error('[API Client] Error getting auth headers:', error);
