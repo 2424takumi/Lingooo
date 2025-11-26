@@ -431,16 +431,6 @@ export async function* sendFollowUpQuestionStream(
   onComplete: (fullAnswer: string) => void,
   onError: (error: Error) => void
 ): AsyncGenerator<string, void, void> {
-  const requestBody = {
-    sessionId: req.sessionId,
-    scope: req.scope,
-    identifier: req.identifier,
-    messages: req.messages,
-    context: req.context,
-    detailLevel: req.detailLevel,
-    targetLanguage: req.targetLanguage,
-  };
-
   logger.info('[Chat API] sendFollowUpQuestionStream called:', {
     scope: req.scope,
     identifier: req.identifier,
@@ -462,6 +452,16 @@ export async function* sendFollowUpQuestionStream(
   }
 
   logger.info('[Chat API] Auth header obtained, sending request with auth');
+
+  const requestBody = {
+    sessionId: req.sessionId,
+    scope: req.scope,
+    identifier: req.identifier,
+    messages: req.messages,
+    context: req.context,
+    detailLevel: req.detailLevel,
+    targetLanguage: req.targetLanguage,
+  };
 
   const xhr = new XMLHttpRequest();
   let accumulatedContent = '';
