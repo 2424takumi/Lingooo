@@ -385,60 +385,147 @@ interface WordDetailResponse {
 }
 ```
 
-### **AIプロンプト設計**
+### **AIプロンプト設計（最適化版）**
+
+#### **2段階生成戦略**
+
+トークン使用量を40-50%削減するため、2つのプロンプトを使い分けます：
+
+##### **1. 基本情報プロンプト（Stage 1）**
+
+超高速表示用（0.2-0.3秒）：
 
 ```typescript
-const DICTIONARY_PROMPT = `
-あなたは英語学習者向けの辞書です。以下の単語について、日本語で詳細な情報を提供してください。
+// services/ai/prompt-generator.ts: createBasicInfoPrompt()
 
-単語: {word}
-ユーザーレベル: {level} (beginner/intermediate/advanced)
-
-以下の形式でJSON出力してください：
+const BASIC_INFO_PROMPT = `
+{lang}の単語"{word}"の基本情報を以下のJSON構造で最小限のトークンで生成：
 
 {
-  "headword": {
-    "lemma": "単語",
-    "pronunciation": "発音記号",
-    "pos": ["品詞1", "品詞2"]
-  },
-  "senses": [
-    {
-      "pos": "品詞",
-      "glossShort": "短い定義（10文字以内）",
-      "glossLong": "詳細な定義（50文字程度）",
-      "register": "formal/informal/slangのいずれか"
-    }
-  ],
-  "metrics": {
-    "frequency": 1-10の数値,
-    "difficulty": 1-10の数値,
-    "nuance": "カジュアル/フォーマル/ニュートラル"
-  },
-  "examples": [
-    {
-      "textSrc": "英語の例文",
-      "textDst": "日本語訳",
-      "context": "使用場面"
-    }
-  ],
-  "etymology": {
-    "origin": "語源",
-    "explanation": "語源の説明"
-  },
-  "related": {
-    "synonyms": ["類義語1", "類義語2"],
-    "antonyms": ["対義語1", "対義語2"],
-    "collocations": ["連語1", "連語2"]
-  }
+  "headword": {"lemma": "{word}", "lang": "{targetLang}", "pos": ["品詞（英語、例: verb, noun）"]},
+  "senses": [{"id": "1", "glossShort": "簡潔な{nativeLang}の意味（10文字以内）"}, {"id": "2", "glossShort": "意味2"}]
 }
 
-注意点：
-- 例文は3-5個、実用的で自然なものを
-- 初心者にもわかりやすい説明を
-- 日本語は自然で読みやすく
+要件:
+- sensesは2-3個、主要な意味のみ（各10文字以内）
+- {nativeLang}の説明は簡潔で分かりやすく
+- 超高速レスポンス用のため最小限の情報のみ
 `;
 ```
+
+**トークン数**: 200-300トークン
+
+##### **2. 追加詳細プロンプト（Stage 2）**
+
+hint + metrics + examples のみ生成（最適化版）：
+
+```typescript
+// services/ai/prompt-generator.ts: createAdditionalDetailsPrompt()
+
+const ADDITIONAL_DETAILS_PROMPT = `
+{lang}の単語"{word}"について、以下の追加情報のみを生成してください：
+
+{
+  "hint": {"text": "{nativeLang}で2〜3文の簡潔な説明（使用場面・ニュアンス・類似語との違いなど、学習に最も重要な特徴2点）"},
+  "metrics": {"frequency": 頻出度0-100, "difficulty": 難易度0-100, "nuance": ニュアンスの強さ0-100},
+  "examples": [
+    {"textSrc": "自然な{lang}の例文", "textDst": "自然な{nativeLang}訳"},
+    {"textSrc": "{lang}例文2", "textDst": "{nativeLang}訳2"},
+    {"textSrc": "{lang}例文3", "textDst": "{nativeLang}訳3"}
+  ]
+}
+
+要件:
+- hint, metrics, examples のみを生成（headwordとsensesは不要）
+- hintは{nativeLang}で2〜3文、学習に最も重要な2つの特徴（使用場面・ニュアンス・文法・類似語との違いなど）
+- 例文は3-5個、実用的で自然な{lang}の文
+- metricsは実際の使用頻度を反映
+- {nativeLang}の説明は自然で分かりやすく
+`;
+```
+
+**トークン数**: 400-600トークン（従来の800-1200から50%削減）
+
+##### **3. 完全辞書プロンプト（レガシー・フォールバック用）**
+
+シングルリクエストで全データを生成する場合のみ使用：
+
+```typescript
+// services/ai/prompt-generator.ts: createDictionaryPrompt()
+
+const DICTIONARY_PROMPT = `
+{lang}の単語"{word}"の辞書情報を以下のJSON構造で生成してください：
+
+{
+  "headword": {"lemma": "{word}", "lang": "{targetLang}", "pos": ["品詞（英語、例: verb, noun）"]},
+  "senses": [{"id": "1", "glossShort": "簡潔な{nativeLang}の意味（10文字以内）"}, {"id": "2", "glossShort": "意味2"}],
+  "hint": {"text": "{nativeLang}で2〜3文の簡潔な説明（使用場面・ニュアンス・類似語との違いなど、学習に最も重要な特徴2点）"},
+  "metrics": {"frequency": 頻出度0-100, "difficulty": 難易度0-100, "nuance": ニュアンスの強さ0-100},
+  "examples": [
+    {"textSrc": "自然な{lang}の例文", "textDst": "自然な{nativeLang}訳"},
+    {"textSrc": "{lang}例文2", "textDst": "{nativeLang}訳2"},
+    {"textSrc": "{lang}例文3", "textDst": "{nativeLang}訳3"}
+  ]
+}
+
+要件:
+- この順序（headword → senses → hint → metrics → examples）で必ず生成
+- hintは{nativeLang}で2〜3文、学習に最も重要な2つの特徴（使用場面・ニュアンス・文法・類似語との違いなど）
+- sensesは2-3個、主要な意味のみ（各10文字以内）
+- 例文は3-5個、実用的で自然な{lang}の文
+- metricsは実際の使用頻度を反映
+- {nativeLang}の説明は自然で分かりやすく
+`;
+```
+
+**トークン数**: 800-1200トークン
+
+#### **実装フロー**
+
+```typescript
+// services/ai/dictionary-generator.ts: generateWordDetailTwoStage()
+
+async function generateWordDetailTwoStage(word, targetLang, nativeLang) {
+  // Stage 1: 基本情報を超高速取得（0.2-0.3秒）
+  const basicPrompt = createBasicInfoPrompt(word, targetLang, nativeLang);
+  const basicPromise = generateBasicInfo(basicPrompt);
+
+  // Stage 2: 追加詳細のみを生成（~1.5秒、最適化により高速化）
+  const additionalPrompt = createAdditionalDetailsPrompt(word, targetLang, nativeLang);
+  const additionalPromise = generateJSONProgressive(additionalPrompt);
+
+  // 基本情報が来たら即表示（0.2-0.3秒）
+  const basicResult = await basicPromise;
+  onProgress(30, basicResult.data); // ヘッダー + 意味だけ表示
+
+  // 追加詳細を待つ（~1.5秒）
+  const additionalResult = await additionalPromise;
+
+  // 基本情報と追加詳細をマージ
+  const mergedData = {
+    ...basicResult.data,
+    ...additionalResult.data,
+  };
+
+  onProgress(100, mergedData); // 完全なデータを表示
+  return mergedData;
+}
+```
+
+#### **最適化効果**
+
+| 指標 | 従来 | 最適化後 | 削減率 |
+|------|------|---------|--------|
+| **Stage 1 トークン** | 200-300 | 200-300 | 0% |
+| **Stage 2 トークン** | 800-1200 | 400-600 | **50%** |
+| **合計トークン** | 1000-1500 | 600-900 | **40-50%** |
+| **Stage 2 レイテンシ** | 2.5秒 | 1.5秒 | **40%** |
+| **コスト削減** | - | - | **40-50%** |
+
+**注意**:
+- `createBasicInfoPrompt()`: Stage 1専用（headword + senses のみ）
+- `createAdditionalDetailsPrompt()`: Stage 2専用（hint + metrics + examples のみ）⭐ **新規追加**
+- `createDictionaryPrompt()`: レガシー・フォールバック用（全フィールド）
 
 ---
 

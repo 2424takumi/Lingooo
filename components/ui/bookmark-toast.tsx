@@ -104,7 +104,7 @@ export function BookmarkToast({ visible, onAddToFolder, onDismiss, showFolderBut
     handleDismiss();
     // Small delay to let the toast animation finish before opening modal
     setTimeout(() => {
-      onAddToFolder();
+      onAddToFolder?.();
     }, 250);
   };
 

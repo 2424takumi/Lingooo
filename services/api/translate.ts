@@ -1,6 +1,7 @@
 import { logger } from '@/utils/logger';
 import { MAX_TEXT_LENGTH } from '@/constants/validation';
 import { authenticatedFetch } from './client';
+import { getCachedTranslation, setCachedTranslation } from '@/services/cache/translate-cache';
 
 const BACKEND_URL = (() => {
   const url = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -45,6 +46,13 @@ export async function translateText(
       throw new Error(`翻訳できるのは${MAX_TEXT_LENGTH}文字までです。現在の文字数: ${text.length}文字`);
     }
 
+    // キャッシュチェック
+    const cached = await getCachedTranslation(text, sourceLang, targetLang);
+    if (cached) {
+      logger.info('[Translate] Using cached translation');
+      return cached;
+    }
+
     logger.info('[Translate] Translating text:', {
       textLength: text.length,
       sourceLang,
@@ -67,6 +75,9 @@ export async function translateText(
 
     const data: TranslateResponse = await response.json();
     logger.info('[Translate] Translation successful');
+
+    // キャッシュに保存
+    await setCachedTranslation(text, sourceLang, targetLang, data);
 
     return data;
   } catch (error) {

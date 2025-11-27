@@ -59,6 +59,10 @@ export default function SearchScreen() {
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>(initialResults);
   const [isLoading, setIsLoading] = useState(false);
 
+  // ハイブリッド表示用: 完了したヒントを追跡
+  // suggestionsが更新されたら、usageHintがあるものは完了とみなす
+  const [completedHintIndices, setCompletedHintIndices] = useState<Set<number>>(new Set());
+
   // 選択テキスト管理
   const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
 
@@ -82,10 +86,22 @@ export default function SearchScreen() {
     handleCloseCreateFolderModal,
   } = useBookmarkManagement({ logPrefix: 'Search' });
 
+  // suggestionsが更新されたらヒント完了インデックスを更新
+  useEffect(() => {
+    const newCompletedIndices = new Set<number>();
+    suggestions.forEach((item, index) => {
+      if (item.usageHint) {
+        newCompletedIndices.add(index);
+      }
+    });
+    setCompletedHintIndices(newCompletedIndices);
+  }, [suggestions]);
+
   // queryまたは言語が変わったら再検索
   useEffect(() => {
     if (!query) {
       setSuggestions([]);
+      setCompletedHintIndices(new Set());
       return;
     }
 
@@ -96,6 +112,7 @@ export default function SearchScreen() {
     } else {
       setSuggestions([]);
     }
+    setCompletedHintIndices(new Set());
     setIsLoading(true);
 
     // キャッシュチェック + API呼び出し
@@ -486,6 +503,28 @@ export default function SearchScreen() {
     }
   };
 
+  // ハイブリッド表示用: 表示可能なヒントを計算
+  // ルール: あるインデックスのヒントを表示するには、そのインデックスと
+  // それより前のすべてのインデックスのヒントが完了している必要がある
+  const displayItems = useMemo(() => {
+    return suggestions.map((item, index) => {
+      // このアイテムのヒントが完了しているか
+      const isCompleted = completedHintIndices.has(index);
+
+      // このアイテムより前のすべてのヒントが完了しているか
+      const allPreviousCompleted = Array.from({ length: index }, (_, i) => i)
+        .every(i => completedHintIndices.has(i));
+
+      // 表示するヒント（完了していて、かつ前のアイテムもすべて完了している場合のみ）
+      const shouldShowHint = isCompleted && allPreviousCompleted;
+
+      return {
+        ...item,
+        usageHint: shouldShowHint ? item.usageHint : undefined,
+      };
+    });
+  }, [suggestions, completedHintIndices]);
+
   const handleWordCardPress = async (item: SuggestionItem) => {
     // 単語詳細画面でデータ取得後にトークン数と一緒に検索履歴に保存されるため、
     // ここでは保存しない
@@ -557,18 +596,18 @@ export default function SearchScreen() {
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.searchResultView}>
-              {isLoading && suggestions.length === 0 ? (
+              {isLoading && displayItems.length === 0 ? (
                 <View style={styles.wordCardList}>
                   <ShimmerSuggestions />
                 </View>
-              ) : suggestions.length > 0 ? (
+              ) : displayItems.length > 0 ? (
                 <View style={styles.wordCardList}>
-                  {suggestions.map((item, index) => (
+                  {displayItems.map((item, index) => (
                     <Pressable
                       key={`${item.lemma}-${index}`}
                       style={styles.wordCardPressable}
                       accessibilityRole="button"
-                      onPress={() => handleWordCardPress(item)}
+                      onPress={() => handleWordCardPress(suggestions[index])}
                     >
                       <WordCard
                         word={item.lemma}
@@ -577,8 +616,6 @@ export default function SearchScreen() {
                         definitions={item.shortSenseJa}
                         description={item.usageHint || ''}
                         nuance={getNuanceType(item.nuance)}
-                        onTextSelected={handleTextSelected}
-                        onSelectionCleared={handleSelectionCleared}
                       />
                     </Pressable>
                   ))}
@@ -700,7 +737,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 8,
     paddingBottom: 0,
-    marginBottom: 16,
+    marginBottom: 20,
     justifyContent: 'flex-end',
   },
   noResultsContainer: {

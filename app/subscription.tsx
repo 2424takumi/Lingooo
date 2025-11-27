@@ -75,8 +75,16 @@ export default function SubscriptionScreen() {
 
   // Format expiry date
   const formatExpiryDate = () => {
-    if (!customerInfo?.expirationDate) return '';
-    const date = new Date(customerInfo.expirationDate);
+    if (!customerInfo?.entitlements?.active) return '';
+
+    // Get the first active entitlement's expiration date
+    const activeEntitlements = Object.values(customerInfo.entitlements.active);
+    if (activeEntitlements.length === 0) return '';
+
+    const expirationDate = activeEntitlements[0].expirationDate;
+    if (!expirationDate) return '';
+
+    const date = new Date(expirationDate);
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
   };
 
@@ -108,7 +116,7 @@ export default function SubscriptionScreen() {
               <Text style={[styles.premiumStatusDescription, { color: subTextColor }]}>
                 すべての機能をご利用いただけます
               </Text>
-              {customerInfo?.expirationDate && (
+              {formatExpiryDate() && (
                 <Text style={[styles.expiryText, { color: subTextColor }]}>
                   次回更新日: {formatExpiryDate()}
                 </Text>

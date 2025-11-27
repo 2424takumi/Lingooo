@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { TextInput, TextStyle, NativeSyntheticEvent, TextInputSelectionChangeEventData } from 'react-native';
+import { TextInput, TextStyle, NativeSyntheticEvent, TextInputSelectionChangeEventData, Platform } from 'react-native';
 
 interface SelectableTextProps {
   text: string;
@@ -55,6 +55,8 @@ export function SelectableText({ text, style, onSelectionChange, onSelectionClea
       textAlignVertical="top"
       contextMenuHidden={false}
       inputAccessoryViewID={undefined}
+      // 短いタップは親に伝播、長押しでテキスト選択
+      delayLongPress={300}
     />
   );
 }

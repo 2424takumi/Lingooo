@@ -52,7 +52,11 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
   // 初期化（userが取得されたら、かつ初期設定が完了していたら実行）
   useEffect(() => {
     if (!authLoading && user && !needsInitialSetup) {
-      loadSettings();
+      // 初期設定完了直後の場合、少し待ってからロード（DBへの書き込み完了を待つ）
+      const timer = setTimeout(() => {
+        loadSettings();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [user, authLoading, needsInitialSetup]);
 
@@ -60,6 +64,8 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     if (!user) return;
 
     try {
+      logger.info('[LearningLanguages] Loading settings for user:', user.id);
+
       // Supabaseからユーザー設定を読み込み
       const { data, error } = await supabase
         .from('users')
@@ -71,15 +77,20 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
         // PGRST116: レコードが0件の場合は初期設定前なので静かに処理
         if (error.code !== 'PGRST116') {
           logger.error('Failed to load language settings:', error);
+        } else {
+          logger.warn('[LearningLanguages] No user record found (PGRST116)');
         }
         return;
       }
 
       if (data) {
+        logger.info('[LearningLanguages] Loaded settings:', data);
+
         // 母語を設定
         if (data.native_language) {
           const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === data.native_language);
           if (language) {
+            logger.info('[LearningLanguages] Setting native language:', language.name);
             setNativeLanguageState(language);
             // UIの言語も設定
             await i18n.changeLanguage(language.code);
@@ -90,6 +101,7 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
         if (data.default_language) {
           const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === data.default_language);
           if (language) {
+            logger.info('[LearningLanguages] Setting default language:', language.name);
             setDefaultLanguageState(language);
             setCurrentLanguageState(language); // 初期表示用
           }
@@ -101,6 +113,7 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
             .map((id: string) => AVAILABLE_LANGUAGES.find((lang) => lang.id === id))
             .filter((lang): lang is Language => lang !== undefined);
           if (languages.length > 0) {
+            logger.info('[LearningLanguages] Setting learning languages:', languages.map(l => l.name));
             setLearningLanguages(languages);
           }
         }

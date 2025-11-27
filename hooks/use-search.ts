@@ -19,6 +19,7 @@ import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { detectWordLanguage } from '@/services/ai/dictionary-generator';
 import { useSubscription } from '@/contexts/subscription-context';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
+import { languageDetectionEvents } from '@/services/events/language-detection-events';
 import type { SearchError } from '@/types/search';
 import { logger } from '@/utils/logger';
 import { isSentence } from '@/utils/text-detector';
@@ -224,10 +225,22 @@ export function useSearch() {
       // 非同期で実行（awaitしない）
       detectWordLanguage(text.trim(), [
         'en', 'pt', 'es', 'fr', 'de', 'it', 'zh', 'ko', 'vi', 'id'
-      ]).then((aiDetectedLang) => {
-        if (aiDetectedLang) {
-          logger.info('[Search] Background AI detected language:', aiDetectedLang);
-          // 翻訳ページ側でこの結果を使用する（グローバル状態やイベントで通知）
+      ]).then((result) => {
+        if (result && result.language) {
+          logger.info('[Search] Background AI detected language:', {
+            language: result.language,
+            confidence: result.confidence,
+            provider: result.provider,
+          });
+
+          // イベントを発火して翻訳ページに通知
+          languageDetectionEvents.emit({
+            text: text.trim(),
+            language: result.language,
+            confidence: result.confidence,
+            provider: result.provider,
+            timestamp: Date.now(),
+          });
         }
       }).catch((error) => {
         logger.error('[Search] Background AI detection failed:', error);

@@ -17,6 +17,7 @@ import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import { detectLang, resolveLanguageCode } from '@/services/utils/language-detect';
 import { detectWordLanguage } from '@/services/ai/dictionary-generator';
+import { languageDetectionEvents } from '@/services/events/language-detection-events';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -170,6 +171,44 @@ export default function TranslateScreen() {
     return currentLanguage.code;
   };
 
+  // AI言語検出イベントリスナー（バックグラウンド検出結果を受信）
+  useEffect(() => {
+    const unsubscribe = languageDetectionEvents.subscribe((event) => {
+      logger.info('[Translate] Received language detection event:', {
+        language: event.language,
+        confidence: event.confidence,
+        currentText: text.substring(0, 30),
+        eventText: event.text.substring(0, 30),
+      });
+
+      // このページのテキストと一致する場合のみ処理
+      if (event.text.trim() === text.trim()) {
+        setIsDetectingLanguage(false);
+
+        // 言語を更新（検出された言語がsourceLangと違う場合）
+        if (event.language !== sourceLang) {
+          logger.info('[Translate] Updating source language from', sourceLang, 'to', event.language);
+          setSourceLang(event.language);
+
+          // 翻訳先言語を再計算
+          const newTargetLang = determineTranslateTargetLang(event.language);
+          setSelectedTranslateTargetLang(newTargetLang);
+          logger.info('[Translate] Updated target lang to:', newTargetLang);
+        }
+
+        // ヘッダーの言語タブを自動切り替え（検出された言語が現在のタブと違い、かつ母語でない場合）
+        if (event.language !== nativeLanguage.code && event.language !== currentLanguage.code) {
+          logger.info('[Translate] Auto-switching language tab from', currentLanguage.code, 'to', event.language);
+          setCurrentLanguage(event.language);
+        } else {
+          logger.info('[Translate] Language tab unchanged:', currentLanguage.code);
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [text, sourceLang, currentLanguage, nativeLanguage]);
+
   // AI言語検出（バックグラウンド）
   useEffect(() => {
     if (needsAiDetection && text) {
@@ -178,25 +217,25 @@ export default function TranslateScreen() {
 
       detectWordLanguage(text.trim(), [
         'en', 'pt', 'es', 'fr', 'de', 'it', 'zh', 'ko', 'vi', 'id'
-      ]).then(async (aiDetectedLang) => {
-        logger.info('[Translate] AI detection completed:', aiDetectedLang, 'initial sourceLang:', sourceLang, 'current tab:', currentLanguage.code);
+      ]).then(async (result) => {
+        logger.info('[Translate] AI detection completed:', result?.language, 'confidence:', result?.confidence, 'initial sourceLang:', sourceLang, 'current tab:', currentLanguage.code);
 
-        if (aiDetectedLang) {
+        if (result && result.language) {
           // 言語を更新（検出された言語がsourceLangと違う場合）
-          if (aiDetectedLang !== sourceLang) {
-            logger.info('[Translate] Updating source language from', sourceLang, 'to', aiDetectedLang);
-            setSourceLang(aiDetectedLang);
+          if (result.language !== sourceLang) {
+            logger.info('[Translate] Updating source language from', sourceLang, 'to', result.language);
+            setSourceLang(result.language);
 
             // 翻訳先言語を再計算
-            const newTargetLang = determineTranslateTargetLang(aiDetectedLang);
+            const newTargetLang = determineTranslateTargetLang(result.language);
             setSelectedTranslateTargetLang(newTargetLang);
             logger.info('[Translate] Updated target lang to:', newTargetLang);
           }
 
           // ヘッダーの言語タブを自動切り替え（検出された言語が現在のタブと違い、かつ母語でない場合）
-          if (aiDetectedLang !== nativeLanguage.code && aiDetectedLang !== currentLanguage.code) {
-            logger.info('[Translate] Auto-switching language tab from', currentLanguage.code, 'to', aiDetectedLang);
-            await setCurrentLanguage(aiDetectedLang);
+          if (result.language !== nativeLanguage.code && result.language !== currentLanguage.code) {
+            logger.info('[Translate] Auto-switching language tab from', currentLanguage.code, 'to', result.language);
+            await setCurrentLanguage(result.language);
           } else {
             logger.info('[Translate] Language tab unchanged:', currentLanguage.code);
           }
@@ -679,7 +718,7 @@ const styles = StyleSheet.create({
   chatContainerFixed: {
     paddingHorizontal: 8,
     paddingBottom: 0,
-    marginBottom: 16,
+    marginBottom: 20,
     justifyContent: 'flex-end',
   },
 });

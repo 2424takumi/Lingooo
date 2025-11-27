@@ -586,22 +586,28 @@ export function ChatSection({
         </ScrollView>
       </Animated.View>
 
-      {/* 選択テキスト表示（translate, word, searchモード） */}
-      {(scope === 'translate' || scope === 'word' || scope === 'search') && !isOpen && selectedText && (
-        <View style={styles.selectedTextContainer}>
-          <Text style={styles.selectedTextLabel} numberOfLines={1} ellipsizeMode="tail">
-            {selectedText.text}
-          </Text>
-          {selectedText.isSingleWord && onDictionaryLookup && (
-            <TouchableOpacity
-              style={styles.dictionaryButton}
-              onPress={onDictionaryLookup}
-            >
-              <Text style={styles.dictionaryButtonText} numberOfLines={1}>単語を調べる</Text>
-              <ArrowRightIcon size={16} color="#242424" />
-            </TouchableOpacity>
-          )}
-        </View>
+      {/* 選択テキスト表示 or ヒント文（translateモード） */}
+      {(scope === 'translate' || scope === 'word' || scope === 'search') && !isOpen && (
+        selectedText ? (
+          <View style={styles.selectedTextContainer}>
+            <Text style={styles.selectedTextLabel} numberOfLines={1} ellipsizeMode="tail">
+              {selectedText.text}
+            </Text>
+            {selectedText.isSingleWord && onDictionaryLookup && (
+              <TouchableOpacity
+                style={styles.dictionaryButton}
+                onPress={onDictionaryLookup}
+              >
+                <Text style={styles.dictionaryButtonText} numberOfLines={1}>単語を調べる</Text>
+                <ArrowRightIcon size={16} color="#242424" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : scope === 'translate' ? (
+          <View style={styles.selectedTextContainer}>
+            <Text style={styles.hintText}>テキストを選択して質問をしてみましょう</Text>
+          </View>
+        ) : null
       )}
 
       {/* Bottom Section: Question Tags + Input */}
@@ -929,11 +935,11 @@ const styles = StyleSheet.create({
     gap: 6, // 質問タグとテキストインプットの間隔
   },
   bottomSectionTranslate: {
-    paddingTop: 0,
+    paddingTop: 8, // 開閉時の位置を統一
     gap: 0,
   },
   bottomSectionTranslateOpen: {
-    paddingTop: 8,
+    // paddingTopは統一されているので不要
   },
   questionScrollView: {
     flexGrow: 0,

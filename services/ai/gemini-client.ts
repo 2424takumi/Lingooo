@@ -516,6 +516,60 @@ export async function generateUsageHints(
 /**
  * バックエンドでAPIキーが設定されているかチェック
  */
+/**
+ * 言語判定（専用エンドポイント使用、Groq優先）
+ *
+ * @param text - 判定するテキスト
+ * @param candidates - 候補となる言語コードのリスト
+ * @returns 検出された言語コード（候補にない場合はnull）
+ */
+export interface LanguageDetectionResult {
+  language: string | null;
+  confidence: number;
+  provider: 'groq' | 'gemini';
+  latency: number;
+}
+
+export async function detectLanguage(
+  text: string,
+  candidates?: string[]
+): Promise<LanguageDetectionResult> {
+  try {
+    const response = await authenticatedFetch(`${BACKEND_URL}/api/language-detect`, {
+      method: 'POST',
+      body: JSON.stringify({ text, candidates }),
+    });
+
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let message = `API Error: ${response.status}`;
+
+      if (contentType?.includes('application/json')) {
+        try {
+          const errorData = await response.json();
+          message = errorData.message || errorData.error || message;
+        } catch (e) {
+          // JSONパース失敗時はstatus codeのみ使用
+        }
+      }
+
+      throw new ApiError(message, response.status);
+    }
+
+    const data: LanguageDetectionResult = await response.json();
+    logger.info('[GeminiClient] Language detected:', {
+      language: data.language,
+      confidence: data.confidence,
+      provider: data.provider,
+      latency: data.latency,
+    });
+    return data;
+  } catch (error) {
+    logger.error('[GeminiClient] Error in detectLanguage:', error);
+    throw error;
+  }
+}
+
 export async function isGeminiConfigured(): Promise<boolean> {
   try {
     const statusUrl = getApiUrl('/status');

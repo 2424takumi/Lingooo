@@ -105,6 +105,9 @@ export function UnifiedHeaderBar({
 }: UnifiedHeaderBarProps) {
   const menuButtonRef = useRef<any>(null);
 
+  // 配列であることを保証
+  const posTagsArray = Array.isArray(posTags) ? posTags : [];
+
   const handleMenuPress = () => {
     if (menuButtonRef.current && onMenuPress) {
       // @ts-ignore - measureInWindow exists on TouchableOpacity but not in type definition
@@ -167,9 +170,9 @@ export function UnifiedHeaderBar({
           </TouchableOpacity>
         </View>
 
-        {posTags.length > 0 && (
+        {posTagsArray.length > 0 && (
           <View style={styles.tagRow}>
-            {posTags.map((tag, index) => (
+            {posTagsArray.map((tag, index) => (
               <PosTag key={index} label={tag} gender={gender} />
             ))}
           </View>

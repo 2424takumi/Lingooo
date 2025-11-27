@@ -1,19 +1,19 @@
-import { Modal, StyleSheet, Text, TouchableOpacity, View, ScrollView, NativeModules, Platform } from 'react-native';
+import { Modal, StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { AVAILABLE_LANGUAGES, Language } from '@/types/language';
 import { useState, useMemo } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { LanguageDropdown } from '@/components/ui/language-dropdown';
+import * as Localization from 'expo-localization';
 
 // デバイスのロケールを取得するヘルパー関数
 function getDeviceLocale(): string {
   try {
-    if (Platform.OS === 'ios') {
-      const settings = NativeModules.SettingsManager?.settings;
-      const locale = settings?.AppleLocale || settings?.AppleLanguages?.[0];
-      return locale?.split('_')[0] || locale?.split('-')[0] || 'en';
-    } else if (Platform.OS === 'android') {
-      const locale = NativeModules.I18nManager?.localeIdentifier;
-      return locale?.split('_')[0] || locale?.split('-')[0] || 'en';
+    // Expo Localizationを使用してデバイスロケールを取得
+    const locales = Localization.getLocales();
+    if (locales && locales.length > 0) {
+      const primaryLocale = locales[0].languageCode;
+      console.log('[InitialSetup] Device locale detected:', primaryLocale);
+      return primaryLocale || 'en';
     }
   } catch (error) {
     console.warn('Failed to get device locale:', error);
@@ -44,11 +44,11 @@ function CheckIcon({ size = 24, color = '#111111' }: { size?: number; color?: st
 export function InitialLanguageSetupModal({ visible, onComplete }: InitialLanguageSetupModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
 
-  // 端末のデフォルト言語を取得（日英葡のみ対応、それ以外は英語）
+  // 端末のデフォルト言語を取得（日英葡のみ対応、それ以外は日本語）
   const defaultNativeLanguage = useMemo(() => {
     const deviceLocale = getDeviceLocale();
     const supportedCodes = ['ja', 'en', 'pt'];
-    const matchedCode = supportedCodes.includes(deviceLocale) ? deviceLocale : 'en';
+    const matchedCode = supportedCodes.includes(deviceLocale) ? deviceLocale : 'ja';
     return AVAILABLE_LANGUAGES.find(lang => lang.code === matchedCode)!;
   }, []);
 

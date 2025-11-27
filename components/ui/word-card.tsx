@@ -2,21 +2,18 @@ import { View, Text, StyleSheet } from 'react-native';
 import { PosTag } from './pos-tag';
 import { Shimmer } from './shimmer';
 import { NuanceTag, type NuanceType } from './nuance-tag';
-import { SelectableText } from './selectable-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface WordCardProps {
   word: string;
-  posTags: string[];
+  posTags?: string[];
   gender?: 'm' | 'f' | 'n' | 'mf';
   definitions: string[];
   description: string;
   nuance?: NuanceType;
-  onTextSelected?: (text: string) => void;
-  onSelectionCleared?: () => void;
 }
 
-export function WordCard({ word, posTags, gender, definitions, description, nuance, onTextSelected, onSelectionCleared }: WordCardProps) {
+export function WordCard({ word, posTags, gender, definitions, description, nuance }: WordCardProps) {
   const cardBackground = useThemeColor({}, 'cardBackground');
   const borderColor = useThemeColor({}, 'border');
   const primaryText = useThemeColor({}, 'text');
@@ -25,20 +22,22 @@ export function WordCard({ word, posTags, gender, definitions, description, nuan
 
   // 配列であることを保証（後方互換性のため）
   const definitionsArray = Array.isArray(definitions) ? definitions : [definitions].filter(Boolean);
+  const posTagsArray = Array.isArray(posTags) ? posTags : [];
 
   return (
     <View style={[styles.container, { backgroundColor: cardBackground, borderColor }]}>
 
       <View style={styles.headerSection}>
         <View style={styles.wordAndPosContainer}>
-          <SelectableText
-            text={word}
-            style={[styles.word, { color: primaryText }] as any}
-            onSelectionChange={onTextSelected}
-            onSelectionCleared={onSelectionCleared}
-          />
+          <Text
+            selectable
+            selectionColor="#111111"
+            style={[styles.word, { color: primaryText }]}
+          >
+            {word}
+          </Text>
           <View style={styles.posTagList}>
-            {posTags.map((tag, index) => (
+            {posTagsArray.map((tag, index) => (
               <PosTag key={index} label={tag} gender={gender} />
             ))}
           </View>
@@ -47,20 +46,22 @@ export function WordCard({ word, posTags, gender, definitions, description, nuan
       </View>
 
       <View style={styles.contentSection}>
-        <SelectableText
-          text={definitionsArray.join('、')}
-          style={[styles.definition, { color: primaryText }] as any}
-          onSelectionChange={onTextSelected}
-          onSelectionCleared={onSelectionCleared}
-        />
+        <Text
+          selectable
+          selectionColor="#111111"
+          style={[styles.definition, { color: primaryText }]}
+        >
+          {definitionsArray.join('、')}
+        </Text>
 
         {description ? (
-          <SelectableText
-            text={description}
-            style={[styles.description, { color: secondaryText }] as any}
-            onSelectionChange={onTextSelected}
-            onSelectionCleared={onSelectionCleared}
-          />
+          <Text
+            selectable
+            selectionColor="#111111"
+            style={[styles.description, { color: secondaryText }]}
+          >
+            {description}
+          </Text>
         ) : (
           <View style={styles.descriptionShimmerContainer}>
             <Shimmer width="90%" height={14} borderRadius={4} style={styles.descriptionShimmer} />

@@ -83,6 +83,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // 初期設定完了処理
   const completeInitialSetup = async (nativeLanguage: string, learningLanguages: string[]) => {
     try {
+      console.log('[Auth] Completing initial setup with:', { nativeLanguage, learningLanguages });
+
       // 初期設定完了フラグを保存
       await AsyncStorage.setItem(INITIAL_SETUP_KEY, 'true');
 
@@ -96,10 +98,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (data.user) {
-        // 選択された言語設定でusersテーブルにレコードを作成
-        await ensureUserRecord(data.user.id, nativeLanguage, learningLanguages);
+        console.log('[Auth] User created:', data.user.id);
+        // 選択された言語設定でusersテーブルにレコードを作成（完了を待つ）
+        const success = await ensureUserRecord(data.user.id, nativeLanguage, learningLanguages);
+        console.log('[Auth] User record created:', success);
+
+        // レコード作成が確実に完了するまで少し待機
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
 
+      console.log('[Auth] Initial setup complete, setting needsInitialSetup to false');
       setNeedsInitialSetup(false);
       setLoading(false);
     } catch (error) {
@@ -136,7 +144,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     userId: string,
     nativeLanguage?: string,
     learningLanguages?: string[]
-  ) => {
+  ): Promise<boolean> => {
     try {
       // 既存レコードを確認
       const { data: existingUser, error: fetchError } = await supabase
@@ -148,7 +156,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (fetchError && fetchError.code !== 'PGRST116') {
         // PGRST116 = レコードが見つからない（これは正常）
         console.error('ユーザーレコード取得エラー:', fetchError);
-        return;
+        return false;
       }
 
       // レコードがなければ作成
@@ -168,11 +176,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // 23505 = duplicate key (既に存在する場合)は無視
           if (insertError.code !== '23505') {
             console.error('ユーザーレコード作成エラー:', insertError);
+            return false;
           }
         }
       }
+      return true;
     } catch (error) {
       console.error('usersテーブル確認例外:', error);
+      return false;
     }
   };
 

@@ -7,6 +7,8 @@
  * 辞書データには詳細度の概念はなく、常に同じ構造を返す
  */
 
+import { fetchPromptWithFallback } from './langfuse-client';
+
 /**
  * 言語名マッピング（日本語表記）
  */
@@ -46,21 +48,83 @@ function hasGrammaticalGender(languageCode: string): boolean {
  *
  * 超高速表示用：0.2~0.3秒で返却
  */
-export function createBasicInfoPrompt(word: string, targetLanguage: string = 'en', nativeLanguage: string = 'ja'): string {
+export async function createBasicInfoPrompt(word: string, targetLanguage: string = 'en', nativeLanguage: string = 'ja'): Promise<string> {
   const langName = getLanguageNameJa(targetLanguage);
   const nativeLangName = getLanguageNameJa(nativeLanguage);
+  const needsGender = hasGrammaticalGender(targetLanguage);
+  const genderField = needsGender ? ', "gender": "m または f または n または mf（名詞の場合のみ）"' : '';
 
-  return `${langName}の単語"${word}"の基本情報を以下のJSON構造で最小限のトークンで生成：
+  const fallback = `${langName}の単語"{{word}}"の基本情報を以下のJSON構造で最小限のトークンで生成：
 
 {
-  "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["品詞（英語、例: verb, noun）"]},
-  "senses": [{"id": "1", "glossShort": "簡潔な${nativeLangName}の意味（10文字以内）"}, {"id": "2", "glossShort": "意味2"}]
+  "headword": {"lemma": "{{word}}", "lang": "{{targetLanguage}}", "pos": ["品詞（英語、例: verb, noun）"]{{genderField}}},
+  "senses": [{"id": "1", "glossShort": "簡潔な{{nativeLangName}}の意味（10文字以内）"}, {"id": "2", "glossShort": "意味2"}]
 }
 
 要件:
 - sensesは2-3個、主要な意味のみ（各10文字以内）
-- ${nativeLangName}の説明は簡潔で分かりやすく
+- {{nativeLangName}}の説明は簡潔で分かりやすく
 - 超高速レスポンス用のため最小限の情報のみ`;
+
+  return await fetchPromptWithFallback(
+    'dictionary-basic',
+    fallback,
+    {
+      word,
+      targetLanguage,
+      langName,
+      nativeLangName,
+      genderField,
+    }
+  );
+}
+
+/**
+ * 追加詳細情報専用プロンプト（hint + metrics + examples のみ）
+ *
+ * 2段階生成のStage 2で使用：基本情報（headword + senses）は既に取得済みのため、
+ * 追加の詳細情報のみを生成してトークンを40-50%削減
+ *
+ * @param word - 検索する単語
+ * @param targetLanguage - ターゲット言語コード
+ * @param nativeLanguage - 母国語コード
+ */
+export async function createAdditionalDetailsPrompt(
+  word: string,
+  targetLanguage: string = 'en',
+  nativeLanguage: string = 'ja'
+): Promise<string> {
+  const langName = getLanguageNameJa(targetLanguage);
+  const nativeLangName = getLanguageNameJa(nativeLanguage);
+
+  const fallback = `{{langName}}の単語"{{word}}"について、以下の追加情報のみを生成してください：
+
+{
+  "hint": {"text": "{{nativeLangName}}で2〜3文の簡潔な説明（使用場面・ニュアンス・類似語との違いなど、学習に最も重要な特徴2点）"},
+  "metrics": {"frequency": 頻出度0-100, "difficulty": 難易度0-100, "nuance": ニュアンスの強さ0-100},
+  "examples": [
+    {"textSrc": "自然な{{langName}}の例文", "textDst": "自然な{{nativeLangName}}訳"},
+    {"textSrc": "{{langName}}例文2", "textDst": "{{nativeLangName}}訳2"},
+    {"textSrc": "{{langName}}例文3", "textDst": "{{nativeLangName}}訳3"}
+  ]
+}
+
+要件:
+- hint, metrics, examples のみを生成（headwordとsensesは不要）
+- hintは{{nativeLangName}}で2〜3文、学習に最も重要な2つの特徴（使用場面・ニュアンス・文法・類似語との違いなど）
+- 例文は3-5個、実用的で自然な{{langName}}の文
+- metricsは実際の使用頻度を反映
+- {{nativeLangName}}の説明は自然で分かりやすく`;
+
+  return await fetchPromptWithFallback(
+    'dictionary-additional',
+    fallback,
+    {
+      word,
+      langName,
+      nativeLangName,
+    }
+  );
 }
 
 /**
@@ -111,6 +175,11 @@ export function createDictionaryPrompt(
 
 /**
  * 日本語からターゲット言語への単語サジェストプロンプトを生成
+ *
+ * @deprecated このプロンプトは使用されていません。
+ * 代わりに高速サジェストプロンプト（dictionary-generator.ts の createFastSuggestionsPrompt）と
+ * 並列UsageHint生成（backend /api/gemini/generate-usage-hint）を使用してください。
+ * Langfuse移行時に削除予定。
  */
 export function createSuggestionsPrompt(japaneseQuery: string, targetLanguage: string = 'en'): string {
   const langName = getLanguageNameJa(targetLanguage);

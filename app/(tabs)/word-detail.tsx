@@ -1140,7 +1140,7 @@ const styles = StyleSheet.create({
   chatContainerFixed: {
     paddingHorizontal: 8,
     paddingBottom: 0,
-    marginBottom: 16,
+    marginBottom: 20,
     justifyContent: 'flex-end',
   },
   loadingContainer: {
