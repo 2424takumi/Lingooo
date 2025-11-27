@@ -499,26 +499,45 @@ export default function TranslateScreen() {
   const handleDictionaryLookup = () => {
     if (!selectedText) return;
 
-    // 選択されたテキストの言語を検出（翻訳用のロジック）
+    // 選択されたテキストの言語を検出
     const detectedLang = detectLang(selectedText.text);
-    let targetLang: string;
-    if (detectedLang === 'ja') {
-      targetLang = 'ja';
-    } else if (detectedLang === 'kanji-only') {
-      targetLang = nativeLanguage.code; // 母語を優先
-    } else {
-      // alphabet or mixed の場合、英語をデフォルトとする
-      targetLang = 'en';
-    }
-    logger.info('[Translate] Dictionary lookup for:', selectedText.text, 'detected:', detectedLang, 'resolved:', targetLang);
 
-    router.push({
-      pathname: '/(tabs)/word-detail',
-      params: {
-        word: selectedText.text,
-        targetLanguage: targetLang,
-      },
-    });
+    // 母国語かどうかを判定
+    const isNativeLanguage = (
+      (detectedLang === 'ja' || detectedLang === 'kanji-only') &&
+      nativeLanguage.code === 'ja'
+    );
+
+    if (isNativeLanguage) {
+      // 母国語の場合: searchページへ遷移（訳語を表示）
+      logger.info('[Translate] Dictionary lookup (native language):', selectedText.text, 'detected:', detectedLang, '-> navigating to search');
+      router.push({
+        pathname: '/(tabs)/search',
+        params: {
+          query: selectedText.text,
+        },
+      });
+    } else {
+      // 外国語の場合: word-detailページへ遷移（辞書を表示）
+      let targetLang: string;
+      if (detectedLang === 'ja') {
+        targetLang = 'ja';
+      } else if (detectedLang === 'kanji-only') {
+        targetLang = nativeLanguage.code; // 母語を優先
+      } else {
+        // alphabet or mixed の場合、英語をデフォルトとする
+        targetLang = 'en';
+      }
+      logger.info('[Translate] Dictionary lookup (foreign language):', selectedText.text, 'detected:', detectedLang, 'resolved:', targetLang);
+
+      router.push({
+        pathname: '/(tabs)/word-detail',
+        params: {
+          word: selectedText.text,
+          targetLanguage: targetLang,
+        },
+      });
+    }
 
     // 検索実行後に選択を解除
     setSelectedText(null);
@@ -563,7 +582,7 @@ export default function TranslateScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? -30 : 0}
       >
         <View pointerEvents="box-none" style={styles.chatContainerFixed}>
           <ChatSection

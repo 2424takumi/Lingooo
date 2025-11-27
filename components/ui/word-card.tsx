@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { PosTag } from './pos-tag';
 import { Shimmer } from './shimmer';
 import { NuanceTag, type NuanceType } from './nuance-tag';
+import { SelectableText } from './selectable-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface WordCardProps {
@@ -11,9 +12,11 @@ interface WordCardProps {
   definitions: string[];
   description: string;
   nuance?: NuanceType;
+  onTextSelected?: (text: string) => void;
+  onSelectionCleared?: () => void;
 }
 
-export function WordCard({ word, posTags, gender, definitions, description, nuance }: WordCardProps) {
+export function WordCard({ word, posTags, gender, definitions, description, nuance, onTextSelected, onSelectionCleared }: WordCardProps) {
   const cardBackground = useThemeColor({}, 'cardBackground');
   const borderColor = useThemeColor({}, 'border');
   const primaryText = useThemeColor({}, 'text');
@@ -28,9 +31,12 @@ export function WordCard({ word, posTags, gender, definitions, description, nuan
 
       <View style={styles.headerSection}>
         <View style={styles.wordAndPosContainer}>
-          <Text selectable selectionColor={accent} style={[styles.word, { color: primaryText }]}>
-            {word}
-          </Text>
+          <SelectableText
+            text={word}
+            style={[styles.word, { color: primaryText }] as any}
+            onSelectionChange={onTextSelected}
+            onSelectionCleared={onSelectionCleared}
+          />
           <View style={styles.posTagList}>
             {posTags.map((tag, index) => (
               <PosTag key={index} label={tag} gender={gender} />
@@ -41,18 +47,20 @@ export function WordCard({ word, posTags, gender, definitions, description, nuan
       </View>
 
       <View style={styles.contentSection}>
-        <Text
-          selectable
-          selectionColor={accent}
-          style={[styles.definition, { color: primaryText }]}
-        >
-          {definitionsArray.join('、')}
-        </Text>
+        <SelectableText
+          text={definitionsArray.join('、')}
+          style={[styles.definition, { color: primaryText }] as any}
+          onSelectionChange={onTextSelected}
+          onSelectionCleared={onSelectionCleared}
+        />
 
         {description ? (
-          <Text selectable selectionColor={accent} style={[styles.description, { color: secondaryText }]}>
-            {description}
-          </Text>
+          <SelectableText
+            text={description}
+            style={[styles.description, { color: secondaryText }] as any}
+            onSelectionChange={onTextSelected}
+            onSelectionCleared={onSelectionCleared}
+          />
         ) : (
           <View style={styles.descriptionShimmerContainer}>
             <Shimmer width="90%" height={14} borderRadius={4} style={styles.descriptionShimmer} />

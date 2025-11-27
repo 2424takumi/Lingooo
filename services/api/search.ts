@@ -12,7 +12,7 @@ import { isGeminiConfigured } from '@/services/ai/gemini-client';
 import { setCachedSuggestions, getCachedSuggestions, getCachedSuggestionsSync } from '@/services/cache/suggestion-cache';
 import { logger } from '@/utils/logger';
 
-const SUGGESTION_TIMEOUT_MS = 10000; // 10秒に延長（AI生成に時間がかかるため）
+const SUGGESTION_TIMEOUT_MS = 15000; // 15秒に延長（AI生成に時間がかかるため）
 // @ts-ignore - Mock data type compatibility
 const jaToEnDictionary = mockDictionary.ja_to_en as Record<string, SuggestionItem[]>;
 const jaToEnEntries = Object.entries(jaToEnDictionary);
@@ -208,9 +208,28 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en',
     // ローカル辞書の結果を即座に返す（キャッシュにも保存）
     setCachedSuggestions(trimmedQuery, localItems, targetLanguage);
 
-    // 背景でAIによるusageHint追加を実行（オプション）
-    // TODO: 必要に応じてバックグラウンドでAI強化を追加
-    // tryEnhanceWithAiInBackground(trimmedQuery, targetLanguage, localItems);
+    // 🔧 バックグラウンドでAIによるusageHint追加を実行
+    (async () => {
+      try {
+        logger.info('[searchJaToEn] Starting background AI enhancement for local items');
+        const lemmas = localItems.map(item => item.lemma);
+
+        // 並列生成：各ヒントが完成次第、キャッシュを更新
+        await addUsageHintsParallel(lemmas, trimmedQuery, (hint) => {
+          const currentItems = getCachedSuggestionsSync(trimmedQuery, targetLanguage) || localItems;
+          const updatedItems = currentItems.map(item =>
+            item.lemma === hint.lemma ? { ...item, usageHint: hint.usageHint } : item
+          );
+          setCachedSuggestions(trimmedQuery, updatedItems, targetLanguage);
+          logger.info(`[searchJaToEn] ✅ Hint added for: ${hint.lemma}`);
+        });
+
+        logger.info('[searchJaToEn] Background AI enhancement completed');
+      } catch (error) {
+        logger.error('[searchJaToEn] Background AI enhancement failed:', error);
+        // ヒント追加に失敗しても基本情報は既に表示されているので問題なし
+      }
+    })();
 
     return {
       items: localItems,

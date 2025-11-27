@@ -1,12 +1,15 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { SelectableText } from './selectable-text';
 
 interface ExampleCardProps {
   english: string;
   japanese: string;
+  onTextSelected?: (text: string) => void;
+  onSelectionCleared?: () => void;
 }
 
-export function ExampleCard({ english, japanese }: ExampleCardProps) {
+export function ExampleCard({ english, japanese, onTextSelected, onSelectionCleared }: ExampleCardProps) {
   const cardBackground = useThemeColor({}, 'cardBackground');
   const borderColor = useThemeColor({}, 'border');
   const primaryText = useThemeColor({}, 'text');
@@ -15,12 +18,18 @@ export function ExampleCard({ english, japanese }: ExampleCardProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: 'transparent', borderColor: 'transparent' }]}>
-      <Text selectable selectionColor={accent} style={[styles.english, { color: primaryText }]}>
-        {english}
-      </Text>
-      <Text selectable selectionColor={accent} style={[styles.japanese, { color: secondaryText }]}>
-        {japanese}
-      </Text>
+      <SelectableText
+        text={english}
+        style={[styles.english, { color: primaryText }] as any}
+        onSelectionChange={onTextSelected}
+        onSelectionCleared={onSelectionCleared}
+      />
+      <SelectableText
+        text={japanese}
+        style={[styles.japanese, { color: secondaryText }] as any}
+        onSelectionChange={onTextSelected}
+        onSelectionCleared={onSelectionCleared}
+      />
     </View>
   );
 }

@@ -1,17 +1,25 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { SelectableText } from './selectable-text';
 
 interface WordHintProps {
   hint: string;
+  onTextSelected?: (text: string) => void;
+  onSelectionCleared?: () => void;
 }
 
-export function WordHint({ hint }: WordHintProps) {
+export function WordHint({ hint, onTextSelected, onSelectionCleared }: WordHintProps) {
   if (!hint) {
     return null;
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.hintText}>{hint}</Text>
+      <SelectableText
+        text={hint}
+        style={styles.hintText}
+        onSelectionChange={onTextSelected}
+        onSelectionCleared={onSelectionCleared}
+      />
     </View>
   );
 }

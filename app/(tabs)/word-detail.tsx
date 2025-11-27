@@ -25,13 +25,14 @@ import { useSubscription } from '@/contexts/subscription-context';
 import { useClipboardSearch } from '@/hooks/use-clipboard-search';
 import { getWordDetailStream } from '@/services/api/search';
 import type { WordDetailResponse } from '@/types/search';
-import { getCachedWordDetail, getPendingPromise } from '@/services/cache/word-detail-cache';
+import { getCachedWordDetail, getPendingPromise, prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
 import { addSearchHistory, removeSearchHistoryItem, getSearchHistory } from '@/services/storage/search-history-storage';
 import { generateId } from '@/utils/id';
 import type { QAPair } from '@/types/chat';
 import { AVAILABLE_LANGUAGES } from '@/types/language';
+import { detectLang } from '@/services/utils/language-detect';
 
 export default function WordDetailScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
@@ -49,6 +50,9 @@ export default function WordDetailScreen() {
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null); // 実際に見つかった言語
   const [showLanguageNotification, setShowLanguageNotification] = useState(false); // 通知表示フラグ
   const [isLoadingAdditional, setIsLoadingAdditional] = useState(false); // 追加データ（例文など）の読み込み中
+
+  // 選択テキスト管理
+  const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
 
   // ヘッダーの高さを測定
   const [headerHeight, setHeaderHeight] = useState(88); // デフォルト値(wordDetailの最低高さ)
@@ -561,6 +565,80 @@ export default function WordDetailScreen() {
     }
   };
 
+  const handleTextSelected = (text: string) => {
+    // Determine if it's a single word (simple heuristic: no spaces)
+    const isSingleWord = !text.includes(' ') && text.split(/\s+/).length === 1;
+    setSelectedText({ text, isSingleWord });
+
+    // 単語の場合、プリフェッチを開始（辞書で調べるボタンを押す前に準備）
+    if (isSingleWord && text.trim()) {
+      const detectedLang = detectLang(text.trim());
+      let targetLang: string;
+      if (detectedLang === 'ja') {
+        targetLang = 'ja';
+      } else if (detectedLang === 'kanji-only') {
+        targetLang = nativeLanguage.code;
+      } else {
+        targetLang = 'en';
+      }
+      logger.info('[WordDetail] Pre-fetching word detail for selected text:', text, 'detected:', detectedLang, 'resolved:', targetLang);
+
+      prefetchWordDetail(text.trim(), (onProgress) => {
+        return getWordDetailStream(text.trim(), targetLang, nativeLanguage.code, 'concise', onProgress);
+      });
+    }
+  };
+
+  const handleSelectionCleared = () => {
+    setSelectedText(null);
+  };
+
+  const handleDictionaryLookup = () => {
+    if (!selectedText) return;
+
+    // 選択されたテキストの言語を検出
+    const detectedLang = detectLang(selectedText.text);
+
+    // 母国語かどうかを判定
+    const isNativeLanguage = (
+      (detectedLang === 'ja' || detectedLang === 'kanji-only') &&
+      nativeLanguage.code === 'ja'
+    );
+
+    if (isNativeLanguage) {
+      // 母国語の場合: searchページへ遷移（訳語を表示）
+      logger.info('[WordDetail] Dictionary lookup (native language):', selectedText.text, 'detected:', detectedLang, '-> navigating to search');
+      router.push({
+        pathname: '/(tabs)/search',
+        params: {
+          query: selectedText.text,
+        },
+      });
+    } else {
+      // 外国語の場合: word-detailページへ遷移（辞書を表示）
+      let targetLang: string;
+      if (detectedLang === 'ja') {
+        targetLang = 'ja';
+      } else if (detectedLang === 'kanji-only') {
+        targetLang = nativeLanguage.code;
+      } else {
+        targetLang = 'en';
+      }
+      logger.info('[WordDetail] Dictionary lookup (foreign language):', selectedText.text, 'detected:', detectedLang, 'resolved:', targetLang);
+
+      router.push({
+        pathname: '/word-detail',
+        params: {
+          word: selectedText.text,
+          targetLanguage: targetLang,
+        },
+      });
+    }
+
+    // 辞書検索後に選択を解除
+    setSelectedText(null);
+  };
+
   const handlePronouncePress = async () => {
     if (!wordData?.headword) {
       logger.warn('[Pronounce] No headword data');
@@ -633,11 +711,29 @@ export default function WordDetailScreen() {
   };
 
   const handleQuestionPress = (question: string) => {
-    void sendQuickQuestion(question);
+    if (selectedText?.text) {
+      // API用: 部分選択した箇所に焦点を当てた質問形式
+      const contextualQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${question}`;
+      // UI表示用: シンプルな形式
+      const displayQuestion = `「${selectedText.text}」について：${question}`;
+      setSelectedText(null);
+      void sendQuickQuestion(contextualQuestion, displayQuestion);
+    } else {
+      void sendQuickQuestion(question);
+    }
   };
 
   const handleChatSubmit = async (text: string) => {
-    await sendChatMessage(text);
+    if (selectedText?.text) {
+      // API用: 部分選択した箇所に焦点を当てた質問形式
+      const contextualQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${text}`;
+      // UI表示用: シンプルな形式
+      const displayQuestion = `「${selectedText.text}」について：${text}`;
+      setSelectedText(null);
+      await sendChatMessage(contextualQuestion, displayQuestion);
+    } else {
+      await sendChatMessage(text);
+    }
   };
 
   const handleChatRetry = () => {
@@ -855,6 +951,8 @@ export default function WordDetailScreen() {
             <View style={styles.definitionsContainer}>
               <DefinitionList
                 definitions={wordData.senses.map(s => s.glossShort)}
+                onTextSelected={handleTextSelected}
+                onSelectionCleared={handleSelectionCleared}
               />
             </View>
           ) : isLoading ? (
@@ -866,7 +964,7 @@ export default function WordDetailScreen() {
           {/* Word Hint - 3番目に表示 */}
           {wordData?.hint?.text ? (
             <View style={styles.hintContainer}>
-              <WordHint hint={wordData.hint.text} />
+              <WordHint hint={wordData.hint.text} onTextSelected={handleTextSelected} onSelectionCleared={handleSelectionCleared} />
             </View>
           ) : (isLoading || isLoadingAdditional) ? (
             <View style={styles.hintContainer}>
@@ -884,6 +982,8 @@ export default function WordDetailScreen() {
                     key={index}
                     english={example.textSrc}
                     japanese={example.textDst}
+                    onTextSelected={handleTextSelected}
+                    onSelectionCleared={handleSelectionCleared}
                   />
                 ))}
               </View>
@@ -925,6 +1025,9 @@ export default function WordDetailScreen() {
             activeFollowUpPairId={activeFollowUpPairId}
             prefilledInputText={prefilledChatText}
             onPrefillConsumed={() => setPrefilledChatText(null)}
+            selectedText={selectedText}
+            onDictionaryLookup={handleDictionaryLookup}
+            onSelectionCleared={handleSelectionCleared}
           />
         </View>
       </KeyboardAvoidingView>

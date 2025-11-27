@@ -11,6 +11,7 @@ import {
   Platform,
   Dimensions,
   Animated,
+  Keyboard,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -48,6 +49,8 @@ interface ChatSectionProps {
   onDictionaryLookup?: () => void; // 辞書で調べるボタンのコールバック
   onEnterFollowUpMode?: (pairId: string, question: string) => void;
   activeFollowUpPairId?: string;
+  onTextSelected?: (text: string) => void; // テキスト選択コールバック
+  onSelectionCleared?: () => void; // テキスト選択解除コールバック
 }
 
 function ExpandIcon({ size = 18 }: { size?: number }) {
@@ -197,6 +200,8 @@ export function ChatSection({
   onDictionaryLookup,
   onEnterFollowUpMode,
   activeFollowUpPairId,
+  onTextSelected,
+  onSelectionCleared,
 }: ChatSectionProps) {
   const { customQuestions, addCustomQuestion } = useAISettings();
   const { isPremium } = useSubscription();
@@ -219,6 +224,7 @@ export function ChatSection({
   const [customQuestionTitle, setCustomQuestionTitle] = useState('');
   const [customQuestionText, setCustomQuestionText] = useState('');
   const [isPremiumUpgradeModalOpen, setIsPremiumUpgradeModalOpen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const INPUT_LINE_HEIGHT = 22;
   const MAX_LINES = 5;
   const INPUT_TOP_PADDING = 6;
@@ -238,11 +244,32 @@ export function ChatSection({
   // expandedMaxHeightが渡されている場合はそれを優先、なければ従来の計算を使用
   const screenHeight = Dimensions.get('window').height;
   const topMargin = scope === 'jpSearch' ? 72 : 98;
-  const calculatedMaxHeight = expandedMaxHeight ?? (screenHeight - topMargin - 200);
+  const calculatedMaxHeight = expandedMaxHeight ?? (screenHeight - topMargin - 200 - keyboardHeight);
 
   // アニメーション用の値
   const animatedHeight = useRef(new Animated.Value(0)).current;
   const animatedOpacity = useRef(new Animated.Value(0)).current;
+
+  // キーボードの高さを検知
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
+  }, []);
 
   // チャットの開閉アニメーション
   useEffect(() => {
@@ -541,6 +568,8 @@ export function ChatSection({
                     scrollViewRef.current?.scrollToEnd({ animated: true });
                   }, 400);
                 }}
+                onTextSelected={onTextSelected}
+                onSelectionCleared={onSelectionCleared}
               />
             </View>
           )}
@@ -557,30 +586,22 @@ export function ChatSection({
         </ScrollView>
       </Animated.View>
 
-      {/* 翻訳モード時の選択テキスト/ヒント表示 */}
-      {scope === 'translate' && !isOpen && (
-        selectedText ? (
-          /* Selected Text Display (shown when text is selected) */
-          <View style={styles.selectedTextContainer}>
-            <Text style={styles.selectedTextLabel} numberOfLines={1} ellipsizeMode="tail">
-              {selectedText.text}
-            </Text>
-            {selectedText.isSingleWord && onDictionaryLookup && (
-              <TouchableOpacity
-                style={styles.dictionaryButton}
-                onPress={onDictionaryLookup}
-              >
-                <Text style={styles.dictionaryButtonText} numberOfLines={1}>単語を調べる</Text>
-                <ArrowRightIcon size={16} color="#242424" />
-              </TouchableOpacity>
-            )}
-          </View>
-        ) : (
-          /* Hint text when no text is selected */
-          <View style={styles.hintTextContainer}>
-            <Text style={styles.hintText}>テキストを選択して質問をしてみましょう</Text>
-          </View>
-        )
+      {/* 選択テキスト表示（translate, word, searchモード） */}
+      {(scope === 'translate' || scope === 'word' || scope === 'search') && !isOpen && selectedText && (
+        <View style={styles.selectedTextContainer}>
+          <Text style={styles.selectedTextLabel} numberOfLines={1} ellipsizeMode="tail">
+            {selectedText.text}
+          </Text>
+          {selectedText.isSingleWord && onDictionaryLookup && (
+            <TouchableOpacity
+              style={styles.dictionaryButton}
+              onPress={onDictionaryLookup}
+            >
+              <Text style={styles.dictionaryButtonText} numberOfLines={1}>単語を調べる</Text>
+              <ArrowRightIcon size={16} color="#242424" />
+            </TouchableOpacity>
+          )}
+        </View>
       )}
 
       {/* Bottom Section: Question Tags + Input */}
@@ -590,8 +611,8 @@ export function ChatSection({
         scope === 'translate' && isOpen && styles.bottomSectionTranslateOpen,
         activeFollowUpPair && styles.bottomSectionFollowUp
       ]}>
-        {/* Question Tags - 翻訳モードでは非表示、フォローアップモード時は非表示 */}
-        {scope !== 'translate' && !activeFollowUpPair && (
+        {/* Question Tags - 翻訳モードでは非表示、フォローアップモード時は非表示、テキスト選択時は非表示 */}
+        {scope !== 'translate' && !activeFollowUpPair && !selectedText && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -873,14 +894,14 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   containerClosed: {
-    marginBottom: 4,
+    marginBottom: 0,
     paddingTop: 8,
-    paddingBottom: 10,
+    paddingBottom: 8,
   },
   containerOpen: {
     paddingTop: 8,
-    paddingBottom: 10,
-    marginBottom: 4,
+    paddingBottom: 6,
+    marginBottom: 0,
   },
   containerTranslateClosed: {
     paddingTop: 8,

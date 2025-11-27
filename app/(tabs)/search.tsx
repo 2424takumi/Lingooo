@@ -29,6 +29,7 @@ import { getNuanceType } from '@/utils/nuance';
 import type { SuggestionItem } from '@/types/search';
 import { generateId } from '@/utils/id';
 import type { QAPair } from '@/types/chat';
+import { detectLang } from '@/services/utils/language-detect';
 
 export default function SearchScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
@@ -57,6 +58,9 @@ export default function SearchScreen() {
 
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>(initialResults);
   const [isLoading, setIsLoading] = useState(false);
+
+  // 選択テキスト管理
+  const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
 
   // ブックマーク管理
   const {
@@ -240,8 +244,102 @@ export default function SearchScreen() {
     }
   };
 
+  const handleTextSelected = (text: string) => {
+    const isSingleWord = !text.includes(' ') && text.split(/\s+/).length === 1;
+    setSelectedText({ text, isSingleWord });
+
+    if (isSingleWord && text.trim()) {
+      const detectedLang = detectLang(text.trim());
+      let targetLang: string;
+      if (detectedLang === 'ja') {
+        targetLang = 'ja';
+      } else if (detectedLang === 'kanji-only') {
+        targetLang = nativeLanguage.code;
+      } else {
+        targetLang = 'en';
+      }
+      logger.info('[Search] Pre-fetching word detail for selected text:', text, 'detected:', detectedLang, 'resolved:', targetLang);
+
+      prefetchWordDetail(text.trim(), (onProgress) => {
+        return getWordDetailStream(text.trim(), targetLang, nativeLanguage.code, 'concise', onProgress);
+      });
+    }
+  };
+
+  const handleSelectionCleared = () => {
+    setSelectedText(null);
+  };
+
+  const handleDictionaryLookup = () => {
+    if (!selectedText) return;
+
+    // 選択されたテキストの言語を検出
+    const detectedLang = detectLang(selectedText.text);
+
+    // 母国語かどうかを判定
+    const isNativeLanguage = (
+      (detectedLang === 'ja' || detectedLang === 'kanji-only') &&
+      nativeLanguage.code === 'ja'
+    );
+
+    if (isNativeLanguage) {
+      // 母国語の場合: searchページへ遷移（訳語を表示）
+      logger.info('[Search] Dictionary lookup (native language):', selectedText.text, 'detected:', detectedLang, '-> navigating to search');
+      router.push({
+        pathname: '/(tabs)/search',
+        params: {
+          query: selectedText.text,
+        },
+      });
+    } else {
+      // 外国語の場合: word-detailページへ遷移（辞書を表示）
+      let targetLang: string;
+      if (detectedLang === 'ja') {
+        targetLang = 'ja';
+      } else if (detectedLang === 'kanji-only') {
+        targetLang = nativeLanguage.code;
+      } else {
+        targetLang = 'en';
+      }
+      logger.info('[Search] Dictionary lookup (foreign language):', selectedText.text, 'detected:', detectedLang, 'resolved:', targetLang);
+
+      router.push({
+        pathname: '/word-detail',
+        params: {
+          word: selectedText.text,
+          targetLanguage: targetLang,
+        },
+      });
+    }
+
+    // 辞書検索後に選択を解除
+    setSelectedText(null);
+  };
+
   const handleChatSubmit = async (text: string) => {
-    await sendChatMessage(text);
+    if (selectedText?.text) {
+      // API用: 部分選択した箇所に焦点を当てた質問形式
+      const contextualQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${text}`;
+      // UI表示用: シンプルな形式
+      const displayQuestion = `「${selectedText.text}」について：${text}`;
+      setSelectedText(null);
+      await sendChatMessage(contextualQuestion, displayQuestion);
+    } else {
+      await sendChatMessage(text);
+    }
+  };
+
+  const handleQuickQuestion = (question: string) => {
+    if (selectedText?.text) {
+      // API用: 部分選択した箇所に焦点を当てた質問形式
+      const contextualQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${question}`;
+      // UI表示用: シンプルな形式
+      const displayQuestion = `「${selectedText.text}」について：${question}`;
+      setSelectedText(null);
+      void sendQuickQuestion(contextualQuestion, displayQuestion);
+    } else {
+      void sendQuickQuestion(question);
+    }
   };
 
   const handleLanguagePress = () => {
@@ -479,6 +577,8 @@ export default function SearchScreen() {
                         definitions={item.shortSenseJa}
                         description={item.usageHint || ''}
                         nuance={getNuanceType(item.nuance)}
+                        onTextSelected={handleTextSelected}
+                        onSelectionCleared={handleSelectionCleared}
                       />
                     </Pressable>
                   ))}
@@ -510,7 +610,7 @@ export default function SearchScreen() {
             error={qaPairs.length === 0 ? chatError : null}
             detailLevel={aiDetailLevel}
             onSend={handleChatSubmit}
-            onQuickQuestion={sendQuickQuestion}
+            onQuickQuestion={handleQuickQuestion}
             onRetryQuestion={handleQACardRetry}
             onDetailLevelChange={setAIDetailLevel}
             expandedMaxHeight={chatExpandedMaxHeight}
@@ -520,6 +620,9 @@ export default function SearchScreen() {
             onFollowUpQuestion={handleFollowUpQuestion}
             onEnterFollowUpMode={handleEnterFollowUpMode}
             activeFollowUpPairId={activeFollowUpPairId}
+            selectedText={selectedText}
+            onDictionaryLookup={handleDictionaryLookup}
+            onSelectionCleared={handleSelectionCleared}
           />
         </View>
       </KeyboardAvoidingView>
