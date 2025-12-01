@@ -8,7 +8,6 @@ import type { QAPair } from '@/types/chat';
 import { TypingIndicator } from './typing-indicator';
 import { CopyIcon } from '@/components/icons/copy-icon';
 import { BookmarkIcon } from '@/components/icons/bookmark-icon';
-import { SelectableText } from './selectable-text';
 import { addBookmark, removeBookmark, findBookmark } from '@/services/storage/bookmark-storage';
 import { logger } from '@/utils/logger';
 
@@ -23,8 +22,6 @@ interface QACardProps {
   onEnterFollowUpMode?: (pairId: string, question: string) => void;
   isFollowUpActive?: boolean;
   onScrollToFollowUpInput?: () => void;
-  onTextSelected?: (text: string) => void;
-  onSelectionCleared?: () => void;
 }
 
 function SendIcon({ size = 20, color = '#FFFFFF' }: { size?: number; color?: string }) {
@@ -83,7 +80,7 @@ function CloseIcon({ size = 16, color = '#242424' }: { size?: number; color?: st
   );
 }
 
-export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion, onEnterFollowUpMode, isFollowUpActive = false, onScrollToFollowUpInput, onTextSelected, onSelectionCleared }: QACardProps) {
+export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion, onEnterFollowUpMode, isFollowUpActive = false, onScrollToFollowUpInput }: QACardProps) {
   // ブックマークページ用の配色（hideActions=trueの時）
   const cardBackground = useThemeColor(
     { light: hideActions ? '#F8F8F8' : '#FAFCFB', dark: '#1C1C1E' },
@@ -310,18 +307,25 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                   transform: [{ translateY: slideAnim }],
                 }}
               >
-                <SelectableText text={pair.a} style={[styles.answerText, { color: answerTextColor }] as any} onSelectionChange={onTextSelected} onSelectionCleared={onSelectionCleared} />
+                <Text
+                  selectable
+                  selectionColor="#111111"
+                  style={[styles.answerText, { color: answerTextColor }]}
+                >
+                  {pair.a}
+                </Text>
               </Animated.View>
             ) : null}
             <TypingIndicator color="#2C2C2C" dotSize={6} />
           </View>
         ) : (
-          <SelectableText
-            text={pair.a ?? (pair.status === 'error' ? '回答を取得できませんでした。' : '')}
-            style={[styles.answerText, { color: answerTextColor }] as any}
-            onSelectionChange={onTextSelected}
-            onSelectionCleared={onSelectionCleared}
-          />
+          <Text
+            selectable
+            selectionColor="#111111"
+            style={[styles.answerText, { color: answerTextColor }]}
+          >
+            {pair.a ?? (pair.status === 'error' ? '回答を取得できませんでした。' : '')}
+          </Text>
         )}
 
         {pair.status === 'error' && pair.errorMessage ? (
@@ -416,22 +420,24 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                         {followUp.status === 'pending' ? (
                           <View style={styles.followUpPendingContainer}>
                             {followUp.a ? (
-                              <SelectableText
-                                text={followUp.a}
-                                style={[styles.answerText, { color: answerTextColor }] as any}
-                                onSelectionChange={onTextSelected}
-                                onSelectionCleared={onSelectionCleared}
-                              />
+                              <Text
+                                selectable
+                                selectionColor="#111111"
+                                style={[styles.answerText, { color: answerTextColor }]}
+                              >
+                                {followUp.a}
+                              </Text>
                             ) : null}
                             <TypingIndicator color="#2C2C2C" dotSize={6} />
                           </View>
                         ) : (
-                          <SelectableText
-                            text={followUp.a ?? (followUp.status === 'error' ? '回答を取得できませんでした。' : '')}
-                            style={[styles.answerText, { color: answerTextColor, marginBottom: -10 }] as any}
-                            onSelectionChange={onTextSelected}
-                            onSelectionCleared={onSelectionCleared}
-                          />
+                          <Text
+                            selectable
+                            selectionColor="#111111"
+                            style={[styles.answerText, { color: answerTextColor }]}
+                          >
+                            {followUp.a ?? (followUp.status === 'error' ? '回答を取得できませんでした。' : '')}
+                          </Text>
                         )}
 
                         {followUp.status === 'error' && followUp.errorMessage && (
@@ -511,11 +517,10 @@ const styles = StyleSheet.create({
         padding: 2,
   },
       followUpSection: {
-        marginTop: 8,
+        marginTop: 4,
   },
       followUpList: {
-        gap: 16,
-      marginBottom: -4,
+        gap: 10,
   },
       followUpItem: {
         gap: 8,
@@ -543,7 +548,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
       paddingTop: 12,
       paddingHorizontal: 16,
-      paddingBottom: 6,
+      paddingBottom: 4,
       gap: 5,
       marginHorizontal: -4,
   },

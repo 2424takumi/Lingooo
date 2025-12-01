@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { useChatContext } from '@/contexts/chat-context';
 import { useAISettings } from '@/contexts/ai-settings-context';
+import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import type { ChatRequestContext, ChatScope } from '@/types/chat';
 import { logger } from '@/utils/logger';
 
@@ -15,6 +16,7 @@ interface UseChatSessionOptions {
 export function useChatSession({ scope, identifier, context, targetLanguage }: UseChatSessionOptions) {
   const chat = useChatContext();
   const { aiDetailLevel } = useAISettings();
+  const { nativeLanguage } = useLearningLanguages();
 
   const normalizedIdentifier = identifier.trim();
   const sessionKey = useMemo(
@@ -26,7 +28,15 @@ export function useChatSession({ scope, identifier, context, targetLanguage }: U
 
   const sendMessage = useCallback(
     async (text: string, displayText?: string) => {
-      logger.info('[useChatSession] sendMessage called:', { text, displayText, scope, identifier: normalizedIdentifier, detailLevel: aiDetailLevel });
+      logger.info('[useChatSession] sendMessage called:', {
+        text,
+        displayText,
+        scope,
+        identifier: normalizedIdentifier,
+        detailLevel: aiDetailLevel,
+        targetLanguage,
+        nativeLanguage: nativeLanguage.code,
+      });
 
       if (!normalizedIdentifier || !text.trim()) {
         logger.warn('[useChatSession] Skipping: empty identifier or text');
@@ -43,10 +53,11 @@ export function useChatSession({ scope, identifier, context, targetLanguage }: U
         streaming: true,
         detailLevel: aiDetailLevel,
         targetLanguage,
+        nativeLanguage: nativeLanguage.code,
       });
       logger.info('[useChatSession] chat.sendMessage completed');
     },
-    [chat, scope, normalizedIdentifier, context, aiDetailLevel, targetLanguage]
+    [chat, scope, normalizedIdentifier, context, aiDetailLevel, targetLanguage, nativeLanguage]
   );
 
   const sendQuickQuestion = useCallback(

@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
+import { useEffect } from 'react';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
@@ -12,6 +13,7 @@ import { ChatProvider } from '@/contexts/chat-context';
 import { AISettingsProvider } from '@/contexts/ai-settings-context';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { InitialLanguageSetupModal } from '@/components/modals/InitialLanguageSetupModal';
+import { startKeepalive, stopKeepalive } from '@/services/keepalive/backend-keepalive';
 import '@/i18n'; // i18nを初期化
 
 export const unstable_settings = {
@@ -50,6 +52,16 @@ function AppContent() {
 }
 
 export default function RootLayout() {
+  // バックエンドのKeepaliveを開始（Renderのスリープ防止）
+  useEffect(() => {
+    startKeepalive();
+
+    // クリーンアップ時に停止
+    return () => {
+      stopKeepalive();
+    };
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>

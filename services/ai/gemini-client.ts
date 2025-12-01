@@ -6,7 +6,7 @@
 
 import type { ModelConfig } from './model-selector';
 import { logger } from '@/utils/logger';
-import { authenticatedFetch } from '../api/client';
+import { authenticatedFetch, getAuthHeaders as getAuthHeadersFromClient } from '../api/client';
 
 // バックエンドサーバーのURL
 const BACKEND_URL = (() => {
@@ -279,6 +279,231 @@ export async function generateJSONProgressive<T>(
 }
 
 /**
+ * 追加情報のストリーミング生成（SSE方式）
+ *
+ * Server-Sent Eventsを使用して、生成中の各セクションを即座に通知。
+ * チャットと同様の真のストリーミングを実現。
+ */
+export interface AdditionalInfoSection {
+  hint?: { text: string };
+  metrics?: any;
+  examples?: any[];
+}
+
+export async function generateAdditionalInfoStream<T>(
+  prompt: string,
+  config: ModelConfig,
+  onSection: (section: 'hint' | 'metrics' | 'examples', data: any) => void
+): Promise<{ data: T; tokensUsed: number }> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      logger.info('[GeminiClient] Starting SSE stream for additional info');
+
+      const xhr = new XMLHttpRequest();
+      let buffer = '';
+      let lastProcessedIndex = 0;
+      let accumulatedData: Partial<T> = {};
+      let finalProvider = 'gemini';
+      let tokensUsed = 0;
+
+      // 認証ヘッダーを取得（非同期）
+      const authHeaders = await getAuthHeadersFromClient();
+
+      xhr.open('POST', getApiUrl('/generate-additional-stream'), true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+
+      // 認証ヘッダーを追加
+      Object.entries(authHeaders).forEach(([key, value]) => {
+        xhr.setRequestHeader(key, value);
+      });
+
+      xhr.onprogress = () => {
+        const newText = xhr.responseText.substring(lastProcessedIndex);
+        lastProcessedIndex = xhr.responseText.length;
+        buffer += newText;
+
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              logger.info('[GeminiClient] SSE stream completed');
+              continue;
+            }
+
+            try {
+              const event = JSON.parse(data);
+
+              if (event.type === 'section') {
+                // セクション完成時のコールバック
+                logger.info(`[GeminiClient] Section received: ${event.section}`);
+                onSection(event.section, event.data);
+
+                // データを蓄積
+                if (event.section === 'hint') {
+                  accumulatedData = { ...accumulatedData, hint: event.data };
+                } else if (event.section === 'metrics') {
+                  accumulatedData = { ...accumulatedData, metrics: event.data };
+                } else if (event.section === 'examples') {
+                  accumulatedData = { ...accumulatedData, examples: event.data };
+                }
+              } else if (event.type === 'complete') {
+                // 全体完了
+                logger.info('[GeminiClient] Complete data received');
+                finalProvider = event.provider || 'gemini';
+                accumulatedData = event.data;
+              } else if (event.type === 'chunk') {
+                // テキストチャンク（現時点では特に処理不要）
+                logger.debug('[GeminiClient] Text chunk received');
+              } else if (event.type === 'error') {
+                logger.error('[GeminiClient] Stream error:', event.error);
+                reject(new Error(event.error || 'Stream error'));
+              }
+            } catch (e) {
+              logger.warn('[GeminiClient] Failed to parse SSE data:', e);
+            }
+          }
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          logger.info('[GeminiClient] SSE stream finished successfully');
+          resolve({
+            data: accumulatedData as T,
+            tokensUsed,
+          });
+        } else {
+          logger.error(`[GeminiClient] SSE stream failed with status ${xhr.status}`);
+          reject(new Error(`Request failed with status ${xhr.status}`));
+        }
+      };
+
+      xhr.onerror = () => {
+        logger.error('[GeminiClient] SSE stream network error');
+        reject(new Error('Network error'));
+      };
+
+      xhr.send(JSON.stringify({ prompt, config }));
+    } catch (error) {
+      logger.error('[GeminiClient] Error in generateAdditionalInfoStream:', error);
+      reject(error);
+    }
+  });
+}
+
+/**
+ * サジェストをSSEストリーミングで生成
+ *
+ * 各サジェスト候補が生成されるたびにコールバックを呼び出し
+ */
+export async function generateSuggestionsStream<T>(
+  prompt: string,
+  config: ModelConfig,
+  onSuggestion: (suggestion: T) => void
+): Promise<{ data: T[]; tokensUsed: number }> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      logger.info('[GeminiClient] Starting SSE stream for suggestions');
+
+      const xhr = new XMLHttpRequest();
+      let buffer = '';
+      let lastProcessedIndex = 0;
+      let suggestions: T[] = [];
+      let finalProvider = 'gemini';
+      let tokensUsed = 0;
+      const seenSuggestions = new Set<string>(); // 重複チェック用
+
+      // 認証ヘッダーを取得（非同期）
+      const authHeaders = await getAuthHeadersFromClient();
+
+      xhr.open('POST', getApiUrl('/generate-suggestions-stream'), true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+
+      // 認証ヘッダーを追加
+      Object.entries(authHeaders).forEach(([key, value]) => {
+        xhr.setRequestHeader(key, value);
+      });
+
+      xhr.onprogress = () => {
+        const newText = xhr.responseText.substring(lastProcessedIndex);
+        lastProcessedIndex = xhr.responseText.length;
+        buffer += newText;
+
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              logger.info('[GeminiClient] SSE suggestions stream completed');
+              continue;
+            }
+
+            try {
+              const event = JSON.parse(data);
+
+              if (event.type === 'suggestion') {
+                // 新しいサジェスト候補が完成
+                const suggestion = event.data as T;
+                const suggestionKey = JSON.stringify(suggestion);
+
+                // 重複チェック
+                if (!seenSuggestions.has(suggestionKey)) {
+                  seenSuggestions.add(suggestionKey);
+                  suggestions.push(suggestion);
+                  logger.info(`[GeminiClient] New suggestion received (${suggestions.length}):`, event.data);
+                  onSuggestion(suggestion);
+                }
+              } else if (event.type === 'complete') {
+                // 全体完了
+                logger.info('[GeminiClient] Complete suggestions data received');
+                finalProvider = event.provider || 'gemini';
+                suggestions = event.data || suggestions;
+              } else if (event.type === 'chunk') {
+                // テキストチャンク（特に処理不要）
+                logger.debug('[GeminiClient] Text chunk received');
+              } else if (event.type === 'error') {
+                logger.error('[GeminiClient] Suggestions stream error:', event.error);
+                reject(new Error(event.error || 'Stream error'));
+              }
+            } catch (e) {
+              logger.warn('[GeminiClient] Failed to parse SSE data:', e);
+            }
+          }
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          logger.info('[GeminiClient] SSE suggestions stream finished successfully');
+          resolve({
+            data: suggestions,
+            tokensUsed,
+          });
+        } else {
+          logger.error(`[GeminiClient] SSE suggestions stream failed with status ${xhr.status}`);
+          reject(new Error(`Request failed with status ${xhr.status}`));
+        }
+      };
+
+      xhr.onerror = () => {
+        logger.error('[GeminiClient] SSE suggestions stream network error');
+        reject(new Error('Network error'));
+      };
+
+      xhr.send(JSON.stringify({ prompt, config }));
+    } catch (error) {
+      logger.error('[GeminiClient] Error in generateSuggestionsStream:', error);
+      reject(error);
+    }
+  });
+}
+
+/**
  * 基本情報のみを超高速生成（headword + senses のみ）
  *
  * 詳細情報なしで0.2~0.3秒で返却
@@ -370,7 +595,7 @@ export async function generateSuggestionsArray<T>(
 /**
  * 高速サジェスト生成（基本情報のみ）
  *
- * usageHintを含まない、lemma/pos/shortSenseJaのみの高速版
+ * usageHintを含まない、lemma/pos/shortSenseのみの高速版
  */
 export async function generateSuggestionsArrayFast<T>(
   prompt: string,
@@ -424,17 +649,17 @@ export async function generateSuggestionsArrayFast<T>(
  * 単一単語のUsageHintを生成（並列実行用）
  *
  * @param lemma - 単語
- * @param japaneseQuery - 元の日本語クエリ
+ * @param query - 元のクエリ（ユーザーの母国語）
  */
 export async function generateUsageHint(
   lemma: string,
-  japaneseQuery: string
+  query: string
 ): Promise<{ lemma: string; usageHint: string }> {
   try {
     logger.info(`[GeminiClient] Starting usage hint generation for: ${lemma}`);
     const response = await authenticatedFetch(getApiUrl('/generate-usage-hint'), {
       method: 'POST',
-      body: JSON.stringify({ lemma, japaneseQuery }),
+      body: JSON.stringify({ lemma, query }),
     });
 
     if (!response.ok) {
@@ -468,18 +693,18 @@ export async function generateUsageHint(
  * UsageHintsをバッチ生成（非推奨）
  *
  * @param lemmas - 英単語のリスト
- * @param japaneseQuery - 元の日本語クエリ
+ * @param query - 元のクエリ（ユーザーの母国語）
  * @deprecated generateUsageHint を並列実行してください
  */
 export async function generateUsageHints(
   lemmas: string[],
-  japaneseQuery: string
+  query: string
 ): Promise<Array<{ lemma: string; usageHint: string }>> {
   try {
     logger.info('[GeminiClient] Starting usage hints generation for:', lemmas);
     const response = await authenticatedFetch(getApiUrl('/generate-usage-hints'), {
       method: 'POST',
-      body: JSON.stringify({ lemmas, japaneseQuery }),
+      body: JSON.stringify({ lemmas, query }),
     });
 
     if (!response.ok) {

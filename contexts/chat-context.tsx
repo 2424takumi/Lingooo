@@ -41,6 +41,7 @@ interface ChatContextValue {
       streaming?: boolean;
       detailLevel?: 'concise' | 'detailed';
       targetLanguage?: string;
+      nativeLanguage?: string;
     }
   ) => Promise<void>;
   clearSession: (key: ChatSessionKey) => void;
@@ -239,7 +240,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   }, []);
 
   const sendMessage = useCallback<ChatContextValue['sendMessage']>(
-    async ({ scope, identifier, text, displayText, context, streaming = true, detailLevel, targetLanguage }) => {
+    async ({ scope, identifier, text, displayText, context, streaming = true, detailLevel, targetLanguage, nativeLanguage }) => {
       const key: ChatSessionKey = { scope, identifier };
       const sessionBefore = ensureSession(key);
 
@@ -249,6 +250,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
         text,
         displayText,
         detailLevel,
+        targetLanguage,
+        nativeLanguage,
         sessionBeforeMessageCount: sessionBefore.messages.length,
       });
 
@@ -280,6 +283,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         context,
         detailLevel,
         targetLanguage,
+        nativeLanguage,
       };
 
       const updateAssistant = (updater: (message: ChatMessage) => ChatMessage) => {

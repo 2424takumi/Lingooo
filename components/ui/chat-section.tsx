@@ -49,8 +49,6 @@ interface ChatSectionProps {
   onDictionaryLookup?: () => void; // 辞書で調べるボタンのコールバック
   onEnterFollowUpMode?: (pairId: string, question: string) => void;
   activeFollowUpPairId?: string;
-  onTextSelected?: (text: string) => void; // テキスト選択コールバック
-  onSelectionCleared?: () => void; // テキスト選択解除コールバック
 }
 
 function ExpandIcon({ size = 18 }: { size?: number }) {
@@ -200,8 +198,6 @@ export function ChatSection({
   onDictionaryLookup,
   onEnterFollowUpMode,
   activeFollowUpPairId,
-  onTextSelected,
-  onSelectionCleared,
 }: ChatSectionProps) {
   const { customQuestions, addCustomQuestion } = useAISettings();
   const { isPremium } = useSubscription();
@@ -568,8 +564,6 @@ export function ChatSection({
                     scrollViewRef.current?.scrollToEnd({ animated: true });
                   }, 400);
                 }}
-                onTextSelected={onTextSelected}
-                onSelectionCleared={onSelectionCleared}
               />
             </View>
           )}

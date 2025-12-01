@@ -189,7 +189,7 @@ export default function SearchScreen() {
     () => ({
       searchSuggestions: suggestions.map((item) => ({
         lemma: item.lemma,
-        shortSenseJa: item.shortSenseJa,
+        shortSense: item.shortSense,
       })),
     }),
     [suggestions]
@@ -537,7 +537,7 @@ export default function SearchScreen() {
         pos: item.pos,
         gender: item.gender,
       },
-      senses: item.shortSenseJa.map((meaning, index) => ({
+      senses: item.shortSense.map((meaning, index) => ({
         id: String(index + 1),
         glossShort: meaning,
       })),
@@ -613,7 +613,7 @@ export default function SearchScreen() {
                         word={item.lemma}
                         posTags={item.pos}
                         gender={item.gender}
-                        definitions={item.shortSenseJa}
+                        definitions={item.shortSense}
                         description={item.usageHint || ''}
                         nuance={getNuanceType(item.nuance)}
                       />

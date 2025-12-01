@@ -25,6 +25,26 @@ const LANGUAGE_NAMES_JA: Record<string, string> = {
 };
 
 /**
+ * 言語名マッピング（英語表記）
+ */
+const LANGUAGE_NAMES_EN: Record<string, string> = {
+  ja: 'Japanese',
+  en: 'English',
+  pt: 'Portuguese',
+  fr: 'French',
+  zh: 'Chinese',
+  ko: 'Korean',
+  vi: 'Vietnamese',
+  id: 'Indonesian',
+  es: 'Spanish',
+  de: 'German',
+  it: 'Italian',
+  ru: 'Russian',
+  ar: 'Arabic',
+  hi: 'Hindi',
+};
+
+/**
  * 言語コードから日本語名を取得
  */
 function getLanguageNameJa(languageCode: string | undefined): string {
@@ -33,6 +53,17 @@ function getLanguageNameJa(languageCode: string | undefined): string {
     return '英語';
   }
   return LANGUAGE_NAMES_JA[languageCode] || languageCode.toUpperCase();
+}
+
+/**
+ * 言語コードから英語名を取得
+ */
+export function getLanguageNameEn(languageCode: string | undefined): string {
+  if (!languageCode) {
+    console.warn('[PromptGenerator] languageCode is undefined, defaulting to "en"');
+    return 'English';
+  }
+  return LANGUAGE_NAMES_EN[languageCode] || languageCode.toUpperCase();
 }
 
 /**
@@ -72,6 +103,7 @@ export async function createBasicInfoPrompt(word: string, targetLanguage: string
     {
       word,
       targetLanguage,
+      nativeLanguage,      // Template expects {{nativeLanguage}}
       langName,
       nativeLangName,
       genderField,
@@ -121,6 +153,8 @@ export async function createAdditionalDetailsPrompt(
     fallback,
     {
       word,
+      targetLanguage,      // Template expects {{targetLanguage}}
+      nativeLanguage,      // Template expects {{nativeLanguage}}
       langName,
       nativeLangName,
     }
@@ -181,18 +215,18 @@ export function createDictionaryPrompt(
  * 並列UsageHint生成（backend /api/gemini/generate-usage-hint）を使用してください。
  * Langfuse移行時に削除予定。
  */
-export function createSuggestionsPrompt(japaneseQuery: string, targetLanguage: string = 'en'): string {
+export function createSuggestionsPrompt(query: string, targetLanguage: string = 'en'): string {
   const langName = getLanguageNameJa(targetLanguage);
   const needsGender = hasGrammaticalGender(targetLanguage);
   const genderExample = needsGender ? ',\n    "gender": "m または f または n（名詞の場合のみ）"' : '';
 
-  return `日本語"${japaneseQuery}"に対応する${langName}の単語を3~5個、以下のJSON配列構造で生成：
+  return `日本語"${query}"に対応する${langName}の単語を3~5個、以下のJSON配列構造で生成：
 
 [
   {
     "lemma": "${langName}単語1",
     "pos": ["品詞（英語）"],
-    "shortSenseJa": "簡潔な日本語の意味（10文字以内）",
+    "shortSense": "簡潔な日本語の意味（10文字以内）",
     "confidence": 関連性スコア0-1,
     "usageHint": "この単語の使い方や特徴を1文で（20文字以内）",
     "nuance": ニュアンススコア0-100${genderExample}
@@ -200,7 +234,7 @@ export function createSuggestionsPrompt(japaneseQuery: string, targetLanguage: s
   {
     "lemma": "${langName}単語2",
     "pos": ["品詞"],
-    "shortSenseJa": "意味2",
+    "shortSense": "意味2",
     "confidence": スコア,
     "usageHint": "使い方2",
     "nuance": ニュアンススコア${genderExample}

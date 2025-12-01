@@ -39,8 +39,8 @@ for (const [japWord, suggestions] of Object.entries(dictionary.ja_to_en)) {
       console.log(`  ❌ ERROR: "${japWord}[${i}]" - pos is not array`);
       jaErrors++;
     }
-    if (!item.shortSenseJa) {
-      console.log(`  ❌ ERROR: "${japWord}[${i}]" - missing shortSenseJa`);
+    if (!item.shortSense) {
+      console.log(`  ❌ ERROR: "${japWord}[${i}]" - missing shortSense`);
       jaErrors++;
     }
     if (typeof item.confidence !== 'number') {

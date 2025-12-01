@@ -52,6 +52,7 @@ export async function sendChatMessage(req: ChatRequest): Promise<ChatCompletion>
         context: req.context,
         detailLevel: req.detailLevel,
         targetLanguage: req.targetLanguage,
+        nativeLanguage: req.nativeLanguage,
       }),
     });
 
@@ -237,6 +238,7 @@ export async function* sendChatMessageStream(
       context: req.context,
       detailLevel: req.detailLevel,
       targetLanguage: req.targetLanguage,
+      nativeLanguage: req.nativeLanguage,
     })
   );
 
@@ -320,6 +322,7 @@ export async function sendChatMessageStreamWebSocket(
       context: req.context,
       detailLevel: req.detailLevel,
       targetLanguage: req.targetLanguage,
+      nativeLanguage: req.nativeLanguage,
     }, {
     onChunk: (data) => {
       if (data.content) {
@@ -461,6 +464,7 @@ export async function* sendFollowUpQuestionStream(
     context: req.context,
     detailLevel: req.detailLevel,
     targetLanguage: req.targetLanguage,
+    nativeLanguage: req.nativeLanguage,
   };
 
   const xhr = new XMLHttpRequest();

@@ -7,12 +7,12 @@
 
 import mockDictionary from '@/data/mock-dictionary.json';
 import type { SuggestionItem, SuggestionResponse, WordDetailResponse, SearchError } from '@/types/search';
-import { generateWordDetail, generateWordDetailStream, generateSuggestions, generateWordDetailTwoStage, generateSuggestionsFast, addUsageHintsParallel } from '@/services/ai/dictionary-generator';
+import { generateWordDetail, generateWordDetailStream, generateSuggestions, generateWordDetailTwoStage, generateSuggestionsFast, addUsageHintsParallel, generateSuggestionsStreamFast } from '@/services/ai/dictionary-generator';
 import { isGeminiConfigured } from '@/services/ai/gemini-client';
-import { setCachedSuggestions, getCachedSuggestions, getCachedSuggestionsSync } from '@/services/cache/suggestion-cache';
+import { setCachedSuggestions, setCachedSuggestionsAsync, getCachedSuggestions, getCachedSuggestionsSync } from '@/services/cache/suggestion-cache';
 import { logger } from '@/utils/logger';
 
-const SUGGESTION_TIMEOUT_MS = 15000; // 15秒に延長（AI生成に時間がかかるため）
+const SUGGESTION_TIMEOUT_MS = 30000; // 30秒に延長（AI生成に時間がかかるため）
 // @ts-ignore - Mock data type compatibility
 const jaToEnDictionary = mockDictionary.ja_to_en as Record<string, SuggestionItem[]>;
 const jaToEnEntries = Object.entries(jaToEnDictionary);
@@ -26,14 +26,17 @@ function findMockSuggestions(query: string): SuggestionItem[] {
 
   // データを配列形式に正規化するヘルパー関数
   const normalizeItem = (item: any): SuggestionItem => {
-    // shortSenseJaが文字列の場合は配列に変換（後方互換性）
-    const shortSenseJa = Array.isArray(item.shortSenseJa)
+    // shortSenseが文字列の場合は配列に変換（後方互換性）
+    // 古いフィールド名shortSenseJaもサポート
+    const shortSense = Array.isArray(item.shortSense)
+      ? item.shortSense
+      : Array.isArray(item.shortSenseJa)
       ? item.shortSenseJa
-      : [item.shortSenseJa].filter(Boolean);
+      : [item.shortSense || item.shortSenseJa].filter(Boolean);
 
     return {
       ...item,
-      shortSenseJa,
+      shortSense,
     };
   };
 
@@ -86,9 +89,9 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 }
 
 /**
- * AI候補生成（2段階高速版）
+ * AI候補生成（SSEストリーミング版）
  *
- * ステージ1: 基本情報のみを0.5~1秒で取得
+ * 各サジェスト候補が生成されるたびに即座にキャッシュを更新してUIに反映
  * ステージ2: usageHintを追加（バックグラウンド）
  */
 async function tryGenerateAiSuggestionsTwoStage(
@@ -96,25 +99,43 @@ async function tryGenerateAiSuggestionsTwoStage(
   targetLanguage: string = 'en'
 ): Promise<{ basic: SuggestionItem[]; enhancePromise: Promise<void> } | null> {
   try {
-    // ステージ1: 基本情報を高速取得（0.5~1秒）
-    logger.info('[tryGenerateAiSuggestionsTwoStage] Stage 1: Fetching basic info');
-    const basicSuggestions = await withTimeout(
-      generateSuggestionsFast(query, targetLanguage),
+    logger.info('[tryGenerateAiSuggestionsTwoStage] Starting SSE streaming for suggestions');
+
+    const receivedSuggestions: SuggestionItem[] = [];
+
+    // SSEストリーミングで各サジェストを取得
+    const suggestions = await withTimeout(
+      generateSuggestionsStreamFast(query, targetLanguage, (suggestion) => {
+        // 各サジェストが生成されるたびに即座にキャッシュを更新
+        const newItem: SuggestionItem = {
+          lemma: suggestion.lemma,
+          pos: suggestion.pos,
+          shortSense: suggestion.shortSense,
+          confidence: suggestion.confidence,
+          nuance: suggestion.nuance,
+        };
+        receivedSuggestions.push(newItem);
+
+        logger.info(`[tryGenerateAiSuggestionsTwoStage] Streaming suggestion ${receivedSuggestions.length}: ${suggestion.lemma}`);
+
+        // キャッシュを更新（UIが即座に反映）
+        setCachedSuggestions(query, receivedSuggestions, targetLanguage);
+      }),
       SUGGESTION_TIMEOUT_MS
     );
 
-    if (!Array.isArray(basicSuggestions) || basicSuggestions.length === 0) {
+    if (!Array.isArray(suggestions) || suggestions.length === 0) {
       logger.warn('[tryGenerateAiSuggestionsTwoStage] No suggestions returned');
       return null;
     }
 
-    logger.info(`[tryGenerateAiSuggestionsTwoStage] Stage 1 complete: ${basicSuggestions.length} ${targetLanguage} suggestions`);
+    logger.info(`[tryGenerateAiSuggestionsTwoStage] SSE streaming complete: ${suggestions.length} ${targetLanguage} suggestions`);
 
     // 基本情報を返す用のアイテム（usageHintなし）
-    const basicItems: SuggestionItem[] = basicSuggestions.slice(0, 10).map(item => ({
+    const basicItems: SuggestionItem[] = suggestions.slice(0, 10).map(item => ({
       lemma: item.lemma,
       pos: item.pos,
-      shortSenseJa: item.shortSenseJa,
+      shortSense: item.shortSense,
       confidence: item.confidence,
       nuance: item.nuance,
     }));
@@ -125,15 +146,15 @@ async function tryGenerateAiSuggestionsTwoStage(
         logger.info('[tryGenerateAiSuggestionsTwoStage] Stage 2: Fetching usage hints in parallel');
         const lemmas = basicItems.map(item => item.lemma);
 
-        // 並列生成：各ヒントが完成次第、キャッシュを更新
-        await addUsageHintsParallel(lemmas, query, (hint) => {
-          // 1つのヒントが完成したら即座にキャッシュ更新（同期版を使用）
+        // 並列生成：各ヒントが完成次第、キャッシュを更新（永続化を確実に実行）
+        await addUsageHintsParallel(lemmas, query, async (hint) => {
+          // 1つのヒントが完成したら即座にキャッシュ更新（非同期版で永続化を保証）
           const currentItems = getCachedSuggestionsSync(query, targetLanguage) || basicItems;
           const updatedItems = currentItems.map(item =>
             item.lemma === hint.lemma ? { ...item, usageHint: hint.usageHint } : item
           );
-          setCachedSuggestions(query, updatedItems, targetLanguage);
-          logger.info(`[tryGenerateAiSuggestionsTwoStage] Hint added for: ${hint.lemma}`);
+          await setCachedSuggestionsAsync(query, updatedItems, targetLanguage);
+          logger.info(`[tryGenerateAiSuggestionsTwoStage] Hint added and persisted for: ${hint.lemma}`);
         });
 
         logger.info('[tryGenerateAiSuggestionsTwoStage] Stage 2 complete: all hints added');

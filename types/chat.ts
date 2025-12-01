@@ -39,7 +39,7 @@ export interface ChatRequestContext {
   headword?: string;
   senses?: string[];
   examples?: Array<{ english: string; japanese: string }>; // 簡易表現
-  searchSuggestions?: Array<{ lemma: string; shortSenseJa: string[] }>;
+  searchSuggestions?: Array<{ lemma: string; shortSense: string[] }>;
 
   // 翻訳コンテキスト
   originalText?: string;
@@ -58,6 +58,7 @@ export interface ChatRequest {
   context?: ChatRequestContext;
   detailLevel?: 'concise' | 'detailed';
   targetLanguage?: string; // 学習言語コード (e.g., 'en', 'pt', 'es')
+  nativeLanguage?: string; // ユーザーの母国語コード (e.g., 'ja', 'en', 'pt')
 }
 
 export interface ChatCompletion {

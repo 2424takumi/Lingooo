@@ -79,6 +79,7 @@ export default function HomeScreen() {
             onSearch={onSearch}
             value={searchText}
             onChangeText={setSearchText}
+            autoFocus={true}
           />
 
           {/* Hint Text */}

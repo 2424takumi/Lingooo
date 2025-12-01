@@ -3,6 +3,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { SearchIcon, MicIcon, ReloadIcon } from './icons';
 import { LanguageTag } from './language-tag';
 import { KeyboardToolbar } from './keyboard-toolbar';
+import { VoiceWaveAnimation } from './voice-wave-animation';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useSubscription } from '@/contexts/subscription-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -23,6 +24,7 @@ interface SearchBarProps {
   onSearch?: (text: string) => void;
   value?: string;
   onChangeText?: (text: string) => void;
+  autoFocus?: boolean;
 }
 
 export function SearchBar({
@@ -30,6 +32,7 @@ export function SearchBar({
   onSearch,
   value: externalValue,
   onChangeText: externalOnChangeText,
+  autoFocus = false,
 }: SearchBarProps) {
   const { learningLanguages, currentLanguage, defaultLanguage, setCurrentLanguage } = useLearningLanguages();
   const { isPremium } = useSubscription();
@@ -93,7 +96,7 @@ export function SearchBar({
   }, [setCurrentLanguage]);
 
   // 音声入力
-  const { state: voiceState, transcript, isSupported, startListening, stopListening } = useVoiceInput({
+  const { state: voiceState, transcript, isSupported, audioLevel, startListening, stopListening } = useVoiceInput({
     onResult: (text) => {
       setSearchText(text);
     },
@@ -123,6 +126,17 @@ export function SearchBar({
       setInputHeight(MIN_INPUT_HEIGHT);
     }
   }, [searchText]);
+
+  // Auto focus on mount if autoFocus is enabled
+  useEffect(() => {
+    if (autoFocus) {
+      // Small delay to ensure component is fully mounted
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [autoFocus]);
 
   return (
     <View style={[styles.container, { backgroundColor: containerBackground }]}>
@@ -198,6 +212,15 @@ export function SearchBar({
               {searchText.length.toLocaleString()} / {maxLength.toLocaleString()}
               {!isPremium && ' 文字'}
             </Text>
+          )}
+
+          {/* 音声入力の波形アニメーション */}
+          {voiceState === 'listening' && (
+            <VoiceWaveAnimation
+              audioLevel={audioLevel}
+              isActive={voiceState === 'listening'}
+              color="#666666"
+            />
           )}
 
           {/* マイクボタン (UI確認用に常に表示) */}

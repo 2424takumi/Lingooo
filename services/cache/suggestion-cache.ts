@@ -124,6 +124,45 @@ export function setCachedSuggestions(query: string, items: SuggestionItem[], lan
   }
 }
 
+/**
+ * Set cached suggestions with await support for AsyncStorage persistence
+ *
+ * Use this when you need to ensure data is persisted before continuing
+ */
+export async function setCachedSuggestionsAsync(query: string, items: SuggestionItem[], languageCode: string = 'en'): Promise<void> {
+  const key = toKey(query, languageCode);
+  const entry: CacheEntry = {
+    items,
+    timestamp: Date.now(),
+  };
+
+  // Write to in-memory cache (instant)
+  suggestionCache.set(key, entry);
+
+  // Write to AsyncStorage (await completion)
+  const storageKey = STORAGE_PREFIX + key;
+  try {
+    await AsyncStorage.setItem(storageKey, JSON.stringify(entry));
+    logger.debug('[SuggestionCache] Persisted to AsyncStorage:', key);
+  } catch (error) {
+    logger.error('[SuggestionCache] Error writing to AsyncStorage:', error);
+  }
+
+  // Notify listeners
+  const subs = listeners.get(key);
+  if (!subs) {
+    return;
+  }
+
+  for (const listener of subs) {
+    try {
+      listener(items);
+    } catch (error) {
+      logger.error('[SuggestionCache] Listener error', error);
+    }
+  }
+}
+
 export function subscribeSuggestions(query: string, listener: SuggestionListener, languageCode: string = 'en'): () => void {
   const key = toKey(query, languageCode);
   const current = listeners.get(key) ?? new Set<SuggestionListener>();

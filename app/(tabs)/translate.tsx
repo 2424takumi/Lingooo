@@ -215,10 +215,21 @@ export default function TranslateScreen() {
       logger.info('[Translate] Starting AI language detection for:', text.substring(0, 50));
       setIsDetectingLanguage(true);
 
+      // タイムアウト設定（5秒）
+      const detectionTimeout = setTimeout(() => {
+        logger.warn('[Translate] AI language detection timeout - proceeding with translation');
+        setIsDetectingLanguage(false);
+      }, 5000);
+
       detectWordLanguage(text.trim(), [
         'en', 'pt', 'es', 'fr', 'de', 'it', 'zh', 'ko', 'vi', 'id'
       ]).then(async (result) => {
+        clearTimeout(detectionTimeout);
         logger.info('[Translate] AI detection completed:', result?.language, 'confidence:', result?.confidence, 'initial sourceLang:', sourceLang, 'current tab:', currentLanguage.code);
+
+        // 検出完了を先にマーク（言語変更前に）
+        setIsDetectingLanguage(false);
+        logger.info('[Translate] Detection shimmer stopped');
 
         if (result && result.language) {
           // 言語を更新（検出された言語がsourceLangと違う場合）
@@ -242,11 +253,8 @@ export default function TranslateScreen() {
         } else {
           logger.info('[Translate] AI detection returned no result');
         }
-
-        // 検出完了（言語が変わっても変わらなくても）
-        setIsDetectingLanguage(false);
-        logger.info('[Translate] Detection shimmer stopped');
       }).catch((error) => {
+        clearTimeout(detectionTimeout);
         logger.error('[Translate] AI language detection failed:', error);
         setIsDetectingLanguage(false);
       });
@@ -266,9 +274,16 @@ export default function TranslateScreen() {
   // 翻訳実行
   useEffect(() => {
     const performTranslation = async () => {
+      logger.info('[Translate] performTranslation called with:', {
+        text: text?.substring(0, 50),
+        sourceLang,
+        targetLang: selectedTranslateTargetLang,
+        isDetectingLanguage,
+      });
+
       // AI検出中は翻訳を開始しない（トークン節約）
       if (isDetectingLanguage) {
-        logger.info('[Translate] Waiting for AI detection before translating');
+        logger.warn('[Translate] Skipping translation - AI detection still in progress');
         setIsTranslating(true);
         // 原文だけ先に表示
         setTranslationData({
@@ -299,7 +314,13 @@ export default function TranslateScreen() {
 
       try {
         const result = await translateText(text, sourceLang, selectedTranslateTargetLang);
+        logger.info('[Translate] Received translation result:', {
+          originalText: result.originalText.substring(0, 50),
+          translatedText: result.translatedText.substring(0, 50),
+          translatedLength: result.translatedText.length,
+        });
         setTranslationData(result);
+        logger.info('[Translate] translationData state updated');
 
         // 翻訳履歴を保存
         try {
