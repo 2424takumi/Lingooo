@@ -20,7 +20,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lingooo.mobile",
-      "buildNumber": "13",
+      "buildNumber": "19",
       "infoPlist": {
         "NSUserActivityTypes": [
           "com.lingooo.mobile.search"
