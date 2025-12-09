@@ -279,10 +279,10 @@ export async function generateJSONProgressive<T>(
 }
 
 /**
- * 追加情報のストリーミング生成（SSE方式）
+ * 追加情報のストリーミング生成（SSE方式 - プログレッシブテキスト表示対応）
  *
  * Server-Sent Eventsを使用して、生成中の各セクションを即座に通知。
- * チャットと同様の真のストリーミングを実現。
+ * JSONチャンクを蓄積し、部分的にパースしてリアルタイムでテキストを抽出。
  */
 export interface AdditionalInfoSection {
   hint?: { text: string };
@@ -290,10 +290,17 @@ export interface AdditionalInfoSection {
   examples?: any[];
 }
 
+export interface StreamingCallbacks {
+  onHintChunk?: (chunk: string, complete: boolean) => void;
+  onExampleChunk?: (exampleIndex: number, field: 'textSrc' | 'textDst', chunk: string, complete: boolean) => void;
+  onSection?: (section: 'hint' | 'metrics' | 'examples', data: any) => void;
+}
+
 export async function generateAdditionalInfoStream<T>(
   prompt: string,
   config: ModelConfig,
-  onSection: (section: 'hint' | 'metrics' | 'examples', data: any) => void
+  onSection: (section: 'hint' | 'metrics' | 'examples', data: any) => void,
+  streamingCallbacks?: StreamingCallbacks
 ): Promise<{ data: T; tokensUsed: number }> {
   return new Promise(async (resolve, reject) => {
     try {
@@ -303,8 +310,15 @@ export async function generateAdditionalInfoStream<T>(
       let buffer = '';
       let lastProcessedIndex = 0;
       let accumulatedData: Partial<T> = {};
+      let accumulatedJSON = '';
       let finalProvider = 'gemini';
       let tokensUsed = 0;
+
+      // 進捗トラッキング用
+      let lastHintLength = 0;
+      let lastExampleLengths: Array<{ textSrc: number; textDst: number }> = [];
+      let hintCompleted = false;
+      let examplesCompleted = false;
 
       // 認証ヘッダーを取得（非同期）
       const authHeaders = await getAuthHeadersFromClient();
@@ -336,10 +350,77 @@ export async function generateAdditionalInfoStream<T>(
             try {
               const event = JSON.parse(data);
 
-              if (event.type === 'section') {
+              if (event.type === 'chunk') {
+                // JSONチャンクを蓄積
+                accumulatedJSON += event.content;
+
+                // 部分的なJSONをパースしてテキストを抽出
+                try {
+                  const partialData = tryParsePartialJSON(accumulatedJSON);
+
+                  if (partialData) {
+                    // Hintテキストの増分を検出
+                    if (partialData.hint?.text && !hintCompleted && streamingCallbacks?.onHintChunk) {
+                      const currentLength = partialData.hint.text.length;
+                      if (currentLength > lastHintLength) {
+                        const newChunk = partialData.hint.text.substring(lastHintLength);
+                        streamingCallbacks.onHintChunk(newChunk, false);
+                        lastHintLength = currentLength;
+                      }
+                    }
+
+                    // Examplesテキストの増分を検出
+                    if (partialData.examples && !examplesCompleted && streamingCallbacks?.onExampleChunk) {
+                      partialData.examples.forEach((example: any, index: number) => {
+                        // 配列を初期化
+                        while (lastExampleLengths.length <= index) {
+                          lastExampleLengths.push({ textSrc: 0, textDst: 0 });
+                        }
+
+                        const lastLengths = lastExampleLengths[index];
+
+                        // textSrcの増分
+                        if (example.textSrc) {
+                          const currentLength = example.textSrc.length;
+                          if (currentLength > lastLengths.textSrc) {
+                            const newChunk = example.textSrc.substring(lastLengths.textSrc);
+                            streamingCallbacks.onExampleChunk!(index, 'textSrc', newChunk, false);
+                            lastLengths.textSrc = currentLength;
+                          }
+                        }
+
+                        // textDstの増分
+                        if (example.textDst) {
+                          const currentLength = example.textDst.length;
+                          if (currentLength > lastLengths.textDst) {
+                            const newChunk = example.textDst.substring(lastLengths.textDst);
+                            streamingCallbacks.onExampleChunk!(index, 'textDst', newChunk, false);
+                            lastLengths.textDst = currentLength;
+                          }
+                        }
+                      });
+                    }
+                  }
+                } catch {
+                  // パース失敗は無視（まだ不完全なJSON）
+                }
+              } else if (event.type === 'section') {
                 // セクション完成時のコールバック
                 logger.info(`[GeminiClient] Section received: ${event.section}`);
                 onSection(event.section, event.data);
+
+                // ストリーミング完了通知
+                if (event.section === 'hint' && streamingCallbacks?.onHintChunk) {
+                  hintCompleted = true;
+                  streamingCallbacks.onHintChunk('', true);
+                } else if (event.section === 'examples' && streamingCallbacks?.onExampleChunk) {
+                  examplesCompleted = true;
+                  // 各例文に完了通知
+                  event.data?.forEach((_: any, index: number) => {
+                    streamingCallbacks.onExampleChunk!(index, 'textSrc', '', true);
+                    streamingCallbacks.onExampleChunk!(index, 'textDst', '', true);
+                  });
+                }
 
                 // データを蓄積
                 if (event.section === 'hint') {
@@ -349,14 +430,16 @@ export async function generateAdditionalInfoStream<T>(
                 } else if (event.section === 'examples') {
                   accumulatedData = { ...accumulatedData, examples: event.data };
                 }
+
+                // セクション完成時もコールバック呼び出し（後方互換性）
+                if (streamingCallbacks?.onSection) {
+                  streamingCallbacks.onSection(event.section, event.data);
+                }
               } else if (event.type === 'complete') {
                 // 全体完了
                 logger.info('[GeminiClient] Complete data received');
                 finalProvider = event.provider || 'gemini';
                 accumulatedData = event.data;
-              } else if (event.type === 'chunk') {
-                // テキストチャンク（現時点では特に処理不要）
-                logger.debug('[GeminiClient] Text chunk received');
               } else if (event.type === 'error') {
                 logger.error('[GeminiClient] Stream error:', event.error);
                 reject(new Error(event.error || 'Stream error'));
@@ -392,6 +475,47 @@ export async function generateAdditionalInfoStream<T>(
       reject(error);
     }
   });
+}
+
+/**
+ * 部分的なJSONをパース（不完全でも可）
+ */
+function tryParsePartialJSON(text: string): any | null {
+  try {
+    const trimmed = text.trim();
+
+    if (!trimmed || trimmed.length < 2) {
+      return null;
+    }
+
+    // 不完全なJSONを完結させる試み
+    let jsonText = trimmed;
+
+    // 閉じカッコが足りない場合は追加
+    const openBraces = (jsonText.match(/{/g) || []).length;
+    const closeBraces = (jsonText.match(/}/g) || []).length;
+    if (openBraces > closeBraces) {
+      jsonText += '}'.repeat(openBraces - closeBraces);
+    }
+
+    // 配列の閉じカッコが足りない場合
+    const openBrackets = (jsonText.match(/\[/g) || []).length;
+    const closeBrackets = (jsonText.match(/\]/g) || []).length;
+    if (openBrackets > closeBrackets) {
+      jsonText += ']'.repeat(openBrackets - closeBrackets);
+    }
+
+    // 最後がカンマで終わっている場合は削除
+    jsonText = jsonText.replace(/,\s*}/g, '}');
+    jsonText = jsonText.replace(/,\s*]/g, ']');
+
+    // 文字列が途中で終わっている場合は閉じる
+    jsonText = jsonText.replace(/:\s*"[^"]*$/, ': ""');
+
+    return JSON.parse(jsonText);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -653,13 +777,14 @@ export async function generateSuggestionsArrayFast<T>(
  */
 export async function generateUsageHint(
   lemma: string,
-  query: string
+  query: string,
+  nativeLanguage: string = 'ja'
 ): Promise<{ lemma: string; usageHint: string }> {
   try {
-    logger.info(`[GeminiClient] Starting usage hint generation for: ${lemma}`);
+    logger.info(`[GeminiClient] Starting usage hint generation for: ${lemma} (native: ${nativeLanguage})`);
     const response = await authenticatedFetch(getApiUrl('/generate-usage-hint'), {
       method: 'POST',
-      body: JSON.stringify({ lemma, query }),
+      body: JSON.stringify({ lemma, query, nativeLanguage }),
     });
 
     if (!response.ok) {

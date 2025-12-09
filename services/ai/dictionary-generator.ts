@@ -132,20 +132,20 @@ export async function generateSuggestionsFast(
   const nativeLanguageName = getLanguageNameEn(nativeLanguage);
 
   // フォールバックプロンプト
-  const fallback = `日本語"{{query}}"に対応する{{targetLanguageName}}単語を3~5個、以下のJSON配列構造で生成：
+  const fallback = `Generate 3-5 {{targetLanguageName}} words corresponding to {{nativeLanguageName}} "{{query}}" in the following JSON array structure:
 
 [
-  {"lemma": "単語1", "pos": ["品詞"], "shortSense": ["意味1", "意味2", "意味3"], "confidence": 関連性スコア0-1, "nuance": ニュアンススコア0-100{{genderField}}},
-  {"lemma": "単語2", "pos": ["品詞"], "shortSense": ["意味1", "意味2", "意味3"], "confidence": スコア, "nuance": ニュアンススコア{{genderField}}}
+  {"lemma": "word1", "pos": ["part of speech"], "shortSense": ["meaning1", "meaning2", "meaning3"], "confidence": relevance score 0-1, "nuance": nuance score 0-100{{genderField}}},
+  {"lemma": "word2", "pos": ["part of speech"], "shortSense": ["meaning1", "meaning2", "meaning3"], "confidence": score, "nuance": nuance score{{genderField}}}
 ]
 
-要件:
-- 必ず3個以上の候補を返すこと
-- shortSenseは各単語に対して3つのユーザーの母国語での意味を配列で返すこと（各10文字以内）
-- 意味は使用頻度が高い順に並べる
-- 関連性の高い順にソート
-- confidenceは最も関連性が高いものを1.0とする
-- nuanceは単語のフォーマル度を示すスコア（0=非常にカジュアル・スラング, 30=カジュアル, 50=中立的, 70=フォーマル, 100=非常にフォーマル・学術的）`;
+Requirements:
+- Must return at least 3 candidates
+- shortSense should return 3 meanings in the user's native language ({{nativeLanguageName}}) as an array for each word (within 10 characters each)
+- Meanings should be ordered by frequency of use
+- Sort by relevance
+- confidence should be 1.0 for the most relevant
+- nuance is a score indicating the formality level of the word (0=very casual/slang, 30=casual, 50=neutral, 70=formal, 100=very formal/academic)`;
 
   // Langfuseからプロンプトを取得（フォールバック付き）
   const prompt = await fetchPromptWithFallback(
@@ -153,7 +153,7 @@ export async function generateSuggestionsFast(
     fallback,
     {
       query,
-      targetLanguage: targetLanguageName,    // Template expects {{targetLanguage}}
+      targetLanguageName: targetLanguageName, // Template expects {{targetLanguageName}}
       nativeLanguageName: nativeLanguageName, // Template expects {{nativeLanguageName}}
       nativeLanguage: nativeLanguage,         // Template expects {{nativeLanguage}}
       genderField,
@@ -187,16 +187,17 @@ export async function generateSuggestionsFast(
  *
  * 各サジェスト候補が生成されるたびに即座にコールバックを呼び出し
  *
- * @param query - 日本語クエリ
+ * @param query - 検索クエリ（母語での入力）
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param nativeLanguage - 母国語コード（例: 'ja', 'en', 'pt'）
  * @param onSuggestion - 各サジェスト生成完了時のコールバック
  * @returns 全てのサジェストの配列
  */
 export async function generateSuggestionsStreamFast(
   query: string,
   targetLanguage: string = 'en',
-  onSuggestion?: (suggestion: { lemma: string; pos: string[]; shortSense: string[]; confidence: number; nuance?: number }) => void,
-  nativeLanguage: string = 'ja'
+  nativeLanguage: string = 'ja',
+  onSuggestion?: (suggestion: { lemma: string; pos: string[]; shortSense: string[]; confidence: number; nuance?: number }) => void
 ): Promise<Array<{ lemma: string; pos: string[]; shortSense: string[]; confidence: number; nuance?: number }>> {
   const modelConfig = selectModel();
 
@@ -210,20 +211,20 @@ export async function generateSuggestionsStreamFast(
   const nativeLanguageName = getLanguageNameEn(nativeLanguage);
 
   // フォールバックプロンプト
-  const fallback = `日本語"{{query}}"に対応する{{targetLanguageName}}単語を3~5個、以下のJSON配列構造で生成：
+  const fallback = `Generate 3-5 {{targetLanguageName}} words corresponding to {{nativeLanguageName}} "{{query}}" in the following JSON array structure:
 
 [
-  {"lemma": "単語1", "pos": ["品詞"], "shortSense": ["意味1", "意味2", "意味3"], "confidence": 関連性スコア0-1, "nuance": ニュアンススコア0-100{{genderField}}},
-  {"lemma": "単語2", "pos": ["品詞"], "shortSense": ["意味1", "意味2", "意味3"], "confidence": スコア, "nuance": ニュアンススコア{{genderField}}}
+  {"lemma": "word1", "pos": ["part of speech"], "shortSense": ["meaning1", "meaning2", "meaning3"], "confidence": relevance score 0-1, "nuance": nuance score 0-100{{genderField}}},
+  {"lemma": "word2", "pos": ["part of speech"], "shortSense": ["meaning1", "meaning2", "meaning3"], "confidence": score, "nuance": nuance score{{genderField}}}
 ]
 
-要件:
-- 必ず3個以上の候補を返すこと
-- shortSenseは各単語に対して3つのユーザーの母国語での意味を配列で返すこと（各10文字以内）
-- 意味は使用頻度が高い順に並べる
-- 関連性の高い順にソート
-- confidenceは最も関連性が高いものを1.0とする
-- nuanceは単語のフォーマル度を示すスコア（0=非常にカジュアル・スラング, 30=カジュアル, 50=中立的, 70=フォーマル, 100=非常にフォーマル・学術的）`;
+Requirements:
+- Must return at least 3 candidates
+- shortSense should return 3 meanings in the user's native language ({{nativeLanguageName}}) as an array for each word (within 10 characters each)
+- Meanings should be ordered by frequency of use
+- Sort by relevance
+- confidence should be 1.0 for the most relevant
+- nuance is a score indicating the formality level of the word (0=very casual/slang, 30=casual, 50=neutral, 70=formal, 100=very formal/academic)`;
 
   // Langfuseからプロンプトを取得（フォールバック付き）
   const prompt = await fetchPromptWithFallback(
@@ -231,7 +232,7 @@ export async function generateSuggestionsStreamFast(
     fallback,
     {
       query,
-      targetLanguage: targetLanguageName,    // Template expects {{targetLanguage}}
+      targetLanguageName: targetLanguageName, // Template expects {{targetLanguageName}}
       nativeLanguageName: nativeLanguageName, // Template expects {{nativeLanguageName}}
       nativeLanguage: nativeLanguage,         // Template expects {{nativeLanguage}}
       genderField,
@@ -277,20 +278,22 @@ export async function generateSuggestionsStreamFast(
  *
  * @param lemmas - 単語のリスト
  * @param query - 元の日本語クエリ
+ * @param nativeLanguage - ユーザーの母国語コード
  * @param onHintGenerated - 各ヒント生成完了時のコールバック
  * @returns 全てのusageHintの配列
  */
 export async function addUsageHintsParallel(
   lemmas: string[],
   query: string,
+  nativeLanguage: string = 'ja',
   onHintGenerated?: (hint: { lemma: string; usageHint: string }) => void
 ): Promise<Array<{ lemma: string; usageHint: string }>> {
   try {
-    logger.info(`[addUsageHintsParallel] Starting parallel generation for: ${lemmas.join(', ')}`);
+    logger.info(`[addUsageHintsParallel] Starting parallel generation for: ${lemmas.join(', ')} (native: ${nativeLanguage})`);
 
     // 各単語を並列で生成
     const hintPromises = lemmas.map(async (lemma) => {
-      const hint = await generateUsageHint(lemma, query);
+      const hint = await generateUsageHint(lemma, query, nativeLanguage);
 
       // 完成次第コールバックを呼ぶ
       if (onHintGenerated) {
@@ -470,7 +473,7 @@ export async function generateWordDetailStreamLegacy(
  *
  * @param word - 検索する単語
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
- * @param detailLevel - AI返答の詳細度レベル（'concise' | 'detailed'）
+ * @param nativeLanguage - ユーザーの母国語コード（例: 'ja', 'en'）
  * @param onProgress - 進捗コールバック（0-100、部分データ付き）
  * @returns 単語の詳細情報
  */
@@ -478,7 +481,6 @@ export async function generateWordDetailTwoStage(
   word: string,
   targetLanguage: string = 'en',
   nativeLanguage: string = 'ja',
-  detailLevel: 'concise' | 'detailed' = 'concise',
   onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void
 ): Promise<{ data: WordDetailResponse; tokensUsed: number }> {
   const modelConfig = selectModel();
