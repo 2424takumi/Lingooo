@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import * as Speech from 'expo-speech';
 import { setAudioModeAsync, AudioMode } from 'expo-audio';
 import { ThemedView } from '@/components/themed-view';
@@ -10,24 +11,26 @@ import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { DefinitionList } from '@/components/ui/definition-list';
 import { WordHint } from '@/components/ui/word-hint';
 import { ExampleCard } from '@/components/ui/example-card';
-import { ChatSection } from '@/components/ui/chat-section';
+import { ChatSection, type ChatSectionMode } from '@/components/ui/chat-section';
+import type { WordDetail } from '@/components/ui/word-detail-card';
 import { ShimmerHeader, ShimmerDefinitions, ShimmerMetrics, ShimmerExamples, ShimmerHint } from '@/components/ui/shimmer';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
+import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useSubscription } from '@/contexts/subscription-context';
-import { useClipboardSearch } from '@/hooks/use-clipboard-search';
 import { getWordDetailStream } from '@/services/api/search';
 import type { WordDetailResponse } from '@/types/search';
 import { getCachedWordDetail, getPendingPromise, prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
+import { parseQuotaError } from '@/utils/quota-error';
 import { addSearchHistory, removeSearchHistoryItem, getSearchHistory } from '@/services/storage/search-history-storage';
 import { generateId } from '@/utils/id';
 import type { QAPair } from '@/types/chat';
@@ -35,10 +38,10 @@ import { AVAILABLE_LANGUAGES } from '@/types/language';
 import { detectLang } from '@/services/utils/language-detect';
 
 export default function WordDetailScreen() {
+  const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { aiDetailLevel, setAIDetailLevel } = useAISettings();
   const { currentLanguage, nativeLanguage, learningLanguages } = useLearningLanguages();
   const { isPremium } = useSubscription();
   const safeAreaInsets = useSafeAreaInsets();
@@ -51,8 +54,19 @@ export default function WordDetailScreen() {
   const [showLanguageNotification, setShowLanguageNotification] = useState(false); // 通知表示フラグ
   const [isLoadingAdditional, setIsLoadingAdditional] = useState(false); // 追加データ（例文など）の読み込み中
 
+  // Hint streaming state
+  const [streamingHintText, setStreamingHintText] = useState<string>(''); // ストリーミング中のHintテキスト
+  const [isHintStreaming, setIsHintStreaming] = useState(false); // Hintストリーミング中かどうか
+
+  // Quota exceeded modal state
+  const [isQuotaModalVisible, setIsQuotaModalVisible] = useState(false);
+  const [quotaErrorType, setQuotaErrorType] = useState<'translation_tokens' | 'question_count' | undefined>();
+
   // 選択テキスト管理
   const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
+
+  // 選択クリア用のキー（値が変わると選択がクリアされる）
+  const [clearSelectionKey, setClearSelectionKey] = useState(0);
 
   // ヘッダーの高さを測定
   const [headerHeight, setHeaderHeight] = useState(88); // デフォルト値(wordDetailの最低高さ)
@@ -80,6 +94,7 @@ export default function WordDetailScreen() {
   // パラメータから単語を取得
   const word = params.word as string || '';
   const targetLanguage = (params.targetLanguage as string) || 'en'; // 学習言語コード
+  const skipLanguageDetection = (params.skipLanguageDetection as string) === 'true'; // 翻訳ページから遷移時はtrue
   const dataParam = params.data as string;
   const fromPage = params.fromPage as string;
   const searchQuery = params.searchQuery as string;
@@ -103,6 +118,31 @@ export default function WordDetailScreen() {
 
   // チャット識別子：正しい単語（headword.lemma）を使用
   const chatIdentifier = wordData?.headword?.lemma || word;
+
+  // ChatSectionのモードを決定
+  const chatSectionMode: ChatSectionMode = useMemo(() => {
+    if (!selectedText) return 'default';
+    return selectedText.isSingleWord ? 'word' : 'text';
+  }, [selectedText]);
+
+  // 単語カード用のwordDetail（単語選択時のみ）
+  const wordDetail: WordDetail | null = useMemo(() => {
+    if (!selectedText || !selectedText.isSingleWord) return null;
+
+    // 単語詳細ページで単語を選択した場合、現在のwordDataを使って簡易版を作成
+    if (wordData?.headword) {
+      return {
+        headword: selectedText.text,
+        reading: wordData.headword.reading || '',
+        meanings: wordData.senses?.map(s => s.glossShort) || [],
+        partOfSpeech: wordData.senses?.flatMap(s => s.pos) || [],
+        nuance: '', // 単語詳細ページでは文脈ニュアンスはない
+        isBookmarked: false,
+      };
+    }
+
+    return null;
+  }, [selectedText, wordData]);
 
   const {
     messages: chatMessages,
@@ -139,15 +179,9 @@ export default function WordDetailScreen() {
     });
   }, [chatMessages, chatError]);
 
-  // クリップボード監視 - word-detailではチャット入力に貼り付け
+  // クリップボードからの質問入力
+  // 注: クリップボード監視は _layout.tsx で一元管理されているため、ここでは不要
   const [prefilledChatText, setPrefilledChatText] = useState<string | null>(null);
-  const { isChecking } = useClipboardSearch({
-    enabled: true,
-    onPaste: (text) => {
-      setPrefilledChatText(text);
-      logger.info('[WordDetail] Clipboard text set to chat input');
-    },
-  });
 
   // チャット展開時の最大高さを計算（ヘッダーの12px下から画面下部まで）
   const chatExpandedMaxHeight = useMemo(() => {
@@ -215,6 +249,24 @@ export default function WordDetailScreen() {
     configureAudio();
   }, []);
 
+  /**
+   * Check if WordDetailResponse has complete data (all sections)
+   */
+  const isWordDetailComplete = (data: Partial<WordDetailResponse> | null): boolean => {
+    if (!data) return false;
+
+    // Must have basic info
+    if (!data.headword || !data.senses || data.senses.length === 0) {
+      return false;
+    }
+
+    // Must have additional info
+    if (!data.hint || !data.metrics || !data.examples || data.examples.length === 0) {
+      return false;
+    }
+
+    return true;
+  };
 
   useEffect(() => {
     logger.info('[WordDetail] useEffect triggered:', {
@@ -263,26 +315,69 @@ export default function WordDetailScreen() {
 
             // プリフェッチがない場合はキャッシュをチェック
             const cachedData = getCachedWordDetail(word);
-            if (cachedData && cachedData.examples && cachedData.examples.length > 0) {
+            if (cachedData && isWordDetailComplete(cachedData)) {
               logger.info('[WordDetail] Enriching with cached full data');
               // 🚀 基本データのsensesを保持してマージ
               setWordData(prev => ({
                 ...cachedData,
                 senses: prev?.senses || cachedData.senses, // 基本データの意味を保持
               }));
+              setIsLoadingAdditional(false);
             } else {
-              logger.info('[WordDetail] No full data available, showing basic info only');
+              // 不完全またはキャッシュなし: Additional情報を生成
+              logger.info('[WordDetail] Incomplete/no cached data, generating additional info');
+
+              try {
+                // Hintストリーミング開始
+                setIsHintStreaming(true);
+                setStreamingHintText('');
+
+                const result = await getWordDetailStream(
+                  word,
+                  targetLanguage,
+                  nativeLanguage.code,
+                  (progress, partialData) => {
+                    if (partialData && progress >= 50) {
+                      // Additional情報が到着したらマージ
+                      setWordData(prev => ({
+                        ...prev,
+                        ...partialData,
+                        senses: prev?.senses || partialData.senses,
+                      }));
+                    }
+                  },
+                  false, // isOffline
+                  (chunk: string) => {
+                    // Hintテキストチャンクを受信
+                    setStreamingHintText(prev => prev + chunk);
+                  }
+                );
+
+                logger.info('[WordDetail] Additional info generation complete');
+                setWordData(prev => ({
+                  ...result.data,
+                  senses: prev?.senses || result.data.senses,
+                }));
+
+                // Hintストリーミング完了
+                setIsHintStreaming(false);
+              } catch (err) {
+                logger.error('[WordDetail] Failed to generate additional info:', err);
+                // Hintストリーミング停止（エラー時）
+                setIsHintStreaming(false);
+              }
+
+              setIsLoadingAdditional(false);
             }
-            setIsLoadingAdditional(false); // 完了（データがあってもなくても）
           })();
 
           return; // 基本情報は即座に表示完了
         } else if (word) {
           // キャッシュをチェック（状態リセット前に）
           const cachedData = getCachedWordDetail(word);
-          if (cachedData) {
-            // キャッシュヒット：即座に表示（状態をリセットせずに）
-            logger.debug('[WordDetail] USING CACHED DATA');
+          if (cachedData && isWordDetailComplete(cachedData)) {
+            // 完全なキャッシュヒット：即座に表示
+            logger.debug('[WordDetail] USING CACHED DATA (complete)');
             setWordData(cachedData);
             setLoadingProgress(100);
             setIsLoading(false);
@@ -290,15 +385,26 @@ export default function WordDetailScreen() {
             setDetectedLanguage(null);
             setShowLanguageNotification(false);
             return;
+          } else if (cachedData && !isWordDetailComplete(cachedData)) {
+            // 不完全なキャッシュ：Basic情報を表示してAdditional情報を取得継続
+            logger.debug('[WordDetail] Partial cached data detected, waiting for additional info');
+            setWordData(cachedData);
+            setLoadingProgress(30);
+            setIsLoading(true); // ローディング状態を維持
+            setIsLoadingAdditional(true);
+            setError(null);
+            setDetectedLanguage(null);
+            setShowLanguageNotification(false);
+            // returnしない - Additional情報の取得に進む
+          } else {
+            // キャッシュなし：状態をリセット
+            setWordData(null);
+            setIsLoading(true);
+            setLoadingProgress(0);
+            setError(null);
+            setDetectedLanguage(null);
+            setShowLanguageNotification(false);
           }
-
-          // キャッシュなし：状態をリセット
-          setWordData(null);
-          setIsLoading(true);
-          setLoadingProgress(0);
-          setError(null);
-          setDetectedLanguage(null);
-          setShowLanguageNotification(false);
 
           // 実行中のPre-flight requestをチェック
           const pendingPromise = getPendingPromise(word);
@@ -371,23 +477,29 @@ export default function WordDetailScreen() {
 
           logger.info('[WordDetail] Languages to try:', languagesToTry);
 
-          // まず言語を検出（Gemini APIが設定されている場合のみ）
+          // まず言語を検出（Gemini APIが設定されている場合のみ、かつskipLanguageDetectionがfalseの場合）
           let detectedLang: string | null = null;
-          try {
-            const { isGeminiConfigured } = await import('@/services/ai/gemini-client');
-            const isConfigured = await isGeminiConfigured();
+          if (!skipLanguageDetection) {
+            try {
+              const { isGeminiConfigured } = await import('@/services/ai/gemini-client');
+              const isConfigured = await isGeminiConfigured();
 
-            if (isConfigured) {
-              const { detectWordLanguage } = await import('@/services/ai/dictionary-generator');
-              logger.info('[WordDetail] Detecting language for word:', word);
-              detectedLang = await detectWordLanguage(word, languagesToTry);
-              logger.info('[WordDetail] Language detection result:', detectedLang);
-            } else {
-              logger.info('[WordDetail] Skipping language detection (Gemini not configured)');
+              if (isConfigured) {
+                const { detectWordLanguage } = await import('@/services/ai/dictionary-generator');
+                logger.info('[WordDetail] Detecting language for word:', word);
+                const detectionResult = await detectWordLanguage(word, languagesToTry);
+                // detectWordLanguageはオブジェクト {language, confidence, provider} を返すため、.languageを取得
+                detectedLang = detectionResult?.language || null;
+                logger.info('[WordDetail] Language detection result:', detectionResult);
+              } else {
+                logger.info('[WordDetail] Skipping language detection (Gemini not configured)');
+              }
+            } catch (detectionError) {
+              logger.warn('[WordDetail] Language detection failed:', detectionError);
+              // 検出失敗時は元の順番で試す
             }
-          } catch (detectionError) {
-            logger.warn('[WordDetail] Language detection failed:', detectionError);
-            // 検出失敗時は元の順番で試す
+          } else {
+            logger.info('[WordDetail] Skipping language detection (skipLanguageDetection=true)');
           }
 
           // 検出された言語があれば、それを最優先にする
@@ -396,6 +508,10 @@ export default function WordDetailScreen() {
             : languagesToTry;
 
           logger.info('[WordDetail] Ordered languages:', orderedLanguages);
+
+          // Hintストリーミング開始
+          setIsHintStreaming(true);
+          setStreamingHintText('');
 
           // 各言語を順番に試す
           for (const langCode of orderedLanguages) {
@@ -406,7 +522,6 @@ export default function WordDetailScreen() {
                 word,
                 langCode,
                 nativeLanguage.code,
-                aiDetailLevel,
                 (progress, partialData) => {
                   logger.debug(`[WordDetail] Progress: ${progress}% (${langCode})`, {
                     hasPartialData: !!partialData,
@@ -442,6 +557,11 @@ export default function WordDetailScreen() {
                       setIsLoading(false);
                     }
                   }
+                },
+                false, // isOffline
+                (chunk: string) => {
+                  // Hintテキストチャンクを受信
+                  setStreamingHintText(prev => prev + chunk);
                 }
               );
 
@@ -449,6 +569,8 @@ export default function WordDetailScreen() {
               successLanguage = langCode;
               setDetectedLanguage(langCode);
               logger.info(`[WordDetail] Successfully found word in language: ${langCode}`);
+              // Hintストリーミング完了
+              setIsHintStreaming(false);
               break; // ループを抜ける
             } catch (streamError) {
               // エラーを保存して次の言語を試す
@@ -472,6 +594,8 @@ export default function WordDetailScreen() {
           // すべての言語で失敗した場合
           if (!successLanguage || !result) {
             logger.error('[WordDetail] Failed in all languages');
+            // Hintストリーミング停止（エラー時）
+            setIsHintStreaming(false);
             throw lastError;
           }
 
@@ -480,6 +604,8 @@ export default function WordDetailScreen() {
           setWordData(result.data);
           setLoadingProgress(100);
           setIsLoading(false);
+          // Hintストリーミング完了（念のため）
+          setIsHintStreaming(false);
 
           // 検索履歴にトークン数を含めて保存（実際に見つかった言語で保存）
           try {
@@ -500,7 +626,7 @@ export default function WordDetailScreen() {
         } else if (err instanceof Error) {
           setError(err.message);
         } else {
-          setError('単語の読み込みに失敗しました');
+          setError(t('wordDetail.loadingFailed'));
         }
         setIsLoading(false);
       }
@@ -584,13 +710,14 @@ export default function WordDetailScreen() {
       logger.info('[WordDetail] Pre-fetching word detail for selected text:', text, 'detected:', detectedLang, 'resolved:', targetLang);
 
       prefetchWordDetail(text.trim(), (onProgress) => {
-        return getWordDetailStream(text.trim(), targetLang, nativeLanguage.code, 'concise', onProgress);
+        return getWordDetailStream(text.trim(), targetLang, nativeLanguage.code, onProgress);
       });
     }
   };
 
   const handleSelectionCleared = () => {
     setSelectedText(null);
+    setClearSelectionKey(prev => prev + 1);
   };
 
   const handleDictionaryLookup = () => {
@@ -637,6 +764,22 @@ export default function WordDetailScreen() {
 
     // 辞書検索後に選択を解除
     setSelectedText(null);
+  };
+
+  const handleWordAskQuestion = () => {
+    if (selectedText && selectedText.isSingleWord) {
+      // isSingleWordはtrueのまま維持して単語モードの質問タグを表示
+      // ChatSectionにフォーカスを当てて入力を促す
+      logger.info('[WordDetail] Opening chat for word questions (keeping word mode)');
+    }
+  };
+
+  const handleSwitchToWordCard = () => {
+    if (selectedText && !selectedText.isSingleWord) {
+      // isSingleWordをtrueに変更して単語カードモードに切り替え
+      setSelectedText({ ...selectedText, isSingleWord: true });
+      logger.info('[WordDetail] Switched from text input mode back to word card mode');
+    }
   };
 
   const handlePronouncePress = async () => {
@@ -710,17 +853,31 @@ export default function WordDetailScreen() {
     }
   };
 
-  const handleQuestionPress = (question: string) => {
+  const handleQuestionPress = (question: string | import('@/constants/question-tags').QuestionTag) => {
+    // QuestionTagオブジェクトの場合はpromptを取得
+    const questionText = typeof question === 'string' ? question : question.prompt;
+    const questionLabel = typeof question === 'string' ? question : question.label;
+
+    let finalQuestion = questionText;
+    let displayQuestion = questionText; // labelではなくprompt（質問文）を使用
+
     if (selectedText?.text) {
-      // API用: 部分選択した箇所に焦点を当てた質問形式
-      const contextualQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${question}`;
-      // UI表示用: シンプルな形式
-      const displayQuestion = `「${selectedText.text}」について：${question}`;
-      setSelectedText(null);
-      void sendQuickQuestion(contextualQuestion, displayQuestion);
+      // 部分選択時: 選択部分のみに焦点を当てる
+      finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${questionText}`;
+      displayQuestion = `「${selectedText.text}」について：${questionText}`;
+      // 選択を維持（ユーザーが同じ単語について複数質問できるように）
     } else {
-      void sendQuickQuestion(question);
+      // 単語全体への質問時: 質問内容に応じた詳細な指示を追加
+      if (questionLabel.includes('ニュアンス')) {
+        finalQuestion = `${questionText}\n\n※この単語が持つニュアンスや語感（フォーマル・カジュアル、肯定的・否定的、古風・現代的など）を具体的に説明してください。`;
+      } else if (questionLabel.includes('語源')) {
+        finalQuestion = `${questionText}\n\n※この単語の意味や用法ではなく、語源（etymology）・由来・歴史的な背景のみを詳しく説明してください。どの言語から来たか、どのように形成されたかなどを教えてください。`;
+      } else if (questionLabel.includes('類義語')) {
+        finalQuestion = `${questionText}\n\n※この単語の類義語をいくつか挙げて、それぞれの違いや使い分けも簡潔に説明してください。`;
+      }
     }
+
+    void sendQuickQuestion(finalQuestion, displayQuestion);
   };
 
   const handleChatSubmit = async (text: string) => {
@@ -729,7 +886,7 @@ export default function WordDetailScreen() {
       const contextualQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${text}`;
       // UI表示用: シンプルな形式
       const displayQuestion = `「${selectedText.text}」について：${text}`;
-      setSelectedText(null);
+      // 選択を維持（ユーザーが同じ単語について複数質問できるように）
       await sendChatMessage(contextualQuestion, displayQuestion);
     } else {
       await sendChatMessage(text);
@@ -813,7 +970,6 @@ export default function WordDetailScreen() {
               japanese: e.textDst,
             })) || [],
           } : undefined,
-          detailLevel: aiDetailLevel,
           targetLanguage: targetLanguage,
         },
         // onContent: ストリーミング中の更新
@@ -847,13 +1003,27 @@ export default function WordDetailScreen() {
         // onError: エラー時
         (error) => {
           logger.error('[WordDetail] Follow-up question error:', error);
+
+          // Check if this is a quota error
+          const quotaError = parseQuotaError(error);
+
+          let errorMessage: string;
+          if (quotaError.isQuotaError) {
+            // Show quota exceeded modal
+            setQuotaErrorType(quotaError.quotaType);
+            setIsQuotaModalVisible(true);
+            errorMessage = quotaError.userFriendlyMessage;
+          } else {
+            errorMessage = error.message || '質問に失敗しました';
+          }
+
           setQAPairs(prev => prev.map(pair => {
             if (pair.id === pairId) {
               return {
                 ...pair,
                 followUpQAs: pair.followUpQAs?.map(fu =>
                   fu.id === followUpId
-                    ? { ...fu, status: 'error' as const, errorMessage: error.message }
+                    ? { ...fu, status: 'error' as const, errorMessage }
                     : fu
                 ),
               };
@@ -869,6 +1039,15 @@ export default function WordDetailScreen() {
       }
     } catch (error) {
       logger.error('[WordDetail] Failed to send follow-up question:', error);
+
+      // Check if this is a quota error
+      const quotaError = parseQuotaError(error);
+
+      if (quotaError.isQuotaError) {
+        // Show quota exceeded modal
+        setQuotaErrorType(quotaError.quotaType);
+        setIsQuotaModalVisible(true);
+      }
     }
   };
 
@@ -886,12 +1065,12 @@ export default function WordDetailScreen() {
       <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
         <StatusBar style="auto" />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error || '単語が見つかりませんでした'}</Text>
+          <Text style={styles.errorText}>{error || t('wordDetail.notFound')}</Text>
           <TouchableOpacity
             style={styles.backButton}
             onPress={handleBackPress}
           >
-            <Text style={styles.backButtonText}>戻る</Text>
+            <Text style={styles.backButtonText}>{t('wordDetail.backButton')}</Text>
           </TouchableOpacity>
         </View>
       </ThemedView>
@@ -938,7 +1117,7 @@ export default function WordDetailScreen() {
           <View style={styles.languageNotificationContainer}>
             <View style={styles.languageNotificationContent}>
               <Text style={styles.languageNotificationText}>
-                {detectedLanguageInfo.name}で見つかりました
+                {t('wordDetail.foundInLanguage', { language: detectedLanguageInfo.name })}
               </Text>
             </View>
           </View>
@@ -962,9 +1141,15 @@ export default function WordDetailScreen() {
           ) : null}
 
           {/* Word Hint - 3番目に表示 */}
-          {wordData?.hint?.text ? (
+          {wordData?.hint?.text || isHintStreaming ? (
             <View style={styles.hintContainer}>
-              <WordHint hint={wordData.hint.text} onTextSelected={handleTextSelected} onSelectionCleared={handleSelectionCleared} />
+              <WordHint
+                hint={wordData?.hint?.text || ''}
+                onTextSelected={handleTextSelected}
+                onSelectionCleared={handleSelectionCleared}
+                isStreaming={isHintStreaming}
+                streamingText={streamingHintText}
+              />
             </View>
           ) : (isLoading || isLoadingAdditional) ? (
             <View style={styles.hintContainer}>
@@ -975,7 +1160,7 @@ export default function WordDetailScreen() {
           {/* Examples Section - 最後に表示 */}
           {wordData?.examples && wordData.examples.length > 0 ? (
             <View style={styles.examplesSection}>
-              <Text style={styles.sectionTitle}>例文</Text>
+              <Text style={styles.sectionTitle}>{t('wordDetail.examples')}</Text>
               <View style={styles.examplesList}>
                 {wordData.examples.map((example, index) => (
                   <ExampleCard
@@ -990,7 +1175,7 @@ export default function WordDetailScreen() {
             </View>
           ) : (isLoading || isLoadingAdditional) ? (
             <View style={styles.examplesSection}>
-              <Text style={styles.sectionTitle}>例文</Text>
+              <Text style={styles.sectionTitle}>{t('wordDetail.examples')}</Text>
               <ShimmerExamples />
             </View>
           ) : null}
@@ -999,23 +1184,21 @@ export default function WordDetailScreen() {
 
       {/* Chat Section - Fixed at bottom */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'position' : 'height'}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? -48 : 0}
       >
         <View pointerEvents="box-none" style={styles.chatContainerFixed}>
           <ChatSection
             key={chatIdentifier} // Reset chat state when navigating to a different word
-            placeholder="この単語について質問をする..."
+            placeholder={t('wordDetail.chatPlaceholder')}
             qaPairs={qaPairs}
             followUps={followUps}
             isStreaming={isChatStreaming}
             error={qaPairs.length === 0 ? chatError : null}
-            detailLevel={aiDetailLevel}
             onSend={handleChatSubmit}
             onQuickQuestion={handleQuestionPress}
             onRetryQuestion={handleQACardRetry}
-            onDetailLevelChange={setAIDetailLevel}
             scope="word"
             identifier={chatIdentifier}
             onBookmarkAdded={handleBookmarkAdded}
@@ -1028,6 +1211,16 @@ export default function WordDetailScreen() {
             selectedText={selectedText}
             onDictionaryLookup={handleDictionaryLookup}
             onSelectionCleared={handleSelectionCleared}
+            mode={chatSectionMode}
+            wordDetail={wordDetail}
+            isLoadingWordDetail={false}
+            onWordBookmarkToggle={() => {
+              // TODO: ブックマーク機能を実装
+              logger.info('[WordDetail] Word bookmark toggled');
+            }}
+            onWordViewDetails={handleDictionaryLookup}
+            onWordAskQuestion={handleWordAskQuestion}
+            onSwitchToWordCard={handleSwitchToWordCard}
           />
         </View>
       </KeyboardAvoidingView>
@@ -1056,6 +1249,19 @@ export default function WordDetailScreen() {
         onChangeFolderName={setNewFolderName}
         onCreate={handleCreateFolder}
         onClose={handleCloseCreateFolderModal}
+      />
+
+      {/* Quota Exceeded Modal */}
+      <QuotaExceededModal
+        visible={isQuotaModalVisible}
+        onClose={() => setIsQuotaModalVisible(false)}
+        remainingQuestions={0}
+        isPremium={isPremium}
+        quotaType={quotaErrorType}
+        onUpgradePress={() => {
+          setIsQuotaModalVisible(false);
+          setIsSubscriptionModalOpen(true);
+        }}
       />
 
       {/* Subscription Bottom Sheet */}
