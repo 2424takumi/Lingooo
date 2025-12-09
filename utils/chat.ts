@@ -3,6 +3,12 @@ import { logger } from '@/utils/logger';
 
 interface ToQAPairsOptions {
   fallbackError?: string | null;
+  context?: {
+    originalText?: string;
+    translatedText?: string;
+    sourceLang?: string;
+    targetLang?: string;
+  };
 }
 
 function normalizeStatus(status?: string): QAPairStatus {
@@ -21,7 +27,7 @@ function normalizeStatus(status?: string): QAPairStatus {
  */
 export function toQAPairs(
   messages: ChatMessage[],
-  { fallbackError }: ToQAPairsOptions = {}
+  { fallbackError, context }: ToQAPairsOptions = {}
 ): QAPair[] {
   logger.info('[toQAPairs] Converting messages to QA pairs:', {
     messageCount: messages.length,
@@ -51,6 +57,7 @@ export function toQAPairs(
         a: answerText.length > 0 ? answerText : undefined,
         status,
         errorMessage: status === 'error' ? message.error ?? fallbackError ?? undefined : undefined,
+        context,
       });
 
       pendingUser = null;
@@ -65,6 +72,7 @@ export function toQAPairs(
       q: pendingUser.displayContent?.trim() || pendingUser.content?.trim() || '', // displayContentを優先
       status,
       errorMessage: status === 'error' ? fallbackError ?? undefined : undefined,
+      context,
     });
   }
 

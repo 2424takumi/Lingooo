@@ -5,7 +5,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { AppSettings, AIDetailLevel, CustomQuestion } from '@/types/settings';
+import type { AppSettings, CustomQuestion } from '@/types/settings';
 import { DEFAULT_APP_SETTINGS } from '@/types/settings';
 import { logger } from '@/utils/logger';
 
@@ -48,38 +48,6 @@ export async function saveAppSettings(settings: AppSettings): Promise<void> {
     logger.info('[SettingsStorage] Settings saved:', settings);
   } catch (error) {
     logger.error('[SettingsStorage] Failed to save settings:', error);
-    throw error;
-  }
-}
-
-/**
- * AI詳細度レベルを取得
- *
- * @returns AI詳細度レベル
- */
-export async function getAIDetailLevel(): Promise<AIDetailLevel> {
-  try {
-    const settings = await loadAppSettings();
-    return settings.aiResponse.detailLevel;
-  } catch (error) {
-    logger.error('[SettingsStorage] Failed to get AI detail level:', error);
-    return DEFAULT_APP_SETTINGS.aiResponse.detailLevel;
-  }
-}
-
-/**
- * AI詳細度レベルを設定
- *
- * @param level - 設定する詳細度レベル
- */
-export async function setAIDetailLevel(level: AIDetailLevel): Promise<void> {
-  try {
-    const settings = await loadAppSettings();
-    settings.aiResponse.detailLevel = level;
-    await saveAppSettings(settings);
-    logger.info('[SettingsStorage] AI detail level updated:', level);
-  } catch (error) {
-    logger.error('[SettingsStorage] Failed to set AI detail level:', error);
     throw error;
   }
 }

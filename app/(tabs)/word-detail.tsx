@@ -1083,7 +1083,7 @@ export default function WordDetailScreen() {
 
       <View style={[styles.content, { paddingTop: safeAreaInsets.top }]}>
         {/* Header - Fixed */}
-        {wordData?.headword ? (
+        {(word || wordData?.headword) ? (
           <View
             style={styles.headerContainer}
             onLayout={(event) => {
@@ -1093,9 +1093,9 @@ export default function WordDetailScreen() {
           >
             <UnifiedHeaderBar
               pageType="wordDetail"
-              word={wordData.headword.lemma}
-              posTags={wordData.headword.pos || []}
-              gender={wordData.headword.gender}
+              word={wordData?.headword?.lemma || word}
+              posTags={wordData?.headword?.pos || []}
+              gender={wordData?.headword?.gender}
               onBackPress={handleBackPress}
               onPronouncePress={handlePronouncePress}
             />

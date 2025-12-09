@@ -86,20 +86,22 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
       if (data) {
         logger.info('[LearningLanguages] Loaded settings:', data);
 
-        // 母語を設定
+        // 母語を設定（データベースには言語コードが保存されている）
         if (data.native_language) {
-          const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === data.native_language);
+          const language = AVAILABLE_LANGUAGES.find((lang) => lang.code === data.native_language);
           if (language) {
             logger.info('[LearningLanguages] Setting native language:', language.name);
             setNativeLanguageState(language);
             // UIの言語も設定
+            logger.info('[LearningLanguages] Changing i18n language to:', language.code);
             await i18n.changeLanguage(language.code);
+            logger.info('[LearningLanguages] i18n language changed successfully to:', language.code);
           }
         }
 
-        // デフォルト言語を設定
+        // デフォルト言語を設定（データベースには言語コードが保存されている）
         if (data.default_language) {
-          const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === data.default_language);
+          const language = AVAILABLE_LANGUAGES.find((lang) => lang.code === data.default_language);
           if (language) {
             logger.info('[LearningLanguages] Setting default language:', language.name);
             setDefaultLanguageState(language);
@@ -107,10 +109,10 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
           }
         }
 
-        // 学習中の言語を設定
+        // 学習中の言語を設定（データベースには言語コードが保存されている）
         if (data.learning_languages && Array.isArray(data.learning_languages)) {
           const languages = data.learning_languages
-            .map((id: string) => AVAILABLE_LANGUAGES.find((lang) => lang.id === id))
+            .map((code: string) => AVAILABLE_LANGUAGES.find((lang) => lang.code === code))
             .filter((lang): lang is Language => lang !== undefined);
           if (languages.length > 0) {
             logger.info('[LearningLanguages] Setting learning languages:', languages.map(l => l.name));
@@ -138,10 +140,11 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     setLearningLanguages(newLearningLanguages);
 
     try {
-      const ids = newLearningLanguages.map((lang) => lang.id);
+      // データベースには言語コードを保存
+      const codes = newLearningLanguages.map((lang) => lang.code);
       const { error } = await supabase
         .from('users')
-        .update({ learning_languages: ids })
+        .update({ learning_languages: codes })
         .eq('id', user.id);
 
       if (error) {
@@ -166,10 +169,11 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     }
 
     try {
-      const ids = newLearningLanguages.map((lang) => lang.id);
+      // データベースには言語コードを保存
+      const codes = newLearningLanguages.map((lang) => lang.code);
       const { error } = await supabase
         .from('users')
-        .update({ learning_languages: ids })
+        .update({ learning_languages: codes })
         .eq('id', user.id);
 
       if (error) {
@@ -189,9 +193,10 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     setDefaultLanguageState(language);
 
     try {
+      // データベースには言語コードを保存
       const { error } = await supabase
         .from('users')
-        .update({ default_language: languageId })
+        .update({ default_language: language.code })
         .eq('id', user.id);
 
       if (error) {
@@ -231,19 +236,25 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === languageId);
     if (!language) return;
 
+    logger.info('[LearningLanguages] setNativeLanguage called with:', languageId, '->', language.name);
     setNativeLanguageState(language);
 
     // UIの言語も変更
+    logger.info('[LearningLanguages] Changing i18n language to:', language.code);
     await i18n.changeLanguage(language.code);
+    logger.info('[LearningLanguages] i18n language changed successfully to:', language.code);
 
     try {
+      // データベースには言語コードを保存
       const { error } = await supabase
         .from('users')
-        .update({ native_language: languageId })
+        .update({ native_language: language.code })
         .eq('id', user.id);
 
       if (error) {
         logger.error('Failed to save native language:', error);
+      } else {
+        logger.info('[LearningLanguages] Native language saved to Supabase:', language.code);
       }
     } catch (error) {
       logger.error('Failed to save native language:', error);

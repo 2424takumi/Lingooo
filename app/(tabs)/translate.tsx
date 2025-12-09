@@ -1,22 +1,27 @@
-import { StyleSheet, View, ScrollView, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, ScrollView, Dimensions, Platform, Pressable, KeyboardAvoidingView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
-import { ChatSection } from '@/components/ui/chat-section';
+import { ChatSection, ChatSectionMode } from '@/components/ui/chat-section';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
 import { TranslateCard } from '@/components/ui/translate-card';
+import { SelectionInfo } from '@/components/ui/selectable-text';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
-import { translateText } from '@/services/api/translate';
+import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
+import { translateText, getWordContext, splitOriginalText, translateParagraph, translateParagraphStream, splitOriginalTextStream, splitOriginalTextStreamSSE } from '@/services/api/translate';
+import { splitIntoParagraphs } from '@/services/api/paragraph-splitter';
 import { getWordDetailStream } from '@/services/api/search';
+import { sendQuestionTagQuery } from '@/services/api/chat';
+import type { QuestionTag as QuestionTagType } from '@/constants/question-tags';
 import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
+import { getWordContextCache, setWordContextCache } from '@/services/cache/word-context-cache';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import { detectLang, resolveLanguageCode } from '@/services/utils/language-detect';
-import { detectWordLanguage } from '@/services/ai/dictionary-generator';
 import { languageDetectionEvents } from '@/services/events/language-detection-events';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
@@ -24,18 +29,49 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useSubscription } from '@/contexts/subscription-context';
-import { useClipboardSearch } from '@/hooks/use-clipboard-search';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
 import { generateId } from '@/utils/id';
+import { parseQuotaError } from '@/utils/quota-error';
 import type { QAPair } from '@/types/chat';
+import { useTranslation } from 'react-i18next';
+import { TRANSLATION_CONFIG } from '@/constants/translation';
+
+/**
+ * 選択位置の周辺文脈を抽出し、選択箇所をマーカーで囲む（前後150文字程度）
+ * 選択された単語を **[単語]** で囲んで、AIが識別できるようにする
+ */
+function extractSurroundingContext(
+  fullText: string,
+  selectionStart: number,
+  selectionEnd: number,
+  contextLength: number = 150
+): string {
+  const beforeStart = Math.max(0, selectionStart - contextLength);
+  const afterEnd = Math.min(fullText.length, selectionEnd + contextLength);
+
+  const before = fullText.substring(beforeStart, selectionStart);
+  const selected = fullText.substring(selectionStart, selectionEnd);
+  const after = fullText.substring(selectionEnd, afterEnd);
+
+  // 選択箇所をマーカーで囲む
+  return `${before}**[${selected}]**${after}`;
+}
+
+interface TranslatedParagraph {
+  id: string;
+  originalText: string;
+  translatedText: string;
+  index: number;
+  isTranslating?: boolean;
+}
 
 export default function TranslateScreen() {
+  const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
   const router = useRouter();
   const params = useLocalSearchParams();
   const safeAreaInsets = useSafeAreaInsets();
-  const { aiDetailLevel, setAIDetailLevel } = useAISettings();
   const { currentLanguage, nativeLanguage, setCurrentLanguage } = useLearningLanguages();
   const { isPremium } = useSubscription();
 
@@ -51,13 +87,30 @@ export default function TranslateScreen() {
   // AI言語検出中の状態（needsAiDetectionがtrueなら最初から検出中）
   const [isDetectingLanguage, setIsDetectingLanguage] = useState(needsAiDetection);
 
-  // デバッグログ
-  useEffect(() => {
-    logger.info('[Translate] isDetectingLanguage state changed:', isDetectingLanguage);
-  }, [isDetectingLanguage]);
-
   // ヘッダーの高さを測定
   const [headerHeight, setHeaderHeight] = useState(52);
+
+  // チャット展開時の最大高さを計算（searchページと同じロジック）
+  const chatExpandedMaxHeight = useMemo(() => {
+    const screenHeight = Dimensions.get('window').height;
+
+    // ChatSection内部の固定スペース
+    const containerPaddingTop = 8;
+    const containerPaddingBottom = 10;
+    const containerMarginBottom = 4;
+    const chatMessagesMarginBottom = 8;
+    const bottomSectionPaddingTop = 8;
+    const questionScrollViewHeight = 32;
+    const bottomSectionGap = 6;
+    const whiteContainerHeight = 55; // paddingTop 9 + minHeight 34 + paddingBottom 12
+
+    const fixedSpaces = containerPaddingTop + containerPaddingBottom + containerMarginBottom +
+      chatMessagesMarginBottom + bottomSectionPaddingTop +
+      questionScrollViewHeight + bottomSectionGap + whiteContainerHeight - 12; // -12でさらに伸ばす
+
+    // 画面高さ - safeAreaTop - headerHeight - 固定スペース - bottomSafeArea
+    return screenHeight - safeAreaInsets.top - headerHeight - fixedSpaces - safeAreaInsets.bottom;
+  }, [safeAreaInsets.top, safeAreaInsets.bottom, headerHeight]);
 
   // ブックマーク管理
   const {
@@ -85,18 +138,94 @@ export default function TranslateScreen() {
   const [selectedTranslateTargetLang, setSelectedTranslateTargetLang] = useState(initialTargetLang);
   const [error, setError] = useState<string | null>(null);
 
+  // Quota exceeded modal state
+  const [isQuotaModalVisible, setIsQuotaModalVisible] = useState(false);
+  const [quotaErrorType, setQuotaErrorType] = useState<'translation_tokens' | 'question_count' | 'text_length' | undefined>();
+
+  // 段落管理
+  const [paragraphs, setParagraphs] = useState<TranslatedParagraph[]>([]);
+  const paragraphsRef = useRef(paragraphs); // 常に最新のparagraphsを参照するためのRef
+  const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
+  const [isSplittingParagraphs, setIsSplittingParagraphs] = useState(false);
+
+  // paragraphsが更新されるたびにRefも更新
+  useEffect(() => {
+    paragraphsRef.current = paragraphs;
+  }, [paragraphs]);
+
+  // currentLanguage と nativeLanguage の最新値を保持するRef
+  const currentLanguageRef = useRef(currentLanguage);
+  const nativeLanguageRef = useRef(nativeLanguage);
+
+  useEffect(() => {
+    currentLanguageRef.current = currentLanguage;
+    nativeLanguageRef.current = nativeLanguage;
+  }, [currentLanguage, nativeLanguage]);
+
   // 選択テキスト管理
-  const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
+  const [selectedText, setSelectedText] = useState<{
+    text: string;
+    isSingleWord: boolean;
+    type: 'original' | 'translated';
+    canReturnToWordCard?: boolean; // 単語カードに戻れるかどうか
+  } | null>(null);
+
+  // 選択クリア用のキー（値が変わると選択がクリアされる）
+  const [clearSelectionKey, setClearSelectionKey] = useState(0);
+
+  // 単語の文脈情報（API取得）
+  const [wordContextInfo, setWordContextInfo] = useState<{
+    translation: string;
+    partOfSpeech: string[];
+    nuance: string;
+    sourceLang: string; // 選択された単語の言語
+    targetLang: string; // 翻訳先の言語
+  } | null>(null);
+  const [isLoadingWordContext, setIsLoadingWordContext] = useState(false);
+
+  // ChatSectionのモードを決定
+  const chatSectionMode: ChatSectionMode = useMemo(() => {
+    if (!selectedText) return 'default';
+    return selectedText.isSingleWord ? 'word' : 'text';
+  }, [selectedText]);
+
+  // wordモード用の単語詳細データ
+  const wordDetail = useMemo(() => {
+    if (!selectedText || !selectedText.isSingleWord) return null;
+
+    // APIから取得した文脈情報がある場合はそれを使用
+    if (wordContextInfo) {
+      // 選択された単語は表示せず、翻訳結果のみを見出し語として表示
+      // 選択された単語が母国語の場合 → 学習言語の訳を見出し語に
+      // 選択された単語が学習言語の場合 → 母国語の訳を見出し語に
+      return {
+        headword: wordContextInfo.translation, // 翻訳結果を見出し語に
+        reading: '', // キーワードは非表示
+        meanings: [],
+        partOfSpeech: wordContextInfo.partOfSpeech,
+        nuance: wordContextInfo.nuance,
+        isBookmarked: false,
+      };
+    }
+
+    // ローディング中またはまだ取得していない場合
+    return {
+      headword: selectedText.text,
+      reading: '',
+      meanings: [],
+      partOfSpeech: [],
+      nuance: isLoadingWordContext ? '情報を取得中...' : '単語を選択しました。',
+      isBookmarked: false,
+    };
+  }, [selectedText, wordContextInfo, isLoadingWordContext]);
 
   // クリップボードからの質問入力
+  // 注: クリップボード監視は _layout.tsx で一元管理されているため、ここでは不要
   const [prefilledChatText, setPrefilledChatText] = useState<string | null>(null);
-  useClipboardSearch({
-    enabled: true,
-    onPaste: (clipboardText) => {
-      setPrefilledChatText(clipboardText);
-      logger.info('[Translate] Clipboard text set to chat input');
-    },
-  });
+
+  // QAペア管理（チャットメッセージから生成）
+  const [qaPairs, setQAPairs] = useState<QAPair[]>([]);
+  const [activeFollowUpPairId, setActiveFollowUpPairId] = useState<string | undefined>();
 
   // チャットコンテキスト
   const chatContext = useMemo(() => {
@@ -126,50 +255,45 @@ export default function TranslateScreen() {
     targetLanguage: currentLanguage.code,
   });
 
-  // チャット展開時の最大高さを計算
-  const chatExpandedMaxHeight = useMemo(() => {
-    const screenHeight = Dimensions.get('window').height;
-    const containerPaddingTop = 8;
-    const containerPaddingBottom = 10;
-    const containerMarginBottom = 4;
-    const chatMessagesMarginBottom = 8;
-    const bottomSectionPaddingTop = 8;
-    const questionScrollViewHeight = 0; // 翻訳モードでは質問タグなし
-    const bottomSectionGap = 6;
-    const whiteContainerHeight = 55;
-    const topMargin = 10;
-
-    const fixedSpaces = containerPaddingTop + containerPaddingBottom + containerMarginBottom +
-      chatMessagesMarginBottom + bottomSectionPaddingTop +
-      questionScrollViewHeight + bottomSectionGap + whiteContainerHeight + topMargin;
-
-    return screenHeight - safeAreaInsets.top - headerHeight - fixedSpaces;
-  }, [safeAreaInsets.top, headerHeight]);
-
-  // QAPairsをstateとして管理
-  const [qaPairs, setQAPairs] = useState<QAPair[]>([]);
-  const [activeFollowUpPairId, setActiveFollowUpPairId] = useState<string | undefined>(undefined);
+  // デバッグログ
+  useEffect(() => {
+    logger.info('[Translate] isDetectingLanguage state changed:', isDetectingLanguage);
+  }, [isDetectingLanguage]);
 
   useEffect(() => {
-    const newPairs = toQAPairs(chatMessages, { fallbackError: chatError });
-    setQAPairs(prevPairs => {
-      return newPairs.map(newPair => {
-        const existingPair = prevPairs.find(p => p.id === newPair.id);
-        if (existingPair?.followUpQAs) {
-          return { ...newPair, followUpQAs: existingPair.followUpQAs };
-        }
-        return newPair;
-      });
-    });
-  }, [chatMessages, chatError]);
+    logger.info('[Translate] isTranslating state changed:', isTranslating);
+  }, [isTranslating]);
 
-  // 翻訳先言語を決定
-  const determineTranslateTargetLang = (srcLang: string): string => {
+  // デバッグ: 状態監視
+  useEffect(() => {
+    const pressablePointerEvents = chatSectionMode === 'word' ? 'none' : 'auto';
+    logger.debug('[Translate] State snapshot', {
+      selectedText: selectedText?.text || null,
+      chatSectionMode,
+      pressablePointerEvents,
+    });
+  }, [selectedText, chatSectionMode]);
+
+  // chatMessagesをQA Pairsに変換
+  useEffect(() => {
+    logger.info('[Translate] Converting chat messages to QA pairs', {
+      messageCount: chatMessages.length,
+      hasError: !!chatError,
+    });
+    const pairs = toQAPairs(chatMessages, {
+      fallbackError: chatError,
+      context: chatContext,
+    });
+    setQAPairs(pairs);
+  }, [chatMessages, chatError, chatContext]);
+
+  // 翻訳先言語を決定（メモ化して不要な再計算を防止）
+  const determineTranslateTargetLang = useCallback((srcLang: string): string => {
     if (srcLang !== nativeLanguage.code) {
       return nativeLanguage.code;
     }
     return currentLanguage.code;
-  };
+  }, [nativeLanguage.code, currentLanguage.code]);
 
   // AI言語検出イベントリスナー（バックグラウンド検出結果を受信）
   useEffect(() => {
@@ -197,69 +321,52 @@ export default function TranslateScreen() {
         }
 
         // ヘッダーの言語タブを自動切り替え（検出された言語が現在のタブと違い、かつ母語でない場合）
-        if (event.language !== nativeLanguage.code && event.language !== currentLanguage.code) {
-          logger.info('[Translate] Auto-switching language tab from', currentLanguage.code, 'to', event.language);
+        const currentLang = currentLanguageRef.current;
+        const nativeLang = nativeLanguageRef.current;
+        if (event.language !== nativeLang.code && event.language !== currentLang.code) {
+          logger.info('[Translate] Auto-switching language tab from', currentLang.code, 'to', event.language);
           setCurrentLanguage(event.language);
         } else {
-          logger.info('[Translate] Language tab unchanged:', currentLanguage.code);
+          logger.info('[Translate] Language tab unchanged:', currentLang.code);
         }
       }
     });
 
     return unsubscribe;
-  }, [text, sourceLang, currentLanguage, nativeLanguage]);
+  }, [text, sourceLang, setCurrentLanguage]);
 
-  // AI言語検出（バックグラウンド）
+  // AI言語検出は use-search.ts で既に実行されているため、ここでは不要
+  // イベントリスナー（上記のuseEffect）で検出結果を受け取る
+  // 検出開始のマーキングだけを行う
   useEffect(() => {
     if (needsAiDetection && text) {
-      logger.info('[Translate] Starting AI language detection for:', text.substring(0, 50));
+      logger.info('[Translate] AI detection is running in background (from use-search.ts)');
       setIsDetectingLanguage(true);
 
-      // タイムアウト設定（5秒）
+      // タイムアウト設定 - イベントが来ない場合のフォールバック
       const detectionTimeout = setTimeout(() => {
-        logger.warn('[Translate] AI language detection timeout - proceeding with translation');
-        setIsDetectingLanguage(false);
-      }, 5000);
+        // Refを使って常に最新のparagraphsを参照
+        const currentParagraphs = paragraphsRef.current;
 
-      detectWordLanguage(text.trim(), [
-        'en', 'pt', 'es', 'fr', 'de', 'it', 'zh', 'ko', 'vi', 'id'
-      ]).then(async (result) => {
-        clearTimeout(detectionTimeout);
-        logger.info('[Translate] AI detection completed:', result?.language, 'confidence:', result?.confidence, 'initial sourceLang:', sourceLang, 'current tab:', currentLanguage.code);
+        // 段落が既に存在する場合はタイムアウト処理をスキップ（翻訳実行中）
+        logger.info('[Translate] AI language detection timeout check:', {
+          paragraphCount: currentParagraphs.length,
+          willProceed: currentParagraphs.length === 0,
+        });
 
-        // 検出完了を先にマーク（言語変更前に）
-        setIsDetectingLanguage(false);
-        logger.info('[Translate] Detection shimmer stopped');
-
-        if (result && result.language) {
-          // 言語を更新（検出された言語がsourceLangと違う場合）
-          if (result.language !== sourceLang) {
-            logger.info('[Translate] Updating source language from', sourceLang, 'to', result.language);
-            setSourceLang(result.language);
-
-            // 翻訳先言語を再計算
-            const newTargetLang = determineTranslateTargetLang(result.language);
-            setSelectedTranslateTargetLang(newTargetLang);
-            logger.info('[Translate] Updated target lang to:', newTargetLang);
-          }
-
-          // ヘッダーの言語タブを自動切り替え（検出された言語が現在のタブと違い、かつ母語でない場合）
-          if (result.language !== nativeLanguage.code && result.language !== currentLanguage.code) {
-            logger.info('[Translate] Auto-switching language tab from', currentLanguage.code, 'to', result.language);
-            await setCurrentLanguage(result.language);
-          } else {
-            logger.info('[Translate] Language tab unchanged:', currentLanguage.code);
-          }
+        if (currentParagraphs.length === 0) {
+          logger.warn('[Translate] AI language detection timeout - proceeding with translation');
+          setIsDetectingLanguage(false);
         } else {
-          logger.info('[Translate] AI detection returned no result');
+          logger.info('[Translate] AI language detection timeout, but translation already in progress - ignoring');
         }
-      }).catch((error) => {
+      }, TRANSLATION_CONFIG.LANGUAGE_DETECTION_TIMEOUT);
+
+      return () => {
         clearTimeout(detectionTimeout);
-        logger.error('[Translate] AI language detection failed:', error);
-        setIsDetectingLanguage(false);
-      });
+      };
     }
-  }, [needsAiDetection, text]); // 初回のみ実行
+  }, [needsAiDetection, text]);
 
   // 言語切り替えを監視して再翻訳
   useEffect(() => {
@@ -269,89 +376,485 @@ export default function TranslateScreen() {
         setSelectedTranslateTargetLang(newTargetLang);
       }
     }
-  }, [currentLanguage, sourceLang, nativeLanguage.code]);
+  }, [currentLanguage, sourceLang, selectedTranslateTargetLang, determineTranslateTargetLang]);
 
-  // 翻訳実行
+  // 翻訳実行（プログレッシブアプローチ: 段落分割→順次翻訳）
   useEffect(() => {
-    const performTranslation = async () => {
-      logger.info('[Translate] performTranslation called with:', {
+    let isActive = true; // この翻訳リクエストがまだアクティブか
+
+    const performProgressiveTranslation = async () => {
+      logger.info('[Translate] performProgressiveTranslation called with:', {
         text: text?.substring(0, 50),
         sourceLang,
         targetLang: selectedTranslateTargetLang,
-        isDetectingLanguage,
+        paragraphsExist: paragraphs.length > 0,
       });
 
-      // AI検出中は翻訳を開始しない（トークン節約）
-      if (isDetectingLanguage) {
-        logger.warn('[Translate] Skipping translation - AI detection still in progress');
-        setIsTranslating(true);
-        // 原文だけ先に表示
-        setTranslationData({
-          originalText: text,
-          translatedText: '',
-          sourceLang: sourceLang,
-          targetLang: selectedTranslateTargetLang,
-        });
+      // 既に段落が存在する場合（タイムアウト後の再実行など）はスキップ
+      if (paragraphs.length > 0) {
+        logger.info('[Translate] Paragraphs already exist, skipping re-translation');
         return;
       }
 
       setIsTranslating(true);
       setError(null);
+      setParagraphs([]);
+      setCurrentParagraphIndex(0);
 
-      // 原文だけ先に表示
-      setTranslationData({
-        originalText: text,
-        translatedText: '',
-        sourceLang: sourceLang,
-        targetLang: selectedTranslateTargetLang,
-      });
-
-      logger.info('[Translate] Translating text:', {
+      logger.info('[Translate] Starting progressive translation flow:', {
         sourceLang,
         targetLang: selectedTranslateTargetLang,
         textLength: text.length
       });
 
       try {
-        const result = await translateText(text, sourceLang, selectedTranslateTargetLang);
-        logger.info('[Translate] Received translation result:', {
-          originalText: result.originalText.substring(0, 50),
-          translatedText: result.translatedText.substring(0, 50),
-          translatedLength: result.translatedText.length,
-        });
-        setTranslationData(result);
-        logger.info('[Translate] translationData state updated');
+        // Step 1: AI段落分割をストリーミングで実行し、段落ごとに即座に翻訳開始
+        logger.info('[Translate] Step 1: Starting streaming AI paragraph split with parallel translation');
 
-        // 翻訳履歴を保存
-        try {
-          // sourceLangとtargetLangのうち、母語でない方（学習言語）を履歴の言語として使用
-          // これにより、英日・日英どちらの翻訳も学習中の言語タブに表示される
-          const historyLanguage = sourceLang === nativeLanguage.code ? selectedTranslateTargetLang : sourceLang;
+        const translatedParagraphs: TranslatedParagraph[] = [];
+        const translationPromises: Promise<void>[] = [];
+        let completedCount = 0;
+        let totalParagraphs = 0;
+        let isSplitComplete = false;
 
-          logger.info('[Translate] Saving translation history:', {
-            text: text.substring(0, 50),
-            language: historyLanguage,
-            sourceLang,
-            targetLang: selectedTranslateTargetLang,
-            textLength: text.length
-          });
-          await addSearchHistory(text, historyLanguage, result, undefined, 'translation');
-          logger.info('[Translate] Translation history saved successfully');
-        } catch (historyError) {
-          logger.error('[Translate] Failed to save translation history:', historyError);
-        }
+        // 翻訳キュー管理（並列実行で高速化）
+        const PARALLEL_LIMIT = TRANSLATION_CONFIG.PARALLEL_LIMIT;
+        let currentlyTranslating = 0;
+        const translationQueue: Array<() => Promise<void>> = [];
+
+        // 翻訳タスクを実行するヘルパー関数
+        const executeTranslationTask = async (task: () => Promise<void>) => {
+          currentlyTranslating++;
+          try {
+            await task();
+          } finally {
+            currentlyTranslating--;
+            completedCount++;
+
+            // キューに次のタスクがあれば実行
+            if (translationQueue.length > 0 && currentlyTranslating < PARALLEL_LIMIT) {
+              const nextTask = translationQueue.shift();
+              if (nextTask) {
+                executeTranslationTask(nextTask);
+              }
+            }
+
+            // すべて完了したかチェック
+            if (isSplitComplete && completedCount === totalParagraphs) {
+              logger.info('[Translate] All translations complete');
+              logger.info('[Translate] Final state:', {
+                paragraphCount: translatedParagraphs.length,
+                paragraphs: translatedParagraphs.map(p => ({
+                  index: p.index,
+                  hasOriginal: !!p.originalText,
+                  hasTranslation: !!p.translatedText,
+                  translationLength: p.translatedText?.length || 0,
+                  isTranslating: p.isTranslating,
+                })),
+              });
+              setIsTranslating(false);
+
+              // 翻訳データを更新（チャット文脈用）
+              const fullTranslatedText = translatedParagraphs.map(p => p.translatedText).join('\n\n');
+              const newTranslationData = {
+                originalText: text,
+                translatedText: fullTranslatedText,
+                sourceLang,
+                targetLang: selectedTranslateTargetLang,
+              };
+              logger.info('[Translate] Setting translation data (initial):', {
+                originalLength: text.length,
+                translatedLength: fullTranslatedText.length,
+                sourceLang,
+                targetLang: selectedTranslateTargetLang,
+              });
+              setTranslationData(newTranslationData);
+
+              // 翻訳履歴に保存
+              try {
+                await addSearchHistory(
+                  text,
+                  sourceLang,
+                  undefined,
+                  undefined,
+                  'translation'
+                );
+                logger.info('[Translate] Added to history:', {
+                  text: text.substring(0, 50),
+                  language: sourceLang,
+                  searchType: 'translation',
+                });
+              } catch (historyError) {
+                logger.error('[Translate] Failed to save translation history:', historyError);
+              }
+            }
+          }
+        };
+
+        // SSEストリーミング分割を開始（段落が来るたびに即座に翻訳開始）
+        // エラー時は自動的にバッチAPIにフォールバック
+        const useSplitFn = async (
+          text: string,
+          sourceLang: string,
+          onParagraph: (paragraph: any) => void,
+          onComplete: (count: number) => void,
+          onError: (error: Error) => void
+        ) => {
+          try {
+            logger.info('[Translate] Trying SSE streaming API');
+            await splitOriginalTextStreamSSE(text, sourceLang, onParagraph, onComplete, onError);
+          } catch (sseError) {
+            logger.warn('[Translate] SSE failed, falling back to batch API:', sseError);
+            await splitOriginalTextStream(text, sourceLang, onParagraph, onComplete, onError);
+          }
+        };
+
+        await useSplitFn(
+          text,
+          sourceLang,
+          // onParagraph: 各段落が到着したら即座に表示して翻訳キューに追加
+          (paragraph) => {
+            if (!isActive) {
+              logger.warn('[Translate] Translation cancelled, ignoring paragraph:', paragraph.index);
+              return;
+            }
+
+            logger.info('[Translate] Paragraph arrived, displaying and queuing translation:', {
+              index: paragraph.index,
+              textLength: paragraph.originalText.length,
+            });
+
+            // 段落を即座に表示（translatedTextは空）
+            const newParagraph: TranslatedParagraph = {
+              id: generateId(),
+              originalText: paragraph.originalText,
+              translatedText: '',
+              index: paragraph.index,
+              isTranslating: true,
+            };
+
+            translatedParagraphs[paragraph.index] = newParagraph;
+            // 配列全体のコピーを避けるため、setStateのコールバック形式を使用
+            setParagraphs(prev => {
+              const updated = [...prev];
+              updated[paragraph.index] = newParagraph;
+              return updated;
+            });
+
+            // 翻訳タスクを作成（ストリーミング対応）
+            const translationTask = async () => {
+              if (!isActive) {
+                logger.warn('[Translate] Translation cancelled for paragraph', paragraph.index);
+                return;
+              }
+
+              try {
+                const previousParagraph = paragraph.index > 0
+                  ? translatedParagraphs[paragraph.index - 1]?.originalText
+                  : undefined;
+                const nextParagraph = paragraph.index < translatedParagraphs.length - 1
+                  ? translatedParagraphs[paragraph.index + 1]?.originalText
+                  : undefined;
+
+                logger.info('[Translate] Starting streaming translation for paragraph', paragraph.index);
+
+                // ストリーミング翻訳を使用
+                await translateParagraphStream(
+                  paragraph.originalText,
+                  sourceLang,
+                  selectedTranslateTargetLang,
+                  paragraph.index,
+                  // onChunk: チャンクごとにリアルタイム更新
+                  (chunk) => {
+                    if (isActive) {
+                      translatedParagraphs[paragraph.index] = {
+                        ...translatedParagraphs[paragraph.index],
+                        translatedText: translatedParagraphs[paragraph.index].translatedText + chunk,
+                        isTranslating: true,
+                      };
+                      setParagraphs(prev => {
+                        const updated = [...prev];
+                        updated[paragraph.index] = translatedParagraphs[paragraph.index];
+                        return updated;
+                      });
+                    }
+                  },
+                  // onComplete: 翻訳完了
+                  (translatedText) => {
+                    if (isActive) {
+                      translatedParagraphs[paragraph.index] = {
+                        ...translatedParagraphs[paragraph.index],
+                        translatedText,
+                        isTranslating: false,
+                      };
+                      setParagraphs(prev => {
+                        const updated = [...prev];
+                        updated[paragraph.index] = translatedParagraphs[paragraph.index];
+                        return updated;
+                      });
+                      logger.info('[Translate] Paragraph streaming translation complete:', paragraph.index);
+                    } else {
+                      logger.warn('[Translate] Translation result discarded (cancelled):', paragraph.index);
+                    }
+                  },
+                  // onError: エラー処理
+                  (error) => {
+                    logger.error('[Translate] Paragraph translation failed:', error);
+
+                    // Check if this is a quota error
+                    const quotaError = parseQuotaError(error);
+
+                    let errorText: string;
+                    if (quotaError.isQuotaError) {
+                      // Show quota exceeded modal
+                      setQuotaErrorType(quotaError.quotaType);
+                      setIsQuotaModalVisible(true);
+                      errorText = quotaError.userFriendlyMessage;
+                    } else {
+                      const errorMessage = error.message;
+                      errorText = errorMessage.includes('503')
+                        ? '翻訳サービスが混雑しています。しばらく待ってから再試行してください。'
+                        : '翻訳に失敗しました';
+                    }
+
+                    translatedParagraphs[paragraph.index] = {
+                      ...translatedParagraphs[paragraph.index],
+                      translatedText: `❌ ${errorText}`,
+                      isTranslating: false,
+                    };
+                    setParagraphs(prev => {
+                      const updated = [...prev];
+                      updated[paragraph.index] = translatedParagraphs[paragraph.index];
+                      return updated;
+                    });
+                  },
+                  previousParagraph,
+                  nextParagraph
+                );
+              } catch (error) {
+                logger.error('[Translate] Paragraph translation setup failed:', error);
+
+                // Check if this is a quota error
+                const quotaError = parseQuotaError(error);
+
+                let errorText: string;
+                if (quotaError.isQuotaError) {
+                  // Show quota exceeded modal
+                  setQuotaErrorType(quotaError.quotaType);
+                  setIsQuotaModalVisible(true);
+                  errorText = quotaError.userFriendlyMessage;
+                } else {
+                  const errorMessage = error instanceof Error ? error.message : String(error);
+                  errorText = errorMessage.includes('503')
+                    ? '翻訳サービスが混雑しています。しばらく待ってから再試行してください。'
+                    : '翻訳に失敗しました';
+                }
+
+                translatedParagraphs[paragraph.index] = {
+                  ...translatedParagraphs[paragraph.index],
+                  translatedText: `❌ ${errorText}`,
+                  isTranslating: false,
+                };
+                setParagraphs(prev => {
+                  const updated = [...prev];
+                  updated[paragraph.index] = translatedParagraphs[paragraph.index];
+                  return updated;
+                });
+              }
+            };
+
+            // キューに追加または即実行
+            if (currentlyTranslating < PARALLEL_LIMIT) {
+              executeTranslationTask(translationTask);
+            } else {
+              translationQueue.push(translationTask);
+            }
+          },
+          // onComplete: すべての段落分割が完了
+          async (paragraphCount) => {
+            if (!isActive) {
+              logger.warn('[Translate] Translation cancelled, skipping completion');
+              return;
+            }
+
+            logger.info('[Translate] All paragraphs split, total:', paragraphCount);
+            totalParagraphs = paragraphCount;
+            isSplitComplete = true;
+
+            // 段落分割完了時点で翻訳が全て完了していればフラグ更新
+            if (completedCount === totalParagraphs) {
+              logger.info('[Translate] All translations already complete');
+              setIsTranslating(false);
+            }
+          },
+          // onError: エラー処理
+          (error) => {
+            logger.error('[Translate] Split stream error:', error);
+            setError(error.message);
+            setIsTranslating(false);
+          }
+        );
+
+        logger.info('[Translate] Split stream finished, translations may still be in progress');
       } catch (err) {
-        logger.error('[Translate] Translation failed:', err);
-        setError('翻訳に失敗しました');
-      } finally {
+        logger.error('[Translate] Progressive translation failed:', err);
+        setError(t('translate.error'));
         setIsTranslating(false);
       }
     };
 
-    if (text) {
-      performTranslation();
+    if (text && !isDetectingLanguage) {
+      performProgressiveTranslation();
+    } else if (isDetectingLanguage) {
+      logger.info('[Translate] Waiting for language detection to complete...');
     }
-  }, [text, sourceLang, selectedTranslateTargetLang, isDetectingLanguage]);
+
+    // クリーンアップ: 依存関係が変わったら古い翻訳をキャンセル
+    return () => {
+      logger.info('[Translate] Translation cancelled due to dependency change');
+      isActive = false;
+    };
+  }, [text, sourceLang, selectedTranslateTargetLang, isDetectingLanguage]); // isDetectingLanguageも追加して言語検出完了を監視
+
+  // 言語検出完了時に翻訳を開始するuseEffectは削除
+  // 代わりに、メインuseEffect内で isDetectingLanguage を直接チェック
+
+  // 学習言語変更時の再翻訳（段落はそのまま、翻訳だけやり直す）
+  const retranslateParagraphs = useCallback(async () => {
+    if (paragraphs.length === 0 || isTranslating) {
+      return;
+    }
+
+    logger.info('[Translate] Re-translating paragraphs to new target language:', selectedTranslateTargetLang);
+    setIsTranslating(true);
+    setError(null);
+
+    // 各段落の翻訳をリセット
+    const updatedParagraphs = paragraphs.map(p => ({
+      ...p,
+      translatedText: '',
+      isTranslating: true,
+    }));
+    setParagraphs(updatedParagraphs);
+
+    // 翻訳された段落を保持する配列
+    const translatedParagraphs = [...updatedParagraphs];
+
+    try {
+      // 各段落を順次翻訳
+      for (const paragraph of paragraphs) {
+        await translateParagraphStream(
+          paragraph.originalText,
+          sourceLang,
+          selectedTranslateTargetLang,
+          paragraph.index,
+          // onChunk: チャンクごとにリアルタイム更新
+          (chunk) => {
+            translatedParagraphs[paragraph.index] = {
+              ...translatedParagraphs[paragraph.index],
+              translatedText: translatedParagraphs[paragraph.index].translatedText + chunk,
+              isTranslating: true,
+            };
+            setParagraphs(prev => {
+              const updated = [...prev];
+              updated[paragraph.index] = translatedParagraphs[paragraph.index];
+              return updated;
+            });
+          },
+          // onComplete: 翻訳完了
+          (translatedText) => {
+            translatedParagraphs[paragraph.index] = {
+              ...translatedParagraphs[paragraph.index],
+              translatedText,
+              isTranslating: false,
+            };
+            setParagraphs(prev => {
+              const updated = [...prev];
+              updated[paragraph.index] = translatedParagraphs[paragraph.index];
+              return updated;
+            });
+          },
+          // onError: エラー処理
+          (error) => {
+            logger.error('[Translate] Re-translation error for paragraph', paragraph.index, error);
+
+            // Check if this is a quota error
+            const quotaError = parseQuotaError(error);
+
+            let errorText: string;
+            if (quotaError.isQuotaError) {
+              // Show quota exceeded modal
+              setQuotaErrorType(quotaError.quotaType);
+              setIsQuotaModalVisible(true);
+              errorText = quotaError.userFriendlyMessage;
+            } else {
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              errorText = errorMessage.includes('503')
+                ? '翻訳サービスが混雑しています。しばらく待ってから再試行してください。'
+                : '翻訳に失敗しました';
+            }
+
+            translatedParagraphs[paragraph.index] = {
+              ...translatedParagraphs[paragraph.index],
+              translatedText: `❌ ${errorText}`,
+              isTranslating: false,
+            };
+            setParagraphs(prev => {
+              const updated = [...prev];
+              updated[paragraph.index] = translatedParagraphs[paragraph.index];
+              return updated;
+            });
+          }
+        );
+      }
+
+      // 翻訳データを更新
+      const fullTranslatedText = translatedParagraphs.map(p => p.translatedText).join('\n\n');
+      const newTranslationData = {
+        originalText: text,
+        translatedText: fullTranslatedText,
+        sourceLang,
+        targetLang: selectedTranslateTargetLang,
+      };
+      logger.info('[Translate] Setting translation data:', {
+        originalLength: text.length,
+        translatedLength: fullTranslatedText.length,
+        sourceLang,
+        targetLang: selectedTranslateTargetLang,
+      });
+      setTranslationData(newTranslationData);
+
+      logger.info('[Translate] Re-translation completed successfully');
+    } catch (error) {
+      logger.error('[Translate] Re-translation failed:', error);
+
+      // Check if this is a quota error
+      const quotaError = parseQuotaError(error);
+
+      if (quotaError.isQuotaError) {
+        // Show quota exceeded modal
+        setQuotaErrorType(quotaError.quotaType);
+        setIsQuotaModalVisible(true);
+        setError(quotaError.userFriendlyMessage);
+      } else {
+        setError('再翻訳に失敗しました。もう一度お試しください。');
+      }
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [paragraphs, sourceLang, selectedTranslateTargetLang, isTranslating, text]);
+
+  // 学習言語変更時の再翻訳トリガー
+  const prevTargetLangRef = useRef(selectedTranslateTargetLang);
+
+  useEffect(() => {
+    // 初回ロードを除外 & 翻訳済みデータがある場合のみ
+    if (prevTargetLangRef.current !== selectedTranslateTargetLang && paragraphs.length > 0 && !isTranslating) {
+      logger.info('[Translate] Target language changed from', prevTargetLangRef.current, 'to', selectedTranslateTargetLang);
+      retranslateParagraphs();
+    }
+    prevTargetLangRef.current = selectedTranslateTargetLang;
+  }, [selectedTranslateTargetLang, paragraphs.length, isTranslating, retranslateParagraphs]);
 
   // 追加質問のハンドラー
   const handleFollowUpQuestion = async (pairId: string, question: string) => {
@@ -411,7 +914,6 @@ export default function TranslateScreen() {
           identifier: translationData?.originalText || text,
           messages: [{ id: generateId('msg'), role: 'user', content: contextualQuestion, createdAt: Date.now() }],
           context: chatContext,
-          detailLevel: aiDetailLevel,
           targetLanguage: currentLanguage.code,
         },
         // onContent: ストリーミング中の更新
@@ -492,27 +994,184 @@ export default function TranslateScreen() {
     let finalQuestion = question;
     let displayQuestion = question;
 
+    logger.info('[Translate] handleChatSubmit called:', {
+      question,
+      hasSelectedText: !!selectedText,
+      hasTranslationData: !!translationData,
+      chatContext,
+    });
+
     if (selectedText?.text) {
       // API用: 部分選択した箇所に焦点を当てた質問形式
       finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${question}`;
       // UI表示用: シンプルな形式
       displayQuestion = `「${selectedText.text}」について：${question}`;
-      setSelectedText(null);
+      // 選択を維持（ユーザーが同じ単語について複数質問できるように）
     }
 
     await sendChatMessage(finalQuestion, displayQuestion);
   };
 
-  const handleQuickQuestion = async (question: string) => {
+  const handleQuickQuestion = async (questionOrTag: string | QuestionTagType) => {
+    // QuestionTagの場合は新しいAPI経由で送信
+    if (typeof questionOrTag === 'object' && questionOrTag.promptId) {
+      const tag = questionOrTag;
+
+      logger.info('[Translate] handleQuickQuestion with tag:', {
+        tagId: tag.id,
+        promptId: tag.promptId,
+        isCustom: tag.isCustom,
+        hasSelectedText: !!selectedText,
+        hasTranslationData: !!translationData,
+      });
+
+      // Save selectedText value for display
+      const selectedTextValue = selectedText?.text;
+
+      // Display question and loading state immediately
+      const displayQuestion = selectedTextValue
+        ? `「${selectedTextValue}」について：${tag.prompt}`
+        : tag.prompt;
+
+      const pairId = generateId();
+      const loadingPair: QAPair = {
+        id: pairId,
+        q: displayQuestion,
+        a: '', // Empty answer, will be filled when response arrives
+        status: 'pending', // Show loading state
+      };
+
+      setQAPairs(prev => [...prev, loadingPair]);
+
+      try {
+        // Build request payload
+        const request = {
+          questionTagId: tag.id,
+          isCustom: tag.isCustom ?? false,
+          nativeLanguage: nativeLanguage.code,
+          targetLanguage: currentLanguage.code, // 常に学習言語で言い換え
+          scope: 'translate',
+          identifier: translationData?.originalText || text,
+          // Word-based prompts need word and meaning fields
+          word: selectedText?.isSingleWord ? selectedText.text : undefined,
+          meaning: wordDetail?.headword, // Translation result from wordContextInfo
+          // Text selection mode - use saved value
+          selectedText: selectedTextValue,
+          fullContext: translationData?.originalText || text,
+          // Custom question (if applicable)
+          customQuestion: tag.isCustom ? tag.prompt : undefined,
+        };
+
+        logger.info('[Translate] Sending question tag query:', request);
+
+        const response = await sendQuestionTagQuery(request);
+
+        logger.info('[Translate] Question tag response received:', {
+          answerLength: response.answer.length,
+          promptId: response.promptId,
+        });
+
+        // Update the pair with the actual response
+        setQAPairs(prev => prev.map(pair =>
+          pair.id === pairId
+            ? {
+              ...pair,
+              a: response.answer,
+              status: 'completed',
+              promptId: response.promptId,
+              metadata: response.metadata,
+            }
+            : pair
+        ));
+
+        // Don't clear selection - keep word context visible
+        // User can manually clear selection if needed
+
+      } catch (error) {
+        logger.error('[Translate] Error sending question tag query:', error);
+
+        // Check if this is a quota error
+        const quotaError = parseQuotaError(error);
+
+        if (quotaError.isQuotaError) {
+          // Show quota exceeded modal
+          setQuotaErrorType(quotaError.quotaType);
+          setIsQuotaModalVisible(true);
+
+          // Update QA pair with quota-specific error
+          setQAPairs(prev => prev.map(pair =>
+            pair.id === pairId
+              ? {
+                ...pair,
+                a: '',
+                status: 'error',
+                errorMessage: quotaError.userFriendlyMessage,
+              }
+              : pair
+          ));
+        } else {
+          // Regular error handling
+          setQAPairs(prev => prev.map(pair =>
+            pair.id === pairId
+              ? {
+                ...pair,
+                a: '',
+                status: 'error',
+                errorMessage: error instanceof Error ? error.message : 'エラーが発生しました',
+              }
+              : pair
+          ));
+
+          // Fallback to old system for non-quota errors
+          await handleQuickQuestionLegacy(tag.prompt);
+        }
+      }
+
+      return;
+    }
+
+    // Legacy string-based question handling
+    await handleQuickQuestionLegacy(typeof questionOrTag === 'string' ? questionOrTag : questionOrTag.prompt);
+  };
+
+  const handleQuickQuestionLegacy = async (question: string) => {
     let finalQuestion = question;
     let displayQuestion = question;
 
+    // 部分選択の有無で指示を切り分け
     if (selectedText?.text) {
-      // API用: 部分選択した箇所に焦点を当てた質問形式
-      finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${question}`;
+      // 部分選択時: 選択部分のみに焦点を当てる
+      // 質問内容に応じた詳細な指示を追加
+      if (question.includes('ニュアンス')) {
+        finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」のトーンや雰囲気（フォーマル・カジュアル、公的・私的、丁寧・くだけた表現など）を具体的に説明してください。`;
+      } else if (question.includes('要約')) {
+        finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」の要点を簡潔に、箇条書きでまとめてください。`;
+      } else if (question.includes('文法')) {
+        finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」の中で特に注目すべき文法事項や、学習者が気をつけるべき文法ポイント（時制、態、構文、語順、慣用表現など）のみを詳しく、わかりやすく説明してください。意味の説明や言語の説明は不要です。`;
+      } else if (question.includes('チェック')) {
+        finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」の文法ミスや不自然な表現があれば指摘し、改善案を提示してください。`;
+      } else if (question.includes('言い換え')) {
+        finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」の別の表現方法を複数提示してください。`;
+      } else {
+        finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${question}`;
+      }
       // UI表示用: シンプルな形式
       displayQuestion = `「${selectedText.text}」について：${question}`;
-      setSelectedText(null);
+      // 選択を維持（ユーザーが同じ単語について複数質問できるように）
+    } else {
+      // 文章全体への質問時: 文章全体を対象とする
+      // 質問内容に応じた詳細な指示を追加
+      if (question.includes('ニュアンス')) {
+        finalQuestion = `${question}\n\n※「この文章は」という形で、文章全体のトーンや雰囲気（フォーマル・カジュアル、公的・私的、ニュース記事風・会話風、丁寧・くだけた表現など）を具体的に説明してください。`;
+      } else if (question.includes('要約')) {
+        finalQuestion = `${question}\n\n※文章全体の要点を簡潔に、箇条書きでまとめてください。`;
+      } else if (question.includes('文法')) {
+        finalQuestion = `${question}\n\n※文章全体の中で特に注目すべき文法事項や、学習者が気をつけるべき文法ポイント（時制、態、構文、語順、慣用表現など）のみを詳しく、わかりやすく説明してください。意味の説明や言語の説明は不要です。`;
+      } else if (question.includes('チェック')) {
+        finalQuestion = `${question}\n\n※文章全体の文法ミスや不自然な表現があれば指摘し、改善案を提示してください。`;
+      } else if (question.includes('言い換え')) {
+        finalQuestion = `${question}\n\n※文章全体を別の表現方法で複数提示してください。`;
+      }
     }
 
     await sendQuickQuestion(finalQuestion, displayQuestion);
@@ -530,34 +1189,184 @@ export default function TranslateScreen() {
     }
   };
 
-  const handleTextSelected = (text: string, type: 'original' | 'translated') => {
-    // Determine if it's a single word (simple heuristic: no spaces)
-    const isSingleWord = !text.includes(' ') && text.split(/\s+/).length === 1;
-    setSelectedText({ text, isSingleWord });
+  const handleTextSelectionWithInfo = async (selectionInfo: SelectionInfo, type: 'original' | 'translated') => {
+    setSelectedText({ ...selectionInfo, type });
+    setWordContextInfo(null); // 前回の情報をクリア
+
+    logger.info('[Translate] Text selected:', {
+      text: selectionInfo.text.substring(0, 30),
+      isSingleWord: selectionInfo.isSingleWord,
+      type,
+      currentParagraphIndex,
+      selectionStartInParagraph: selectionInfo.startIndex,
+      selectionEndInParagraph: selectionInfo.endIndex,
+      hasParagraphs: paragraphs.length > 0,
+      hasTranslationData: !!translationData,
+    });
 
     // 単語の場合、プリフェッチを開始（辞書で調べるボタンを押す前に準備）
-    if (isSingleWord && text.trim()) {
-      // 選択されたテキストの言語を検出（翻訳用のロジック）
-      const detectedLang = detectLang(text.trim());
-      let targetLang: string;
-      if (detectedLang === 'ja') {
-        targetLang = 'ja';
-      } else if (detectedLang === 'kanji-only') {
-        targetLang = nativeLanguage.code; // 母語を優先
-      } else {
-        // alphabet or mixed の場合、英語をデフォルトとする
-        targetLang = 'en';
-      }
-      logger.info('[Translate] Pre-fetching word detail for selected text:', text, 'detected:', detectedLang, 'resolved:', targetLang);
+    if (selectionInfo.isSingleWord && selectionInfo.text.trim()) {
+      // 原文で選択 → sourceLang、訳文で選択 → selectedTranslateTargetLang を使う
+      const targetLang = type === 'original' ? sourceLang : selectedTranslateTargetLang;
+      logger.info('[Translate] Pre-fetching word detail for selected text:', selectionInfo.text, 'type:', type, 'resolved targetLang:', targetLang);
 
-      prefetchWordDetail(text.trim(), (onProgress) => {
-        return getWordDetailStream(text.trim(), targetLang, nativeLanguage.code, 'concise', onProgress);
+      prefetchWordDetail(selectionInfo.text.trim(), (onProgress) => {
+        return getWordDetailStream(selectionInfo.text.trim(), targetLang, nativeLanguage.code, onProgress);
       });
+
+      // 文脈情報を取得 - 段落データまたは翻訳データが存在する場合
+      const hasContext = paragraphs.length > 0 || translationData;
+      logger.info('[Translate] Word context check:', {
+        hasContext,
+        paragraphCount: paragraphs.length,
+        hasTranslationData: !!translationData,
+      });
+
+      if (hasContext) {
+        setIsLoadingWordContext(true);
+        try {
+          // 選択されたテキストが原文か訳文かによって、sourceLangとtargetLangを決定
+          let wordSourceLang: string;
+          let wordTargetLang: string;
+          let fullText: string;
+
+          if (translationData) {
+            // translationDataが存在する場合はそれを使用
+            wordSourceLang = type === 'original' ? translationData.sourceLang : translationData.targetLang;
+            wordTargetLang = type === 'original' ? translationData.targetLang : translationData.sourceLang;
+            fullText = type === 'original'
+              ? translationData.originalText
+              : translationData.translatedText;
+          } else {
+            // paragraphsから文脈を構築
+            wordSourceLang = type === 'original' ? sourceLang : selectedTranslateTargetLang;
+            wordTargetLang = type === 'original' ? selectedTranslateTargetLang : sourceLang;
+
+            if (type === 'original') {
+              fullText = paragraphs.map(p => p.originalText).filter(t => t).join('\n\n');
+            } else {
+              fullText = paragraphs.map(p => p.translatedText).filter(t => t).join('\n\n');
+            }
+          }
+
+          // 段落内の位置を全体位置に変換
+          let globalStartIndex = selectionInfo.startIndex;
+          let globalEndIndex = selectionInfo.endIndex;
+
+          // paragraphsが複数ある場合、現在の段落より前の段落の文字数を加算
+          if (paragraphs.length > 1) {
+            const relevantParagraphs = type === 'original'
+              ? paragraphs.map(p => p.originalText).filter(t => t)
+              : paragraphs.map(p => p.translatedText).filter(t => t);
+
+            // 現在の段落より前の段落の文字数を計算（区切り文字 '\n\n' も含める）
+            let offsetBeforeCurrentParagraph = 0;
+            for (let i = 0; i < currentParagraphIndex; i++) {
+              offsetBeforeCurrentParagraph += relevantParagraphs[i].length + 2; // 段落 + '\n\n'
+            }
+
+            globalStartIndex = offsetBeforeCurrentParagraph + selectionInfo.startIndex;
+            globalEndIndex = offsetBeforeCurrentParagraph + selectionInfo.endIndex;
+
+            logger.info('[Translate] Position conversion:', {
+              paragraphIndex: currentParagraphIndex,
+              offsetBeforeCurrentParagraph,
+              localStart: selectionInfo.startIndex,
+              localEnd: selectionInfo.endIndex,
+              globalStart: globalStartIndex,
+              globalEnd: globalEndIndex,
+            });
+          }
+
+          // 選択位置の周辺文脈のみを抽出（前後150文字）
+          const context = extractSurroundingContext(
+            fullText,
+            globalStartIndex,
+            globalEndIndex,
+            150
+          );
+
+          // キャッシュをチェック
+          const cachedContext = await getWordContextCache(
+            selectionInfo.text.trim(),
+            context,
+            wordSourceLang,
+            wordTargetLang
+          );
+
+          if (cachedContext) {
+            // キャッシュヒット - 即座に表示
+            logger.info('[Translate] Using cached word context:', selectionInfo.text);
+            setWordContextInfo(cachedContext);
+            setIsLoadingWordContext(false);
+            return;
+          }
+
+          // キャッシュミス - API呼び出し
+          logger.info('[Translate] Fetching word context from API:', {
+            word: selectionInfo.text,
+            wordSourceLang,
+            wordTargetLang,
+            selectionStart: selectionInfo.startIndex,
+            selectionEnd: selectionInfo.endIndex,
+            fullTextLength: fullText.length,
+            contextLength: context.length,
+            context: context, // 抽出された文脈全体をログに出力
+          });
+
+          const contextInfo = await getWordContext(
+            selectionInfo.text.trim(),
+            context,
+            wordSourceLang,
+            wordTargetLang
+          );
+
+          logger.info('[Translate] Word context received:', contextInfo);
+
+          // キャッシュに保存
+          await setWordContextCache(
+            selectionInfo.text.trim(),
+            context,
+            wordSourceLang,
+            wordTargetLang,
+            contextInfo
+          );
+
+          setWordContextInfo({
+            ...contextInfo,
+            sourceLang: wordSourceLang,
+            targetLang: wordTargetLang,
+          });
+        } catch (error) {
+          logger.error('[Translate] Failed to fetch word context:', error);
+          // エラーが発生しても、辞書機能は使えるようにする
+          const errorMessage = error instanceof Error ? error.message : '文脈情報の取得に失敗しました';
+          logger.error('[Translate] Word context error details:', errorMessage);
+
+          // エラー情報を設定（ユーザーに表示）
+          setWordContextInfo({
+            translation: selectionInfo.text,
+            partOfSpeech: [],
+            nuance: `文脈情報を取得できませんでした: ${errorMessage}`,
+            sourceLang: type === 'original' ? sourceLang : selectedTranslateTargetLang,
+            targetLang: type === 'original' ? selectedTranslateTargetLang : sourceLang,
+          });
+        } finally {
+          setIsLoadingWordContext(false);
+        }
+      } else {
+        logger.warn('[Translate] No context available for word context fetch');
+      }
     }
   };
 
   const handleDictionaryLookup = () => {
-    if (!selectedText) return;
+    logger.info('[Translate] handleDictionaryLookup called, selectedText:', selectedText);
+
+    if (!selectedText) {
+      logger.warn('[Translate] handleDictionaryLookup: No selectedText, returning early');
+      return;
+    }
 
     // 選択されたテキストの言語を検出
     const detectedLang = detectLang(selectedText.text);
@@ -579,28 +1388,40 @@ export default function TranslateScreen() {
       });
     } else {
       // 外国語の場合: word-detailページへ遷移（辞書を表示）
-      let targetLang: string;
-      if (detectedLang === 'ja') {
-        targetLang = 'ja';
-      } else if (detectedLang === 'kanji-only') {
-        targetLang = nativeLanguage.code; // 母語を優先
-      } else {
-        // alphabet or mixed の場合、英語をデフォルトとする
-        targetLang = 'en';
-      }
-      logger.info('[Translate] Dictionary lookup (foreign language):', selectedText.text, 'detected:', detectedLang, 'resolved:', targetLang);
+      // 原文で選択 → sourceLang、訳文で選択 → selectedTranslateTargetLang を使う
+      const targetLang = selectedText.type === 'original' ? sourceLang : selectedTranslateTargetLang;
+
+      logger.info('[Translate] Dictionary lookup (foreign language):', selectedText.text, 'type:', selectedText.type, 'resolved targetLang:', targetLang);
 
       router.push({
         pathname: '/(tabs)/word-detail',
         params: {
           word: selectedText.text,
           targetLanguage: targetLang,
+          skipLanguageDetection: 'true', // 翻訳ページは既に正しい言語を知っているため
         },
       });
     }
 
     // 検索実行後に選択を解除
     setSelectedText(null);
+  };
+
+  const handleWordAskQuestion = () => {
+    if (selectedText && selectedText.isSingleWord) {
+      // isSingleWordはtrueのまま維持して単語モードの質問タグを表示
+      // ChatSectionにフォーカスを当てて入力を促す
+      logger.info('[Translate] Opening chat for word questions (keeping word mode)');
+    }
+  };
+
+  const handleSwitchToWordCard = () => {
+    if (selectedText && !selectedText.isSingleWord) {
+      // isSingleWordをtrueに変更して単語カードモードに切り替え
+      // canReturnToWordCardをfalseに設定
+      setSelectedText({ ...selectedText, isSingleWord: true, canReturnToWordCard: false });
+      logger.info('[Translate] Switched from text input mode back to word card mode');
+    }
   };
 
   return (
@@ -623,54 +1444,106 @@ export default function TranslateScreen() {
 
         {/* Translation Card - Scrollable */}
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-          {translationData && (
+          <Pressable
+            // 常に押せるようにして、選択中はonPressで解除処理を行う
+            onPress={() => {
+              logger.debug('[Translate] Pressable onPress', {
+                selectedText: selectedText?.text || null,
+                chatSectionMode,
+              });
+              if (selectedText) {
+                setSelectedText(null);
+                setWordContextInfo(null);
+                setClearSelectionKey(prev => prev + 1);
+                setQAPairs([]); // チャットセクションをリセット
+              }
+            }}
+            onTouchStart={() => {
+              logger.debug('[Translate] Pressable onTouchStart', {
+                chatSectionMode,
+                pointerEvents: chatSectionMode === 'word' ? 'none' : 'auto',
+              });
+            }}
+            onPressIn={() => {
+              logger.debug('[Translate] Pressable onPressIn', {
+                chatSectionMode,
+                disabled: chatSectionMode === 'word',
+              });
+            }}
+          >
             <View style={styles.translateCardContainer}>
               <TranslateCard
-                originalText={translationData.originalText}
-                translatedText={translationData.translatedText}
-                sourceLang={translationData.sourceLang}
-                targetLang={translationData.targetLang}
-                isTranslating={isTranslating}
-                onTextSelected={handleTextSelected}
+                paragraphs={paragraphs.length > 0 ? paragraphs : [{
+                  id: 'loading',
+                  originalText: '',
+                  translatedText: '',
+                  index: 0,
+                }]}
+                currentIndex={currentParagraphIndex}
+                onIndexChange={(newIndex) => {
+                  setSelectedText(null);
+                  setWordContextInfo(null);
+                  setClearSelectionKey(prev => prev + 1);
+                  setCurrentParagraphIndex(newIndex);
+                }}
+                sourceLang={translationData?.sourceLang || sourceLang}
+                targetLang={translationData?.targetLang || selectedTranslateTargetLang}
+                isTranslating={isDetectingLanguage || isTranslating || isSplittingParagraphs}
+                onTextSelectionWithInfo={handleTextSelectionWithInfo}
+                onSelectionCleared={() => {
+                  setSelectedText(null);
+                  setWordContextInfo(null);
+                  setQAPairs([]); // チャットセクションをリセット
+                }}
+                clearSelectionKey={clearSelectionKey}
               />
             </View>
-          )}
+          </Pressable>
         </ScrollView>
       </View>
 
       {/* Chat Section - Fixed at bottom */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? -30 : 0}
-      >
-        <View pointerEvents="box-none" style={styles.chatContainerFixed}>
+      <View style={styles.keyboardAvoidingView} pointerEvents="box-none">
+        <View pointerEvents="box-none" style={styles.chatContainerFixed} collapsable={false}>
           <ChatSection
-            key={translationData?.originalText}
-            placeholder="この文章について質問をする..."
+            key={`${translationData?.originalText}-${selectedText?.text || 'default'}`}
+            placeholder={t('translate.chatPlaceholder')}
             qaPairs={qaPairs}
             followUps={followUps}
             isStreaming={isChatStreaming}
             error={chatError}
-            detailLevel={aiDetailLevel}
             onSend={handleChatSubmit}
             onQuickQuestion={handleQuickQuestion}
             onRetryQuestion={handleQACardRetry}
-            onDetailLevelChange={setAIDetailLevel}
+            expandedMaxHeight={chatExpandedMaxHeight}
             scope="translate"
             identifier={translationData?.originalText || text}
             onBookmarkAdded={handleBookmarkAdded}
-            expandedMaxHeight={chatExpandedMaxHeight}
             onFollowUpQuestion={handleFollowUpQuestion}
             onEnterFollowUpMode={handleEnterFollowUpMode}
-            activeFollowUpPairId={activeFollowUpPairId}
             prefilledInputText={prefilledChatText}
             onPrefillConsumed={() => setPrefilledChatText(null)}
             selectedText={selectedText}
             onDictionaryLookup={handleDictionaryLookup}
+            onSelectionCleared={() => {
+              setSelectedText(null);
+              setWordContextInfo(null);
+              setClearSelectionKey(prev => prev + 1);
+              setQAPairs([]); // チャットセクションをリセット
+            }}
+            mode={chatSectionMode}
+            wordDetail={wordDetail}
+            isLoadingWordDetail={isLoadingWordContext}
+            onWordBookmarkToggle={() => {
+              // TODO: ブックマーク機能を実装
+              logger.info('[Translate] Word bookmark toggled');
+            }}
+            onWordViewDetails={handleDictionaryLookup}
+            onWordAskQuestion={handleWordAskQuestion}
+            onSwitchToWordCard={handleSwitchToWordCard}
           />
         </View>
-      </KeyboardAvoidingView>
+      </View>
 
       {/* Bookmark Toast */}
       <BookmarkToast
@@ -703,6 +1576,19 @@ export default function TranslateScreen() {
         visible={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
       />
+
+      {/* Quota Exceeded Modal */}
+      <QuotaExceededModal
+        visible={isQuotaModalVisible}
+        onClose={() => setIsQuotaModalVisible(false)}
+        remainingQuestions={0}
+        isPremium={isPremium}
+        quotaType={quotaErrorType}
+        onUpgradePress={() => {
+          setIsQuotaModalVisible(false);
+          setIsSubscriptionModalOpen(true);
+        }}
+      />
     </ThemedView>
   );
 }
@@ -724,17 +1610,20 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     paddingHorizontal: 16,
-    paddingBottom: 220, // ChatSection分のスペースを確保
+    paddingBottom: 16, // コンテンツのパディングのみ（ChatSection分はtranslateCardContainerで確保）
   },
   translateCardContainer: {
     paddingTop: 0,
-    paddingBottom: 8,
+    paddingBottom: 220, // Pressableな領域を広げるためにここにパディングを追加
   },
   keyboardAvoidingView: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
+    top: 0, // 全画面を覆うように変更（タッチ判定のクリッピングを防ぐため）
+    zIndex: 1000,
+    justifyContent: 'flex-end', // コンテンツを下部に配置
   },
   chatContainerFixed: {
     paddingHorizontal: 8,

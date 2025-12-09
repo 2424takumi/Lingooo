@@ -31,20 +31,21 @@ const styles = StyleSheet.create({
   },
   definitionRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   definition: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '500',
     color: '#000000',
-    lineHeight: 27,
+    lineHeight: 28,
     letterSpacing: 0.5,
   },
   bullet: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#111111',
-    lineHeight: 27,
+    lineHeight: 28,
     marginRight: 4,
+    marginTop: 7,
   },
 });

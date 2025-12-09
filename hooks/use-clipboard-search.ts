@@ -15,7 +15,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/utils/logger';
 
 const LAST_CLIPBOARD_KEY = '@lingooo/lastClipboard';
-const MAX_SEARCH_LENGTH = 500; // 検索可能な最大文字数
 const MIN_SEARCH_LENGTH = 1; // 検索可能な最小文字数
 
 interface UseClipboardSearchOptions {
@@ -36,7 +35,6 @@ export function useClipboardSearch(
 
   const lastCheckedText = useRef<string>('');
   const appState = useRef(AppState.currentState);
-  const isPromptShowing = useRef(false); // ダイアログ表示中フラグ
 
   // onPasteをrefで保持して、useEffect依存配列から除外
   const onPasteRef = useRef(onPaste);
@@ -54,8 +52,8 @@ export function useClipboardSearch(
 
     const trimmed = text.trim();
 
-    // 長さチェック
-    if (trimmed.length < MIN_SEARCH_LENGTH || trimmed.length > MAX_SEARCH_LENGTH) {
+    // 最小文字数チェックのみ（上限チェックは削除）
+    if (trimmed.length < MIN_SEARCH_LENGTH) {
       return false;
     }
 
@@ -71,7 +69,7 @@ export function useClipboardSearch(
    * 確認ダイアログを表示してクリップボードから貼り付け
    */
   const checkClipboardAndPrompt = async () => {
-    if (!enabled || isPromptShowing.current) return;
+    if (!enabled) return;
 
     try {
       setIsChecking(true);
@@ -112,70 +110,20 @@ export function useClipboardSearch(
         return;
       }
 
-      // 2. 最後にダイアログを表示した時刻をチェック
-      const lastPromptTime = await AsyncStorage.getItem('@lingooo/lastPromptTime');
-      const now = Date.now();
+      // iOSシステムダイアログで許可された時点で自動的に検索実行
+      logger.info('[ClipboardSearch] Auto-executing search with clipboard content:', text.substring(0, 50));
 
-      if (lastPromptTime) {
-        const timeSinceLastPrompt = now - parseInt(lastPromptTime, 10);
-        if (timeSinceLastPrompt < 3000) { // 3秒以内なら再表示しない
-          logger.info('[ClipboardSearch] Prompt shown recently, skipping');
-          setIsChecking(false);
-          return;
-        }
+      lastCheckedText.current = text;
+      await AsyncStorage.setItem(LAST_CLIPBOARD_KEY, text);
+      await AsyncStorage.setItem(`${LAST_CLIPBOARD_KEY}_time`, Date.now().toString());
+
+      if (onPasteRef.current) {
+        onPasteRef.current(text);
       }
-
-      // ダイアログ表示中フラグを設定
-      isPromptShowing.current = true;
-      await AsyncStorage.setItem('@lingooo/lastPromptTime', now.toString());
-
-      // 3. 確認ダイアログを表示
-      Alert.alert(
-        'クリップボードから貼り付け',
-        `"${text.length > 50 ? text.substring(0, 50) + '...' : text}" を検索欄に貼り付けますか？`,
-        [
-          {
-            text: 'キャンセル',
-            style: 'cancel',
-            onPress: () => {
-              logger.info('[ClipboardSearch] User cancelled paste');
-              // キャンセルした場合、次回も同じ内容で表示しないように記録
-              lastCheckedText.current = text;
-              isPromptShowing.current = false;
-              setIsChecking(false);
-            },
-          },
-          {
-            text: '貼り付け',
-            onPress: async () => {
-              try {
-                logger.info('[ClipboardSearch] User approved paste:', text.substring(0, 50));
-
-                // テキスト入力に設定
-                lastCheckedText.current = text;
-                await AsyncStorage.setItem(LAST_CLIPBOARD_KEY, text);
-                await AsyncStorage.setItem(`${LAST_CLIPBOARD_KEY}_time`, Date.now().toString());
-
-                if (onPasteRef.current) {
-                  onPasteRef.current(text);
-                }
-
-                isPromptShowing.current = false;
-                setIsChecking(false);
-              } catch (error) {
-                logger.error('[ClipboardSearch] Error setting clipboard text:', error);
-                isPromptShowing.current = false;
-                setIsChecking(false);
-              }
-            },
-          },
-        ]
-      );
 
       setIsChecking(false);
     } catch (error) {
       logger.error('[ClipboardSearch] Error checking clipboard:', error);
-      isPromptShowing.current = false;
       setIsChecking(false);
     }
   };

@@ -14,6 +14,7 @@ import { logger } from '@/utils/logger';
 import Svg, { Path } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from 'react-i18next';
 
 // Star Icon for premium features
 function StarIcon({ size = 16 }: { size?: number }) {
@@ -36,6 +37,7 @@ interface SettingsBottomSheetProps {
 }
 
 export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: SettingsBottomSheetProps) {
+  const { t } = useTranslation();
   const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   const pageBackground = useThemeColor({}, 'pageBackground');
   const text = useThemeColor({}, 'text');
@@ -53,7 +55,6 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
     addLearningLanguage,
     removeLearningLanguage,
   } = useLearningLanguages();
-  const { aiDetailLevel, setAIDetailLevel } = useAISettings();
   const { isPremium } = useSubscription();
 
   // 使用量のデフォルト値
@@ -142,27 +143,15 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
     }
   };
 
-  const handleAIDetailLevelChange = (value: boolean) => {
-    const newLevel = value ? 'detailed' : 'concise';
-
-    // Free users cannot enable detailed mode
-    if (newLevel === 'detailed' && !isPremium) {
-      onUpgradePress?.();
-      return;
-    }
-
-    setAIDetailLevel(newLevel);
-  };
-
   // 開発用: アプリをリセットして初回起動状態に戻す
   const handleResetApp = () => {
     Alert.alert(
-      '開発用: アプリをリセット',
-      'AsyncStorageとSupabase認証をクリアして、初回起動状態に戻します。',
+      t('settingsBottomSheet.resetConfirmTitle'),
+      t('settingsBottomSheet.resetConfirmMessage'),
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'リセット',
+          text: t('settingsBottomSheet.resetApp'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -177,17 +166,17 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
 
               // 完了メッセージ
               Alert.alert(
-                '完了',
-                'AsyncStorageと認証をクリアしました。アプリを再起動してください（ターミナルで"r"キーを押す）。',
+                t('settingsBottomSheet.resetComplete'),
+                t('settingsBottomSheet.resetCompleteMessage'),
                 [
                   {
-                    text: 'OK',
+                    text: t('common.ok'),
                   },
                 ]
               );
             } catch (error) {
               console.error('リセットエラー:', error);
-              Alert.alert('エラー', 'リセットに失敗しました');
+              Alert.alert(t('common.error'), t('settingsBottomSheet.resetError'));
             }
           },
         },
@@ -222,7 +211,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
 
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.headerTitle, { color: text }]}>設定</Text>
+            <Text style={[styles.headerTitle, { color: text }]}>{t('settingsBottomSheet.title')}</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <CloseIcon size={24} color={text} />
             </TouchableOpacity>
@@ -234,7 +223,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
               <Text style={styles.userAvatarText}>U</Text>
             </View>
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>ユーザー名</Text>
+              <Text style={styles.userName}>{t('settingsBottomSheet.user')}</Text>
               <View style={[
                 styles.planBadge,
                 { backgroundColor: plan === 'free' ? '#F8F8F8' : '#4CAF50' }
@@ -243,7 +232,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                   styles.planBadgeText,
                   { color: plan === 'free' ? '#666666' : '#FFFFFF' }
                 ]}>
-                  {plan === 'free' ? '無料プラン' : 'プレミアムプラン'}
+                  {plan === 'free' ? t('settingsBottomSheet.freePlan') : t('settingsBottomSheet.premiumPlan')}
                 </Text>
               </View>
             </View>
@@ -262,7 +251,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                   color="#111111"
                 />
                 <View style={styles.statTextContainer}>
-                  <Text style={styles.statLabel}>トークン</Text>
+                  <Text style={styles.statLabel}>{t('settingsBottomSheet.tokens')}</Text>
                   <Text style={styles.statNumbers}>
                     {tokenUsage.used.toLocaleString()} / {tokenUsage.limit.toLocaleString()}
                   </Text>
@@ -278,7 +267,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                   color="#111111"
                 />
                 <View style={styles.statTextContainer}>
-                  <Text style={styles.statLabel}>質問回数</Text>
+                  <Text style={styles.statLabel}>{t('settingsBottomSheet.questions')}</Text>
                   <Text style={styles.statNumbers}>
                     {questionCount.used} / {questionCount.limit}
                   </Text>
@@ -288,7 +277,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
 
             {/* Second Row: Reset Days */}
             <View style={styles.resetRow}>
-              <Text style={styles.resetText}>あと{daysUntilReset}日でリセット</Text>
+              <Text style={styles.resetText}>{t('settingsBottomSheet.resetIn', { days: daysUntilReset })}</Text>
             </View>
           </View>
 
@@ -299,9 +288,9 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                 style={styles.upgradeButton}
                 onPress={() => onUpgradePress?.()}
               >
-                <Text style={styles.upgradeButtonText}>7日間無料でプレミアムプランを試す</Text>
+                <Text style={styles.upgradeButtonText}>{t('settingsBottomSheet.tryPremium')}</Text>
                 <Text style={styles.upgradeButtonSubtext}>
-                  その後、月500円で月間1,000回質問・最大50,000文字翻訳可能
+                  {t('settingsBottomSheet.premiumSubtext')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -310,21 +299,21 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
           <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
             {/* Language Settings */}
             <View style={styles.languageSettingsContainer}>
-              <Text style={styles.sectionTitle}>言語設定</Text>
+              <Text style={styles.sectionTitle}>{t('settingsBottomSheet.languageSettings')}</Text>
               <LanguageDropdown
-                label="母国語"
+                label={t('settingsBottomSheet.nativeLanguage')}
                 selectedLanguage={nativeLanguage}
                 availableLanguages={AVAILABLE_LANGUAGES}
                 onSelect={(lang) => setNativeLanguage(lang.id)}
               />
               <LanguageDropdown
-                label="デフォルト言語"
+                label={t('settingsBottomSheet.defaultLanguage')}
                 selectedLanguage={defaultLanguage}
                 availableLanguages={AVAILABLE_LANGUAGES}
                 onSelect={(lang) => setDefaultLanguage(lang.id)}
               />
               <LanguageDropdown
-                label="学習中の言語"
+                label={t('settingsBottomSheet.learningLanguages')}
                 selectedLanguages={learningLanguages}
                 availableLanguages={AVAILABLE_LANGUAGES}
                 onMultiSelect={handleLearningLanguagesChange}
@@ -332,38 +321,16 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
               />
             </View>
 
-            {/* AI Settings */}
-            <View style={styles.aiSettingsContainer}>
-              <Text style={styles.sectionTitle}>AI設定</Text>
-              <View style={styles.aiSettingItem}>
-                <View style={styles.aiSettingInfo}>
-                  <View style={styles.aiSettingLabelRow}>
-                    <Text style={styles.aiSettingLabel}>AI返答の詳細度</Text>
-                    {!isPremium && <StarIcon size={16} />}
-                  </View>
-                  <Text style={styles.aiSettingDescription}>
-                    {aiDetailLevel === 'concise' ? '簡潔（デフォルト）' : '詳細（語源・追加例文含む）'}
-                  </Text>
-                </View>
-                <Switch
-                  value={aiDetailLevel === 'detailed'}
-                  onValueChange={handleAIDetailLevelChange}
-                  trackColor={{ false: '#D1D1D1', true: '#111111' }}
-                  thumbColor="#FFFFFF"
-                />
-              </View>
-            </View>
-
             {/* Developer Tools */}
             <View style={styles.developerToolsContainer}>
-              <Text style={styles.sectionTitle}>開発者ツール</Text>
+              <Text style={styles.sectionTitle}>{t('settingsBottomSheet.developerTools')}</Text>
               <TouchableOpacity
                 style={styles.resetButton}
                 onPress={handleResetApp}
               >
-                <Text style={styles.resetButtonText}>アプリをリセット</Text>
+                <Text style={styles.resetButtonText}>{t('settingsBottomSheet.resetApp')}</Text>
                 <Text style={styles.resetButtonSubtext}>
-                  初回起動状態に戻す（AsyncStorage + 認証クリア）
+                  {t('settingsBottomSheet.resetAppDescription')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -371,16 +338,16 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
             {/* Footer Links */}
             <View style={styles.footerContainer}>
               <TouchableOpacity onPress={() => { onClose(); router.push('/privacy-policy'); }}>
-                <Text style={styles.footerLink}>プライバシーポリシー</Text>
+                <Text style={styles.footerLink}>{t('settingsBottomSheet.privacyPolicy')}</Text>
               </TouchableOpacity>
               <Text style={styles.footerSeparator}>・</Text>
               <TouchableOpacity onPress={() => { onClose(); router.push('/terms-of-service'); }}>
-                <Text style={styles.footerLink}>利用規約</Text>
+                <Text style={styles.footerLink}>{t('settingsBottomSheet.termsOfService')}</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.versionContainer}>
-              <Text style={styles.versionText}>Version 1.0.0</Text>
+              <Text style={styles.versionText}>{t('settingsBottomSheet.version')} 1.0.0</Text>
             </View>
           </ScrollView>
         </Animated.View>

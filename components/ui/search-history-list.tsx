@@ -2,42 +2,40 @@ import { StyleSheet, View, Text, TouchableOpacity, FlatList } from 'react-native
 import { useEffect, useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import type { SearchHistoryItem } from '@/types/search';
-import { getWordHistoryByLanguage } from '@/services/storage/search-history-storage';
+import { getSearchHistory } from '@/services/storage/search-history-storage';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { logger } from '@/utils/logger';
 
 interface SearchHistoryListProps {
   onItemPress: (query: string) => void;
   maxItems?: number; // 表示する最大件数
   showTitle?: boolean; // タイトルを表示するか（デフォルト: true）
+  refreshTrigger?: number; // 履歴更新トリガー
 }
 
-export function SearchHistoryList({ onItemPress, maxItems = 20, showTitle = true }: SearchHistoryListProps) {
-  const { currentLanguage } = useLearningLanguages();
+export function SearchHistoryList({ onItemPress, maxItems = 20, showTitle = true, refreshTrigger }: SearchHistoryListProps) {
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
   const titleColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'text');
   const itemTextColor = useThemeColor({ light: '#000000', dark: '#F2F2F2' }, 'text');
 
   const loadHistory = useCallback(async () => {
     try {
-      const items = await getWordHistoryByLanguage(currentLanguage.code);
-      logger.debug('[SearchHistoryList] Loaded word history:', {
-        language: currentLanguage.code,
+      const items = await getSearchHistory();
+      logger.info('[SearchHistoryList] Loaded search history:', {
         count: items.length,
-        items: items.slice(0, 5).map(i => i.query),
+        items: items.slice(0, 5).map(i => ({ query: i.query, lang: i.language, type: i.searchType })),
       });
       setHistory(items.slice(0, maxItems));
     } catch (error) {
-      logger.error('[SearchHistoryList] Failed to load word history:', error);
+      logger.error('[SearchHistoryList] Failed to load search history:', error);
       setHistory([]);
     }
-  }, [currentLanguage.code, maxItems]);
+  }, [maxItems]);
 
-  // 検索履歴を読み込む（言語変更時）
+  // 検索履歴を読み込む（マウント時とrefreshTrigger変更時）
   useEffect(() => {
     loadHistory();
-  }, [loadHistory]);
+  }, [loadHistory, refreshTrigger]);
 
   // 画面がフォーカスされた時に履歴を再読み込み
   useFocusEffect(

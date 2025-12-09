@@ -39,7 +39,6 @@ interface ChatContextValue {
       displayText?: string; // UI表示用のテキスト
       context?: ChatRequestContext;
       streaming?: boolean;
-      detailLevel?: 'concise' | 'detailed';
       targetLanguage?: string;
       nativeLanguage?: string;
     }
@@ -52,7 +51,8 @@ type SessionsState = Record<string, ChatSessionState>;
 
 type SessionAction =
   | { type: 'UPSERT'; key: string; session: ChatSessionState }
-  | { type: 'CLEAR'; key: string };
+  | { type: 'CLEAR'; key: string }
+  | { type: 'ENSURE'; key: string; sessionKey: ChatSessionKey };
 
 function toKey({ scope, identifier }: ChatSessionKey): string {
   return `${scope}:${identifier.toLowerCase()}`;
@@ -72,6 +72,26 @@ function reducer(state: SessionsState, action: SessionAction): SessionsState {
       const next = { ...state };
       delete next[action.key];
       return next;
+    }
+    case 'ENSURE': {
+      // すでに存在する場合は変更なし
+      if (state[action.key]) {
+        return state;
+      }
+
+      // キャッシュから取得するか新規作成
+      const cached = getChatSession(action.sessionKey);
+      const session = cached ?? createEmptySession(action.sessionKey);
+
+      // キャッシュに保存
+      if (!cached) {
+        setChatSession(action.sessionKey, session.messages, session.followUps, session.sessionId);
+      }
+
+      return {
+        ...state,
+        [action.key]: session,
+      };
     }
     default:
       return state;
@@ -126,16 +146,22 @@ export function ChatProvider({ children }: ChatProviderProps) {
   // ストリームコントローラーを保持（セッションキーごと）
   const streamControllers = useRef<Record<string, ChatStreamController>>({});
 
+  // sessionsRefを使って最新のsessionsを参照
+  const sessionsRef = useRef(sessions);
+  useEffect(() => {
+    sessionsRef.current = sessions;
+  }, [sessions]);
+
   const ensureSession = useCallback(
     (key: ChatSessionKey): ChatSessionState => {
       const mapKey = toKey(key);
-      const existing = sessions[mapKey];
 
       logger.info('[ChatContext] ensureSession called:', {
         mapKey,
-        hasExisting: !!existing,
-        existingMessageCount: existing?.messages?.length ?? 0,
       });
+
+      // Refから最新のsessionsを取得
+      const existing = sessionsRef.current[mapKey];
 
       if (existing) {
         logger.info('[ChatContext] Returning existing session:', {
@@ -145,27 +171,20 @@ export function ChatProvider({ children }: ChatProviderProps) {
         return existing;
       }
 
-      const cached = getChatSession(key);
-      logger.info('[ChatContext] Cached session:', {
-        hasCached: !!cached,
-        cachedMessageCount: cached?.messages?.length ?? 0,
-      });
+      // reducerに委譲してセッションを作成
+      dispatch({ type: 'ENSURE', key: mapKey, sessionKey: key });
 
-      const session = cached ?? createEmptySession(key);
-
-      dispatch({ type: 'UPSERT', key: mapKey, session });
-      if (!cached) {
-        setChatSession(key, session.messages, session.followUps, session.sessionId);
+      // ENSUREアクション後のセッションを取得
+      // (dispatch後すぐにsessionsが更新されるため、Refから取得)
+      const newSession = sessionsRef.current[mapKey];
+      if (newSession) {
+        return newSession;
       }
 
-      logger.info('[ChatContext] Created/restored session:', {
-        messageCount: session.messages.length,
-        sessionId: session.sessionId,
-      });
-
-      return session;
+      // フォールバック（通常は到達しない）
+      return createEmptySession(key);
     },
-    [sessions]
+    [] // 依存配列を空に（Refを使用するため）
   );
 
   const patchSession = useCallback(
@@ -240,7 +259,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   }, []);
 
   const sendMessage = useCallback<ChatContextValue['sendMessage']>(
-    async ({ scope, identifier, text, displayText, context, streaming = true, detailLevel, targetLanguage, nativeLanguage }) => {
+    async ({ scope, identifier, text, displayText, context, streaming = true, targetLanguage, nativeLanguage }) => {
       const key: ChatSessionKey = { scope, identifier };
       const sessionBefore = ensureSession(key);
 
@@ -249,7 +268,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
         identifier,
         text,
         displayText,
-        detailLevel,
         targetLanguage,
         nativeLanguage,
         sessionBeforeMessageCount: sessionBefore.messages.length,
@@ -273,7 +291,35 @@ export function ChatProvider({ children }: ChatProviderProps) {
       dispatch({ type: 'UPSERT', key: toKey(key), session: workingSession });
       setChatSession(key, workingSession.messages, workingSession.followUps, workingSession.sessionId);
 
-      const requestMessages = workingSession.messages.filter((msg) => msg.role !== 'assistant' || msg.id !== assistantPlaceholder.id);
+      // フォローアップモードの判定: 直前のメッセージが assistant かつ messages が 4 つ以上
+      const allMessages = workingSession.messages.filter((msg) => msg.role !== 'assistant' || msg.id !== assistantPlaceholder.id);
+      const isFollowUpMode =
+        allMessages.length >= 3 && // user + assistant + user (最低3つ)
+        allMessages[allMessages.length - 2]?.role === 'assistant'; // 直前が assistant の回答
+
+      let requestMessages: ChatMessage[];
+
+      if (isFollowUpMode) {
+        // フォローアップモード: 直前の Q&A ペア (2メッセージ) + 新しい質問のみ
+        const prevAnswer = allMessages[allMessages.length - 2]; // assistant (prev answer)
+        const prevQuestion = allMessages[allMessages.length - 3]; // user (prev question)
+        const currentQuestion = allMessages[allMessages.length - 1]; // user (current question)
+
+        requestMessages = [prevQuestion, prevAnswer, currentQuestion];
+
+        logger.info('[ChatContext] Follow-up mode: sending previous Q&A + current question', {
+          prevQuestionPreview: prevQuestion.content?.substring(0, 30),
+          prevAnswerPreview: prevAnswer.content?.substring(0, 30),
+          currentQuestionPreview: currentQuestion.content?.substring(0, 30),
+        });
+      } else {
+        // 通常モード: 新しい質問のみ
+        requestMessages = [allMessages[allMessages.length - 1]]; // 最新のユーザーメッセージのみ
+
+        logger.info('[ChatContext] Normal mode: sending current question only', {
+          currentQuestionPreview: requestMessages[0].content?.substring(0, 30),
+        });
+      }
 
       const request = {
         sessionId: workingSession.sessionId,
@@ -281,7 +327,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
         identifier,
         messages: requestMessages,
         context,
-        detailLevel,
         targetLanguage,
         nativeLanguage,
       };

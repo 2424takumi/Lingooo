@@ -56,7 +56,6 @@ export interface ChatRequest {
   identifier: string;
   messages: ChatMessage[];
   context?: ChatRequestContext;
-  detailLevel?: 'concise' | 'detailed';
   targetLanguage?: string; // 学習言語コード (e.g., 'en', 'pt', 'es')
   nativeLanguage?: string; // ユーザーの母国語コード (e.g., 'ja', 'en', 'pt')
 }
@@ -79,6 +78,12 @@ export interface QAPair {
   a?: string;
   status: QAPairStatus;
   errorMessage?: string;
+  context?: {
+    originalText?: string;
+    translatedText?: string;
+    sourceLang?: string;
+    targetLang?: string;
+  };
   followUpQAs?: Array<{
     id: string;
     q: string;

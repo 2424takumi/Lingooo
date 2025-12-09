@@ -10,6 +10,7 @@ import { logger } from '@/utils/logger';
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const KEEPALIVE_INTERVAL = 10 * 60 * 1000; // 10分ごと（15分のスリープより前）
 const HEALTH_ENDPOINT = '/health';
+const WARMUP_ENDPOINT = '/warmup';
 
 let keepaliveTimer: NodeJS.Timeout | null = null;
 
@@ -64,10 +65,12 @@ export function startKeepalive(): void {
 
   logger.info('[Keepalive] Starting keepalive service');
 
-  // 即座に1回実行（サーバーのウォームアップ）
-  sendKeepalive();
+  // 初回はウォームアップリクエストを送信（Langfuseプロンプトをキャッシュ）
+  sendWarmup().catch((error) => {
+    logger.warn('[Keepalive] Initial warmup failed:', error);
+  });
 
-  // 定期的に実行
+  // 定期的にヘルスチェックを実行（サーバーをアクティブに保つ）
   keepaliveTimer = setInterval(() => {
     sendKeepalive();
   }, KEEPALIVE_INTERVAL);
@@ -87,6 +90,47 @@ export function stopKeepalive(): void {
 }
 
 /**
+ * ウォームアップリクエストを送信（Langfuseプロンプトを事前キャッシュ）
+ *
+ * 起動時に1回実行して、Langfuseプロンプトをキャッシュに読み込みます。
+ * これにより初回リクエストの遅延を削減します。
+ */
+async function sendWarmup(): Promise<boolean> {
+  if (!BACKEND_URL) {
+    logger.warn('[Keepalive] BACKEND_URL not configured');
+    return false;
+  }
+
+  try {
+    const url = `${BACKEND_URL}${WARMUP_ENDPOINT}`;
+    logger.info('[Keepalive] Sending warmup request to:', url);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒タイムアウト
+
+    const response = await fetch(url, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = await response.json();
+      logger.info('[Keepalive] ✓ Warmup completed:', data);
+      return true;
+    } else {
+      logger.warn('[Keepalive] Warmup returned non-OK status:', response.status);
+      return false;
+    }
+  } catch (error) {
+    // ウォームアップ失敗は警告のみ
+    logger.debug('[Keepalive] Warmup failed:', error);
+    return false;
+  }
+}
+
+/**
  * 手動でkeepaliveを実行
  *
  * ユーザーが重要な操作を開始する前に、サーバーをウォームアップするために使用します。
@@ -94,5 +138,5 @@ export function stopKeepalive(): void {
  */
 export async function warmupBackend(): Promise<void> {
   logger.info('[Keepalive] Manual warmup requested');
-  await sendKeepalive();
+  await sendWarmup();
 }

@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { LanguageDropdown } from '@/components/ui/language-dropdown';
 import * as Localization from 'expo-localization';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 // デバイスのロケールを取得するヘルパー関数
 function getDeviceLocale(): string {
@@ -42,13 +44,14 @@ function CheckIcon({ size = 24, color = '#111111' }: { size?: number; color?: st
 }
 
 export function InitialLanguageSetupModal({ visible, onComplete }: InitialLanguageSetupModalProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<1 | 2>(1);
 
-  // 端末のデフォルト言語を取得（日英葡のみ対応、それ以外は日本語）
+  // 端末のデフォルト言語を取得（日英葡のみ対応、それ以外は英語）
   const defaultNativeLanguage = useMemo(() => {
     const deviceLocale = getDeviceLocale();
     const supportedCodes = ['ja', 'en', 'pt'];
-    const matchedCode = supportedCodes.includes(deviceLocale) ? deviceLocale : 'ja';
+    const matchedCode = supportedCodes.includes(deviceLocale) ? deviceLocale : 'en';
     return AVAILABLE_LANGUAGES.find(lang => lang.code === matchedCode)!;
   }, []);
 
@@ -65,8 +68,10 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
     (lang) => lang.id !== selectedNativeLanguage?.id
   );
 
-  const handleNativeLanguageSelect = (language: Language) => {
+  const handleNativeLanguageSelect = async (language: Language) => {
     setSelectedNativeLanguage(language);
+    // UIの言語を即座に切り替え（UX向上）
+    await i18n.changeLanguage(language.code);
   };
 
   const handleLearningLanguagesChange = (languages: Language[]) => {
@@ -85,10 +90,14 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (selectedNativeLanguage && selectedLearningLanguages.length > 0) {
       const nativeLanguageId = selectedNativeLanguage.id;
       const learningLanguageIds = selectedLearningLanguages.map(lang => lang.id);
+
+      // UIの言語を即座に切り替え
+      await i18n.changeLanguage(selectedNativeLanguage.code);
+
       onComplete(nativeLanguageId, learningLanguageIds);
     }
   };
@@ -113,14 +122,14 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
 
           {/* タイトル */}
           <Text style={styles.modalTitle}>
-            {step === 1 ? 'あなたの母国語を選択してください' : '学習したい言語を選択してください'}
+            {step === 1 ? t('initialSetup.step1Title') : t('initialSetup.step2Title')}
           </Text>
 
           {/* 説明 */}
           <Text style={styles.description}>
             {step === 1
-              ? 'アプリの表示言語として使用されます'
-              : '複数選択できます。後から追加・削除も可能です'}
+              ? t('initialSetup.step1Description')
+              : t('initialSetup.step2Description')}
           </Text>
 
           {/* 言語ドロップダウン */}
@@ -128,7 +137,7 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
             {step === 1 ? (
               // ステップ1: 母国語選択
               <LanguageDropdown
-                label="母国語"
+                label={t('initialSetup.nativeLanguageLabel')}
                 selectedLanguage={selectedNativeLanguage ?? undefined}
                 availableLanguages={nativeLanguageOptions}
                 onSelect={handleNativeLanguageSelect}
@@ -136,7 +145,7 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
             ) : (
               // ステップ2: 学習言語選択（複数選択）
               <LanguageDropdown
-                label="学習言語"
+                label={t('initialSetup.learningLanguageLabel')}
                 selectedLanguages={selectedLearningLanguages}
                 availableLanguages={learningLanguageOptions}
                 onMultiSelect={handleLearningLanguagesChange}
@@ -152,7 +161,7 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
                 style={styles.backButton}
                 onPress={handleBack}
               >
-                <Text style={styles.backButtonText}>戻る</Text>
+                <Text style={styles.backButtonText}>{t('common.back')}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
@@ -165,7 +174,7 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
               disabled={!canProceed}
             >
               <Text style={[styles.primaryButtonText, !canProceed && styles.primaryButtonTextDisabled]}>
-                {step === 1 ? '次へ' : '完了'}
+                {step === 1 ? t('common.next') : t('common.complete')}
               </Text>
             </TouchableOpacity>
           </View>

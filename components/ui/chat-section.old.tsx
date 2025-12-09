@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -14,68 +14,41 @@ import {
   Keyboard,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import Reanimated, { useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { QAPair } from '@/types/chat';
 import { QuestionTag } from './question-tag';
 import { QACardList } from './qa-card-list';
 import { KeyboardToolbar } from './keyboard-toolbar';
-import { WordDetailCard, type WordDetail } from './word-detail-card';
-import { useQuestionTags } from './chat-section/use-question-tags';
-import { useChatAnimation } from './chat-section/use-chat-animation';
-import { ChatSuggestionTags } from './chat-section/chat-suggestion-tags';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useSubscription } from '@/contexts/subscription-context';
 import { logger } from '@/utils/logger';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 
-// ChatSection Mode Type Export
-export type ChatSectionMode = 'default' | 'word' | 'text';
-
 interface ChatSectionProps {
-  // Mode & Display Control
-  mode?: ChatSectionMode; // UI表示モード (default/word/text)
   placeholder?: string;
-  scope?: string; // 質問タグのコンテキスト (translate/word/search)
-  identifier?: string;
-  expandedMaxHeight?: number; // 展開時の最大高さ（デフォルト: 600）
-
-  // Data Props
   qaPairs?: QAPair[];
   followUps?: string[];
-  questionPresets?: string[];
-  wordDetail?: WordDetail | null; // 単語カードデータ（wordモード時のみ）
-  selectedText?: { text: string; isSingleWord: boolean; canReturnToWordCard?: boolean } | null;
-  prefilledInputText?: string | null;
-
-  // State Props
   isStreaming?: boolean;
-  isLoadingWordDetail?: boolean; // 単語データ読み込み状態
   error?: string | null;
-  activeFollowUpPairId?: string;
-
-  // Callback Props - Chat
+  detailLevel?: 'concise' | 'detailed';
   onSend?: (text: string) => Promise<void> | void;
   onQuickQuestion?: (question: string) => Promise<void> | void;
-  onFollowUpQuestion?: (pairId: string, question: string) => Promise<void>;
-  onEnterFollowUpMode?: (pairId: string, question: string) => void;
   onRetry?: () => void;
   onRetryQuestion?: (question: string) => void;
-  onPrefillConsumed?: () => void;
-
-  // Callback Props - Word Mode
-  onWordBookmarkToggle?: (wordId: string) => void; // 単語ブックマークトグル
-  onWordViewDetails?: () => void; // 単語詳細表示
-  onWordAskQuestion?: () => void; // 単語カードの「質問する」ボタン
-  onSwitchToWordCard?: () => void; // textモードから単語カードモードへ戻る
-
-  // Callback Props - Text Selection
-  onSelectionCleared?: () => void; // 選択解除
-  onDictionaryLookup?: () => void; // 辞書で調べるボタン
-
-  // Callback Props - Other
+  onDetailLevelChange?: (level: 'concise' | 'detailed') => void;
+  questionPresets?: string[];
+  scope?: string;
+  identifier?: string;
   onBookmarkAdded?: (bookmarkId: string) => void;
+  expandedMaxHeight?: number; // 展開時のchatMessagesの最大高さ（デフォルト: 512）
+  onFollowUpQuestion?: (pairId: string, question: string) => Promise<void>;
+  prefilledInputText?: string | null;
+  onPrefillConsumed?: () => void;
+  selectedText?: { text: string; isSingleWord: boolean } | null; // 選択テキスト情報
+  onDictionaryLookup?: () => void; // 辞書で調べるボタンのコールバック
+  onEnterFollowUpMode?: (pairId: string, question: string) => void;
+  activeFollowUpPairId?: string;
 }
 
 function ExpandIcon({ size = 18 }: { size?: number }) {
@@ -150,20 +123,6 @@ function PlusIcon({ size = 24 }: { size?: number }) {
   );
 }
 
-function ArrowUpRightIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M7 17L17 7M17 7H7M17 7v10"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 function ArrowRightIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -216,48 +175,29 @@ function CornerDownRightIcon({ size = 24, color = '#242424' }: { size?: number; 
 const DEFAULT_QUESTIONS = ['ニュアンス', '語源', '例文'];
 
 export function ChatSection({
-  // Mode & Display Control
-  mode = 'default',
   placeholder = 'この単語について質問をする...',
-  scope,
-  identifier,
-  expandedMaxHeight = 600,
-
-  // Data Props
   qaPairs = [],
   followUps = [],
-  questionPresets = DEFAULT_QUESTIONS,
-  wordDetail,
-  selectedText,
-  prefilledInputText,
-
-  // State Props
   isStreaming = false,
-  isLoadingWordDetail = false,
   error = null,
-  activeFollowUpPairId,
-
-  // Callback Props - Chat
+  detailLevel = 'concise',
   onSend,
   onQuickQuestion,
-  onFollowUpQuestion,
-  onEnterFollowUpMode,
   onRetry,
   onRetryQuestion,
-  onPrefillConsumed,
-
-  // Callback Props - Word Mode
-  onWordBookmarkToggle,
-  onWordViewDetails,
-  onWordAskQuestion,
-  onSwitchToWordCard,
-
-  // Callback Props - Text Selection
-  onSelectionCleared,
-  onDictionaryLookup,
-
-  // Callback Props - Other
+  onDetailLevelChange,
+  questionPresets = DEFAULT_QUESTIONS,
+  scope,
+  identifier,
   onBookmarkAdded,
+  expandedMaxHeight = 512,
+  onFollowUpQuestion,
+  prefilledInputText,
+  onPrefillConsumed,
+  selectedText,
+  onDictionaryLookup,
+  onEnterFollowUpMode,
+  activeFollowUpPairId,
 }: ChatSectionProps) {
   const { customQuestions, addCustomQuestion } = useAISettings();
   const { isPremium } = useSubscription();
@@ -275,21 +215,12 @@ export function ChatSection({
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasManuallyClosedWithContent, setHasManuallyClosedWithContent] = useState(false);
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [isCustomQuestionModalOpen, setIsCustomQuestionModalOpen] = useState(false);
   const [customQuestionTitle, setCustomQuestionTitle] = useState('');
   const [customQuestionText, setCustomQuestionText] = useState('');
   const [isPremiumUpgradeModalOpen, setIsPremiumUpgradeModalOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  // wordモードで入力欄を表示するか（質問モード）
-  const [showInputInWordMode, setShowInputInWordMode] = useState(false);
-
-  // Reanimated アニメーション状態（mode切り替え用）
-  const inputOpacity = useSharedValue(1);
-  const inputScale = useSharedValue(1);
-  const wordCardOpacity = useSharedValue(0);
-  const wordCardScale = useSharedValue(0.85);
-
   const INPUT_LINE_HEIGHT = 22;
   const MAX_LINES = 5;
   const INPUT_TOP_PADDING = 6;
@@ -310,16 +241,6 @@ export function ChatSection({
   const screenHeight = Dimensions.get('window').height;
   const topMargin = scope === 'jpSearch' ? 72 : 98;
   const calculatedMaxHeight = expandedMaxHeight ?? (screenHeight - topMargin - 200 - keyboardHeight);
-
-  // useQuestionTagsフックの統合（質問タグロジック）
-  const { contextQuestionTags, combinedQuestions, questionMap } = useQuestionTags({
-    mode,
-    scope,
-    selectedText,
-    customQuestions,
-    questions,
-    followUps,
-  });
 
   // アニメーション用の値
   const animatedHeight = useRef(new Animated.Value(0)).current;
@@ -452,23 +373,6 @@ export function ChatSection({
     }
   }, [qaPairs, isStreaming, isOpen]);
 
-  // アニメーション制御：modeとshowInputInWordModeに応じて入力欄とwordカードの表示切替
-  useEffect(() => {
-    if (mode === 'word' && !showInputInWordMode) {
-      // wordモード（カード表示）：入力欄をフェードアウト、カードをフェードイン
-      inputOpacity.value = withTiming(0.3, { duration: 200 });
-      inputScale.value = withTiming(0.95, { duration: 200 });
-      wordCardOpacity.value = withTiming(1, { duration: 200 });
-      wordCardScale.value = withTiming(1, { duration: 200 });
-    } else {
-      // 通常モード（入力表示）：入力欄を復元、カードを非表示
-      inputOpacity.value = withTiming(1, { duration: 200 });
-      inputScale.value = withTiming(1, { duration: 200 });
-      wordCardOpacity.value = withTiming(0, { duration: 200 });
-      wordCardScale.value = withTiming(0.85, { duration: 200 });
-    }
-  }, [mode, showInputInWordMode]);
-
   const handleSubmit = async (text: string) => {
     if (!text.trim()) {
       return;
@@ -550,6 +454,35 @@ export function ChatSection({
     setIsOpen(true);
   };
 
+  const combinedQuestions = useMemo(() => {
+    // カスタム質問のタイトルを先頭に、次にデフォルト質問を表示
+    // フォローアップ質問（AIからの提案など）はタグとして表示しない
+    return [...customQuestions.map(cq => cq.title), ...questions];
+  }, [customQuestions, questions]);
+
+  // タイトルと実際の質問文のマッピングを作成
+  const questionMap = useMemo(() => {
+    const map = new Map<string, string>();
+    // カスタム質問のマッピング
+    customQuestions.forEach(cq => {
+      map.set(cq.title, cq.question);
+    });
+
+    // デフォルト質問のマッピング
+    map.set('ニュアンス', 'この単語の持つニュアンスについて詳しく教えてください');
+    map.set('語源', 'この単語の語源や由来を教えてください');
+    map.set('例文', 'この単語を使った自然な例文をいくつか教えてください');
+
+    // その他の質問（フォローアップなど）はタイトル=質問文とするが、
+    // デフォルト質問に含まれていないものだけを追加
+    questions.forEach(q => {
+      if (!map.has(q)) map.set(q, q);
+    });
+    followUps.forEach(q => {
+      if (!map.has(q)) map.set(q, q);
+    });
+    return map;
+  }, [customQuestions, questions, followUps]);
 
   const handleAddCustomQuestion = async () => {
     const title = customQuestionTitle.trim();
@@ -648,55 +581,7 @@ export function ChatSection({
       </Animated.View>
 
       {/* 選択テキスト表示 or ヒント文（translateモード） */}
-      {/* WordDetailCard表示 - wordモードで単語データがあり、質問モードでない場合 */}
-      {mode === 'word' && wordDetail && !showInputInWordMode && (
-        <WordDetailCard
-          word={wordDetail}
-          isLoading={isLoadingWordDetail}
-          onBookmarkToggle={() => onWordBookmarkToggle?.(wordDetail.headword)}
-          onViewDetails={onWordViewDetails}
-          onAskQuestion={() => {
-            setShowInputInWordMode(true);
-            onWordAskQuestion?.();
-          }}
-          onClose={onSelectionCleared}
-        />
-      )}
-
-      {/* 選択テキスト表示 - textモードスタイル（展開時に表示） */}
-      {((mode === 'text' && selectedText) || (mode === 'word' && showInputInWordMode && selectedText)) && (
-        <View style={styles.selectedTextContainerTextMode}>
-          <View style={styles.selectedTextHeader}>
-            <Text style={styles.selectedTextLabelTextMode}>{selectedText.text}</Text>
-            {/* wordモードの質問モードから単語カードモードへ戻るボタン */}
-            {mode === 'word' && showInputInWordMode && (
-              <TouchableOpacity
-                style={styles.backToCardButton}
-                onPress={() => {
-                  setShowInputInWordMode(false);
-                  onSwitchToWordCard?.();
-                }}
-              >
-                <Text style={styles.backToCardButtonText}>カードに戻る</Text>
-                <ArrowUpRightIcon size={20} color="#242424" />
-              </TouchableOpacity>
-            )}
-            {/* textモードで選択解除ボタン */}
-            {mode === 'text' && onSelectionCleared && (
-              <TouchableOpacity
-                style={styles.clearSelectionButton}
-                onPress={onSelectionCleared}
-              >
-                <CloseIcon size={18} color="#FFFFFF" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      )}
-
-      {/* 選択テキスト表示 - 折りたたみ時（translate/word/searchスコープのみ） */}
-      {/* wordモードとtextモード時は表示しない（それぞれ専用UIが表示される） */}
-      {mode === 'default' && (scope === 'translate' || scope === 'word' || scope === 'search') && !isOpen && (
+      {(scope === 'translate' || scope === 'word' || scope === 'search') && !isOpen && (
         selectedText ? (
           <View style={styles.selectedTextContainer}>
             <Text style={styles.selectedTextLabel} numberOfLines={1} ellipsizeMode="tail">
@@ -719,38 +604,43 @@ export function ChatSection({
         ) : null
       )}
 
-      {/* Bottom Section: Question Tags + Input - wordモード時は質問モードでのみ表示 */}
-      {(mode !== 'word' || showInputInWordMode) && (
+      {/* Bottom Section: Question Tags + Input */}
       <View style={[
         styles.bottomSection,
         scope === 'translate' && styles.bottomSectionTranslate,
         scope === 'translate' && isOpen && styles.bottomSectionTranslateOpen,
         activeFollowUpPair && styles.bottomSectionFollowUp
       ]}>
-        {/* Question Tags - ChatSuggestionTagsコンポーネントに統合 */}
-        <ChatSuggestionTags
-          mode={mode}
-          scope={scope}
-          selectedText={selectedText}
-          activeFollowUpPair={activeFollowUpPair}
-          showInputInWordMode={showInputInWordMode}
-          combinedQuestions={combinedQuestions}
-          contextQuestionTags={contextQuestionTags}
-          questionMap={questionMap}
-          onQuickQuestion={(questionOrTag) => {
-            // チャットを開いてから質問を送信
-            setIsOpen(true);
-            // QuestionTagオブジェクトかstringかを判定
-            if (typeof questionOrTag === 'string') {
-              const actualQuestion = questionMap.get(questionOrTag) || questionOrTag;
-              onQuickQuestion?.(actualQuestion);
-            } else {
-              onQuickQuestion?.(questionOrTag.prompt);
-            }
-          }}
-          onOpenCustomQuestionModal={() => setIsCustomQuestionModalOpen(true)}
-          onOpenChat={() => setIsOpen(true)}
-        />
+        {/* Question Tags - 翻訳モードでは非表示、フォローアップモード時は非表示、テキスト選択時は非表示 */}
+        {scope !== 'translate' && !activeFollowUpPair && !selectedText && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.questionScrollView}
+            contentContainerStyle={styles.questionList}
+          >
+            {/* Plus button for adding custom questions */}
+            <TouchableOpacity
+              style={styles.plusButton}
+              onPress={() => setIsCustomQuestionModalOpen(true)}
+            >
+              <PlusIcon size={20} />
+            </TouchableOpacity>
+
+            {combinedQuestions.map((label, index) => (
+              <QuestionTag
+                key={`${label}-${index}`}
+                label={label}
+                onPress={() => {
+                  setIsOpen(true);
+                  // questionMapから実際の質問文を取得して送信
+                  const actualQuestion = questionMap.get(label) || label;
+                  onQuickQuestion?.(actualQuestion);
+                }}
+              />
+            ))}
+          </ScrollView>
+        )}
 
         {/* Follow-up Context View - フォローアップモード時のみ表示 */}
         {activeFollowUpPair && (
@@ -774,6 +664,15 @@ export function ChatSection({
         {/* White Container: Settings Icon + Input + Action Button (1 row) */}
         <View style={[styles.whiteContainer, { backgroundColor: inputBackground }]}>
           <View style={styles.inputRow}>
+            {/* Settings Icon Button */}
+            <TouchableOpacity
+              style={styles.settingsButton}
+              onPress={() => setIsSettingsMenuOpen(true)}
+              disabled={isStreaming}
+            >
+              <SliderIcon size={20} />
+            </TouchableOpacity>
+
             {/* Text Input */}
             <View style={styles.inputWrapper}>
               <TextInput
@@ -791,18 +690,10 @@ export function ChatSection({
                 value={inputText}
                 onChangeText={setInputText}
                 onFocus={() => {
-                  logger.debug('[ChatSection] TextInput onFocus', { mode, isStreaming });
                   setIsInputFocused(true);
                 }}
                 onBlur={() => {
-                  logger.debug('[ChatSection] TextInput onBlur', { mode, isStreaming });
                   setIsInputFocused(false);
-                }}
-                onTouchStart={() => {
-                  logger.debug('[ChatSection] TextInput onTouchStart', { mode, isStreaming, editable: !isStreaming });
-                }}
-                onPressIn={() => {
-                  logger.debug('[ChatSection] TextInput onPressIn', { mode, isStreaming, editable: !isStreaming });
                 }}
                 editable={!isStreaming}
                 multiline
@@ -834,15 +725,70 @@ export function ChatSection({
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Keyboard Toolbar */}
-        <KeyboardToolbar
-          nativeID={keyboardAccessoryID}
-          onDone={() => inputRef.current?.blur()}
-          isVisible={isInputFocused}
-        />
       </View>
-      )}
+
+      {/* Settings Menu Modal */}
+      <Modal
+        visible={isSettingsMenuOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsSettingsMenuOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsSettingsMenuOpen(false)}
+        >
+          <View style={styles.menuContainer} onStartShouldSetResponder={() => true}>
+            <Text style={styles.menuItemLabel}>詳細レベル</Text>
+            <View style={styles.toggleContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.toggleOption,
+                  detailLevel === 'concise' && styles.toggleOptionActive,
+                ]}
+                onPress={() => {
+                  onDetailLevelChange?.('concise');
+                }}
+              >
+                <Text
+                  style={[
+                    styles.toggleOptionText,
+                    detailLevel === 'concise' && styles.toggleOptionTextActive,
+                  ]}
+                >
+                  簡潔
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.toggleOption,
+                  detailLevel === 'detailed' && styles.toggleOptionActive,
+                ]}
+                onPress={() => {
+                  if (!isPremium && detailLevel !== 'detailed') {
+                    // プレミアムでない場合はアップグレードモーダルを表示
+                    setIsSettingsMenuOpen(false);
+                    setIsPremiumUpgradeModalOpen(true);
+                  } else {
+                    // プレミアムの場合は通常通り切り替え
+                    onDetailLevelChange?.('detailed');
+                  }
+                }}
+              >
+                <Text
+                  style={[
+                    styles.toggleOptionText,
+                    detailLevel === 'detailed' && styles.toggleOptionTextActive,
+                  ]}
+                >
+                  詳細
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Custom Question Modal */}
       <Modal
@@ -851,16 +797,19 @@ export function ChatSection({
         animationType="fade"
         onRequestClose={() => setIsCustomQuestionModalOpen(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          pointerEvents={isCustomQuestionModalOpen ? 'auto' : 'none'}
-          onPress={() => {
-            setIsCustomQuestionModalOpen(false);
-            setCustomQuestionTitle('');
-            setCustomQuestionText('');
-          }}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
         >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => {
+              setIsCustomQuestionModalOpen(false);
+              setCustomQuestionTitle('');
+              setCustomQuestionText('');
+            }}
+          >
             <ScrollView
               contentContainerStyle={styles.scrollViewContent}
               keyboardShouldPersistTaps="handled"
@@ -918,12 +867,19 @@ export function ChatSection({
               </View>
             </ScrollView>
           </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Subscription Bottom Sheet */}
       <SubscriptionBottomSheet
         visible={isPremiumUpgradeModalOpen}
         onClose={() => setIsPremiumUpgradeModalOpen(false)}
+      />
+
+      {/* Keyboard Toolbar */}
+      <KeyboardToolbar
+        nativeID={keyboardAccessoryID}
+        onDone={() => inputRef.current?.blur()}
       />
     </View>
   );
@@ -944,9 +900,8 @@ const styles = StyleSheet.create({
   },
   containerOpen: {
     paddingTop: 8,
-    paddingBottom: 8, // 閉じている状態と統一
+    paddingBottom: 6,
     marginBottom: 0,
-    paddingHorizontal: 8, // containerTranslateClosedと統一
   },
   containerTranslateClosed: {
     paddingTop: 8,
@@ -975,7 +930,7 @@ const styles = StyleSheet.create({
   },
   bottomSectionTranslate: {
     paddingTop: 8, // 開閉時の位置を統一
-    // gap: 0 を削除してデフォルトのgap: 6を使用
+    gap: 0,
   },
   bottomSectionTranslateOpen: {
     // paddingTopは統一されているので不要
@@ -1146,6 +1101,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 2,
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   scrollViewContent: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -1237,17 +1195,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingLeft: 8,
-    paddingRight: 38, // バツボタン分のスペースを確保（青色と揃える）
-    paddingVertical: 9, // 上下のマージンを広げる
-    minHeight: 28, // 高さを削減してコンパクトに
-    marginBottom: 0, // ヒント文と質問タグの間の余白なし
+    paddingRight: 0,
+    paddingVertical: 0,
+    minHeight: 38,
+    marginBottom: 8,
     alignSelf: 'stretch',
   },
   selectedTextLabel: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 34,
     color: '#CECECE',
-    fontWeight: '500',
+    fontWeight: '400',
     letterSpacing: 1,
     marginRight: 8,
     flexShrink: 1,
@@ -1256,17 +1215,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 8,
-    paddingRight: 0,
-    paddingVertical: 4,
-    minHeight: 28,
-    marginBottom: 0,
+    paddingVertical: 0,
+    minHeight: 38,
+    marginBottom: 8,
     alignSelf: 'stretch',
   },
   hintText: {
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 34,
     color: '#ACACAC',
-    fontWeight: '500',
-    letterSpacing: 1,
+    fontWeight: '400',
+    letterSpacing: 0.5,
   },
   dictionaryButton: {
     flexDirection: 'row',
@@ -1314,53 +1273,5 @@ const styles = StyleSheet.create({
   followUpContextCloseButton: {
     padding: 4,
     marginRight: 0,
-  },
-  // textモード用の選択テキスト表示スタイル
-  selectedTextContainerTextMode: {
-    backgroundColor: 'transparent',
-    borderRadius: 0,
-    padding: 0,
-    marginBottom: 0, // 選択前後で位置を一定に保つ
-    alignSelf: 'stretch',
-  },
-  selectedTextHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingLeft: 8,
-    paddingRight: 0,
-    paddingVertical: 4,
-    minHeight: 28,
-    marginBottom: 0,
-    alignSelf: 'stretch',
-  },
-  selectedTextLabelTextMode: {
-    flex: 1,
-    fontSize: 15,
-    color: '#FFFFFF', // 白文字
-    fontWeight: '500',
-    letterSpacing: 1,
-  },
-  backToCardButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 19,
-    paddingLeft: 12,
-    paddingRight: 8,
-    paddingVertical: 6,
-  },
-  backToCardButtonText: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#242424',
-    lineHeight: 22,
-    letterSpacing: 0.5,
-  },
-  clearSelectionButton: {
-    padding: 6,
-    marginLeft: 8,
   },
 });

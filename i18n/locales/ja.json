@@ -8,7 +8,10 @@
     "create": "作成",
     "close": "閉じる",
     "error": "エラー",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "next": "次へ",
+    "complete": "完了",
+    "ok": "OK"
   },
   "settings": {
     "title": "設定",
@@ -39,14 +42,37 @@
       "title": "デフォルト言語",
       "description": "アプリ起動時に表示される言語を選択してください。"
     },
-    "aiSettings": {
-      "title": "AI設定",
-      "detailLevel": {
-        "title": "詳細度",
-        "concise": "簡潔",
-        "balanced": "バランス",
-        "detailed": "詳細"
-      }
+    "account": {
+      "title": "アカウント",
+      "profile": "プロフィール",
+      "profileDescription": "アカウント情報を管理",
+      "dataManagement": "データ管理",
+      "dataManagementDescription": "学習データのバックアップと復元"
+    },
+    "info": {
+      "title": "情報",
+      "privacyPolicy": "プライバシーポリシー",
+      "termsOfService": "利用規約",
+      "version": "バージョン"
+    },
+    "developer": {
+      "title": "開発者ツール",
+      "resetApp": "アプリをリセット",
+      "resetAppDescription": "初回起動状態に戻す（AsyncStorage + 認証クリア）",
+      "resetConfirmTitle": "開発用: アプリをリセット",
+      "resetConfirmMessage": "AsyncStorageとSupabase認証をクリアして、初回起動状態に戻します。アプリが再起動されます。",
+      "resetCompleteTitle": "完了",
+      "resetCompleteMessage": "AsyncStorageと認証をクリアしました。アプリを再起動してください（ターミナルで\"r\"キーを押す）。",
+      "resetError": "リセットに失敗しました"
+    }
+  },
+  "home": {
+    "searchPlaceholder": "知りたいテキストを入力...",
+    "hintText": "長文を入力すると自動で翻訳機能に切り替わります",
+    "searching": "検索中...",
+    "historyTab": {
+      "words": "単語",
+      "translations": "翻訳"
     }
   },
   "search": {
@@ -54,23 +80,81 @@
     "noResults": "「{{query}}」の検索結果が見つかりませんでした",
     "chatPlaceholder": "この単語について質問をする..."
   },
+  "initialSetup": {
+    "step1Title": "あなたの母国語を選択してください",
+    "step2Title": "学習したい言語を選択してください",
+    "step1Description": "アプリの表示言語として使用されます",
+    "step2Description": "複数選択できます。後から追加・削除も可能です",
+    "nativeLanguageLabel": "母国語",
+    "learningLanguageLabel": "学習言語"
+  },
   "wordDetail": {
     "bookmarked": "ブックマークに追加しました",
     "examples": "例文",
     "usageHint": "使い方のヒント",
     "frequency": "頻出度",
     "difficulty": "難易度",
-    "nuance": "ニュアンス"
+    "nuance": "ニュアンス",
+    "notFound": "単語が見つかりませんでした",
+    "loadingFailed": "単語の読み込みに失敗しました",
+    "backButton": "戻る",
+    "foundInLanguage": "{{language}}で見つかりました",
+    "chatPlaceholder": "この単語について質問をする..."
   },
   "bookmarks": {
     "title": "ブックマーク",
+    "allTab": "全て",
+    "foldersTab": "フォルダ",
+    "loading": "読み込み中...",
+    "bookmarkCount": "{{count}}件のブックマーク",
+    "bookmarkCountSingular": "{{count}}件のブックマーク",
+    "today": "今日",
+    "yesterday": "昨日",
+    "daysAgo": "{{days}}日前",
+    "general": "一般",
+    "deleteBookmark": "ブックマークを削除",
+    "deleteBookmarkConfirm": "このブックマークを削除してもよろしいですか？",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "copied": "コピーしました",
+    "copiedToClipboard": "質問と回答をクリップボードにコピーしました",
+    "error": "エラー",
+    "copyFailed": "コピーに失敗しました",
     "addToFolder": "フォルダに追加",
-    "noFolder": "フォルダなし",
-    "createFolder": "新しくフォルダを作る",
+    "copy": "コピー",
+    "totalBookmarks": "全{{count}}件のブックマーク",
+    "totalFolders": "全{{count}}個のフォルダ",
+    "noFolders": "フォルダがありません",
+    "noFoldersDescription": "フォルダを作成してブックマークを整理しましょう",
+    "noBookmarks": "ブックマークがありません",
+    "noBookmarksDescription": "チャットの回答をブックマークすると、\nここに保存されます",
+    "createFolder": "フォルダを作成",
+    "newFolder": "新しいフォルダ",
     "folderName": "フォルダ名",
+    "folderNamePlaceholder": "例: 重要な単語",
+    "create": "作成",
+    "addToFolderTitle": "フォルダに追加",
+    "noFolder": "フォルダなし",
+    "noFoldersYet": "フォルダがまだありません",
+    "noFoldersYetDescription": "下のボタンから新しいフォルダを作成できます",
     "createNewFolder": "新しいフォルダを作成",
-    "folderNameRequired": "フォルダ名を入力してください",
-    "createFailed": "フォルダの作成に失敗しました"
+    "createAndAdd": "作成して追加",
+    "rename": "名前を変更",
+    "renameFolderTitle": "フォルダ名を変更",
+    "enterFolderName": "フォルダ名を入力",
+    "save": "保存",
+    "deleteFolder": "フォルダを削除",
+    "deleteFolderConfirm": "「{{name}}」を削除してもよろしいですか？\n\nフォルダ内のブックマークは削除されません。",
+    "premiumFeature": "プレミアム機能",
+    "premiumFolderMessage": "フォルダ機能はプレミアムプラン限定です。\n\nブックマークを整理してより効率的に学習しましょう。",
+    "viewPremium": "プレミアムを見る",
+    "loadFailed": "ブックマークの読み込みに失敗しました",
+    "folderLoadFailed": "フォルダの読み込みに失敗しました",
+    "deleteFailed": "ブックマークの削除に失敗しました",
+    "createFolderFailed": "フォルダの作成に失敗しました",
+    "addToFolderFailed": "フォルダへの追加に失敗しました",
+    "renameFailed": "フォルダ名の変更に失敗しました",
+    "deleteFolderFailed": "フォルダの削除に失敗しました"
   },
   "history": {
     "title": "履歴",
@@ -82,5 +166,143 @@
     "retry": "再試行",
     "followUpQuestion": "追加質問",
     "askFollowUp": "さらに詳しく質問する"
+  },
+  "translate": {
+    "error": "翻訳に失敗しました",
+    "chatPlaceholder": "質問をしてみましょう"
+  },
+  "menu": {
+    "bookmarks": "ブックマーク",
+    "customQuestions": "カスタム質問"
+  },
+  "header": {
+    "learn": "学習する"
+  },
+  "settingsBottomSheet": {
+    "title": "設定",
+    "user": "ユーザー名",
+    "freePlan": "無料プラン",
+    "premiumPlan": "プレミアムプラン",
+    "tokens": "トークン",
+    "questions": "質問回数",
+    "resetIn": "あと{{days}}日でリセット",
+    "tryPremium": "7日間無料でプレミアムプランを試す",
+    "premiumSubtext": "その後、月500円で月間1,000回質問・最大50,000文字翻訳可能",
+    "languageSettings": "言語設定",
+    "nativeLanguage": "母国語",
+    "defaultLanguage": "デフォルト言語",
+    "learningLanguages": "学習中の言語",
+    "aiSettings": "AI設定",
+    "aiDetailLevel": "AI返答の詳細度",
+    "concise": "簡潔（デフォルト）",
+    "detailed": "詳細（語源・追加例文含む）",
+    "developerTools": "開発者ツール",
+    "resetApp": "アプリをリセット",
+    "resetAppDescription": "初回起動状態に戻す（AsyncStorage + 認証クリア）",
+    "resetConfirmTitle": "開発用: アプリをリセット",
+    "resetConfirmMessage": "AsyncStorageとSupabase認証をクリアして、初回起動状態に戻します。",
+    "resetComplete": "完了",
+    "resetCompleteMessage": "AsyncStorageと認証をクリアしました。アプリを再起動してください（ターミナルで\"r\"キーを押す）。",
+    "resetError": "リセットに失敗しました",
+    "privacyPolicy": "プライバシーポリシー",
+    "termsOfService": "利用規約",
+    "version": "Version"
+  },
+  "pos": {
+    "verb": "動詞",
+    "noun": "名詞",
+    "adjective": "形容詞",
+    "adverb": "副詞",
+    "pronoun": "代名詞",
+    "preposition": "前置詞",
+    "conjunction": "接続詞",
+    "interjection": "間投詞",
+    "article": "冠詞",
+    "determiner": "限定詞",
+    "auxiliary": "助動詞",
+    "modal": "法助動詞",
+    "transitive": "他動詞",
+    "intransitive": "自動詞",
+    "participle": "分詞",
+    "infinitive": "不定詞",
+    "gerund": "動名詞",
+    "numeral": "数詞",
+    "particle": "不変化詞",
+    "comparative": "比較級",
+    "superlative": "最上級",
+    "phrasal verb": "句動詞",
+    "proper noun": "固有名詞",
+    "common noun": "普通名詞"
+  },
+  "gender": {
+    "m": "男",
+    "f": "女",
+    "n": "中",
+    "mf": "男/女"
+  },
+  "metrics": {
+    "frequency": "使用頻度",
+    "difficulty": "難易度",
+    "nuance": "ニュアンス",
+    "rare": "めずらしい",
+    "common": "よく使う",
+    "easy": "かんたん",
+    "hard": "むずかしい",
+    "casual": "カジュアル",
+    "normal": "中立的",
+    "formal": "フォーマル"
+  },
+  "nuanceTag": {
+    "casual": "カジュアル",
+    "formal": "フォーマル",
+    "neutral": "中立的",
+    "academic": "学術的",
+    "slang": "スラング"
+  },
+  "questionTags": {
+    "textNuance": {
+      "label": "ニュアンスを教えて",
+      "prompt": "この文章のニュアンスを教えてください"
+    },
+    "summary": {
+      "label": "要約して",
+      "prompt": "この文章を要約してください"
+    },
+    "grammarCheck": {
+      "label": "文章をチェックして",
+      "prompt": "この文章の文法や表現をチェックしてください"
+    },
+    "paraphrase": {
+      "label": "言い換えて",
+      "prompt": "この文章を言い換えてください"
+    },
+    "grammarExplain": {
+      "label": "文法を解説して",
+      "prompt": "この文章の文法を解説してください"
+    },
+    "meaning": {
+      "label": "意味を教えて",
+      "prompt": "この文章の意味を教えてください"
+    },
+    "wordNuance": {
+      "label": "ニュアンス",
+      "prompt": "この単語の持つニュアンスについて詳しく教えてください"
+    },
+    "etymology": {
+      "label": "語源",
+      "prompt": "この単語の語源や由来を教えてください"
+    },
+    "synonyms": {
+      "label": "類義語",
+      "prompt": "この単語の類義語を教えてください"
+    },
+    "difference": {
+      "label": "どう違う？",
+      "prompt": "これらの単語の違いや使い分けを教えてください"
+    },
+    "usageContext": {
+      "label": "使用場面",
+      "prompt": "これらの単語がどんな場面で使われるか教えてください"
+    }
   }
 }

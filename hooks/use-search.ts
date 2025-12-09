@@ -6,7 +6,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
 import {
   detectLang,
   normalizeQuery,
@@ -15,9 +14,11 @@ import {
 } from '@/services/utils/language-detect';
 import { searchJaToEn, getWordDetail, getWordDetailStream } from '@/services/api/search';
 import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
+import { getCachedLanguage, setCachedLanguage } from '@/services/cache/language-detection-cache';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { detectWordLanguage } from '@/services/ai/dictionary-generator';
 import { useSubscription } from '@/contexts/subscription-context';
+import { useAuth } from '@/contexts/auth-context';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import { languageDetectionEvents } from '@/services/events/language-detection-events';
 import type { SearchError } from '@/types/search';
@@ -27,10 +28,12 @@ import { getMaxTextLength } from '@/constants/validation';
 
 export function useSearch() {
   const router = useRouter();
-  const { currentLanguage, nativeLanguage } = useLearningLanguages();
+  const { currentLanguage, nativeLanguage, learningLanguages } = useLearningLanguages();
   const { isPremium } = useSubscription();
+  const { needsInitialSetup } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTextLengthModal, setShowTextLengthModal] = useState(false);
 
   /**
    * 検索を実行してページ遷移
@@ -60,21 +63,12 @@ export function useSearch() {
       if (isSentence(normalizedQuery)) {
         logger.info('[Search] Detected sentence, navigating to translate mode');
 
-        // 文字数制限チェック
+        // 文字数制限チェック（初期設定中は警告を表示しない）
         const maxLength = getMaxTextLength(isPremium);
         if (normalizedQuery.length > maxLength) {
-          const upgradeText = isPremium
-            ? ''
-            : '\n\nプレミアムプランなら50,000文字まで翻訳できます。';
-
-          Alert.alert(
-            '文字数制限',
-            `翻訳は${maxLength.toLocaleString()}文字以内にしてください。${upgradeText}`,
-            [
-              { text: 'OK' },
-              ...(!isPremium ? [{ text: 'プレミアムを見る', onPress: () => router.push('/subscription') }] : []),
-            ]
-          );
+          if (!needsInitialSetup) {
+            setShowTextLengthModal(true);
+          }
           return false;
         }
 
@@ -86,35 +80,137 @@ export function useSearch() {
       const detectedLang = detectLang(normalizedQuery);
 
       // 4. 言語コードに変換
-      // - 漢字のみ: 中国語タブなら中国語、それ以外は母語
-      // - アルファベット: タブで選択中の言語
-      const targetLang = resolveLanguageCode(detectedLang, currentLanguage.code, nativeLanguage.code);
+      const learningLanguageCodes = learningLanguages.map(lang => lang.code);
+      let targetLang: string;
+      let usedCache = false;
+      let detectionMethod = 'rule-based detection';
+
+      // アルファベット言語のリスト
+      const alphabetLanguages = ['en', 'pt', 'es', 'fr', 'de', 'it'];
+
+      // 4.1. AI判定が必要なケース
+      // - mixed（混在テキスト）
+      // - alphabet かつ ネイティブ言語もアルファベット言語（例：ポルトガル語母語で英語を学習中）
+      const needsAiDetection =
+        detectedLang === 'mixed' ||
+        (detectedLang === 'alphabet' && alphabetLanguages.includes(nativeLanguage.code));
+
+      if (needsAiDetection) {
+        logger.info('[Search] AI detection needed:', {
+          detectedLang,
+          nativeLanguage: nativeLanguage.code,
+          reason: detectedLang === 'mixed' ? 'mixed text' : 'alphabet + alphabet native',
+        });
+
+        try {
+          // まずキャッシュをチェック
+          const cachedLang = await getCachedLanguage(normalizedQuery);
+
+          if (cachedLang) {
+            // キャッシュヒット
+            targetLang = cachedLang;
+            usedCache = true;
+            detectionMethod = 'AI detection (cached)';
+            logger.info('[Search] Using cached language:', {
+              word: normalizedQuery,
+              language: cachedLang,
+            });
+          } else {
+            // キャッシュミス → AI判定実行
+            const aiResult = await detectWordLanguage(
+              normalizedQuery,
+              [nativeLanguage.code, ...learningLanguageCodes]
+            );
+
+            if (aiResult && aiResult.language) {
+              targetLang = aiResult.language;
+              detectionMethod = 'AI detection (fresh)';
+
+              // 結果をキャッシュに保存
+              await setCachedLanguage(
+                normalizedQuery,
+                aiResult.language,
+                aiResult.confidence || 0,
+                aiResult.provider
+              );
+
+              logger.info('[Search] AI detected language:', {
+                language: aiResult.language,
+                confidence: aiResult.confidence,
+                provider: aiResult.provider,
+              });
+            } else {
+              // AI判定失敗時はタブ選択を信頼
+              logger.warn('[Search] AI detection failed, using current tab');
+              targetLang = currentLanguage.code;
+              detectionMethod = 'fallback to tab';
+            }
+          }
+        } catch (error) {
+          // エラー時もタブ選択を信頼
+          logger.error('[Search] AI detection error, using current tab:', error);
+          targetLang = currentLanguage.code;
+          detectionMethod = 'fallback to tab (error)';
+        }
+      } else {
+        // 4.2. それ以外（ja, kanji-only, alphabetでネイティブが非alphabet）は従来のロジック
+        // 単一言語の単語はタブ選択を優先
+        targetLang = resolveLanguageCode(
+          detectedLang,
+          currentLanguage.code,
+          nativeLanguage.code,
+          learningLanguageCodes
+        );
+        detectionMethod = 'rule-based detection';
+      }
+
+      // 判定理由をログ出力（デバッグ用）
+      const willNavigateTo = targetLang === nativeLanguage.code ? 'suggestion page' : 'word-detail page';
+
+      logger.info('[Search] Language detection result:', {
+        query: normalizedQuery,
+        detectedLang,
+        targetLang,
+        method: detectionMethod,
+        cached: usedCache,
+        navigation: willNavigateTo,
+        currentTab: currentLanguage.code,
+        nativeLanguage: nativeLanguage.code,
+        learningLanguages: learningLanguageCodes,
+      });
 
       // 5. 検索分岐
       if (targetLang === nativeLanguage.code) {
-        // 母語（日本語）が検出された場合
-        if (currentLanguage.code === nativeLanguage.code) {
-          // 選択中の言語も母語（日本語） → 日本語辞書として検索
-          await searchAndNavigateToWord(normalizedQuery, targetLang);
-        } else {
-          // 選択中の言語が他言語 → 訳語候補を表示
-          await searchAndNavigateToJp(normalizedQuery);
-        }
+        // 母語を検出 → 母語→学習言語への訳語候補を表示（タブに関係なく）
+        logger.info('[Search] Native language detected → showing translations');
+        await searchAndNavigateToJp(normalizedQuery);
       } else {
         // 非母語検索 → WordDetailPage（検出された言語の辞書検索）
+        logger.info('[Search] Foreign language detected → showing word detail');
         await searchAndNavigateToWord(normalizedQuery, targetLang);
       }
 
       // 6. 検索履歴に保存
       try {
-        // 日本語→他言語の翻訳検索の場合は、学習言語で保存
-        const historyLanguage = (targetLang === nativeLanguage.code && currentLanguage.code !== nativeLanguage.code)
+        // 母語→学習言語の翻訳検索の場合は、学習言語で保存
+        const historyLanguage = (targetLang === nativeLanguage.code)
           ? currentLanguage.code
           : targetLang;
-        await addSearchHistory(normalizedQuery, historyLanguage);
+
+        // searchTypeを判定
+        const searchType: 'word' | 'phrase' | 'translation' =
+          normalizedQuery.length > 50 ? 'translation' :
+          normalizedQuery.includes(' ') ? 'phrase' : 'word';
+
+        await addSearchHistory(normalizedQuery, historyLanguage, undefined, undefined, searchType);
+        logger.info('[Search] Added to history:', {
+          query: normalizedQuery,
+          language: historyLanguage,
+          searchType,
+        });
       } catch (historyError) {
         // 履歴保存に失敗しても検索は成功とみなす
-        logger.error('Failed to save search history:', historyError);
+        logger.error('[Search] Failed to save search history:', historyError);
       }
 
       // 質問回数のインクリメントはバックエンドが自動的に実行する
@@ -260,5 +356,7 @@ export function useSearch() {
     isLoading,
     error,
     clearError,
+    showTextLengthModal,
+    setShowTextLengthModal,
   };
 }

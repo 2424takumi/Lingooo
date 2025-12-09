@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Pl
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { z } from 'zod';
 
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
@@ -13,6 +14,7 @@ import { BookmarkToast } from '@/components/ui/bookmark-toast';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
+import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -25,18 +27,31 @@ import { getWordDetailStream, searchJaToEn } from '@/services/api/search';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
+import { parseQuotaError } from '@/utils/quota-error';
 import { getNuanceType } from '@/utils/nuance';
 import type { SuggestionItem } from '@/types/search';
 import { generateId } from '@/utils/id';
 import type { QAPair } from '@/types/chat';
 import { detectLang } from '@/services/utils/language-detect';
 
+// SuggestionItemのZodスキーマ定義
+const SuggestionItemSchema = z.object({
+  lemma: z.string(),
+  pos: z.array(z.string()),
+  gender: z.enum(['m', 'f', 'n', 'mf']).optional(),
+  shortSense: z.array(z.string()),
+  confidence: z.number(),
+  usageHint: z.string().optional(),
+  nuance: z.number().optional(),
+});
+
+const SuggestionListSchema = z.array(SuggestionItemSchema);
+
 export default function SearchScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const router = useRouter();
   const params = useLocalSearchParams();
   const { currentLanguage, nativeLanguage } = useLearningLanguages();
-  const { aiDetailLevel, setAIDetailLevel } = useAISettings();
   const { isPremium } = useSubscription();
   const safeAreaInsets = useSafeAreaInsets();
 
@@ -47,11 +62,23 @@ export default function SearchScreen() {
   const [headerHeight, setHeaderHeight] = useState(52); // デフォルト値
 
   const initialResults = useMemo<SuggestionItem[]>(() => {
+    if (!resultsParam || resultsParam === '[]') return [];
+
     try {
+      // 1. JSONパース
       const parsed = JSON.parse(resultsParam);
-      return Array.isArray(parsed) ? (parsed as SuggestionItem[]) : [];
+
+      // 2. Zodによる厳密なバリデーション
+      const result = SuggestionListSchema.safeParse(parsed);
+
+      if (result.success) {
+        return result.data;
+      } else {
+        logger.warn('[Search] Invalid search results schema:', result.error);
+        return [];
+      }
     } catch (error) {
-      logger.warn('[Search] Failed to parse search results', error);
+      logger.warn('[Search] Failed to parse search results:', error);
       return [];
     }
   }, [resultsParam]);
@@ -62,6 +89,10 @@ export default function SearchScreen() {
   // ハイブリッド表示用: 完了したヒントを追跡
   // suggestionsが更新されたら、usageHintがあるものは完了とみなす
   const [completedHintIndices, setCompletedHintIndices] = useState<Set<number>>(new Set());
+
+  // Quota exceeded modal state
+  const [isQuotaModalVisible, setIsQuotaModalVisible] = useState(false);
+  const [quotaErrorType, setQuotaErrorType] = useState<'translation_tokens' | 'question_count' | 'text_length' | undefined>();
 
   // 選択テキスト管理
   const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
@@ -128,8 +159,8 @@ export default function SearchScreen() {
 
       // キャッシュになければAPI呼び出し
       try {
-        logger.info(`[Search] Fetching ${currentLanguage.code} suggestions for:`, query);
-        const result = await searchJaToEn(query, currentLanguage.code);
+        logger.info(`[Search] Fetching ${currentLanguage.code} suggestions for:`, query, `(native: ${nativeLanguage.code})`);
+        const result = await searchJaToEn(query, currentLanguage.code, nativeLanguage.code);
         logger.info('[Search] Received suggestions:', result.items.length);
         setSuggestions(result.items);
       } catch (error) {
@@ -178,7 +209,6 @@ export default function SearchScreen() {
           topSuggestion.lemma,
           currentLanguage.code,
           nativeLanguage.code,
-          'concise',
           onProgress
         )
       );
@@ -278,7 +308,7 @@ export default function SearchScreen() {
       logger.info('[Search] Pre-fetching word detail for selected text:', text, 'detected:', detectedLang, 'resolved:', targetLang);
 
       prefetchWordDetail(text.trim(), (onProgress) => {
-        return getWordDetailStream(text.trim(), targetLang, nativeLanguage.code, 'concise', onProgress);
+        return getWordDetailStream(text.trim(), targetLang, nativeLanguage.code, onProgress);
       });
     }
   };
@@ -346,17 +376,29 @@ export default function SearchScreen() {
     }
   };
 
-  const handleQuickQuestion = (question: string) => {
+  const handleQuickQuestion = (question: string | import('@/constants/question-tags').QuestionTag) => {
+    // QuestionTagオブジェクトの場合はpromptを取得
+    const questionText = typeof question === 'string' ? question : question.prompt;
+    const questionLabel = typeof question === 'string' ? question : question.label;
+
+    let finalQuestion = questionText;
+    let displayQuestion = questionText; // labelではなくprompt（質問文）を使用
+
     if (selectedText?.text) {
-      // API用: 部分選択した箇所に焦点を当てた質問形式
-      const contextualQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${question}`;
-      // UI表示用: シンプルな形式
-      const displayQuestion = `「${selectedText.text}」について：${question}`;
+      // 部分選択時: 選択部分のみに焦点を当てる
+      finalQuestion = `文章全体の文脈を理解した上で、選択された部分「${selectedText.text}」に焦点を当てて回答してください。\n\n質問：${questionText}`;
+      displayQuestion = `「${selectedText.text}」について：${questionText}`;
       setSelectedText(null);
-      void sendQuickQuestion(contextualQuestion, displayQuestion);
     } else {
-      void sendQuickQuestion(question);
+      // 検索結果全体への質問時: 複数の単語を比較する指示を追加
+      if (questionLabel.includes('違い')) {
+        finalQuestion = `${questionText}\n\n※検索結果に表示されているこれらの単語について、それぞれの意味の違い、ニュアンスの違い（フォーマル・カジュアル、肯定的・否定的など）、使い分け、よく使われる文脈などを比較しながら説明してください。`;
+      } else if (questionLabel.includes('使用場面')) {
+        finalQuestion = `${questionText}\n\n※検索結果に表示されているこれらの単語について、それぞれがどのような場面や文脈で使われるか、具体例を交えて説明してください。`;
+      }
     }
+
+    void sendQuickQuestion(finalQuestion, displayQuestion);
   };
 
   const handleLanguagePress = () => {
@@ -432,7 +474,6 @@ export default function SearchScreen() {
           identifier: query,
           messages: [{ id: generateId('msg'), role: 'user', content: contextualQuestion, createdAt: Date.now() }],
           context: chatContext,
-          detailLevel: aiDetailLevel,
           targetLanguage: currentLanguage.code,
         },
         // onContent: ストリーミング中の更新
@@ -468,13 +509,27 @@ export default function SearchScreen() {
         // onError: エラー時
         (error) => {
           logger.error('[Search] Follow-up question error:', error);
+
+          // Check if this is a quota error
+          const quotaError = parseQuotaError(error);
+
+          let errorMessage: string;
+          if (quotaError.isQuotaError) {
+            // Show quota exceeded modal
+            setQuotaErrorType(quotaError.quotaType);
+            setIsQuotaModalVisible(true);
+            errorMessage = quotaError.userFriendlyMessage;
+          } else {
+            errorMessage = error.message || '質問に失敗しました';
+          }
+
           setQAPairs(prev => prev.map(pair => {
             if (pair.id === pairId) {
               return {
                 ...pair,
                 followUpQAs: pair.followUpQAs?.map(fu =>
                   fu.id === followUpId
-                    ? { ...fu, status: 'error' as const, errorMessage: error.message }
+                    ? { ...fu, status: 'error' as const, errorMessage }
                     : fu
                 ),
               };
@@ -492,6 +547,15 @@ export default function SearchScreen() {
       logger.info('[Search] Generator loop completed');
     } catch (error) {
       logger.error('[Search] Failed to send follow-up question:', error);
+
+      // Check if this is a quota error
+      const quotaError = parseQuotaError(error);
+
+      if (quotaError.isQuotaError) {
+        // Show quota exceeded modal
+        setQuotaErrorType(quotaError.quotaType);
+        setIsQuotaModalVisible(true);
+      }
     }
   };
 
@@ -553,7 +617,7 @@ export default function SearchScreen() {
 
     // バックグラウンドでAI詳細（例文など）をプリフェッチ
     logger.info('[Search] 🚀 Starting prefetch for:', item.lemma);
-    prefetchWordDetail(item.lemma, (onProgress) => getWordDetailStream(item.lemma, currentLanguage.code, nativeLanguage.code, 'concise', onProgress));
+    prefetchWordDetail(item.lemma, (onProgress) => getWordDetailStream(item.lemma, currentLanguage.code, nativeLanguage.code, onProgress));
 
     router.push({
       pathname: '/(tabs)/word-detail',
@@ -634,9 +698,9 @@ export default function SearchScreen() {
 
       {/* Chat Section - Fixed at bottom */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'position' : 'height'}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? -48 : 0}
       >
         <View pointerEvents="box-none" style={styles.chatContainerFixed}>
           <ChatSection
@@ -645,11 +709,9 @@ export default function SearchScreen() {
             followUps={followUps}
             isStreaming={isChatStreaming}
             error={qaPairs.length === 0 ? chatError : null}
-            detailLevel={aiDetailLevel}
             onSend={handleChatSubmit}
             onQuickQuestion={handleQuickQuestion}
             onRetryQuestion={handleQACardRetry}
-            onDetailLevelChange={setAIDetailLevel}
             expandedMaxHeight={chatExpandedMaxHeight}
             scope="search"
             identifier={query}
@@ -688,6 +750,19 @@ export default function SearchScreen() {
         onChangeFolderName={setNewFolderName}
         onCreate={handleCreateFolder}
         onClose={handleCloseCreateFolderModal}
+      />
+
+      {/* Quota Exceeded Modal */}
+      <QuotaExceededModal
+        visible={isQuotaModalVisible}
+        onClose={() => setIsQuotaModalVisible(false)}
+        remainingQuestions={0}
+        isPremium={isPremium}
+        quotaType={quotaErrorType}
+        onUpgradePress={() => {
+          setIsQuotaModalVisible(false);
+          setIsSubscriptionModalOpen(true);
+        }}
       />
 
       {/* Subscription Bottom Sheet */}

@@ -38,15 +38,15 @@ export function LanguageTag({ label, selected = true, onPress }: LanguageTagProp
 
 const styles = StyleSheet.create({
   container: {
-    height: 24,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    height: 28,
+    paddingHorizontal: 17,
+    borderRadius: 9,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
   },
   text: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
   },

@@ -35,6 +35,7 @@ interface QuotaExceededModalProps {
   remainingQuestions: number;
   isPremium: boolean;
   onUpgradePress?: () => void;
+  quotaType?: 'translation_tokens' | 'question_count' | 'text_length';
 }
 
 export function QuotaExceededModal({
@@ -43,6 +44,7 @@ export function QuotaExceededModal({
   remainingQuestions,
   isPremium,
   onUpgradePress,
+  quotaType = 'question_count', // Default to question_count for backward compatibility
 }: QuotaExceededModalProps) {
   const cardBackground = useThemeColor({ light: '#FFFFFF', dark: '#1C1C1E' }, 'cardBackground');
   const textColor = useThemeColor({}, 'text');
@@ -63,6 +65,43 @@ export function QuotaExceededModal({
 
   const daysUntilReset = getDaysUntilReset();
 
+  // Get title and description based on quota type
+  const getTitle = () => {
+    if (quotaType === 'text_length') {
+      return isPremium ? '翻訳文字数の上限に達しました' : '翻訳文字数の上限に達しました';
+    }
+    if (quotaType === 'translation_tokens') {
+      return isPremium ? '本日の翻訳トークンに達しました' : '月間翻訳トークンに達しました';
+    }
+    return isPremium ? '本日の質問回数に達しました' : '月間質問回数に達しました';
+  };
+
+  const getDescription = () => {
+    if (quotaType === 'text_length') {
+      return isPremium
+        ? `一度に翻訳できる文字数は20,000文字までです。\n\nテキストを分割して翻訳してください。`
+        : `無料プランでは一度に4,000文字まで翻訳できます。\n\nプレミアムプランにアップグレードすると、20,000文字まで翻訳できます。`;
+    }
+    if (quotaType === 'translation_tokens') {
+      return isPremium
+        ? `本日の翻訳トークン制限に達しました。\n明日リセットされます。`
+        : `無料プランの月間翻訳トークン制限に達しました。\n\nプレミアムプランにアップグレードすると、より多くの翻訳が可能になります。`;
+    }
+    return isPremium
+      ? `本日の質問回数制限に達しました。\n明日リセットされます。`
+      : `無料プランの月間質問回数（100回）に達しました。\n\nプレミアムプランにアップグレードすると、月間1,000回まで質問できます。`;
+  };
+
+  const getUpgradeButtonText = () => {
+    if (quotaType === 'text_length') {
+      return 'もっと長い文章を翻訳したい';
+    }
+    if (quotaType === 'translation_tokens') {
+      return 'もっと翻訳したい';
+    }
+    return 'もっと質問したい';
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -74,18 +113,16 @@ export function QuotaExceededModal({
 
           {/* Title */}
           <Text style={[styles.title, { color: textColor }]}>
-            {isPremium ? '本日の質問回数に達しました' : '月間質問回数に達しました'}
+            {getTitle()}
           </Text>
 
           {/* Description */}
           <Text style={[styles.description, { color: subTextColor }]}>
-            {isPremium
-              ? `本日の質問回数制限に達しました。\n明日リセットされます。`
-              : `無料プランの月間質問回数（100回）に達しました。\n\nプレミアムプランにアップグレードすると、月間1,000回まで質問できます。`}
+            {getDescription()}
           </Text>
 
           {/* Reset Info */}
-          {!isPremium && (
+          {!isPremium && quotaType !== 'text_length' && (
             <View style={styles.resetInfo}>
               <Text style={[styles.resetText, { color: subTextColor }]}>
                 無料プランは{daysUntilReset}日後にリセットされます
@@ -97,7 +134,7 @@ export function QuotaExceededModal({
           <View style={styles.buttonContainer}>
             {!isPremium && (
               <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade}>
-                <Text style={styles.upgradeButtonText}>プレミアムを見る</Text>
+                <Text style={styles.upgradeButtonText}>{getUpgradeButtonText()}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity

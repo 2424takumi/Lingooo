@@ -864,6 +864,119 @@ export async function generateUsageHints(
 }
 
 /**
+ * Hintをストリーミング生成（プレーンテキストモード - スムーズな文字表示）
+ *
+ * チャットと同じ方式でSSEストリーミング。5-10文字ずつ返される。
+ *
+ * @param word - 調べる単語
+ * @param targetLanguage - 単語の言語（例: 'pt', 'en'）
+ * @param nativeLanguage - ユーザーの母国語（例: 'ja', 'en'）
+ * @param onChunk - テキストチャンクを受け取るコールバック
+ */
+export interface HintStreamCallbacks {
+  onChunk: (chunk: string) => void;
+  onComplete: (fullText: string) => void;
+  onError?: (error: Error) => void;
+}
+
+export async function generateHintStream(
+  word: string,
+  targetLanguage: string,
+  nativeLanguage: string,
+  callbacks: HintStreamCallbacks
+): Promise<void> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      logger.info(`[GeminiClient] Starting Hint stream for: ${word} (${targetLanguage} -> ${nativeLanguage})`);
+
+      const xhr = new XMLHttpRequest();
+      let buffer = '';
+      let lastProcessedIndex = 0;
+      let accumulatedText = '';
+
+      // 認証ヘッダーを取得（非同期）
+      const authHeaders = await getAuthHeadersFromClient();
+
+      xhr.open('POST', getApiUrl('/generate-hint-stream'), true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+
+      // 認証ヘッダーを追加
+      Object.entries(authHeaders).forEach(([key, value]) => {
+        xhr.setRequestHeader(key, value);
+      });
+
+      xhr.onprogress = () => {
+        const newText = xhr.responseText.substring(lastProcessedIndex);
+        lastProcessedIndex = xhr.responseText.length;
+        buffer += newText;
+
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              logger.info('[GeminiClient] Hint stream completed');
+              continue;
+            }
+
+            try {
+              const event = JSON.parse(data);
+
+              if (event.type === 'start') {
+                logger.info('[GeminiClient] Hint stream started');
+              } else if (event.type === 'chunk') {
+                // テキストチャンクを蓄積して通知
+                accumulatedText += event.text;
+                callbacks.onChunk(event.text);
+                logger.debug(`[GeminiClient] Hint chunk: "${event.text}" (total: ${accumulatedText.length} chars)`);
+              } else if (event.type === 'complete') {
+                // ストリーム完了
+                logger.info(`[GeminiClient] Hint complete: "${event.fullText}"`);
+                callbacks.onComplete(event.fullText);
+              } else if (event.type === 'error') {
+                logger.error('[GeminiClient] Hint stream error:', event.error);
+                const error = new Error(event.error || 'Stream error');
+                callbacks.onError?.(error);
+                reject(error);
+              }
+            } catch (e) {
+              logger.warn('[GeminiClient] Failed to parse SSE data:', e);
+            }
+          }
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          logger.info('[GeminiClient] Hint SSE stream finished successfully');
+          resolve();
+        } else {
+          logger.error(`[GeminiClient] Hint SSE stream failed with status ${xhr.status}`);
+          const error = new Error(`Request failed with status ${xhr.status}`);
+          callbacks.onError?.(error);
+          reject(error);
+        }
+      };
+
+      xhr.onerror = () => {
+        logger.error('[GeminiClient] Hint SSE stream network error');
+        const error = new Error('Network error');
+        callbacks.onError?.(error);
+        reject(error);
+      };
+
+      xhr.send(JSON.stringify({ word, targetLanguage, nativeLanguage }));
+    } catch (error) {
+      logger.error('[GeminiClient] Error in generateHintStream:', error);
+      callbacks.onError?.(error as Error);
+      reject(error);
+    }
+  });
+}
+
+/**
  * バックエンドでAPIキーが設定されているかチェック
  */
 /**

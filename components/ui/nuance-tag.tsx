@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 export type NuanceType = 'casual' | 'formal' | 'neutral' | 'academic' | 'slang';
 
@@ -8,31 +9,26 @@ interface NuanceTagProps {
 
 const NUANCE_CONFIG = {
   casual: {
-    label: 'カジュアル',
     emoji: '😊',
     backgroundColor: '#E5F8D7',
     textColor: '#242424',
   },
   formal: {
-    label: 'フォーマル',
     emoji: '💼',
     backgroundColor: '#F8DED7',
     textColor: '#242424',
   },
   neutral: {
-    label: '中立的',
     emoji: '⚖️',
     backgroundColor: '#D7E8F8',
     textColor: '#242424',
   },
   academic: {
-    label: '学術的',
     emoji: '📚',
     backgroundColor: '#D7E5F8',
     textColor: '#242424',
   },
   slang: {
-    label: 'スラング',
     emoji: '🔥',
     backgroundColor: '#F8D7E5',
     textColor: '#242424',
@@ -40,11 +36,12 @@ const NUANCE_CONFIG = {
 };
 
 export function NuanceTag({ type }: NuanceTagProps) {
+  const { t } = useTranslation();
   const config = NUANCE_CONFIG[type];
 
   return (
     <View style={[styles.container, { backgroundColor: config.backgroundColor }]}>
-      <Text style={[styles.label, { color: config.textColor }]}>{config.label}</Text>
+      <Text style={[styles.label, { color: config.textColor }]}>{t(`nuanceTag.${type}`)}</Text>
       <Text style={styles.emoji}>{config.emoji}</Text>
     </View>
   );

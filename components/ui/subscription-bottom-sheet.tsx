@@ -111,6 +111,7 @@ function CustomQuestionIcon({ size = 20, color = '#FFFFFF' }: { size?: number; c
 interface SubscriptionBottomSheetProps {
   visible: boolean;
   onClose: () => void;
+  source?: string;
 }
 
 export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottomSheetProps) {
@@ -320,11 +321,6 @@ export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottom
                 </Text>
               </View>
 
-              {/* Subtitle */}
-              <Text style={[styles.subtitle, { color: subTextColor }]}>
-                ７日間無料で開始して、いつでもキャンセルできます
-              </Text>
-
               {/* Segmented Control */}
               <View style={styles.segmentContainer}>
                 <View style={styles.segmentedControl}>
@@ -363,7 +359,7 @@ export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottom
                 </View>
 
                 {selectedPlan === 'yearly' && (
-                  <Text style={styles.savingsText}>月約412円で2ヶ月分お得</Text>
+                  <Text style={styles.savingsText}>年間プランで2ヶ月分お得！</Text>
                 )}
               </View>
 
@@ -393,9 +389,14 @@ export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottom
                   {isPurchasing ? (
                     <ActivityIndicator color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.purchaseButtonText}>無料で体験する</Text>
+                    <Text style={styles.purchaseButtonText}>７日間無料で体験する</Text>
                   )}
                 </TouchableOpacity>
+
+                {/* Free Trial Notice */}
+                <Text style={[styles.freeTrialNotice, { color: subTextColor }]}>
+                  プランはいつでもキャンセルができます。
+                </Text>
 
                 {/* Features */}
                 <View style={styles.featuresContainer}>
@@ -432,15 +433,6 @@ export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottom
                     </View>
                     <Text style={[styles.featureText, { color: '#414141' }]}>
                       無制限のカスタム質問
-                    </Text>
-                  </View>
-
-                  <View style={styles.featureItem}>
-                    <View style={styles.featureIconContainer}>
-                      <SparklesIcon size={16} color="#FFFFFF" />
-                    </View>
-                    <Text style={[styles.featureText, { color: '#414141' }]}>
-                      より高性能なAIによる回答
                     </Text>
                   </View>
 
@@ -573,17 +565,10 @@ const styles = StyleSheet.create({
     lineHeight: 30,
   },
 
-  // Subtitle
-  subtitle: {
-    fontSize: 12,
-    fontWeight: '300',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-
   // Segmented Control
   segmentContainer: {
     alignItems: 'center',
+    marginTop: 8,
     marginBottom: 20,
   },
   segmentedControl: {
@@ -618,10 +603,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   savingsText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
     color: '#1877EE',
-    marginTop: 6,
+    marginTop: 8,
     letterSpacing: 1,
   },
 
@@ -659,7 +644,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     marginTop: 2,
-    marginBottom: 24,
+    marginBottom: 0,
   },
   purchaseButtonDisabled: {
     backgroundColor: '#CCCCCC',
@@ -669,6 +654,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     letterSpacing: 1,
+  },
+
+  // Free Trial Notice
+  freeTrialNotice: {
+    fontSize: 13,
+    fontWeight: '400',
+    textAlign: 'center',
+    marginTop: 6,
+    marginBottom: 16,
+    lineHeight: 18,
   },
 
   // Features
@@ -689,7 +684,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   featureText: {
-    fontSize: 14,
+    fontSize: 15,
     letterSpacing: 1,
   },
 

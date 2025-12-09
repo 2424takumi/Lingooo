@@ -8,7 +8,10 @@
     "create": "Criar",
     "close": "Fechar",
     "error": "Erro",
-    "loading": "Carregando..."
+    "loading": "Carregando...",
+    "next": "Próximo",
+    "complete": "Concluir",
+    "ok": "OK"
   },
   "settings": {
     "title": "Configurações",
@@ -39,14 +42,37 @@
       "title": "Idioma Padrão",
       "description": "Selecione o idioma a ser exibido quando o aplicativo for iniciado."
     },
-    "aiSettings": {
-      "title": "Configurações de IA",
-      "detailLevel": {
-        "title": "Nível de Detalhes",
-        "concise": "Conciso",
-        "balanced": "Equilibrado",
-        "detailed": "Detalhado"
-      }
+    "account": {
+      "title": "Conta",
+      "profile": "Perfil",
+      "profileDescription": "Gerenciar informações da conta",
+      "dataManagement": "Gerenciamento de Dados",
+      "dataManagementDescription": "Backup e restauração de dados de aprendizado"
+    },
+    "info": {
+      "title": "Informações",
+      "privacyPolicy": "Política de Privacidade",
+      "termsOfService": "Termos de Serviço",
+      "version": "Versão"
+    },
+    "developer": {
+      "title": "Ferramentas do Desenvolvedor",
+      "resetApp": "Redefinir App",
+      "resetAppDescription": "Redefinir para o estado inicial (AsyncStorage + autenticação)",
+      "resetConfirmTitle": "Dev: Redefinir App",
+      "resetConfirmMessage": "Isso limpará o AsyncStorage e a autenticação do Supabase, retornando o app ao estado inicial. O app será reiniciado.",
+      "resetCompleteTitle": "Concluído",
+      "resetCompleteMessage": "AsyncStorage e autenticação limpos. Por favor, reinicie o app (pressione 'r' no terminal).",
+      "resetError": "Falha na redefinição"
+    }
+  },
+  "home": {
+    "searchPlaceholder": "Digite texto para aprender...",
+    "hintText": "Texto longo mudará automaticamente para o modo de tradução",
+    "searching": "Pesquisando...",
+    "historyTab": {
+      "words": "Palavras",
+      "translations": "Traduções"
     }
   },
   "search": {
@@ -54,23 +80,81 @@
     "noResults": "Nenhum resultado encontrado para \"{{query}}\"",
     "chatPlaceholder": "Faça uma pergunta sobre esta palavra..."
   },
+  "initialSetup": {
+    "step1Title": "Selecione Seu Idioma Nativo",
+    "step2Title": "Selecione Idiomas para Aprender",
+    "step1Description": "Será usado como idioma de exibição do app",
+    "step2Description": "Seleções múltiplas permitidas. Você pode adicionar ou remover depois",
+    "nativeLanguageLabel": "Idioma Nativo",
+    "learningLanguageLabel": "Idiomas de Aprendizado"
+  },
   "wordDetail": {
     "bookmarked": "Adicionado aos favoritos",
     "examples": "Exemplos",
     "usageHint": "Dica de Uso",
     "frequency": "Frequência",
     "difficulty": "Dificuldade",
-    "nuance": "Nuance"
+    "nuance": "Nuance",
+    "notFound": "Palavra não encontrada",
+    "loadingFailed": "Falha ao carregar palavra",
+    "backButton": "Voltar",
+    "foundInLanguage": "Encontrado em {{language}}",
+    "chatPlaceholder": "Faça uma pergunta sobre esta palavra..."
   },
   "bookmarks": {
     "title": "Favoritos",
+    "allTab": "Todos",
+    "foldersTab": "Pastas",
+    "loading": "Carregando...",
+    "bookmarkCount": "{{count}} favoritos",
+    "bookmarkCountSingular": "{{count}} favorito",
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "daysAgo": "{{days}} dias atrás",
+    "general": "Geral",
+    "deleteBookmark": "Excluir Favorito",
+    "deleteBookmarkConfirm": "Tem certeza de que deseja excluir este favorito?",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "copied": "Copiado",
+    "copiedToClipboard": "Pergunta e resposta copiadas para a área de transferência",
+    "error": "Erro",
+    "copyFailed": "Falha ao copiar",
     "addToFolder": "Adicionar à Pasta",
-    "noFolder": "Sem Pasta",
-    "createFolder": "Criar Nova Pasta",
+    "copy": "Copiar",
+    "totalBookmarks": "Total de {{count}} favoritos",
+    "totalFolders": "Total de {{count}} pastas",
+    "noFolders": "Sem pastas",
+    "noFoldersDescription": "Crie pastas para organizar seus favoritos",
+    "noBookmarks": "Sem favoritos",
+    "noBookmarksDescription": "Respostas de chat favoritadas\nserão salvas aqui",
+    "createFolder": "Criar Pasta",
+    "newFolder": "Nova Pasta",
     "folderName": "Nome da Pasta",
+    "folderNamePlaceholder": "ex: Palavras importantes",
+    "create": "Criar",
+    "addToFolderTitle": "Adicionar à Pasta",
+    "noFolder": "Sem Pasta",
+    "noFoldersYet": "Ainda sem pastas",
+    "noFoldersYetDescription": "Você pode criar uma nova pasta no botão abaixo",
     "createNewFolder": "Criar Nova Pasta",
-    "folderNameRequired": "Por favor, insira um nome para a pasta",
-    "createFailed": "Falha ao criar pasta"
+    "createAndAdd": "Criar e Adicionar",
+    "rename": "Renomear",
+    "renameFolderTitle": "Renomear Pasta",
+    "enterFolderName": "Digite o nome da pasta",
+    "save": "Salvar",
+    "deleteFolder": "Excluir Pasta",
+    "deleteFolderConfirm": "Tem certeza de que deseja excluir \"{{name}}\"?\n\nOs favoritos desta pasta não serão excluídos.",
+    "premiumFeature": "Recurso Premium",
+    "premiumFolderMessage": "O recurso de pastas é exclusivo do plano Premium.\n\nOrganize seus favoritos para um aprendizado mais eficiente.",
+    "viewPremium": "Ver Premium",
+    "loadFailed": "Falha ao carregar favoritos",
+    "folderLoadFailed": "Falha ao carregar pastas",
+    "deleteFailed": "Falha ao excluir favorito",
+    "createFolderFailed": "Falha ao criar pasta",
+    "addToFolderFailed": "Falha ao adicionar à pasta",
+    "renameFailed": "Falha ao renomear pasta",
+    "deleteFolderFailed": "Falha ao excluir pasta"
   },
   "history": {
     "title": "Histórico",
@@ -82,5 +166,143 @@
     "retry": "Tentar Novamente",
     "followUpQuestion": "Continuação",
     "askFollowUp": "Fazer uma pergunta de acompanhamento"
+  },
+  "translate": {
+    "error": "Falha na tradução",
+    "chatPlaceholder": "Faça uma pergunta sobre este texto..."
+  },
+  "menu": {
+    "bookmarks": "Favoritos",
+    "customQuestions": "Perguntas Personalizadas"
+  },
+  "header": {
+    "learn": "Aprender"
+  },
+  "settingsBottomSheet": {
+    "title": "Configurações",
+    "user": "Nome de usuário",
+    "freePlan": "Plano Gratuito",
+    "premiumPlan": "Plano Premium",
+    "tokens": "Tokens",
+    "questions": "Perguntas",
+    "resetIn": "Redefine em {{days}} dias",
+    "tryPremium": "Experimente o Premium por 7 dias grátis",
+    "premiumSubtext": "Depois ¥500/mês para 1.000 perguntas e 50.000 caracteres de tradução",
+    "languageSettings": "Configurações de Idioma",
+    "nativeLanguage": "Idioma Nativo",
+    "defaultLanguage": "Idioma Padrão",
+    "learningLanguages": "Idiomas de Aprendizado",
+    "aiSettings": "Configurações de IA",
+    "aiDetailLevel": "Nível de Detalhe da Resposta da IA",
+    "concise": "Conciso (Padrão)",
+    "detailed": "Detalhado (com etimologia e exemplos)",
+    "developerTools": "Ferramentas do Desenvolvedor",
+    "resetApp": "Redefinir App",
+    "resetAppDescription": "Redefinir para o estado inicial (AsyncStorage + limpeza de autenticação)",
+    "resetConfirmTitle": "Dev: Redefinir App",
+    "resetConfirmMessage": "Isso limpará o AsyncStorage e a autenticação do Supabase, retornando o app ao estado inicial.",
+    "resetComplete": "Concluído",
+    "resetCompleteMessage": "AsyncStorage e autenticação limpos. Por favor, reinicie o app (pressione a tecla 'r' no terminal).",
+    "resetError": "Falha na redefinição",
+    "privacyPolicy": "Política de Privacidade",
+    "termsOfService": "Termos de Serviço",
+    "version": "Versão"
+  },
+  "pos": {
+    "verb": "Verbo",
+    "noun": "Substantivo",
+    "adjective": "Adjetivo",
+    "adverb": "Advérbio",
+    "pronoun": "Pronome",
+    "preposition": "Preposição",
+    "conjunction": "Conjunção",
+    "interjection": "Interjeição",
+    "article": "Artigo",
+    "determiner": "Determinante",
+    "auxiliary": "Auxiliar",
+    "modal": "Modal",
+    "transitive": "Transitivo",
+    "intransitive": "Intransitivo",
+    "participle": "Particípio",
+    "infinitive": "Infinitivo",
+    "gerund": "Gerúndio",
+    "numeral": "Numeral",
+    "particle": "Partícula",
+    "comparative": "Comparativo",
+    "superlative": "Superlativo",
+    "phrasal verb": "Verbo Frasal",
+    "proper noun": "Substantivo Próprio",
+    "common noun": "Substantivo Comum"
+  },
+  "gender": {
+    "m": "M",
+    "f": "F",
+    "n": "N",
+    "mf": "M/F"
+  },
+  "metrics": {
+    "frequency": "Frequência",
+    "difficulty": "Dificuldade",
+    "nuance": "Nuance",
+    "rare": "Raro",
+    "common": "Comum",
+    "easy": "Fácil",
+    "hard": "Difícil",
+    "casual": "Casual",
+    "normal": "Neutro",
+    "formal": "Formal"
+  },
+  "nuanceTag": {
+    "casual": "Casual",
+    "formal": "Formal",
+    "neutral": "Neutro",
+    "academic": "Acadêmico",
+    "slang": "Gíria"
+  },
+  "questionTags": {
+    "textNuance": {
+      "label": "Nuance",
+      "prompt": "Diga-me a nuance deste texto"
+    },
+    "summary": {
+      "label": "Resumir",
+      "prompt": "Resuma este texto"
+    },
+    "grammarCheck": {
+      "label": "Verificar Gramática",
+      "prompt": "Verifique a gramática e expressões deste texto"
+    },
+    "paraphrase": {
+      "label": "Parafrasear",
+      "prompt": "Parafraseie este texto"
+    },
+    "grammarExplain": {
+      "label": "Explicar Gramática",
+      "prompt": "Explique a gramática deste texto"
+    },
+    "meaning": {
+      "label": "Significado",
+      "prompt": "Diga-me o significado deste texto"
+    },
+    "wordNuance": {
+      "label": "Nuance",
+      "prompt": "Diga-me a nuance desta palavra em detalhes"
+    },
+    "etymology": {
+      "label": "Etimologia",
+      "prompt": "Diga-me a etimologia e origem desta palavra"
+    },
+    "synonyms": {
+      "label": "Sinônimos",
+      "prompt": "Diga-me sinônimos para esta palavra"
+    },
+    "difference": {
+      "label": "Diferença?",
+      "prompt": "Diga-me a diferença e distinção de uso entre estas palavras"
+    },
+    "usageContext": {
+      "label": "Contexto de Uso",
+      "prompt": "Diga-me em que situações estas palavras são usadas"
+    }
   }
 }

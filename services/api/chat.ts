@@ -50,7 +50,6 @@ export async function sendChatMessage(req: ChatRequest): Promise<ChatCompletion>
         identifier: req.identifier,
         messages: req.messages,
         context: req.context,
-        detailLevel: req.detailLevel,
         targetLanguage: req.targetLanguage,
         nativeLanguage: req.nativeLanguage,
       }),
@@ -236,7 +235,6 @@ export async function* sendChatMessageStream(
       identifier: req.identifier,
       messages: req.messages,
       context: req.context,
-      detailLevel: req.detailLevel,
       targetLanguage: req.targetLanguage,
       nativeLanguage: req.nativeLanguage,
     })
@@ -320,7 +318,6 @@ export async function sendChatMessageStreamWebSocket(
       identifier: req.identifier,
       messages: req.messages,
       context: req.context,
-      detailLevel: req.detailLevel,
       targetLanguage: req.targetLanguage,
       nativeLanguage: req.nativeLanguage,
     }, {
@@ -462,7 +459,6 @@ export async function* sendFollowUpQuestionStream(
     identifier: req.identifier,
     messages: req.messages,
     context: req.context,
-    detailLevel: req.detailLevel,
     targetLanguage: req.targetLanguage,
     nativeLanguage: req.nativeLanguage,
   };
@@ -558,4 +554,80 @@ export async function* sendFollowUpQuestionStream(
 
   logger.info('[Chat API] Sending XHR request');
   xhr.send(JSON.stringify(requestBody));
+}
+
+/**
+ * Question tag query request interface
+ */
+export interface QuestionTagRequest {
+  questionTagId: string;
+  isCustom: boolean;
+  word?: string;
+  meaning?: string;
+  selectedText?: string;
+  fullContext?: string;
+  wordDetail?: any;
+  nativeLanguage: string;
+  targetLanguage: string;
+  customQuestion?: string;
+  scope: string;
+  identifier: string;
+}
+
+/**
+ * Question tag query response interface
+ */
+export interface QuestionTagResponse {
+  answer: string;
+  promptId: string;
+  metadata: {
+    questionTagId: string;
+    isCustom: boolean;
+  };
+}
+
+/**
+ * Send question tag query to backend
+ * Uses specialized prompts registered in Langfuse
+ *
+ * @param req - Question tag request
+ * @returns Answer from AI with metadata
+ */
+export async function sendQuestionTagQuery(req: QuestionTagRequest): Promise<QuestionTagResponse> {
+  logger.info('[Chat API] sendQuestionTagQuery called:', {
+    questionTagId: req.questionTagId,
+    isCustom: req.isCustom,
+    scope: req.scope,
+    backendUrl: BACKEND_URL,
+  });
+
+  try {
+    const response = await authenticatedFetch(`${BACKEND_URL}/api/chat/question-tag`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
+
+    if (!response.ok) {
+      // 401エラーの場合は認証エラーとして扱う
+      if (response.status === 401) {
+        throw new Error('認証エラー: ログインし直してください');
+      }
+
+      // エラーレスポンスを取得
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const data: QuestionTagResponse = await response.json();
+
+    logger.info('[Chat API] QuestionTag response received:', {
+      answerLength: data.answer?.length ?? 0,
+      promptId: data.promptId,
+    });
+
+    return data;
+  } catch (error) {
+    logger.error('[Chat API] Error in sendQuestionTagQuery:', error);
+    throw error;
+  }
 }

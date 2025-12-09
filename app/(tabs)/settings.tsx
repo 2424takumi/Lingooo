@@ -5,9 +5,10 @@ import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
-import { useAISettings } from '@/contexts/ai-settings-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from 'react-i18next';
+import { clearPromptCache } from '@/services/ai/langfuse-client';
 
 // Icons
 function ChevronRightIcon({ size = 24, color = '#686868' }: { size?: number; color?: string }) {
@@ -25,21 +26,33 @@ function ChevronRightIcon({ size = 24, color = '#686868' }: { size?: number; col
 }
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
-  const {
-    aiDetailLevel,
-    setAIDetailLevel,
-  } = useAISettings();
+
+  // 開発用: プロンプトキャッシュをクリア
+  const handleClearPromptCache = async () => {
+    try {
+      await clearPromptCache();
+      Alert.alert(
+        'Cache Cleared',
+        'Prompt cache has been cleared. New prompts will be fetched from backend on next use.',
+        [{ text: t('common.ok') }]
+      );
+    } catch (error) {
+      console.error('Failed to clear prompt cache:', error);
+      Alert.alert(t('common.error'), 'Failed to clear prompt cache');
+    }
+  };
 
   // 開発用: アプリをリセットして初回起動状態に戻す
   const handleResetApp = () => {
     Alert.alert(
-      '開発用: アプリをリセット',
-      'AsyncStorageとSupabase認証をクリアして、初回起動状態に戻します。アプリが再起動されます。',
+      t('settings.developer.resetConfirmTitle'),
+      t('settings.developer.resetConfirmMessage'),
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'リセット',
+          text: t('settings.developer.resetApp'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -51,17 +64,17 @@ export default function SettingsScreen() {
 
               // 完了メッセージ
               Alert.alert(
-                '完了',
-                'AsyncStorageと認証をクリアしました。アプリを再起動してください（ターミナルで"r"キーを押す）。',
+                t('settings.developer.resetCompleteTitle'),
+                t('settings.developer.resetCompleteMessage'),
                 [
                   {
-                    text: 'OK',
+                    text: t('common.ok'),
                   },
                 ]
               );
             } catch (error) {
               console.error('リセットエラー:', error);
-              Alert.alert('エラー', 'リセットに失敗しました');
+              Alert.alert(t('common.error'), t('settings.developer.resetError'));
             }
           },
         },
@@ -78,43 +91,23 @@ export default function SettingsScreen() {
         <View style={styles.headerContainer}>
           <UnifiedHeaderBar
             pageType="other"
-            title="設定"
+            title={t('settings.title')}
             onBackPress={() => router.back()}
           />
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* AI Settings */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>AI設定</Text>
-
-            <View style={styles.settingItem}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>AI返答の詳細度</Text>
-                <Text style={styles.settingDescription}>
-                  {aiDetailLevel === 'concise' ? '簡潔（デフォルト）' : '詳細（語源・追加例文含む）'}
-                </Text>
-              </View>
-              <Switch
-                value={aiDetailLevel === 'detailed'}
-                onValueChange={(value) => setAIDetailLevel(value ? 'detailed' : 'concise')}
-                trackColor={{ false: '#D1D1D1', true: '#111111' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-          </View>
-
           {/* Account Settings */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>アカウント</Text>
+            <Text style={styles.sectionTitle}>{t('settings.account.title')}</Text>
 
             <TouchableOpacity
               style={styles.settingItem}
               onPress={() => router.push('/profile')}
             >
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>プロフィール</Text>
-                <Text style={styles.settingDescription}>アカウント情報を管理</Text>
+                <Text style={styles.settingLabel}>{t('settings.account.profile')}</Text>
+                <Text style={styles.settingDescription}>{t('settings.account.profileDescription')}</Text>
               </View>
               <ChevronRightIcon />
             </TouchableOpacity>
@@ -124,8 +117,8 @@ export default function SettingsScreen() {
               onPress={() => router.push('/data-management')}
             >
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>データ管理</Text>
-                <Text style={styles.settingDescription}>学習データのバックアップと復元</Text>
+                <Text style={styles.settingLabel}>{t('settings.account.dataManagement')}</Text>
+                <Text style={styles.settingDescription}>{t('settings.account.dataManagementDescription')}</Text>
               </View>
               <ChevronRightIcon />
             </TouchableOpacity>
@@ -133,14 +126,14 @@ export default function SettingsScreen() {
 
           {/* About */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>情報</Text>
+            <Text style={styles.sectionTitle}>{t('settings.info.title')}</Text>
 
             <TouchableOpacity
               style={styles.settingItem}
               onPress={() => router.push('/privacy-policy')}
             >
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>プライバシーポリシー</Text>
+                <Text style={styles.settingLabel}>{t('settings.info.privacyPolicy')}</Text>
               </View>
               <ChevronRightIcon />
             </TouchableOpacity>
@@ -150,14 +143,14 @@ export default function SettingsScreen() {
               onPress={() => router.push('/terms-of-service')}
             >
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>利用規約</Text>
+                <Text style={styles.settingLabel}>{t('settings.info.termsOfService')}</Text>
               </View>
               <ChevronRightIcon />
             </TouchableOpacity>
 
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>バージョン</Text>
+                <Text style={styles.settingLabel}>{t('settings.info.version')}</Text>
               </View>
               <Text style={styles.versionText}>1.0.0</Text>
             </View>
@@ -165,16 +158,28 @@ export default function SettingsScreen() {
 
           {/* Developer Tools */}
           <View style={[styles.section, styles.lastSection]}>
-            <Text style={styles.sectionTitle}>開発者ツール</Text>
+            <Text style={styles.sectionTitle}>{t('settings.developer.title')}</Text>
+
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={handleClearPromptCache}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Clear Prompt Cache</Text>
+                <Text style={styles.settingDescription}>
+                  Clear cached AI prompts (for testing language changes)
+                </Text>
+              </View>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.settingItem, styles.dangerItem]}
               onPress={handleResetApp}
             >
               <View style={styles.settingInfo}>
-                <Text style={styles.dangerLabel}>アプリをリセット</Text>
+                <Text style={styles.dangerLabel}>{t('settings.developer.resetApp')}</Text>
                 <Text style={styles.settingDescription}>
-                  初回起動状態に戻す（AsyncStorage + 認証クリア）
+                  {t('settings.developer.resetAppDescription')}
                 </Text>
               </View>
             </TouchableOpacity>

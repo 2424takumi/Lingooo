@@ -3,8 +3,8 @@
  *
  * 学習言語に応じて適切なプロンプトを動的に生成
  *
- * 注意：detailLevel（詳細度）はチャット機能のAI返答にのみ適用
- * 辞書データには詳細度の概念はなく、常に同じ構造を返す
+ * 注意：辞書データには詳細度の概念はなく、常に同じ構造を返す
+ * （detailLevel機能は2025-12-06に削除されました）
  */
 
 import { fetchPromptWithFallback } from './langfuse-client';
@@ -80,22 +80,22 @@ function hasGrammaticalGender(languageCode: string): boolean {
  * 超高速表示用：0.2~0.3秒で返却
  */
 export async function createBasicInfoPrompt(word: string, targetLanguage: string = 'en', nativeLanguage: string = 'ja'): Promise<string> {
-  const langName = getLanguageNameJa(targetLanguage);
-  const nativeLangName = getLanguageNameJa(nativeLanguage);
+  const targetLanguageName = getLanguageNameEn(targetLanguage);
+  const nativeLanguageName = getLanguageNameEn(nativeLanguage);
   const needsGender = hasGrammaticalGender(targetLanguage);
-  const genderField = needsGender ? ', "gender": "m または f または n または mf（名詞の場合のみ）"' : '';
+  const genderField = needsGender ? ', "gender": "m or f or n or mf (for nouns only)"' : '';
 
-  const fallback = `${langName}の単語"{{word}}"の基本情報を以下のJSON構造で最小限のトークンで生成：
+  const fallback = `Generate basic information for the {{targetLanguageName}} word "{{word}}" in the following JSON structure with minimal tokens:
 
 {
-  "headword": {"lemma": "{{word}}", "lang": "{{targetLanguage}}", "pos": ["品詞（英語、例: verb, noun）"]{{genderField}}},
-  "senses": [{"id": "1", "glossShort": "簡潔な{{nativeLangName}}の意味（10文字以内）"}, {"id": "2", "glossShort": "意味2"}]
+  "headword": {"lemma": "{{word}}", "lang": "{{targetLanguage}}", "pos": ["part of speech (English, e.g., verb, noun)"]{{genderField}}},
+  "senses": [{"id": "1", "glossShort": "concise {{nativeLanguageName}} meaning (within 10 chars)"}, {"id": "2", "glossShort": "meaning 2"}]
 }
 
-要件:
-- sensesは2-3個、主要な意味のみ（各10文字以内）
-- {{nativeLangName}}の説明は簡潔で分かりやすく
-- 超高速レスポンス用のため最小限の情報のみ`;
+Requirements:
+- 2-3 senses only, main meanings (each within 10 chars)
+- {{nativeLanguageName}} explanations should be concise and clear
+- Minimal information only for ultra-fast response`;
 
   return await fetchPromptWithFallback(
     'dictionary-basic',
@@ -103,9 +103,9 @@ export async function createBasicInfoPrompt(word: string, targetLanguage: string
     {
       word,
       targetLanguage,
-      nativeLanguage,      // Template expects {{nativeLanguage}}
-      langName,
-      nativeLangName,
+      langName: targetLanguageName,
+      nativeLanguage,
+      nativeLangName: nativeLanguageName,
       genderField,
     }
   );
@@ -126,39 +126,61 @@ export async function createAdditionalDetailsPrompt(
   targetLanguage: string = 'en',
   nativeLanguage: string = 'ja'
 ): Promise<string> {
-  const langName = getLanguageNameJa(targetLanguage);
-  const nativeLangName = getLanguageNameJa(nativeLanguage);
+  const targetLanguageName = getLanguageNameEn(targetLanguage);
+  const nativeLanguageName = getLanguageNameEn(nativeLanguage);
 
-  const fallback = `{{langName}}の単語"{{word}}"について、以下の追加情報のみを生成してください：
+  console.log('[createAdditionalDetailsPrompt] Parameters:', {
+    word,
+    targetLanguage,
+    targetLanguageName,
+    nativeLanguage,
+    nativeLanguageName,
+  });
 
+  const fallback = `You are a bilingual dictionary engine that generates high-quality example sentences for language learners.
+
+For the {{targetLanguageName}} word "{{word}}", generate ONLY example sentences with translations.
+
+Output JSON format:
 {
-  "hint": {"text": "{{nativeLangName}}で2〜3文の簡潔な説明（使用場面・ニュアンス・類似語との違いなど、学習に最も重要な特徴2点）"},
-  "metrics": {"frequency": 頻出度0-100, "difficulty": 難易度0-100, "nuance": ニュアンスの強さ0-100},
   "examples": [
-    {"textSrc": "自然な{{langName}}の例文", "textDst": "自然な{{nativeLangName}}訳"},
-    {"textSrc": "{{langName}}例文2", "textDst": "{{nativeLangName}}訳2"},
-    {"textSrc": "{{langName}}例文3", "textDst": "{{nativeLangName}}訳3"}
+    {"textSrc": "natural {{targetLanguageName}} example sentence", "textDst": "natural {{nativeLanguageName}} translation"},
+    {"textSrc": "{{targetLanguageName}} example 2", "textDst": "{{nativeLanguageName}} translation 2"},
+    {"textSrc": "{{targetLanguageName}} example 3", "textDst": "{{nativeLanguageName}} translation 3"},
+    {"textSrc": "{{targetLanguageName}} example 4", "textDst": "{{nativeLanguageName}} translation 4"}
   ]
 }
 
-要件:
-- hint, metrics, examples のみを生成（headwordとsensesは不要）
-- hintは{{nativeLangName}}で2〜3文、学習に最も重要な2つの特徴（使用場面・ニュアンス・文法・類似語との違いなど）
-- 例文は3-5個、実用的で自然な{{langName}}の文
-- metricsは実際の使用頻度を反映
-- {{nativeLangName}}の説明は自然で分かりやすく`;
+Requirements:
+- Generate ONLY the "examples" array (do NOT include hint or metrics)
+- Provide EXACTLY 4 practical and natural {{targetLanguageName}} example sentences
+- Each example must have BOTH textSrc ({{targetLanguageName}} sentence) and textDst ({{nativeLanguageName}} translation)
+- IMPORTANT: Keep sentences concise - textSrc should be 8-12 words, textDst should be 15-25 characters
+- Examples should demonstrate different usage contexts and sentence patterns
+- Translations should be natural and appropriate for the context (use appropriate formality level for each sentence)
+- Keep translations clear and contextually accurate`;
 
-  return await fetchPromptWithFallback(
+  const prompt = await fetchPromptWithFallback(
     'dictionary-additional',
     fallback,
     {
       word,
-      targetLanguage,      // Template expects {{targetLanguage}}
-      nativeLanguage,      // Template expects {{nativeLanguage}}
-      langName,
-      nativeLangName,
+      targetLanguage,
+      targetLanguageName,
+      nativeLanguage,
+      nativeLanguageName,
     }
   );
+
+  // Log the first 500 characters of the generated prompt to verify variables are replaced
+  console.log('[createAdditionalDetailsPrompt] Generated prompt preview:', prompt.substring(0, 500));
+  console.log('[createAdditionalDetailsPrompt] Checking for unreplaced variables:', {
+    hasNativeLanguageName: prompt.includes('{{nativeLanguageName}}'),
+    hasTargetLanguageName: prompt.includes('{{targetLanguageName}}'),
+    actualNativeLanguage: nativeLanguageName,
+  });
+
+  return prompt;
 }
 
 /**
@@ -179,32 +201,32 @@ export function createDictionaryPrompt(
   targetLanguage: string = 'en',
   nativeLanguage: string = 'ja'
 ): string {
-  const langName = getLanguageNameJa(targetLanguage);
-  const nativeLangName = getLanguageNameJa(nativeLanguage);
+  const targetLanguageName = getLanguageNameEn(targetLanguage);
+  const nativeLanguageName = getLanguageNameEn(nativeLanguage);
   const needsGender = hasGrammaticalGender(targetLanguage);
-  const genderField = needsGender ? ', "gender": "m または f または n または mf（名詞の場合のみ）"' : '';
+  const genderField = needsGender ? ', "gender": "m or f or n or mf (for nouns only)"' : '';
 
-  return `${langName}の単語"${word}"の辞書情報を以下のJSON構造で生成してください：
+  return `Generate dictionary information for the ${targetLanguageName} word "${word}" in the following JSON structure:
 
 {
-  "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["品詞（英語、例: verb, noun）"]${genderField}},
-  "senses": [{"id": "1", "glossShort": "簡潔な${nativeLangName}の意味（10文字以内）"}, {"id": "2", "glossShort": "意味2"}],
-  "hint": {"text": "${nativeLangName}で2〜3文の簡潔な説明（使用場面・ニュアンス・類似語との違いなど、学習に最も重要な特徴2点）"},
-  "metrics": {"frequency": 頻出度0-100, "difficulty": 難易度0-100, "nuance": ニュアンスの強さ0-100},
+  "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["part of speech (English, e.g., verb, noun)"]${genderField}},
+  "senses": [{"id": "1", "glossShort": "concise ${nativeLanguageName} meaning (within 10 chars)"}, {"id": "2", "glossShort": "meaning 2"}],
+  "hint": {"text": "2-3 concise sentences in ${nativeLanguageName} (usage context, nuance, differences from similar words, etc. - 2 most important learning points)"},
+  "metrics": {"frequency": frequency 0-100, "difficulty": difficulty 0-100, "nuance": nuance strength 0-100},
   "examples": [
-    {"textSrc": "自然な${langName}の例文", "textDst": "自然な${nativeLangName}訳"},
-    {"textSrc": "${langName}例文2", "textDst": "${nativeLangName}訳2"},
-    {"textSrc": "${langName}例文3", "textDst": "${nativeLangName}訳3"}
+    {"textSrc": "natural ${targetLanguageName} example sentence", "textDst": "natural ${nativeLanguageName} translation"},
+    {"textSrc": "${targetLanguageName} example 2", "textDst": "${nativeLanguageName} translation 2"},
+    {"textSrc": "${targetLanguageName} example 3", "textDst": "${nativeLanguageName} translation 3"}
   ]
 }
 
-要件:
-- この順序（headword → senses → hint → metrics → examples）で必ず生成
-- hintは${nativeLangName}で2〜3文、学習に最も重要な2つの特徴（使用場面・ニュアンス・文法・類似語との違いなど）
-- sensesは2-3個、主要な意味のみ（各10文字以内）
-- 例文は3-5個、実用的で自然な${langName}の文
-- metricsは実際の使用頻度を反映
-- ${nativeLangName}の説明は自然で分かりやすく`;
+Requirements:
+- Generate in this order (headword → senses → hint → metrics → examples)
+- Hint should be 2-3 sentences in ${nativeLanguageName}, covering 2 most important features (usage context, nuance, grammar, differences from similar words, etc.)
+- 2-3 senses only, main meanings (each within 10 chars)
+- 3-5 practical and natural ${targetLanguageName} example sentences
+- Metrics should reflect actual usage frequency
+- ${nativeLanguageName} explanations should be natural and clear`;
 }
 
 /**

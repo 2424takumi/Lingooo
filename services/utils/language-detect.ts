@@ -140,6 +140,7 @@ export function validateSearchInput(text: string): { valid: boolean; error?: str
  * @param detectedLang - detectLangの結果
  * @param currentLanguageCode - 現在選択中の言語コード
  * @param nativeLanguageCode - 母語の言語コード
+ * @param learningLanguageCodes - 学習中の言語コード配列（オプション）
  * @returns ISO 639-1言語コード ('ja', 'zh', 'en', 'es', 'pt'等)
  *
  * @example
@@ -147,11 +148,13 @@ export function validateSearchInput(text: string): { valid: boolean; error?: str
  * resolveLanguageCode('kanji-only', 'zh', 'ja') // => 'zh'（中国語タブ選択中）
  * resolveLanguageCode('kanji-only', 'en', 'ja') // => 'ja'（母語を使用）
  * resolveLanguageCode('alphabet', 'es', 'ja') // => 'es'（タブで選択中の言語）
+ * resolveLanguageCode('alphabet', 'ja', 'ja', ['en']) // => 'en'（ホーム画面での検索）
  */
 export function resolveLanguageCode(
   detectedLang: Language,
   currentLanguageCode: string,
-  nativeLanguageCode: string = 'ja'
+  nativeLanguageCode: string = 'ja',
+  learningLanguageCodes: string[] = []
 ): string {
   // 日本語として確定（ひらがな/カタカナを含む）
   if (detectedLang === 'ja') {
@@ -164,10 +167,35 @@ export function resolveLanguageCode(
     if (currentLanguageCode === 'zh') {
       return 'zh';
     }
-    // それ以外 → 母語（日本語）として扱う
+    // 日本語タブ選択中 → 日本語辞書
+    if (currentLanguageCode === 'ja') {
+      return 'ja';
+    }
+    // それ以外 → 母語として扱う
     return nativeLanguageCode;
   }
 
-  // alphabet or mixed → 選択中の言語を使う
+  // alphabet or mixed の場合
+  // アルファベット言語を優先的に選択
+  // 1. currentLanguageがアルファベット言語（en, pt, es等）なら、それを使用
+  // 2. そうでない場合（ja, zh等）、学習言語からアルファベット言語を探す
+
+  const alphabetLanguages = ['en', 'pt', 'es', 'fr', 'de', 'it'];
+
+  // currentLanguageがアルファベット言語なら、それを返す
+  if (alphabetLanguages.includes(currentLanguageCode)) {
+    return currentLanguageCode;
+  }
+
+  // currentLanguageがアルファベット言語でない場合、学習言語からアルファベット言語を探す
+  const alphabetLearningLang = learningLanguageCodes.find(code =>
+    alphabetLanguages.includes(code)
+  );
+
+  if (alphabetLearningLang) {
+    return alphabetLearningLang;
+  }
+
+  // アルファベット言語が見つからない場合は、currentLanguageをそのまま返す
   return currentLanguageCode;
 }

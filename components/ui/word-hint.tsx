@@ -1,6 +1,5 @@
 import { View, StyleSheet, Text } from 'react-native';
 import { SelectableText } from './selectable-text';
-import { TypingIndicator } from './typing-indicator';
 
 interface WordHintProps {
   hint: string;
@@ -27,11 +26,8 @@ export function WordHint({
   return (
     <View style={styles.container}>
       {isStreaming ? (
-        // ストリーミング中はTypingIndicatorと共に表示
-        <View style={styles.streamingContainer}>
-          <Text style={styles.hintText}>{streamingText}</Text>
-          <TypingIndicator />
-        </View>
+        // ストリーミング中はテキストのみ表示
+        <Text style={styles.hintText}>{streamingText}</Text>
       ) : (
         // 完成後は選択可能テキストとして表示
         <SelectableText
@@ -54,14 +50,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 18,
   },
-  streamingContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
   hintText: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 25,
     color: '#000000',
     letterSpacing: 0.5,
     flex: 1,

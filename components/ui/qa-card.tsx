@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, Alert, TextInput, TouchableOpacity } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Path } from 'react-native-svg';
+import Markdown from 'react-native-markdown-display';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
 import type { QAPair } from '@/types/chat';
@@ -307,25 +308,65 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                   transform: [{ translateY: slideAnim }],
                 }}
               >
-                <Text
-                  selectable
-                  selectionColor="#111111"
-                  style={[styles.answerText, { color: answerTextColor }]}
+                <Markdown
+                  style={{
+                    body: {
+                      color: answerTextColor,
+                      fontSize: 15,
+                      lineHeight: 25,
+                      letterSpacing: 0.3,
+                    },
+                    paragraph: {
+                      marginTop: 0,
+                      marginBottom: 8,
+                    },
+                    text: {
+                      color: answerTextColor,
+                    },
+                    strong: {
+                      fontWeight: '700',
+                      color: answerTextColor,
+                    },
+                    em: {
+                      fontStyle: 'italic',
+                      color: answerTextColor,
+                    },
+                  }}
                 >
                   {pair.a}
-                </Text>
+                </Markdown>
               </Animated.View>
             ) : null}
             <TypingIndicator color="#2C2C2C" dotSize={6} />
           </View>
         ) : (
-          <Text
-            selectable
-            selectionColor="#111111"
-            style={[styles.answerText, { color: answerTextColor }]}
+          <Markdown
+            style={{
+              body: {
+                color: answerTextColor,
+                fontSize: 15,
+                lineHeight: 25,
+                letterSpacing: 0.3,
+              },
+              paragraph: {
+                marginTop: 0,
+                marginBottom: 8,
+              },
+              text: {
+                color: answerTextColor,
+              },
+              strong: {
+                fontWeight: '700',
+                color: answerTextColor,
+              },
+              em: {
+                fontStyle: 'italic',
+                color: answerTextColor,
+              },
+            }}
           >
             {pair.a ?? (pair.status === 'error' ? '回答を取得できませんでした。' : '')}
-          </Text>
+          </Markdown>
         )}
 
         {pair.status === 'error' && pair.errorMessage ? (
@@ -487,8 +528,8 @@ const styles = StyleSheet.create({
       marginBottom: -4,
   },
       answerText: {
-        fontSize: 14,
-      lineHeight: 24,
+        fontSize: 15,
+      lineHeight: 25,
       fontWeight: '400',
       letterSpacing: 0.3,
   },

@@ -1,23 +1,23 @@
-import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard, ScrollView, Text, Alert, Platform } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard, ScrollView, Text, Platform } from 'react-native';
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { SearchIcon, MicIcon, ReloadIcon } from './icons';
+import { SearchIcon, ReloadIcon } from './icons';
 import { LanguageTag } from './language-tag';
 import { KeyboardToolbar } from './keyboard-toolbar';
-import { VoiceWaveAnimation } from './voice-wave-animation';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useSubscription } from '@/contexts/subscription-context';
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'expo-router';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { getMaxTextLength } from '@/constants/validation';
 import { isSentence } from '@/utils/text-detector';
-import { useVoiceInput } from '@/hooks/use-voice-input';
 import { logger } from '@/utils/logger';
 
 const LINE_HEIGHT = 22;
-const MAX_LINES = 5;
+const MAX_LINES = 10;
 const INPUT_TOP_PADDING = 4;
-const INPUT_BOTTOM_PADDING = 9;
-const MIN_INPUT_HEIGHT = LINE_HEIGHT + INPUT_TOP_PADDING + INPUT_BOTTOM_PADDING;
-const MAX_INPUT_HEIGHT = MIN_INPUT_HEIGHT + LINE_HEIGHT * (MAX_LINES - 1);
+const INPUT_BOTTOM_PADDING = 12;
+const MIN_INPUT_HEIGHT = LINE_HEIGHT * 5 + INPUT_TOP_PADDING + INPUT_BOTTOM_PADDING;
+const MAX_INPUT_HEIGHT = LINE_HEIGHT * MAX_LINES + INPUT_TOP_PADDING + INPUT_BOTTOM_PADDING;
 
 interface SearchBarProps {
   placeholder?: string;
@@ -25,6 +25,7 @@ interface SearchBarProps {
   value?: string;
   onChangeText?: (text: string) => void;
   autoFocus?: boolean;
+  onTextLengthError?: () => void;
 }
 
 export function SearchBar({
@@ -33,9 +34,12 @@ export function SearchBar({
   value: externalValue,
   onChangeText: externalOnChangeText,
   autoFocus = false,
+  onTextLengthError,
 }: SearchBarProps) {
   const { learningLanguages, currentLanguage, defaultLanguage, setCurrentLanguage } = useLearningLanguages();
   const { isPremium } = useSubscription();
+  const { needsInitialSetup } = useAuth();
+  const router = useRouter();
   const [internalValue, setInternalValue] = useState('');
   const inputRef = useRef<TextInput>(null);
   const containerBackground = useThemeColor({}, 'surfaceBackground');
@@ -46,17 +50,26 @@ export function SearchBar({
   const buttonBackground = useThemeColor({}, 'buttonGray');
   const buttonIconColor = useThemeColor({}, 'buttonText');
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
+  const hasInitialized = useRef(false);
 
   // キーボードツールバー用のID
   const keyboardAccessoryID = 'search-bar-input-accessory';
 
-  // デフォルト言語が設定されたらcurrentLanguageを初期化
+  // デフォルト言語が設定されたらcurrentLanguageを初期化（初回のみ）
   useEffect(() => {
-    if (defaultLanguage && currentLanguage.id !== defaultLanguage.id) {
-      setCurrentLanguage(defaultLanguage.id);
-      logger.info('[SearchBar] Initialized with default language:', defaultLanguage.id);
+    if (!hasInitialized.current && defaultLanguage && defaultLanguage.id) {
+      // 初期化フラグを先にセットして、他の更新を防ぐ
+      hasInitialized.current = true;
+
+      // currentLanguageがデフォルトと異なる場合のみ更新
+      if (currentLanguage.id !== defaultLanguage.id) {
+        setCurrentLanguage(defaultLanguage.id);
+        logger.info('[SearchBar] Initialized with default language:', defaultLanguage.id);
+      } else {
+        logger.info('[SearchBar] Already on default language:', defaultLanguage.id);
+      }
     }
-  }, [defaultLanguage.id]);
+  }, [defaultLanguage, defaultLanguage.id, currentLanguage.id, setCurrentLanguage]);
 
   // プランに応じた文字数制限
   const maxLength = useMemo(() => getMaxTextLength(isPremium), [isPremium]);
@@ -75,50 +88,43 @@ export function SearchBar({
 
   const setSearchText = useCallback(
     (text: string) => {
+      // まず状態を更新（文字数カウンター表示のため）
       if (externalOnChangeText) {
         externalOnChangeText(text);
       } else {
         setInternalValue(text);
       }
+
+      // 文字数制限チェック（文章の場合のみ）
+      const isTranslation = isSentence(text);
+      if (isTranslation && text.length > maxLength && !needsInitialSetup) {
+        onTextLengthError?.();
+      }
     },
-    [externalOnChangeText]
+    [externalOnChangeText, maxLength, needsInitialSetup, onTextLengthError]
   );
 
   const handleSearchPress = useCallback(() => {
-    if (searchText.trim()) {
-      Keyboard.dismiss();
-      onSearch?.(searchText);
+    const trimmedText = searchText.trim();
+    if (!trimmedText) return;
+
+    // 文字数制限チェック（文章の場合のみ）
+    const isTranslation = isSentence(trimmedText);
+    if (isTranslation && trimmedText.length > maxLength) {
+      // 初期設定中はアラートを表示しない
+      if (!needsInitialSetup) {
+        onTextLengthError?.();
+      }
+      return; // 検索を中止
     }
-  }, [searchText, onSearch]);
+
+    Keyboard.dismiss();
+    onSearch?.(trimmedText);
+  }, [searchText, onSearch, maxLength, needsInitialSetup, onTextLengthError]);
 
   const handleLanguageSelect = useCallback(async (languageId: string) => {
     await setCurrentLanguage(languageId);
   }, [setCurrentLanguage]);
-
-  // 音声入力
-  const { state: voiceState, transcript, isSupported, audioLevel, startListening, stopListening } = useVoiceInput({
-    onResult: (text) => {
-      setSearchText(text);
-    },
-    onError: (error) => {
-      Alert.alert('音声認識エラー', error);
-    },
-  });
-
-  const handleMicPress = useCallback(() => {
-    if (voiceState === 'listening') {
-      stopListening();
-    } else {
-      startListening();
-    }
-  }, [voiceState, startListening, stopListening]);
-
-  // 音声認識中は一時的な文字列を表示
-  useEffect(() => {
-    if (voiceState === 'listening' && transcript) {
-      // 一時的な表示のみ(確定はonResultで行う)
-    }
-  }, [voiceState, transcript]);
 
   // shrink back to single line when text cleared
   useEffect(() => {
@@ -177,7 +183,6 @@ export function SearchBar({
             multiline
             scrollEnabled={true}
             textAlignVertical="top"
-            maxLength={maxLength}
             onContentSizeChange={(e) => {
               const contentHeight = e.nativeEvent.contentSize.height + INPUT_TOP_PADDING + INPUT_BOTTOM_PADDING;
               const nextHeight = Math.min(
@@ -214,26 +219,7 @@ export function SearchBar({
             </Text>
           )}
 
-          {/* 音声入力の波形アニメーション */}
-          {voiceState === 'listening' && (
-            <VoiceWaveAnimation
-              audioLevel={audioLevel}
-              isActive={voiceState === 'listening'}
-              color="#666666"
-            />
-          )}
-
-          {/* マイクボタン (UI確認用に常に表示) */}
-          <TouchableOpacity
-            style={styles.micButton}
-            onPress={handleMicPress}
-          >
-            <MicIcon
-              size={20}
-              color={voiceState === 'listening' ? '#FF4444' : '#666666'}
-            />
-          </TouchableOpacity>
-
+          {/* 検索ボタン */}
           <TouchableOpacity
             style={[styles.searchButton, { backgroundColor: buttonBackground }]}
             onPress={handleSearchPress}
@@ -259,7 +245,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   languageTabContainer: {
-    height: 24,
+    height: 28,
     paddingHorizontal: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -291,9 +277,9 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '400',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     backgroundColor: 'transparent',
     minHeight: MIN_INPUT_HEIGHT,
     maxHeight: MAX_INPUT_HEIGHT,
@@ -334,12 +320,6 @@ const styles = StyleSheet.create({
   charCounterLimit: {
     color: '#E74C3C',
     fontWeight: '600',
-  },
-  micButton: {
-    width: 34,
-    height: 34,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   searchButton: {
     width: 34,

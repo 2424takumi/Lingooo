@@ -2,8 +2,15 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AVAILABLE_LANGUAGES } from '@/types/language';
 
 const INITIAL_SETUP_KEY = '@initial_language_setup_completed';
+
+// 言語IDから言語コードへの変換ヘルパー
+const languageIdToCode = (languageId: string): string => {
+  const language = AVAILABLE_LANGUAGES.find(lang => lang.id === languageId);
+  return language?.code || languageId; // 見つからない場合はそのまま返す（フォールバック）
+};
 
 interface AuthContextType {
   user: User | null;
@@ -46,9 +53,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setSession(session);
       setUser(session?.user ?? null);
 
-      if (session?.user) {
-        ensureUserRecord(session.user.id);
-      }
+      // Note: ensureUserRecord is called explicitly in completeInitialSetup and initializeAuth
+      // We don't call it here to avoid race conditions with initial setup
     });
 
     return () => subscription.unsubscribe();
@@ -161,14 +167,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // レコードがなければ作成
       if (!existingUser) {
+        // 言語IDを言語コードに変換
+        const nativeLanguageCode = nativeLanguage ? languageIdToCode(nativeLanguage) : 'ja';
+        const learningLanguageCodes = learningLanguages?.map(id => languageIdToCode(id)) || ['en'];
+
+        console.log('[Auth] Converting language IDs to codes:', {
+          nativeLanguage,
+          nativeLanguageCode,
+          learningLanguages,
+          learningLanguageCodes,
+        });
+
         const { error: insertError } = await supabase.from('users').insert({
           id: userId,
           plan: 'free',
           monthly_question_count: 0,
           monthly_token_usage: 0,
-          native_language: nativeLanguage || 'ja',
-          default_language: learningLanguages?.[0] || 'en',
-          learning_languages: learningLanguages || ['en'],
+          native_language: nativeLanguageCode,
+          default_language: learningLanguageCodes[0],
+          learning_languages: learningLanguageCodes,
           ai_detail_level: 'concise',
         });
 

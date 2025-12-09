@@ -250,3 +250,17 @@ export function CloseSmallIcon({ size = 24, color = '#000000' }: IconProps) {
     </Svg>
   );
 }
+
+export function UpArrowIcon({ size = 24, color = '#FFFFFF' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 19V5M5 12L12 5L19 12"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}

@@ -3,6 +3,7 @@ import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-na
 import { useEffect } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { router, type Href } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 interface SideMenuProps {
   visible: boolean;
@@ -40,6 +41,7 @@ function MessagePlusIcon({ size = 22, color = '#242424' }: { size?: number; colo
 }
 
 export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) {
+  const { t } = useTranslation();
   const item1Opacity = useSharedValue(0);
   const item1TranslateY = useSharedValue(-10);
   const item2Opacity = useSharedValue(0);
@@ -112,7 +114,7 @@ export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) 
               <View style={styles.iconButton}>
                 <BookmarkIcon size={20} color="#242424" />
               </View>
-              <Text style={styles.menuText}>ブックマーク</Text>
+              <Text style={styles.menuText}>{t('menu.bookmarks')}</Text>
             </TouchableOpacity>
           </Animated.View>
 
@@ -128,7 +130,7 @@ export function SideMenu({ visible, onClose, menuButtonLayout }: SideMenuProps) 
                   <MessagePlusIcon size={24} color="#242424" />
                 </View>
               </View>
-              <Text style={styles.menuText}>カスタム質問</Text>
+              <Text style={styles.menuText}>{t('menu.customQuestions')}</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>

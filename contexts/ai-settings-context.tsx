@@ -1,14 +1,12 @@
 /**
  * AI設定管理コンテキスト
  *
- * AI返答の詳細度などの設定を管理
+ * カスタム質問などの設定を管理
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { AIDetailLevel, CustomQuestion } from '@/types/settings';
+import type { CustomQuestion } from '@/types/settings';
 import {
-  getAIDetailLevel,
-  setAIDetailLevel as saveAIDetailLevel,
   getCustomQuestions,
   addCustomQuestion as saveCustomQuestion,
   removeCustomQuestion as deleteCustomQuestion,
@@ -16,10 +14,6 @@ import {
 import { logger } from '@/utils/logger';
 
 interface AISettingsContextType {
-  // AI返答設定
-  aiDetailLevel: AIDetailLevel;
-  setAIDetailLevel: (level: AIDetailLevel) => Promise<void>;
-
   // カスタム質問
   customQuestions: CustomQuestion[];
   addCustomQuestion: (title: string, question: string) => Promise<void>;
@@ -36,7 +30,6 @@ interface AISettingsProviderProps {
 }
 
 export function AISettingsProvider({ children }: AISettingsProviderProps) {
-  const [aiDetailLevel, setAIDetailLevelState] = useState<AIDetailLevel>('concise');
   const [customQuestions, setCustomQuestionsState] = useState<CustomQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,34 +42,16 @@ export function AISettingsProvider({ children }: AISettingsProviderProps) {
     try {
       setIsLoading(true);
 
-      // 各設定を並列で読み込み
-      const [detailLevel, questions] = await Promise.all([
-        getAIDetailLevel(),
-        getCustomQuestions(),
-      ]);
-
-      setAIDetailLevelState(detailLevel);
+      const questions = await getCustomQuestions();
       setCustomQuestionsState(questions);
 
       logger.info('[AISettings] Settings loaded:', {
-        aiDetailLevel: detailLevel,
         customQuestionsCount: questions.length,
       });
     } catch (error) {
       logger.error('[AISettings] Failed to load settings:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const setAIDetailLevel = async (level: AIDetailLevel) => {
-    try {
-      await saveAIDetailLevel(level);
-      setAIDetailLevelState(level);
-      logger.info('[AISettings] AI detail level updated:', level);
-    } catch (error) {
-      logger.error('[AISettings] Failed to update AI detail level:', error);
-      throw error;
     }
   };
 
@@ -107,8 +82,6 @@ export function AISettingsProvider({ children }: AISettingsProviderProps) {
   return (
     <AISettingsContext.Provider
       value={{
-        aiDetailLevel,
-        setAIDetailLevel,
         customQuestions,
         addCustomQuestion,
         removeCustomQuestion,

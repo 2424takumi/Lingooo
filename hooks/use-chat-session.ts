@@ -15,7 +15,6 @@ interface UseChatSessionOptions {
 
 export function useChatSession({ scope, identifier, context, targetLanguage }: UseChatSessionOptions) {
   const chat = useChatContext();
-  const { aiDetailLevel } = useAISettings();
   const { nativeLanguage } = useLearningLanguages();
 
   const normalizedIdentifier = identifier.trim();
@@ -33,7 +32,6 @@ export function useChatSession({ scope, identifier, context, targetLanguage }: U
         displayText,
         scope,
         identifier: normalizedIdentifier,
-        detailLevel: aiDetailLevel,
         targetLanguage,
         nativeLanguage: nativeLanguage.code,
       });
@@ -51,13 +49,12 @@ export function useChatSession({ scope, identifier, context, targetLanguage }: U
         displayText,
         context,
         streaming: true,
-        detailLevel: aiDetailLevel,
         targetLanguage,
         nativeLanguage: nativeLanguage.code,
       });
       logger.info('[useChatSession] chat.sendMessage completed');
     },
-    [chat, scope, normalizedIdentifier, context, aiDetailLevel, targetLanguage, nativeLanguage]
+    [chat, scope, normalizedIdentifier, context, targetLanguage, nativeLanguage]
   );
 
   const sendQuickQuestion = useCallback(

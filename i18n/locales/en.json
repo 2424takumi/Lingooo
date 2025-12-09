@@ -8,7 +8,10 @@
     "create": "Create",
     "close": "Close",
     "error": "Error",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "next": "Next",
+    "complete": "Complete",
+    "ok": "OK"
   },
   "settings": {
     "title": "Settings",
@@ -39,14 +42,37 @@
       "title": "Default Language",
       "description": "Select the language to display when the app launches."
     },
-    "aiSettings": {
-      "title": "AI Settings",
-      "detailLevel": {
-        "title": "Detail Level",
-        "concise": "Concise",
-        "balanced": "Balanced",
-        "detailed": "Detailed"
-      }
+    "account": {
+      "title": "Account",
+      "profile": "Profile",
+      "profileDescription": "Manage account information",
+      "dataManagement": "Data Management",
+      "dataManagementDescription": "Backup and restore learning data"
+    },
+    "info": {
+      "title": "Information",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service",
+      "version": "Version"
+    },
+    "developer": {
+      "title": "Developer Tools",
+      "resetApp": "Reset App",
+      "resetAppDescription": "Reset to initial state (AsyncStorage + auth clear)",
+      "resetConfirmTitle": "Dev: Reset App",
+      "resetConfirmMessage": "This will clear AsyncStorage and Supabase auth, returning the app to its initial state. The app will restart.",
+      "resetCompleteTitle": "Complete",
+      "resetCompleteMessage": "AsyncStorage and auth cleared. Please restart the app (press 'r' key in terminal).",
+      "resetError": "Reset failed"
+    }
+  },
+  "home": {
+    "searchPlaceholder": "Enter text to learn...",
+    "hintText": "Long text will automatically switch to translation mode",
+    "searching": "Searching...",
+    "historyTab": {
+      "words": "Words",
+      "translations": "Translations"
     }
   },
   "search": {
@@ -54,23 +80,81 @@
     "noResults": "No results found for \"{{query}}\"",
     "chatPlaceholder": "Ask a question about this word..."
   },
+  "initialSetup": {
+    "step1Title": "Select Your Native Language",
+    "step2Title": "Select Languages to Learn",
+    "step1Description": "This will be used as the app's display language",
+    "step2Description": "Multiple selections allowed. You can add or remove later",
+    "nativeLanguageLabel": "Native Language",
+    "learningLanguageLabel": "Learning Languages"
+  },
   "wordDetail": {
     "bookmarked": "Added to bookmarks",
     "examples": "Examples",
     "usageHint": "Usage Hint",
     "frequency": "Frequency",
     "difficulty": "Difficulty",
-    "nuance": "Nuance"
+    "nuance": "Nuance",
+    "notFound": "Word not found",
+    "loadingFailed": "Failed to load word",
+    "backButton": "Back",
+    "foundInLanguage": "Found in {{language}}",
+    "chatPlaceholder": "Ask a question about this word..."
   },
   "bookmarks": {
     "title": "Bookmarks",
+    "allTab": "All",
+    "foldersTab": "Folders",
+    "loading": "Loading...",
+    "bookmarkCount": "{{count}} bookmarks",
+    "bookmarkCountSingular": "{{count}} bookmark",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{days}} days ago",
+    "general": "General",
+    "deleteBookmark": "Delete Bookmark",
+    "deleteBookmarkConfirm": "Are you sure you want to delete this bookmark?",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "copied": "Copied",
+    "copiedToClipboard": "Question and answer copied to clipboard",
+    "error": "Error",
+    "copyFailed": "Failed to copy",
     "addToFolder": "Add to Folder",
-    "noFolder": "No Folder",
-    "createFolder": "Create New Folder",
+    "copy": "Copy",
+    "totalBookmarks": "Total {{count}} bookmarks",
+    "totalFolders": "Total {{count}} folders",
+    "noFolders": "No folders",
+    "noFoldersDescription": "Create folders to organize your bookmarks",
+    "noBookmarks": "No bookmarks",
+    "noBookmarksDescription": "Bookmarked chat responses\nwill be saved here",
+    "createFolder": "Create Folder",
+    "newFolder": "New Folder",
     "folderName": "Folder Name",
+    "folderNamePlaceholder": "e.g. Important words",
+    "create": "Create",
+    "addToFolderTitle": "Add to Folder",
+    "noFolder": "No Folder",
+    "noFoldersYet": "No folders yet",
+    "noFoldersYetDescription": "You can create a new folder from the button below",
     "createNewFolder": "Create New Folder",
-    "folderNameRequired": "Please enter a folder name",
-    "createFailed": "Failed to create folder"
+    "createAndAdd": "Create and Add",
+    "rename": "Rename",
+    "renameFolderTitle": "Rename Folder",
+    "enterFolderName": "Enter folder name",
+    "save": "Save",
+    "deleteFolder": "Delete Folder",
+    "deleteFolderConfirm": "Are you sure you want to delete \"{{name}}\"?\n\nBookmarks in this folder will not be deleted.",
+    "premiumFeature": "Premium Feature",
+    "premiumFolderMessage": "Folder feature is exclusive to Premium plan.\n\nOrganize your bookmarks for more efficient learning.",
+    "viewPremium": "View Premium",
+    "loadFailed": "Failed to load bookmarks",
+    "folderLoadFailed": "Failed to load folders",
+    "deleteFailed": "Failed to delete bookmark",
+    "createFolderFailed": "Failed to create folder",
+    "addToFolderFailed": "Failed to add to folder",
+    "renameFailed": "Failed to rename folder",
+    "deleteFolderFailed": "Failed to delete folder"
   },
   "history": {
     "title": "History",
@@ -82,5 +166,143 @@
     "retry": "Retry",
     "followUpQuestion": "Follow-up",
     "askFollowUp": "Ask a follow-up question"
+  },
+  "translate": {
+    "error": "Translation failed",
+    "chatPlaceholder": "Ask a question about this text..."
+  },
+  "menu": {
+    "bookmarks": "Bookmarks",
+    "customQuestions": "Custom Questions"
+  },
+  "header": {
+    "learn": "Learn"
+  },
+  "settingsBottomSheet": {
+    "title": "Settings",
+    "user": "Username",
+    "freePlan": "Free Plan",
+    "premiumPlan": "Premium Plan",
+    "tokens": "Tokens",
+    "questions": "Questions",
+    "resetIn": "Resets in {{days}} days",
+    "tryPremium": "Try Premium for 7 days free",
+    "premiumSubtext": "Then ¥500/month for 1,000 questions & 50,000 characters translation",
+    "languageSettings": "Language Settings",
+    "nativeLanguage": "Native Language",
+    "defaultLanguage": "Default Language",
+    "learningLanguages": "Learning Languages",
+    "aiSettings": "AI Settings",
+    "aiDetailLevel": "AI Response Detail Level",
+    "concise": "Concise (Default)",
+    "detailed": "Detailed (with etymology & examples)",
+    "developerTools": "Developer Tools",
+    "resetApp": "Reset App",
+    "resetAppDescription": "Reset to initial state (AsyncStorage + auth clear)",
+    "resetConfirmTitle": "Dev: Reset App",
+    "resetConfirmMessage": "This will clear AsyncStorage and Supabase auth, returning the app to its initial state.",
+    "resetComplete": "Complete",
+    "resetCompleteMessage": "AsyncStorage and auth cleared. Please restart the app (press 'r' key in terminal).",
+    "resetError": "Reset failed",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "version": "Version"
+  },
+  "pos": {
+    "verb": "Verb",
+    "noun": "Noun",
+    "adjective": "Adjective",
+    "adverb": "Adverb",
+    "pronoun": "Pronoun",
+    "preposition": "Preposition",
+    "conjunction": "Conjunction",
+    "interjection": "Interjection",
+    "article": "Article",
+    "determiner": "Determiner",
+    "auxiliary": "Auxiliary",
+    "modal": "Modal",
+    "transitive": "Transitive",
+    "intransitive": "Intransitive",
+    "participle": "Participle",
+    "infinitive": "Infinitive",
+    "gerund": "Gerund",
+    "numeral": "Numeral",
+    "particle": "Particle",
+    "comparative": "Comparative",
+    "superlative": "Superlative",
+    "phrasal verb": "Phrasal Verb",
+    "proper noun": "Proper Noun",
+    "common noun": "Common Noun"
+  },
+  "gender": {
+    "m": "M",
+    "f": "F",
+    "n": "N",
+    "mf": "M/F"
+  },
+  "metrics": {
+    "frequency": "Frequency",
+    "difficulty": "Difficulty",
+    "nuance": "Nuance",
+    "rare": "Rare",
+    "common": "Common",
+    "easy": "Easy",
+    "hard": "Hard",
+    "casual": "Casual",
+    "normal": "Neutral",
+    "formal": "Formal"
+  },
+  "nuanceTag": {
+    "casual": "Casual",
+    "formal": "Formal",
+    "neutral": "Neutral",
+    "academic": "Academic",
+    "slang": "Slang"
+  },
+  "questionTags": {
+    "textNuance": {
+      "label": "Nuance",
+      "prompt": "Tell me the nuance of this text"
+    },
+    "summary": {
+      "label": "Summarize",
+      "prompt": "Summarize this text"
+    },
+    "grammarCheck": {
+      "label": "Check Grammar",
+      "prompt": "Check the grammar and expressions of this text"
+    },
+    "paraphrase": {
+      "label": "Paraphrase",
+      "prompt": "Paraphrase this text"
+    },
+    "grammarExplain": {
+      "label": "Explain Grammar",
+      "prompt": "Explain the grammar of this text"
+    },
+    "meaning": {
+      "label": "Meaning",
+      "prompt": "Tell me the meaning of this text"
+    },
+    "wordNuance": {
+      "label": "Nuance",
+      "prompt": "Tell me the nuance of this word in detail"
+    },
+    "etymology": {
+      "label": "Etymology",
+      "prompt": "Tell me the etymology and origin of this word"
+    },
+    "synonyms": {
+      "label": "Synonyms",
+      "prompt": "Tell me synonyms for this word"
+    },
+    "difference": {
+      "label": "Difference?",
+      "prompt": "Tell me the difference and usage distinction between these words"
+    },
+    "usageContext": {
+      "label": "Usage Context",
+      "prompt": "Tell me in what situations these words are used"
+    }
   }
 }

@@ -7,7 +7,7 @@
 
 import mockDictionary from '@/data/mock-dictionary.json';
 import type { SuggestionItem, SuggestionResponse, WordDetailResponse, SearchError } from '@/types/search';
-import { generateWordDetail, generateWordDetailStream, generateSuggestions, generateWordDetailTwoStage, generateSuggestionsFast, addUsageHintsParallel, generateSuggestionsStreamFast } from '@/services/ai/dictionary-generator';
+import { generateWordDetail, generateWordDetailStream, generateSuggestions, generateWordDetailTwoStage, generateSuggestionsFast, addUsageHintsParallel, generateSuggestionsStreamFast, generateWordDetailWithHintStreaming } from '@/services/ai/dictionary-generator';
 import { isGeminiConfigured } from '@/services/ai/gemini-client';
 import { setCachedSuggestions, setCachedSuggestionsAsync, getCachedSuggestions, getCachedSuggestionsSync } from '@/services/cache/suggestion-cache';
 import { logger } from '@/utils/logger';
@@ -96,7 +96,8 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
  */
 async function tryGenerateAiSuggestionsTwoStage(
   query: string,
-  targetLanguage: string = 'en'
+  targetLanguage: string = 'en',
+  nativeLanguage: string = 'ja'
 ): Promise<{ basic: SuggestionItem[]; enhancePromise: Promise<void> } | null> {
   try {
     logger.info('[tryGenerateAiSuggestionsTwoStage] Starting SSE streaming for suggestions');
@@ -105,12 +106,17 @@ async function tryGenerateAiSuggestionsTwoStage(
 
     // SSEストリーミングで各サジェストを取得
     const suggestions = await withTimeout(
-      generateSuggestionsStreamFast(query, targetLanguage, (suggestion) => {
+      generateSuggestionsStreamFast(query, targetLanguage, nativeLanguage, (suggestion) => {
         // 各サジェストが生成されるたびに即座にキャッシュを更新
+        // 防御的パース: shortSenseが文字列の場合は配列に変換
+        const normalizedShortSense = Array.isArray(suggestion.shortSense)
+          ? suggestion.shortSense
+          : [suggestion.shortSense].filter(Boolean);
+
         const newItem: SuggestionItem = {
           lemma: suggestion.lemma,
           pos: suggestion.pos,
-          shortSense: suggestion.shortSense,
+          shortSense: normalizedShortSense,
           confidence: suggestion.confidence,
           nuance: suggestion.nuance,
         };
@@ -132,10 +138,13 @@ async function tryGenerateAiSuggestionsTwoStage(
     logger.info(`[tryGenerateAiSuggestionsTwoStage] SSE streaming complete: ${suggestions.length} ${targetLanguage} suggestions`);
 
     // 基本情報を返す用のアイテム（usageHintなし）
+    // 防御的パース: shortSenseが文字列の場合は配列に変換
     const basicItems: SuggestionItem[] = suggestions.slice(0, 10).map(item => ({
       lemma: item.lemma,
       pos: item.pos,
-      shortSense: item.shortSense,
+      shortSense: Array.isArray(item.shortSense)
+        ? item.shortSense
+        : [item.shortSense].filter(Boolean),
       confidence: item.confidence,
       nuance: item.nuance,
     }));
@@ -147,7 +156,7 @@ async function tryGenerateAiSuggestionsTwoStage(
         const lemmas = basicItems.map(item => item.lemma);
 
         // 並列生成：各ヒントが完成次第、キャッシュを更新（永続化を確実に実行）
-        await addUsageHintsParallel(lemmas, query, async (hint) => {
+        await addUsageHintsParallel(lemmas, query, nativeLanguage, async (hint) => {
           // 1つのヒントが完成したら即座にキャッシュ更新（非同期版で永続化を保証）
           const currentItems = getCachedSuggestionsSync(query, targetLanguage) || basicItems;
           const updatedItems = currentItems.map(item =>
@@ -177,12 +186,13 @@ async function tryGenerateAiSuggestionsTwoStage(
  * ステージ1: 基本情報を0.5~1秒で返却
  * ステージ2: usageHintをバックグラウンドで追加
  *
- * @param query - 日本語の検索クエリ
+ * @param query - 検索クエリ（母語での入力）
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param nativeLanguage - 母国語コード（例: 'ja', 'en', 'pt'）
  * @param isOffline - オフライン状態かどうか（オプション）
  * @returns 候補のリスト
  */
-export async function searchJaToEn(query: string, targetLanguage: string = 'en', isOffline: boolean = false): Promise<SuggestionResponse> {
+export async function searchJaToEn(query: string, targetLanguage: string = 'en', nativeLanguage: string = 'ja', isOffline: boolean = false): Promise<SuggestionResponse> {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
     return {
@@ -236,7 +246,7 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en',
         const lemmas = localItems.map(item => item.lemma);
 
         // 並列生成：各ヒントが完成次第、キャッシュを更新
-        await addUsageHintsParallel(lemmas, trimmedQuery, (hint) => {
+        await addUsageHintsParallel(lemmas, trimmedQuery, nativeLanguage, (hint) => {
           const currentItems = getCachedSuggestionsSync(trimmedQuery, targetLanguage) || localItems;
           const updatedItems = currentItems.map(item =>
             item.lemma === hint.lemma ? { ...item, usageHint: hint.usageHint } : item
@@ -258,8 +268,8 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en',
   }
 
   // ローカル辞書になければ、2段階生成（並列版）を開始
-  logger.info(`[searchJaToEn] Not in local dictionary, starting AI generation for: ${trimmedQuery} (${targetLanguage})`);
-  const result = await tryGenerateAiSuggestionsTwoStage(trimmedQuery, targetLanguage);
+  logger.info(`[searchJaToEn] Not in local dictionary, starting AI generation for: ${trimmedQuery} (${targetLanguage}, native: ${nativeLanguage})`);
+  const result = await tryGenerateAiSuggestionsTwoStage(trimmedQuery, targetLanguage, nativeLanguage);
 
   if (result && result.basic.length > 0) {
     // ステージ1: 基本情報を即座に返す & キャッシュ
@@ -291,14 +301,12 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en',
  *
  * @param word - 検索する単語
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
- * @param detailLevel - AI返答の詳細度レベル（'concise' | 'detailed'）
  * @param isOffline - オフライン状態かどうか（オプション）
  * @returns 単語の詳細情報
  */
 export async function getWordDetail(
   word: string,
   targetLanguage: string = 'en',
-  detailLevel?: 'concise' | 'detailed',
   isOffline: boolean = false
 ): Promise<{ data: WordDetailResponse; tokensUsed: number }> {
   // オフライン時: モックデータのみ使用
@@ -355,28 +363,29 @@ export async function getWordDetail(
 }
 
 /**
- * ターゲット言語の単語詳細取得（ストリーミング版 - 2段階超高速）
+ * ターゲット言語の単語詳細取得（ストリーミング版 - 2段階超高速 + Hintストリーミング）
  *
  * ステージ1: 基本情報を0.2~0.3秒で表示
- * ステージ2: 詳細情報を2.5秒で追加
+ * ステージ2A: Hintを文字単位でストリーミング（チャットのようにスムーズ）
+ * ステージ2B: 詳細情報を2.5秒で追加
  *
  * @param word - 検索する単語
  * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
  * @param nativeLanguage - 母国語コード（例: 'ja', 'en', 'zh'）
- * @param detailLevel - AI返答の詳細度レベル（'concise' | 'detailed'）
  * @param onProgress - 進捗コールバック（0-100、部分データ付き）
  * @param isOffline - オフライン状態かどうか（オプション）
+ * @param onHintChunk - Hintテキストチャンク受信コールバック（5-10文字ずつ）
  * @returns 単語の詳細情報
  */
 export async function getWordDetailStream(
   word: string,
   targetLanguage: string = 'en',
   nativeLanguage: string = 'ja',
-  detailLevel: 'concise' | 'detailed' = 'concise',
   onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void,
-  isOffline: boolean = false
+  isOffline: boolean = false,
+  onHintChunk?: (chunk: string) => void
 ): Promise<{ data: WordDetailResponse; tokensUsed: number }> {
-  logger.info(`[Search API] getWordDetailStream (2-stage) called for: ${word} (${targetLanguage}, native: ${nativeLanguage}, ${detailLevel}, offline: ${isOffline})`);
+  logger.info(`[Search API] getWordDetailStream (Hint streaming) called for: ${word} (${targetLanguage}, native: ${nativeLanguage}, offline: ${isOffline})`);
 
   // オフライン時: モックデータのみ使用
   if (isOffline) {
@@ -416,9 +425,15 @@ export async function getWordDetailStream(
 
     if (isConfigured) {
       try {
-        logger.info('[Search API] Calling generateWordDetailTwoStage');
-        const result = await generateWordDetailTwoStage(word, targetLanguage, nativeLanguage, detailLevel, onProgress);
-        logger.info('[Search API] generateWordDetailTwoStage succeeded');
+        logger.info('[Search API] Calling generateWordDetailWithHintStreaming');
+        const result = await generateWordDetailWithHintStreaming(
+          word,
+          targetLanguage,
+          nativeLanguage,
+          onProgress,
+          onHintChunk
+        );
+        logger.info('[Search API] generateWordDetailWithHintStreaming succeeded');
         return result;
       } catch (error) {
         // 429エラー（レート制限）の場合は特別なメッセージ
@@ -432,7 +447,7 @@ export async function getWordDetailStream(
         }
 
         // エラー時は通常版にフォールバック（これもトークン数を返す）
-        const fallbackResult = await getWordDetail(word, targetLanguage, detailLevel, isOffline);
+        const fallbackResult = await getWordDetail(word, targetLanguage, isOffline);
         return fallbackResult;
       }
     }
@@ -442,7 +457,7 @@ export async function getWordDetailStream(
 
   // APIキーなしの場合は通常版を使用（これもトークン数を返す）
   logger.info('[Search API] Using mock data');
-  const mockResult = await getWordDetail(word, targetLanguage, detailLevel, isOffline);
+  const mockResult = await getWordDetail(word, targetLanguage, isOffline);
   return mockResult;
 }
 

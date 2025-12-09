@@ -4,6 +4,7 @@ import { MenuIcon, SettingsIcon } from './icons';
 import Svg, { Path } from 'react-native-svg';
 import { PosTag } from './pos-tag';
 import { LanguageSwitcher } from './language-switcher';
+import { useTranslation } from 'react-i18next';
 
 // Icons
 function ChevronLeftIcon({ size = 28 }: { size?: number }) {
@@ -92,7 +93,7 @@ export function UnifiedHeaderBar({
   onMenuPress,
   onProfilePress,
   onSettingsPress,
-  title = '学習する',
+  title,
   selectedFlag = '🇺🇸',
   onLanguagePress,
   onBackPress,
@@ -103,7 +104,11 @@ export function UnifiedHeaderBar({
   isDetectingLanguage = false,
   isOffline = false,
 }: UnifiedHeaderBarProps) {
+  const { t } = useTranslation();
   const menuButtonRef = useRef<any>(null);
+
+  // titleのデフォルト値を翻訳から取得
+  const defaultTitle = title || t('header.learn');
 
   // 配列であることを保証
   const posTagsArray = Array.isArray(posTags) ? posTags : [];
@@ -144,7 +149,7 @@ export function UnifiedHeaderBar({
         </TouchableOpacity>
 
         <Text selectable selectionColor="#111111" style={styles.title}>
-          {title}
+          {defaultTitle}
         </Text>
 
         <LanguageSwitcher isDetectingLanguage={isDetectingLanguage} />
@@ -204,7 +209,7 @@ export function UnifiedHeaderBar({
           <ChevronLeftIcon size={28} />
         </TouchableOpacity>
 
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title}>{defaultTitle}</Text>
 
         <View style={styles.placeholder} />
       </View>

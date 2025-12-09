@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import * as Clipboard from 'expo-clipboard';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
@@ -110,6 +111,7 @@ interface FolderCardProps {
 }
 
 function FolderCard({ folder, bookmarkCount, onPress, onLongPress }: FolderCardProps) {
+  const { t } = useTranslation();
   const cardBackground = useThemeColor({ light: '#FAFCFB', dark: '#1C1C1E' }, 'background');
   const borderColor = useThemeColor({ light: '#E5E5EA', dark: '#3A3A3C' }, 'background');
   const titleColor = useThemeColor({ light: '#000000', dark: '#F2F2F2' }, 'text');
@@ -131,7 +133,7 @@ function FolderCard({ folder, bookmarkCount, onPress, onLongPress }: FolderCardP
             </Text>
             <View style={styles.folderCardMeta}>
               <Text style={[styles.folderCardCount, { color: subtitleColor }]}>
-                {bookmarkCount}件のブックマーク
+                {t('bookmarks.bookmarkCount', { count: bookmarkCount })}
               </Text>
               <Text style={[styles.folderCardDate, { color: subtitleColor }]}>
                 {formatDate(folder.createdAt)}
@@ -152,6 +154,7 @@ interface BookmarkCardProps {
 }
 
 function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: BookmarkCardProps) {
+  const { t } = useTranslation();
   const labelColor = useThemeColor({ light: '#949494', dark: '#8E8E93' }, 'icon');
   const iconColor = useThemeColor({ light: '#686868', dark: '#8E8E93' }, 'icon');
 
@@ -163,11 +166,11 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: Bookma
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
-      return '今日';
+      return t('bookmarks.today');
     } else if (diffDays === 1) {
-      return '昨日';
+      return t('bookmarks.yesterday');
     } else if (diffDays < 7) {
-      return `${diffDays}日前`;
+      return t('bookmarks.daysAgo', { days: diffDays });
     } else {
       return `${date.getMonth() + 1}/${date.getDate()}`;
     }
@@ -175,17 +178,17 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: Bookma
 
   // Format scope label
   const getScopeLabel = () => {
-    return bookmark.identifier || '一般';
+    return bookmark.identifier || t('bookmarks.general');
   };
 
   const handleDelete = () => {
     Alert.alert(
-      'ブックマークを削除',
-      'このブックマークを削除してもよろしいですか？',
+      t('bookmarks.deleteBookmark'),
+      t('bookmarks.deleteBookmarkConfirm'),
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: t('bookmarks.cancel'), style: 'cancel' },
         {
-          text: '削除',
+          text: t('bookmarks.delete'),
           style: 'destructive',
           onPress: () => onDelete(bookmark.id),
         },
@@ -201,10 +204,10 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: Bookma
     try {
       const textToCopy = `Q: ${bookmark.question}\n\nA: ${bookmark.answer}`;
       await Clipboard.setStringAsync(textToCopy);
-      Alert.alert('コピーしました', '質問と回答をクリップボードにコピーしました');
+      Alert.alert(t('bookmarks.copied'), t('bookmarks.copiedToClipboard'));
     } catch (error) {
       logger.error('Failed to copy:', error);
-      Alert.alert('エラー', 'コピーに失敗しました');
+      Alert.alert(t('bookmarks.error'), t('bookmarks.copyFailed'));
     }
   };
 
@@ -227,7 +230,7 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: Bookma
           <View style={styles.actionButtons}>
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="フォルダに追加"
+              accessibilityLabel={t('bookmarks.addToFolder')}
               onPress={handleAddToFolder}
               style={styles.actionButton}
               hitSlop={8}
@@ -237,7 +240,7 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: Bookma
 
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="コピー"
+              accessibilityLabel={t('bookmarks.copy')}
               onPress={handleCopy}
               style={styles.actionButton}
               hitSlop={8}
@@ -247,7 +250,7 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: Bookma
 
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="削除"
+              accessibilityLabel={t('bookmarks.delete')}
               onPress={handleDelete}
               style={styles.actionButton}
               hitSlop={8}
@@ -281,6 +284,7 @@ function BookmarkCard({ bookmark, onDelete, onAddToFolder, onCardPress }: Bookma
 }
 
 export default function BookmarksScreen() {
+  const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
   const tabTextColor = useThemeColor({ light: '#686868', dark: '#8E8E93' }, 'icon');
   const activeTabColor = useThemeColor({}, 'primary');
@@ -314,7 +318,7 @@ export default function BookmarksScreen() {
       setBookmarks(data);
     } catch (error) {
       logger.error('[Bookmarks] Failed to load bookmarks:', error);
-      Alert.alert('エラー', 'ブックマークの読み込みに失敗しました');
+      Alert.alert(t('bookmarks.error'), t('bookmarks.loadFailed'));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -329,9 +333,9 @@ export default function BookmarksScreen() {
       setFolders(data);
     } catch (error) {
       logger.error('[Bookmarks] Failed to load folders:', error);
-      Alert.alert('エラー', 'フォルダの読み込みに失敗しました');
+      Alert.alert(t('bookmarks.error'), t('bookmarks.folderLoadFailed'));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void fetchBookmarks();
@@ -352,7 +356,7 @@ export default function BookmarksScreen() {
       setBookmarks((prev) => prev.filter((b) => b.id !== id));
     } catch (error) {
       logger.error('Failed to delete bookmark:', error);
-      Alert.alert('エラー', 'ブックマークの削除に失敗しました');
+      Alert.alert(t('bookmarks.error'), t('bookmarks.deleteFailed'));
     }
   };
 
@@ -390,7 +394,7 @@ export default function BookmarksScreen() {
       }
     } catch (error) {
       logger.error('[Bookmarks] Failed to create folder:', error);
-      Alert.alert('エラー', 'フォルダの作成に失敗しました');
+      Alert.alert(t('bookmarks.error'), t('bookmarks.createFolderFailed'));
     }
   };
 
@@ -398,11 +402,11 @@ export default function BookmarksScreen() {
   const handleOpenFolderSelect = async (bookmarkId: string) => {
     if (!isPremium) {
       Alert.alert(
-        'プレミアム機能',
-        'フォルダ機能はプレミアムプラン限定です。\n\nブックマークを整理してより効率的に学習しましょう。',
+        t('bookmarks.premiumFeature'),
+        t('bookmarks.premiumFolderMessage'),
         [
-          { text: 'キャンセル' },
-          { text: 'プレミアムを見る', onPress: () => setIsSubscriptionSheetOpen(true) },
+          { text: t('bookmarks.cancel') },
+          { text: t('bookmarks.viewPremium'), onPress: () => setIsSubscriptionSheetOpen(true) },
         ]
       );
       return;
@@ -432,7 +436,7 @@ export default function BookmarksScreen() {
       logger.debug('[Bookmarks] Bookmark added to folder:', folderId);
     } catch (error) {
       logger.error('[Bookmarks] Failed to add bookmark to folder:', error);
-      Alert.alert('エラー', 'フォルダへの追加に失敗しました');
+      Alert.alert(t('bookmarks.error'), t('bookmarks.addToFolderFailed'));
     }
   };
 
@@ -457,7 +461,7 @@ export default function BookmarksScreen() {
       logger.debug('[Bookmarks] New folder created and bookmark added:', newFolder.id);
     } catch (error) {
       logger.error('[Bookmarks] Failed to create folder:', error);
-      Alert.alert('エラー', 'フォルダの作成に失敗しました');
+      Alert.alert(t('bookmarks.error'), t('bookmarks.createFolderFailed'));
     }
   };
 
@@ -490,7 +494,7 @@ export default function BookmarksScreen() {
       logger.debug('[Bookmarks] Folder name updated');
     } catch (error) {
       logger.error('[Bookmarks] Failed to update folder name:', error);
-      Alert.alert('エラー', 'フォルダ名の変更に失敗しました');
+      Alert.alert(t('bookmarks.error'), t('bookmarks.renameFailed'));
     }
   };
 
@@ -499,12 +503,12 @@ export default function BookmarksScreen() {
     if (!selectedFolder) return;
 
     Alert.alert(
-      'フォルダを削除',
-      `「${selectedFolder.name}」を削除してもよろしいですか？\n\nフォルダ内のブックマークは削除されません。`,
+      t('bookmarks.deleteFolder'),
+      t('bookmarks.deleteFolderConfirm', { name: selectedFolder.name }),
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: t('bookmarks.cancel'), style: 'cancel' },
         {
-          text: '削除',
+          text: t('bookmarks.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -517,7 +521,7 @@ export default function BookmarksScreen() {
               logger.debug('[Bookmarks] Folder deleted');
             } catch (error) {
               logger.error('[Bookmarks] Failed to delete folder:', error);
-              Alert.alert('エラー', 'フォルダの削除に失敗しました');
+              Alert.alert(t('bookmarks.error'), t('bookmarks.deleteFolderFailed'));
             }
           },
         },
@@ -565,7 +569,7 @@ export default function BookmarksScreen() {
         <View style={styles.headerContainer}>
           <UnifiedHeaderBar
             pageType="other"
-            title="ブックマーク"
+            title={t('bookmarks.title')}
             onBackPress={() => router.back()}
           />
         </View>
@@ -586,7 +590,7 @@ export default function BookmarksScreen() {
                 activeTab === 'all' && [styles.activeTabText, { color: activeTabColor }],
               ]}
             >
-              全て
+              {t('bookmarks.allTab')}
             </Text>
           </TouchableOpacity>
 
@@ -605,7 +609,7 @@ export default function BookmarksScreen() {
                   activeTab === 'folders' && [styles.activeTabText, { color: activeTabColor }],
                 ]}
               >
-                フォルダ
+                {t('bookmarks.foldersTab')}
               </Text>
               {!isPremium && <StarIcon size={16} />}
             </View>
@@ -616,7 +620,7 @@ export default function BookmarksScreen() {
         {activeTab === 'folders' ? (
           isLoading ? (
             <View style={styles.centerContainer}>
-              <Text style={[styles.loadingText, { color: tabTextColor }]}>読み込み中...</Text>
+              <Text style={[styles.loadingText, { color: tabTextColor }]}>{t('bookmarks.loading')}</Text>
             </View>
           ) : folders.length > 0 ? (
             <ScrollView
@@ -651,22 +655,22 @@ export default function BookmarksScreen() {
 
               <View style={styles.footer}>
                 <Text style={styles.footerText}>
-                  全{folders.length}個のフォルダ
+                  {t('bookmarks.totalFolders', { count: folders.length })}
                 </Text>
               </View>
             </ScrollView>
           ) : (
             <View style={styles.emptyContainer}>
               <FolderIcon size={64} color="#D1D1D1" />
-              <Text style={styles.emptyTitle}>フォルダがありません</Text>
+              <Text style={styles.emptyTitle}>{t('bookmarks.noFolders')}</Text>
               <Text style={[styles.emptyDescription, { color: tabTextColor }]}>
-                フォルダを作成してブックマークを整理しましょう
+                {t('bookmarks.noFoldersDescription')}
               </Text>
             </View>
           )
         ) : isLoading ? (
           <View style={styles.centerContainer}>
-            <Text style={[styles.loadingText, { color: tabTextColor }]}>読み込み中...</Text>
+            <Text style={[styles.loadingText, { color: tabTextColor }]}>{t('bookmarks.loading')}</Text>
           </View>
         ) : bookmarks.length > 0 ? (
           <ScrollView
@@ -690,17 +694,16 @@ export default function BookmarksScreen() {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-                全{bookmarks.length}件のブックマーク
+                {t('bookmarks.totalBookmarks', { count: bookmarks.length })}
               </Text>
             </View>
           </ScrollView>
         ) : (
           <View style={styles.emptyContainer}>
             <BookmarkEmptyIcon size={64} />
-            <Text style={styles.emptyTitle}>ブックマークがありません</Text>
+            <Text style={styles.emptyTitle}>{t('bookmarks.noBookmarks')}</Text>
             <Text style={[styles.emptyDescription, { color: tabTextColor }]}>
-              チャットの回答をブックマークすると、{'\n'}
-              ここに保存されます
+              {t('bookmarks.noBookmarksDescription')}
             </Text>
           </View>
         )}
@@ -711,7 +714,7 @@ export default function BookmarksScreen() {
             style={styles.fab}
             onPress={() => setIsCreateFolderModalOpen(true)}
             accessibilityRole="button"
-            accessibilityLabel="フォルダを作成"
+            accessibilityLabel={t('bookmarks.createFolder')}
           >
             <PlusIcon size={24} color="#FFFFFF" />
           </TouchableOpacity>
@@ -740,13 +743,13 @@ export default function BookmarksScreen() {
               }}
             >
               <View style={styles.createFolderModalContainer} onStartShouldSetResponder={() => true}>
-                <Text style={styles.modalTitle}>新しいフォルダ</Text>
+                <Text style={styles.modalTitle}>{t('bookmarks.newFolder')}</Text>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>フォルダ名</Text>
+                  <Text style={styles.inputLabel}>{t('bookmarks.folderName')}</Text>
                   <TextInput
                     style={styles.folderNameInput}
-                    placeholder="例: 重要な単語"
+                    placeholder={t('bookmarks.folderNamePlaceholder')}
                     placeholderTextColor="#ACACAC"
                     value={newFolderName}
                     onChangeText={setNewFolderName}
@@ -762,7 +765,7 @@ export default function BookmarksScreen() {
                       setNewFolderName('');
                     }}
                   >
-                    <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+                    <Text style={styles.modalCancelButtonText}>{t('bookmarks.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
@@ -772,7 +775,7 @@ export default function BookmarksScreen() {
                     onPress={handleCreateFolder}
                     disabled={!newFolderName.trim()}
                   >
-                    <Text style={styles.modalAddButtonText}>作成</Text>
+                    <Text style={styles.modalAddButtonText}>{t('bookmarks.create')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -807,7 +810,7 @@ export default function BookmarksScreen() {
               }}
             >
               <View style={styles.folderSelectModalContainer} onStartShouldSetResponder={() => true}>
-                <Text style={styles.modalTitle}>フォルダに追加</Text>
+                <Text style={styles.modalTitle}>{t('bookmarks.addToFolderTitle')}</Text>
 
                 <ScrollView style={styles.folderSelectList} showsVerticalScrollIndicator={false}>
                   {/* No folder option */}
@@ -823,7 +826,7 @@ export default function BookmarksScreen() {
                         ]}
                         onPress={() => handleAddBookmarkToFolder(undefined)}
                       >
-                        <Text style={[styles.folderSelectItemText, { flex: 1 }]}>フォルダなし</Text>
+                        <Text style={[styles.folderSelectItemText, { flex: 1 }]}>{t('bookmarks.noFolder')}</Text>
                         {isNoFolder && <CheckIcon size={20} color="#111111" />}
                       </TouchableOpacity>
                     );
@@ -855,10 +858,10 @@ export default function BookmarksScreen() {
                   {!isCreatingNewFolder && folders.length === 0 && (
                     <View style={styles.noFoldersMessage}>
                       <Text style={styles.noFoldersMessageText}>
-                        フォルダがまだありません
+                        {t('bookmarks.noFoldersYet')}
                       </Text>
                       <Text style={styles.noFoldersMessageSubtext}>
-                        下のボタンから新しいフォルダを作成できます
+                        {t('bookmarks.noFoldersYetDescription')}
                       </Text>
                     </View>
                   )}
@@ -867,10 +870,10 @@ export default function BookmarksScreen() {
                   {isCreatingNewFolder ? (
                     <View style={styles.createFolderInline}>
                       <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>フォルダ名</Text>
+                        <Text style={styles.inputLabel}>{t('bookmarks.folderName')}</Text>
                         <TextInput
                           style={styles.folderNameInput}
-                          placeholder="例: 重要な単語"
+                          placeholder={t('bookmarks.folderNamePlaceholder')}
                           placeholderTextColor="#ACACAC"
                           value={newFolderNameInline}
                           onChangeText={setNewFolderNameInline}
@@ -885,7 +888,7 @@ export default function BookmarksScreen() {
                             setNewFolderNameInline('');
                           }}
                         >
-                          <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+                          <Text style={styles.modalCancelButtonText}>{t('bookmarks.cancel')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[
@@ -895,7 +898,7 @@ export default function BookmarksScreen() {
                           onPress={handleCreateNewFolderInline}
                           disabled={!newFolderNameInline.trim()}
                         >
-                          <Text style={styles.modalAddButtonText}>作成して追加</Text>
+                          <Text style={styles.modalAddButtonText}>{t('bookmarks.createAndAdd')}</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -906,7 +909,7 @@ export default function BookmarksScreen() {
                     >
                       <PlusIcon size={20} color="#111111" />
                       <Text style={[styles.folderSelectItemText, styles.createFolderText]}>
-                        新しいフォルダを作成
+                        {t('bookmarks.createNewFolder')}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -920,7 +923,7 @@ export default function BookmarksScreen() {
                       setSelectedBookmarkId(null);
                     }}
                   >
-                    <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+                    <Text style={styles.modalCancelButtonText}>{t('bookmarks.cancel')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -955,7 +958,7 @@ export default function BookmarksScreen() {
                 style={styles.folderMenuItem}
                 onPress={handleEditFolder}
               >
-                <Text style={styles.folderMenuItemText}>名前を変更</Text>
+                <Text style={styles.folderMenuItemText}>{t('bookmarks.rename')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -963,7 +966,7 @@ export default function BookmarksScreen() {
                 onPress={handleDeleteFolder}
               >
                 <Text style={[styles.folderMenuItemText, styles.folderMenuItemTextDanger]}>
-                  削除
+                  {t('bookmarks.delete')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -995,13 +998,13 @@ export default function BookmarksScreen() {
               }}
             >
               <View style={styles.createFolderModalContainer} onStartShouldSetResponder={() => true}>
-                <Text style={styles.modalTitle}>フォルダ名を変更</Text>
+                <Text style={styles.modalTitle}>{t('bookmarks.renameFolderTitle')}</Text>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>フォルダ名</Text>
+                  <Text style={styles.inputLabel}>{t('bookmarks.folderName')}</Text>
                   <TextInput
                     style={styles.folderNameInput}
-                    placeholder="フォルダ名を入力"
+                    placeholder={t('bookmarks.enterFolderName')}
                     placeholderTextColor="#ACACAC"
                     value={editFolderName}
                     onChangeText={setEditFolderName}
@@ -1018,7 +1021,7 @@ export default function BookmarksScreen() {
                       setEditFolderName('');
                     }}
                   >
-                    <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+                    <Text style={styles.modalCancelButtonText}>{t('bookmarks.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
@@ -1028,7 +1031,7 @@ export default function BookmarksScreen() {
                     onPress={handleUpdateFolderName}
                     disabled={!editFolderName.trim()}
                   >
-                    <Text style={styles.modalAddButtonText}>保存</Text>
+                    <Text style={styles.modalAddButtonText}>{t('bookmarks.save')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>

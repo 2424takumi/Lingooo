@@ -5,7 +5,7 @@
  * 多言語対応
  */
 
-import { generateJSON, generateText, generateTextStream, generateJSONProgressive, generateBasicInfo, generateSuggestionsArray, generateSuggestionsArrayFast, generateUsageHint, generateUsageHints, detectLanguage, generateAdditionalInfoStream, generateSuggestionsStream, type LanguageDetectionResult } from './gemini-client';
+import { generateJSON, generateText, generateTextStream, generateJSONProgressive, generateBasicInfo, generateSuggestionsArray, generateSuggestionsArrayFast, generateUsageHint, generateUsageHints, detectLanguage, generateAdditionalInfoStream, generateSuggestionsStream, generateHintStream, type LanguageDetectionResult, type HintStreamCallbacks } from './gemini-client';
 import { selectModel } from './model-selector';
 import { createBasicInfoPrompt, createAdditionalDetailsPrompt, createDictionaryPrompt, createSuggestionsPrompt, getLanguageNameEn } from './prompt-generator';
 import { fetchPromptWithFallback } from './langfuse-client';
@@ -594,6 +594,145 @@ function tryParsePartialJSON(text: string): Partial<WordDetailResponse> | null {
     return JSON.parse(jsonText);
   } catch {
     return null;
+  }
+}
+
+/**
+ * 単語の詳細情報を2段階で生成（Hintストリーミング版）
+ *
+ * ステージ1: 基本情報（headword + senses）を0.2~0.3秒で取得 → 即表示
+ * ステージ2A: Hintをプレーンテキストストリーミング（5-10文字ずつ、チャットのようにスムーズ）
+ * ステージ2B: Metrics + Examples をJSONで生成
+ *
+ * 最適化: Hintは文字単位で表示、チャットと同じ体験
+ *
+ * @param word - 検索する単語
+ * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param nativeLanguage - ユーザーの母国語コード（例: 'ja', 'en'）
+ * @param onProgress - 進捗コールバック（0-100、部分データ付き）
+ * @param onHintChunk - Hintテキストチャンク受信コールバック（5-10文字ずつ）
+ * @returns 単語の詳細情報
+ */
+export async function generateWordDetailWithHintStreaming(
+  word: string,
+  targetLanguage: string = 'en',
+  nativeLanguage: string = 'ja',
+  onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void,
+  onHintChunk?: (chunk: string) => void
+): Promise<{ data: WordDetailResponse; tokensUsed: number }> {
+  const modelConfig = selectModel();
+
+  logger.info(`[WordDetail Hint Streaming] Starting generation for: ${word} (${targetLanguage} -> ${nativeLanguage})`);
+
+  try {
+    let totalTokens = 0;
+    let accumulatedHintText = '';
+
+    // ステージ1: 基本情報を超高速取得（0.2~0.3秒）
+    const basicPrompt = await createBasicInfoPrompt(word, targetLanguage, nativeLanguage);
+    const basicResult = await generateBasicInfo<Partial<WordDetailResponse>>(basicPrompt, modelConfig);
+
+    totalTokens += basicResult.tokensUsed;
+    logger.info('[WordDetail Hint Streaming] Basic info received, tokens:', basicResult.tokensUsed);
+
+    if (onProgress) {
+      onProgress(30, basicResult.data); // ヘッダー + 意味だけ表示
+    }
+
+    // ステージ2A: Hintをプレーンテキストストリーミング（5-10文字ずつ）
+    await generateHintStream(
+      word,
+      targetLanguage,
+      nativeLanguage,
+      {
+        onChunk: (chunk: string) => {
+          accumulatedHintText += chunk;
+          // リアルタイムでチャンクを通知（チャットと同じ体験）
+          if (onHintChunk) {
+            onHintChunk(chunk);
+          }
+          logger.debug(`[WordDetail Hint Streaming] Hint chunk: "${chunk}"`);
+        },
+        onComplete: (fullText: string) => {
+          logger.info(`[WordDetail Hint Streaming] Hint complete: "${fullText}"`);
+          // Hint完成後、50%まで進捗を進める
+          if (onProgress) {
+            const partialData = {
+              ...basicResult.data,
+              hint: { text: fullText },
+            };
+            onProgress(50, partialData);
+          }
+        },
+        onError: (error: Error) => {
+          logger.error('[WordDetail Hint Streaming] Hint stream error:', error);
+          // エラー時は空のHintで続行
+          accumulatedHintText = '';
+        },
+      }
+    );
+
+    // ステージ2B: Metrics + Examples をJSONで生成
+    // TODO: ここもストリーミング化するなら、別のendpointを使う
+    // 現状はHintのみストリーミング、残りはJSON一括生成
+    const additionalPrompt = await createAdditionalDetailsPrompt(word, targetLanguage, nativeLanguage);
+
+    let currentProgress = 50;
+    const additionalResult = await generateAdditionalInfoStream<Partial<WordDetailResponse>>(
+      additionalPrompt,
+      modelConfig,
+      (section, data) => {
+        // Hintは既にストリーミング済みなのでスキップ
+        if (section === 'hint') {
+          return;
+        }
+
+        if (section === 'metrics') {
+          currentProgress = 70;
+          logger.info('[WordDetail Hint Streaming] Metrics received via SSE');
+        } else if (section === 'examples') {
+          currentProgress = 90;
+          logger.info('[WordDetail Hint Streaming] Examples received via SSE');
+        }
+
+        // 基本情報 + Hint + 新しいセクションをマージして即座に表示
+        if (onProgress) {
+          const partialMerged = {
+            ...basicResult.data,
+            hint: { text: accumulatedHintText },
+            [section]: data,
+          };
+          onProgress(currentProgress, partialMerged);
+        }
+      }
+    );
+
+    totalTokens += additionalResult.tokensUsed;
+    logger.info('[WordDetail Hint Streaming] Additional details received, tokens:', additionalResult.tokensUsed);
+
+    // 全てをマージ
+    const mergedData: WordDetailResponse = {
+      ...basicResult.data,
+      ...additionalResult.data,
+      hint: { text: accumulatedHintText }, // ストリーミングしたHintを使用
+    } as WordDetailResponse;
+
+    if (!mergedData.headword || !mergedData.headword.lemma) {
+      throw new Error(`「${word}」の生成に失敗しました。`);
+    }
+
+    if (onProgress) {
+      onProgress(100, mergedData); // 完全なデータを表示
+    }
+
+    logger.info(`[WordDetail Hint Streaming] Total tokens used: ${totalTokens}`);
+    return {
+      data: mergedData,
+      tokensUsed: totalTokens,
+    };
+  } catch (error) {
+    logger.error('[WordDetail Hint Streaming] Error:', error);
+    throw error;
   }
 }
 

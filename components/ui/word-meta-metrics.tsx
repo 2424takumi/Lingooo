@@ -1,5 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { FrequencyBar } from './frequency-bar';
+import { useTranslation } from 'react-i18next';
 
 interface WordMetaMetricsProps {
   frequency: number; // 0-100
@@ -8,30 +9,32 @@ interface WordMetaMetricsProps {
 }
 
 export function WordMetaMetrics({ frequency, difficulty, nuance }: WordMetaMetricsProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
       <FrequencyBar
-        title="使用頻度"
+        title={t('metrics.frequency')}
         value={frequency}
-        leftLabel="めずらしい"
-        rightLabel="よく使う"
+        leftLabel={t('metrics.rare')}
+        rightLabel={t('metrics.common')}
         type="frequency"
         delay={0}
       />
       <FrequencyBar
-        title="難易度"
+        title={t('metrics.difficulty')}
         value={difficulty}
-        leftLabel="かんたん"
-        rightLabel="むずかしい"
+        leftLabel={t('metrics.easy')}
+        rightLabel={t('metrics.hard')}
         type="difficulty"
         delay={80}
       />
       <FrequencyBar
-        title="ニュアンス"
+        title={t('metrics.nuance')}
         value={nuance}
-        leftLabel="カジュアル"
-        centerLabel="ノーマル"
-        rightLabel="フォーマル"
+        leftLabel={t('metrics.casual')}
+        centerLabel={t('metrics.normal')}
+        rightLabel={t('metrics.formal')}
         type="nuance"
         delay={160}
       />
