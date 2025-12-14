@@ -20,7 +20,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lingooo.mobile",
-      "buildNumber": "22",
+      "buildNumber": "23",
       "infoPlist": {
         "NSUserActivityTypes": [
           "com.lingooo.mobile.search"
@@ -35,7 +35,8 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSSpeechRecognitionUsageDescription": "音声入力で単語や文章を検索できます",
         "NSMicrophoneUsageDescription": "音声入力機能を使用するためにマイクへのアクセスが必要です",
-        "NSPhotoLibraryUsageDescription": "プロフィール画像の設定や画像から文字を読み取るためにフォトライブラリへのアクセスが必要です"
+        "NSPhotoLibraryUsageDescription": "プロフィール画像の設定や画像から文字を読み取るためにフォトライブラリへのアクセスが必要です",
+        "NSCameraUsageDescription": "画像から文字を読み取るためにカメラへのアクセスが必要です"
       }
     },
     "android": {
@@ -50,7 +51,10 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE"
       ]
     },
     "web": {
