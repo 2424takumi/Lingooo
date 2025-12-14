@@ -39,7 +39,21 @@ export async function fetchPrompt(
   name: string,
   variables?: Record<string, any>
 ): Promise<string> {
-  const cacheKey = `${CACHE_PREFIX}${name}`;
+  // キャッシュキーに重要な変数を含める
+  let cacheKeySuffix = '';
+  if (variables) {
+    // dictionary-additionalやtranslateプロンプトで重要な変数
+    const cacheKeyVars: string[] = [];
+    if (variables.targetLanguage) cacheKeyVars.push(`tl:${variables.targetLanguage}`);
+    if (variables.nativeLanguage) cacheKeyVars.push(`nl:${variables.nativeLanguage}`);
+    if (variables.word) cacheKeyVars.push(`w:${variables.word}`);
+
+    if (cacheKeyVars.length > 0) {
+      cacheKeySuffix = `:${cacheKeyVars.join(':')}`;
+    }
+  }
+
+  const cacheKey = `${CACHE_PREFIX}${name}${cacheKeySuffix}`;
 
   try {
     // キャッシュチェック

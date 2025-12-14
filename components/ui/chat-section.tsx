@@ -584,13 +584,17 @@ export function ChatSection({
   }, [qaPairs, activeFollowUpPairId]);
 
   return (
-    <View style={[
-      styles.container,
-      { backgroundColor: containerBackground },
-      isOpen ? styles.containerOpen : styles.containerClosed,
-      scope === 'translate' && !isOpen && styles.containerTranslateClosed
-    ]}>
+    <View
+      pointerEvents="box-none"
+      style={[
+        styles.container,
+        { backgroundColor: containerBackground },
+        isOpen ? styles.containerOpen : styles.containerClosed,
+        scope === 'translate' && !isOpen && styles.containerTranslateClosed
+      ]}
+    >
       <Animated.View
+        pointerEvents="box-none"
         style={{
           height: animatedHeight,
           opacity: animatedOpacity,
@@ -600,7 +604,7 @@ export function ChatSection({
         <ScrollView
           ref={scrollViewRef}
           style={styles.chatMessages}
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 0 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => {
@@ -674,6 +678,7 @@ export function ChatSection({
                 style={styles.backToCardButton}
                 onPress={() => {
                   setShowInputInWordMode(false);
+                  setIsOpen(false);
                   onSwitchToWordCard?.();
                 }}
               >
@@ -721,12 +726,15 @@ export function ChatSection({
 
       {/* Bottom Section: Question Tags + Input - wordモード時は質問モードでのみ表示 */}
       {(mode !== 'word' || showInputInWordMode) && (
-      <View style={[
-        styles.bottomSection,
-        scope === 'translate' && styles.bottomSectionTranslate,
-        scope === 'translate' && isOpen && styles.bottomSectionTranslateOpen,
-        activeFollowUpPair && styles.bottomSectionFollowUp
-      ]}>
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.bottomSection,
+          scope === 'translate' && styles.bottomSectionTranslate,
+          scope === 'translate' && isOpen && styles.bottomSectionTranslateOpen,
+          activeFollowUpPair && styles.bottomSectionFollowUp
+        ]}
+      >
         {/* Question Tags - ChatSuggestionTagsコンポーネントに統合 */}
         <ChatSuggestionTags
           mode={mode}
@@ -772,10 +780,10 @@ export function ChatSection({
         )}
 
         {/* White Container: Settings Icon + Input + Action Button (1 row) */}
-        <View style={[styles.whiteContainer, { backgroundColor: inputBackground }]}>
-          <View style={styles.inputRow}>
+        <View pointerEvents="box-none" style={[styles.whiteContainer, { backgroundColor: inputBackground }]}>
+          <View pointerEvents="box-none" style={styles.inputRow}>
             {/* Text Input */}
-            <View style={styles.inputWrapper}>
+            <View pointerEvents="box-none" style={styles.inputWrapper}>
               <TextInput
                 ref={inputRef}
                 style={[
