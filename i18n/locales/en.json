@@ -172,6 +172,7 @@
     "chatPlaceholder": "Ask a question about this text..."
   },
   "menu": {
+    "title": "Menu",
     "bookmarks": "Bookmarks",
     "customQuestions": "Custom Questions"
   },

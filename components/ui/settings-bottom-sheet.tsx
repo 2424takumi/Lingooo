@@ -300,12 +300,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
             {/* Language Settings */}
             <View style={styles.languageSettingsContainer}>
               <Text style={styles.sectionTitle}>{t('settingsBottomSheet.languageSettings')}</Text>
-              <LanguageDropdown
-                label={t('settingsBottomSheet.nativeLanguage')}
-                selectedLanguage={nativeLanguage}
-                availableLanguages={AVAILABLE_LANGUAGES}
-                onSelect={(lang) => setNativeLanguage(lang.id)}
-              />
+              {/* Native Language removed: Japanese-only optimization */}
               <LanguageDropdown
                 label={t('settingsBottomSheet.defaultLanguage')}
                 selectedLanguage={defaultLanguage}

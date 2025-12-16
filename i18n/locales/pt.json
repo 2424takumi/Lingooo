@@ -172,6 +172,7 @@
     "chatPlaceholder": "Faça uma pergunta sobre este texto..."
   },
   "menu": {
+    "title": "Menu",
     "bookmarks": "Favoritos",
     "customQuestions": "Perguntas Personalizadas"
   },

@@ -45,9 +45,9 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
   const [currentLanguage, setCurrentLanguageState] = useState<Language>(
     AVAILABLE_LANGUAGES[0]
   );
-  const [nativeLanguage, setNativeLanguageState] = useState<Language>(
-    AVAILABLE_LANGUAGES[1] // デフォルトは日本語
-  );
+  // 日本語に固定（Japanese-only optimization for initial release）
+  const JAPANESE_LANGUAGE = AVAILABLE_LANGUAGES.find(lang => lang.code === 'ja')!;
+  const [nativeLanguage] = useState<Language>(JAPANESE_LANGUAGE);
 
   // 初期化（userが取得されたら、かつ初期設定が完了していたら実行）
   useEffect(() => {
@@ -86,18 +86,10 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
       if (data) {
         logger.info('[LearningLanguages] Loaded settings:', data);
 
-        // 母語を設定（データベースには言語コードが保存されている）
-        if (data.native_language) {
-          const language = AVAILABLE_LANGUAGES.find((lang) => lang.code === data.native_language);
-          if (language) {
-            logger.info('[LearningLanguages] Setting native language:', language.name);
-            setNativeLanguageState(language);
-            // UIの言語も設定
-            logger.info('[LearningLanguages] Changing i18n language to:', language.code);
-            await i18n.changeLanguage(language.code);
-            logger.info('[LearningLanguages] i18n language changed successfully to:', language.code);
-          }
-        }
+        // 母語は日本語に固定（Japanese-only optimization）
+        // UIの言語も日本語に固定
+        logger.info('[LearningLanguages] Setting i18n language to: ja (Japanese-only mode)');
+        await i18n.changeLanguage('ja');
 
         // デフォルト言語を設定（データベースには言語コードが保存されている）
         if (data.default_language) {
@@ -231,34 +223,10 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
   };
 
   const setNativeLanguage = async (languageId: string) => {
-    if (!user) return;
-
-    const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === languageId);
-    if (!language) return;
-
-    logger.info('[LearningLanguages] setNativeLanguage called with:', languageId, '->', language.name);
-    setNativeLanguageState(language);
-
-    // UIの言語も変更
-    logger.info('[LearningLanguages] Changing i18n language to:', language.code);
-    await i18n.changeLanguage(language.code);
-    logger.info('[LearningLanguages] i18n language changed successfully to:', language.code);
-
-    try {
-      // データベースには言語コードを保存
-      const { error } = await supabase
-        .from('users')
-        .update({ native_language: language.code })
-        .eq('id', user.id);
-
-      if (error) {
-        logger.error('Failed to save native language:', error);
-      } else {
-        logger.info('[LearningLanguages] Native language saved to Supabase:', language.code);
-      }
-    } catch (error) {
-      logger.error('Failed to save native language:', error);
-    }
+    // 日本語に固定（Japanese-only optimization）
+    // この関数は互換性のために残すが、何もしない
+    logger.info('[LearningLanguages] setNativeLanguage called but disabled (Japanese-only mode)');
+    return;
   };
 
   const isLearning = (languageId: string): boolean => {

@@ -45,64 +45,36 @@ function CheckIcon({ size = 24, color = '#111111' }: { size?: number; color?: st
 
 export function InitialLanguageSetupModal({ visible, onComplete }: InitialLanguageSetupModalProps) {
   const { t } = useTranslation();
-  const [step, setStep] = useState<1 | 2>(1);
+  // Step 1 removed: Japanese-only optimization
+  // const [step, setStep] = useState<1 | 2>(1);
 
-  // 端末のデフォルト言語を取得（日英葡のみ対応、それ以外は英語）
-  const defaultNativeLanguage = useMemo(() => {
-    const deviceLocale = getDeviceLocale();
-    const supportedCodes = ['ja', 'en', 'pt'];
-    const matchedCode = supportedCodes.includes(deviceLocale) ? deviceLocale : 'en';
-    return AVAILABLE_LANGUAGES.find(lang => lang.code === matchedCode)!;
-  }, []);
-
-  const [selectedNativeLanguage, setSelectedNativeLanguage] = useState<Language | null>(defaultNativeLanguage);
+  // 日本語に固定（Japanese-only optimization for initial release）
+  const JAPANESE_LANGUAGE = AVAILABLE_LANGUAGES.find(lang => lang.code === 'ja')!;
+  const [selectedNativeLanguage] = useState<Language>(JAPANESE_LANGUAGE);
   const [selectedLearningLanguages, setSelectedLearningLanguages] = useState<Language[]>([]);
 
-  // 母国語として選択可能な言語（日本語、英語、ポルトガル語のみ）
-  const nativeLanguageOptions = AVAILABLE_LANGUAGES.filter(
-    (lang) => lang.code === 'ja' || lang.code === 'en' || lang.code === 'pt'
-  );
-
-  // 学習言語として選択可能な言語（母国語以外）
+  // 学習言語として選択可能な言語（日本語以外）
   const learningLanguageOptions = AVAILABLE_LANGUAGES.filter(
-    (lang) => lang.id !== selectedNativeLanguage?.id
+    (lang) => lang.id !== selectedNativeLanguage.id
   );
-
-  const handleNativeLanguageSelect = async (language: Language) => {
-    setSelectedNativeLanguage(language);
-    // UIの言語を即座に切り替え（UX向上）
-    await i18n.changeLanguage(language.code);
-  };
 
   const handleLearningLanguagesChange = (languages: Language[]) => {
     setSelectedLearningLanguages(languages);
   };
 
-  const handleNext = () => {
-    if (step === 1 && selectedNativeLanguage) {
-      setStep(2);
-    }
-  };
-
-  const handleBack = () => {
-    if (step === 2) {
-      setStep(1);
-    }
-  };
-
   const handleComplete = async () => {
-    if (selectedNativeLanguage && selectedLearningLanguages.length > 0) {
+    if (selectedLearningLanguages.length > 0) {
       const nativeLanguageId = selectedNativeLanguage.id;
       const learningLanguageIds = selectedLearningLanguages.map(lang => lang.id);
 
-      // UIの言語を即座に切り替え
-      await i18n.changeLanguage(selectedNativeLanguage.code);
+      // UIは日本語に固定（Japanese-only optimization）
+      await i18n.changeLanguage('ja');
 
       onComplete(nativeLanguageId, learningLanguageIds);
     }
   };
 
-  const canProceed = step === 1 ? selectedNativeLanguage !== null : selectedLearningLanguages.length > 0;
+  const canProceed = selectedLearningLanguages.length > 0;
 
   return (
     <Modal
@@ -113,68 +85,40 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer} onStartShouldSetResponder={() => true}>
-          {/* ステップインジケーター */}
-          <View style={styles.stepIndicator}>
-            <View style={[styles.stepDot, step >= 1 && styles.stepDotActive]} />
-            <View style={styles.stepLine} />
-            <View style={[styles.stepDot, step >= 2 && styles.stepDotActive]} />
-          </View>
-
           {/* タイトル */}
           <Text style={styles.modalTitle}>
-            {step === 1 ? t('initialSetup.step1Title') : t('initialSetup.step2Title')}
+            {t('initialSetup.step2Title')}
           </Text>
 
           {/* 説明 */}
           <Text style={styles.description}>
-            {step === 1
-              ? t('initialSetup.step1Description')
-              : t('initialSetup.step2Description')}
+            {t('initialSetup.step2Description')}
           </Text>
 
-          {/* 言語ドロップダウン */}
+          {/* 言語ドロップダウン（学習言語選択のみ） */}
           <View style={styles.dropdownContainer}>
-            {step === 1 ? (
-              // ステップ1: 母国語選択
-              <LanguageDropdown
-                label={t('initialSetup.nativeLanguageLabel')}
-                selectedLanguage={selectedNativeLanguage ?? undefined}
-                availableLanguages={nativeLanguageOptions}
-                onSelect={handleNativeLanguageSelect}
-              />
-            ) : (
-              // ステップ2: 学習言語選択（複数選択）
-              <LanguageDropdown
-                label={t('initialSetup.learningLanguageLabel')}
-                selectedLanguages={selectedLearningLanguages}
-                availableLanguages={learningLanguageOptions}
-                onMultiSelect={handleLearningLanguagesChange}
-                multiSelect
-              />
-            )}
+            <LanguageDropdown
+              label={t('initialSetup.learningLanguageLabel')}
+              selectedLanguages={selectedLearningLanguages}
+              availableLanguages={learningLanguageOptions}
+              onMultiSelect={handleLearningLanguagesChange}
+              multiSelect
+            />
           </View>
 
-          {/* ボタン */}
+          {/* 完了ボタン */}
           <View style={styles.buttonContainer}>
-            {step === 2 && (
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={handleBack}
-              >
-                <Text style={styles.backButtonText}>{t('common.back')}</Text>
-              </TouchableOpacity>
-            )}
             <TouchableOpacity
               style={[
                 styles.primaryButton,
                 !canProceed && styles.primaryButtonDisabled,
-                step === 2 && styles.primaryButtonFull,
+                styles.primaryButtonFull,
               ]}
-              onPress={step === 1 ? handleNext : handleComplete}
+              onPress={handleComplete}
               disabled={!canProceed}
             >
               <Text style={[styles.primaryButtonText, !canProceed && styles.primaryButtonTextDisabled]}>
-                {step === 1 ? t('common.next') : t('common.complete')}
+                {t('common.complete')}
               </Text>
             </TouchableOpacity>
           </View>

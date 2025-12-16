@@ -10,34 +10,10 @@ import en from './locales/en.json';
 import pt from './locales/pt.json';
 
 /**
- * デバイスのロケールを取得し、サポートされている言語コードを返す
- * サポート言語: ja, en, pt
- * それ以外の言語の場合は英語(en)を返す
+ * 日本語に固定（Japanese-only optimization for initial release）
+ * 将来的な多言語展開のため、設定構造は維持
  */
-function getDeviceLanguage(): string {
-  try {
-    const locales = Localization.getLocales();
-    if (locales && locales.length > 0) {
-      const deviceLang = locales[0].languageCode;
-      console.log('[i18n] Device language detected:', deviceLang);
-
-      // サポートされている言語のみ
-      const supportedLanguages = ['ja', 'en', 'pt'];
-      if (supportedLanguages.includes(deviceLang || '')) {
-        return deviceLang || 'en';
-      }
-
-      // サポートされていない言語の場合は英語をデフォルトに
-      console.log('[i18n] Unsupported language, defaulting to English');
-      return 'en';
-    }
-  } catch (error) {
-    console.warn('[i18n] Failed to get device locale:', error);
-  }
-  return 'en';
-}
-
-const deviceLanguage = getDeviceLanguage();
+const deviceLanguage = 'ja';
 
 i18n
   .use(initReactI18next)
