@@ -255,11 +255,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   nuanceText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '510',
     color: '#242424',
-    lineHeight: 22,
-    letterSpacing: 0,
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
   footer: {
     flexDirection: 'row',

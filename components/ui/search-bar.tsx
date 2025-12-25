@@ -2,7 +2,7 @@ import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard, ScrollView, Te
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { SearchIcon, ReloadIcon } from './icons';
 import { LanguageTag } from './language-tag';
-import { KeyboardToolbar } from './keyboard-toolbar';
+import { ImageUploadButton } from './image-upload-button';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useSubscription } from '@/contexts/subscription-context';
 import { useAuth } from '@/contexts/auth-context';
@@ -26,6 +26,8 @@ interface SearchBarProps {
   onChangeText?: (text: string) => void;
   autoFocus?: boolean;
   onTextLengthError?: () => void;
+  onImageSelected?: (result: { uri: string; mimeType: string; fileName?: string }) => void;
+  onImageError?: (error: string) => void;
 }
 
 export function SearchBar({
@@ -35,6 +37,8 @@ export function SearchBar({
   onChangeText: externalOnChangeText,
   autoFocus = false,
   onTextLengthError,
+  onImageSelected,
+  onImageError,
 }: SearchBarProps) {
   const { learningLanguages, currentLanguage, defaultLanguage, setCurrentLanguage } = useLearningLanguages();
   const { isPremium } = useSubscription();
@@ -51,9 +55,6 @@ export function SearchBar({
   const buttonIconColor = useThemeColor({}, 'buttonText');
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
   const hasInitialized = useRef(false);
-
-  // キーボードツールバー用のID
-  const keyboardAccessoryID = 'search-bar-input-accessory';
 
   // デフォルト言語が設定されたらcurrentLanguageを初期化（初回のみ）
   useEffect(() => {
@@ -194,7 +195,6 @@ export function SearchBar({
             autoComplete="off"
             textContentType="none"
             importantForAutofill="no"
-            inputAccessoryViewID={Platform.OS === 'ios' ? keyboardAccessoryID : undefined}
           />
         </View>
         <View style={styles.actionArea}>
@@ -219,6 +219,14 @@ export function SearchBar({
             </Text>
           )}
 
+          {/* 画像アップロードボタン */}
+          {onImageSelected && onImageError && (
+            <ImageUploadButton
+              onImageSelected={onImageSelected}
+              onError={onImageError}
+            />
+          )}
+
           {/* 検索ボタン */}
           <TouchableOpacity
             style={[styles.searchButton, { backgroundColor: buttonBackground }]}
@@ -228,12 +236,6 @@ export function SearchBar({
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Keyboard Toolbar */}
-      <KeyboardToolbar
-        nativeID={keyboardAccessoryID}
-        onDone={() => inputRef.current?.blur()}
-      />
     </View>
   );
 }

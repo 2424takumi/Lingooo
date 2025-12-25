@@ -19,7 +19,6 @@ import Reanimated, { useSharedValue, withTiming } from 'react-native-reanimated'
 import type { QAPair } from '@/types/chat';
 import { QuestionTag } from './question-tag';
 import { QACardList } from './qa-card-list';
-import { KeyboardToolbar } from './keyboard-toolbar';
 import { WordDetailCard, type WordDetail } from './word-detail-card';
 import { useQuestionTags } from './chat-section/use-question-tags';
 import { useChatAnimation } from './chat-section/use-chat-animation';
@@ -264,9 +263,6 @@ export function ChatSection({
   const containerBackground = useThemeColor({}, 'chatSectionBackground');
   const inputBackground = useThemeColor({}, 'chatInputBackground');
   const placeholderColor = useThemeColor({}, 'textPlaceholder');
-
-  // キーボードツールバー用のID
-  const keyboardAccessoryID = `chat-input-accessory-${scope || 'default'}-${identifier || 'default'}`;
 
   // questionPresetsをローカル変数として保持（依存配列で使用するため）
   const questions = questionPresets;
@@ -819,7 +815,6 @@ export function ChatSection({
                 selectionColor="#242424"
                 selectTextOnFocus={false}
                 contextMenuHidden={false}
-                inputAccessoryViewID={Platform.OS === 'ios' ? keyboardAccessoryID : undefined}
               />
             </View>
 
@@ -842,13 +837,6 @@ export function ChatSection({
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Keyboard Toolbar */}
-        <KeyboardToolbar
-          nativeID={keyboardAccessoryID}
-          onDone={() => inputRef.current?.blur()}
-          isVisible={isInputFocused}
-        />
       </View>
       )}
 

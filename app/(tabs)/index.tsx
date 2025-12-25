@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, ActivityIndicator, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { router } from 'expo-router';
@@ -10,11 +10,13 @@ import { SideMenu } from '@/components/ui/side-menu';
 import { SettingsBottomSheet } from '@/components/ui/settings-bottom-sheet';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
+import { ImagePreviewModal } from '@/components/ui/image-preview-modal';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSearch } from '@/hooks/use-search';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/auth-context';
 import { useSubscription } from '@/contexts/subscription-context';
+import { useLearningLanguages } from '@/contexts/learning-languages-context';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -23,12 +25,16 @@ export default function HomeScreen() {
   const { handleSearch, isLoading, error, showTextLengthModal, setShowTextLengthModal } = useSearch();
   const { needsInitialSetup } = useAuth();
   const { isPremium } = useSubscription();
+  const { currentLanguage, defaultLanguage } = useLearningLanguages();
   const [searchText, setSearchText] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [subscriptionVisible, setSubscriptionVisible] = useState(false);
   const [menuButtonLayout, setMenuButtonLayout] = useState<{ x: number; y: number; width: number; height: number } | undefined>(undefined);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
+  const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+  const [selectedImageMimeType, setSelectedImageMimeType] = useState<string | undefined>(undefined);
 
   const handleMenuPress = (layout: { x: number; y: number; width: number; height: number }) => {
     setMenuButtonLayout(layout);
@@ -59,6 +65,24 @@ export default function HomeScreen() {
     onSearch(query);
   };
 
+  const handleImageSelected = (result: { uri: string; mimeType: string; fileName?: string }) => {
+    console.log('[HomeScreen] Image selected:', result);
+    setSelectedImageUri(result.uri);
+    setSelectedImageMimeType(result.mimeType);
+    setImagePreviewVisible(true);
+  };
+
+  const handleImageError = (error: string) => {
+    console.error('[HomeScreen] Image selection error:', error);
+    Alert.alert(t('imageUpload.error', 'エラー'), error);
+  };
+
+  const handleImagePreviewClose = () => {
+    setImagePreviewVisible(false);
+    setSelectedImageUri(null);
+    setSelectedImageMimeType(undefined);
+  };
+
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
       <StatusBar style="auto" />
@@ -86,6 +110,8 @@ export default function HomeScreen() {
               onChangeText={setSearchText}
               autoFocus={!needsInitialSetup}
               onTextLengthError={() => setShowTextLengthModal(true)}
+              onImageSelected={handleImageSelected}
+              onImageError={handleImageError}
             />
 
             {/* Loading Indicator */}
@@ -143,6 +169,15 @@ export default function HomeScreen() {
       <SubscriptionBottomSheet
         visible={subscriptionVisible}
         onClose={() => setSubscriptionVisible(false)}
+      />
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        visible={imagePreviewVisible}
+        imageUri={selectedImageUri}
+        mimeType={selectedImageMimeType}
+        onClose={handleImagePreviewClose}
+        targetLanguage={currentLanguage?.code || defaultLanguage?.code || 'ja'}
       />
     </ThemedView>
   );

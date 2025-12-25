@@ -112,6 +112,7 @@ export function BookmarkToast({ visible, onAddToFolder, onDismiss, showFolderBut
 
   return (
     <Animated.View
+      pointerEvents="box-none"
       style={[
         styles.container,
         {

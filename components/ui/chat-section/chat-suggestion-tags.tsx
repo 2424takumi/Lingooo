@@ -66,6 +66,7 @@ export function ChatSuggestionTags({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          pointerEvents="box-none"
           style={[
             styles.questionScrollView,
             scope === 'translate' && styles.questionScrollViewTranslate
@@ -114,6 +115,7 @@ export function ChatSuggestionTags({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          pointerEvents="box-none"
           style={[
             styles.questionScrollView,
             scope === 'translate' && styles.questionScrollViewTranslate

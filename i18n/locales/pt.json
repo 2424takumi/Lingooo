@@ -169,7 +169,15 @@
   },
   "translate": {
     "error": "Falha na tradução",
-    "chatPlaceholder": "Faça uma pergunta sobre este texto..."
+    "chatPlaceholder": "Faça uma pergunta sobre este texto...",
+    "imageTranslation": {
+      "ocrParseFailed": "Não foi possível ler o texto da imagem. Verifique se a imagem está clara e contém texto.",
+      "ocrProcessingFailed": "O texto foi reconhecido, mas ocorreu um erro durante o processamento. Por favor, tente novamente.",
+      "quotaExceeded": "Limite de uso da API atingido. Aguarde um pouco antes de tentar novamente.",
+      "contentBlocked": "O conteúdo da imagem pode violar políticas de segurança. Tente uma imagem diferente.",
+      "fileTooLarge": "O tamanho da imagem é muito grande. Tente uma imagem menor.",
+      "failed": "Ocorreu um erro durante a tradução da imagem. Verifique se a imagem está clara e o texto está visível."
+    }
   },
   "menu": {
     "title": "Menu",

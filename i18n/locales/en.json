@@ -169,7 +169,15 @@
   },
   "translate": {
     "error": "Translation failed",
-    "chatPlaceholder": "Ask a question about this text..."
+    "chatPlaceholder": "Ask a question about this text...",
+    "imageTranslation": {
+      "ocrParseFailed": "Could not read text from image. Please check if the image is clear and contains text.",
+      "ocrProcessingFailed": "Text was recognized but an error occurred during processing. Please try again.",
+      "quotaExceeded": "API usage limit reached. Please wait a while before retrying.",
+      "contentBlocked": "The image content may violate safety policies. Please try a different image.",
+      "fileTooLarge": "Image size is too large. Please try a smaller image.",
+      "failed": "An error occurred during image translation. Please check if the image is clear and text is visible."
+    }
   },
   "menu": {
     "title": "Menu",

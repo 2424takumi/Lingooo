@@ -1,6 +1,6 @@
 import { StyleSheet, View, ScrollView, Dimensions, Platform, Pressable, KeyboardAvoidingView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/themed-view';
@@ -21,6 +21,7 @@ import type { QuestionTag as QuestionTagType } from '@/constants/question-tags';
 import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { getWordContextCache, setWordContextCache } from '@/services/cache/word-context-cache';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
+import { getAndClearImageTranslationData } from '@/services/storage/image-translation-storage';
 import { detectLang, resolveLanguageCode } from '@/services/utils/language-detect';
 import { languageDetectionEvents } from '@/services/events/language-detection-events';
 import { useChatSession } from '@/hooks/use-chat-session';
@@ -75,11 +76,28 @@ export default function TranslateScreen() {
   const { currentLanguage, nativeLanguage, setCurrentLanguage } = useLearningLanguages();
   const { isPremium } = useSubscription();
 
+  // 画像翻訳から来た場合の全文テキストと翻訳を保持
+  const [imageTranslationText, setImageTranslationText] = useState<string | null>(null);
+  const [imageTranslatedText, setImageTranslatedText] = useState<string | null>(null);
+  const [isLoadingImageData, setIsLoadingImageData] = useState(fromImageTranslation);
+
   // パラメータから文章と言語を取得
-  const text = (params.word as string) || '';
+  // 画像翻訳の場合はimageTranslationTextを優先（AsyncStorageから読み込んだ全文）
+  const text = useMemo(
+    () => imageTranslationText || (params.word as string) || (params.initialText as string) || '',
+    [imageTranslationText, params.word, params.initialText]
+  );
   const initialSourceLang = (params.sourceLang as string) || 'en';
   const initialTargetLang = (params.targetLang as string) || 'ja';
   const needsAiDetection = (params.needsAiDetection as string) === 'true';
+  const fromImageTranslation = (params.fromImageTranslation as string) === 'true';
+
+  // 画像翻訳から来た場合の初期翻訳結果
+  // AsyncStorageから読み込んだ翻訳を優先
+  const initialTranslation = useMemo(
+    () => imageTranslatedText || (params.initialTranslation as string) || '',
+    [imageTranslatedText, params.initialTranslation]
+  );
 
   // AI検出によって言語が変わる可能性があるため、sourceLangをstateで管理
   const [sourceLang, setSourceLang] = useState(initialSourceLang);
@@ -162,6 +180,179 @@ export default function TranslateScreen() {
     nativeLanguageRef.current = nativeLanguage;
   }, [currentLanguage, nativeLanguage]);
 
+  // ページにフォーカスが戻った時に選択状態をクリア
+  useFocusEffect(
+    useCallback(() => {
+      // ページにフォーカスが当たったとき（ページに戻ってきたとき）の処理
+      logger.debug('[Translate] useFocusEffect - page focused, clearing selection state', {
+        hadSelectedText: !!selectedText,
+        selectedText: selectedText?.text,
+      });
+      setSelectedText(null);
+      setWordContextInfo(null);
+      setClearSelectionKey(prev => {
+        const newKey = prev + 1;
+        logger.debug('[Translate] useFocusEffect - clearSelectionKey incremented', {
+          oldKey: prev,
+          newKey,
+        });
+        return newKey;
+      });
+    }, [])  // 空の依存配列 - ページフォーカス時に必ず実行
+  );
+
+  // 画像翻訳から来た場合、AsyncStorageから全文データを読み込む
+  useEffect(() => {
+    if (fromImageTranslation) {
+      logger.info('[Translate] Loading image translation data from AsyncStorage');
+
+      getAndClearImageTranslationData().then((data) => {
+        if (data) {
+          logger.info('[Translate] Image translation data loaded', {
+            extractedLength: data.extractedText.length,
+            translatedLength: data.translatedText.length,
+          });
+
+          // stateに保存して、既存のinitialTranslationロジックで処理
+          setImageTranslationText(data.extractedText);
+          setImageTranslatedText(data.translatedText);
+          setSourceLang(data.detectedLanguage);
+          setSelectedTranslateTargetLang(data.targetLanguage);
+        } else {
+          logger.warn('[Translate] No image translation data found in AsyncStorage');
+        }
+        // データ読み込み完了（データがあってもなくても）
+        setIsLoadingImageData(false);
+      }).catch((error) => {
+        logger.error('[Translate] Failed to load image translation data', error);
+        setIsLoadingImageData(false);
+      });
+    }
+  }, [fromImageTranslation]);
+
+  // デバッグログ: text と initialTranslation の値を確認
+  useEffect(() => {
+    if (text || initialTranslation) {
+      logger.info('[Translate] Current text and initialTranslation values:', {
+        textLength: text.length,
+        textPreview: text.substring(0, 100),
+        initialTranslationLength: initialTranslation.length,
+        initialTranslationPreview: initialTranslation.substring(0, 100),
+        fromImageTranslation,
+      });
+    }
+  }, [text, initialTranslation, fromImageTranslation]);
+
+  // 短い段落を前の段落と結合するヘルパー関数
+  const mergeShortParagraphs = (paragraphs: string[], minLength: number = 60): string[] => {
+    if (paragraphs.length === 0) return [];
+    if (paragraphs.length === 1) return paragraphs;
+
+    const merged: string[] = [];
+    let buffer = paragraphs[0];
+
+    for (let i = 1; i < paragraphs.length; i++) {
+      const current = paragraphs[i];
+
+      // 現在のbufferまたは次の段落が短い場合は結合
+      if (buffer.length < minLength || current.length < minLength) {
+        buffer += '\n\n' + current;
+      } else {
+        merged.push(buffer);
+        buffer = current;
+      }
+    }
+
+    // 最後のbufferを追加
+    merged.push(buffer);
+    return merged;
+  };
+
+  // 画像翻訳から遷移した場合の初期データ設定
+  useEffect(() => {
+    if (initialTranslation && text && !translationData) {
+      logger.info('[Translate] Setting translation data (initial from image):', {
+        originalLength: text.length,
+        translatedLength: initialTranslation.length,
+        sourceLang: initialSourceLang,
+        targetLang: initialTargetLang,
+      });
+
+      // 言語検出をスキップ（すでに検出済み）
+      setIsDetectingLanguage(false);
+      setSourceLang(initialSourceLang);
+
+      // 段落分割処理を開始
+      const processParagraphs = async () => {
+        try {
+          // テキストを段落に分割（簡易実装：改行で分割）
+          const originalParagraphsSplit = text.split(/\n\n+/).filter(p => p.trim());
+          const translatedParagraphsSplit = initialTranslation.split(/\n\n+/).filter(p => p.trim());
+
+          logger.info('[Translate] Initial split:', {
+            original: originalParagraphsSplit.length,
+            translated: translatedParagraphsSplit.length,
+          });
+
+          // 短い段落を結合
+          const originalParagraphs = mergeShortParagraphs(originalParagraphsSplit, 60);
+          const translatedParagraphs = mergeShortParagraphs(translatedParagraphsSplit, 60);
+
+          logger.info('[Translate] After merging short paragraphs:', {
+            original: originalParagraphs.length,
+            translated: translatedParagraphs.length,
+          });
+
+          // 段落が1つしかない場合や分割が合わない場合、1つの段落として扱う
+          if (originalParagraphs.length !== translatedParagraphs.length || originalParagraphs.length === 0) {
+            logger.info('[Translate] Using single paragraph for image translation');
+            setParagraphs([{
+              id: generateId('paragraph'),
+              originalText: text,
+              translatedText: initialTranslation,
+              index: 0,
+              isTranslating: false,
+            }]);
+          } else {
+            // 複数段落に分割
+            logger.info('[Translate] Split image translation into paragraphs:', originalParagraphs.length);
+            const newParagraphs = originalParagraphs.map((origText, index) => ({
+              id: generateId('paragraph'),
+              originalText: origText.trim(),
+              translatedText: translatedParagraphs[index]?.trim() || '',
+              index,
+              isTranslating: false,
+            }));
+            setParagraphs(newParagraphs);
+          }
+
+          // 翻訳データを設定
+          setTranslationData({
+            originalText: text,
+            translatedText: initialTranslation,
+            sourceLang: initialSourceLang,
+            targetLang: initialTargetLang,
+          });
+
+          // 検索履歴に追加
+          addSearchHistory(text, initialSourceLang, 'translation');
+        } catch (error) {
+          logger.error('[Translate] Error processing image translation paragraphs:', error);
+          // エラー時は1つの段落として扱う
+          setParagraphs([{
+            id: generateId('paragraph'),
+            originalText: text,
+            translatedText: initialTranslation,
+            index: 0,
+            isTranslating: false,
+          }]);
+        }
+      };
+
+      processParagraphs();
+    }
+  }, [initialTranslation, text, initialSourceLang, initialTargetLang, translationData]);
+
   // 選択テキスト管理
   const [selectedText, setSelectedText] = useState<{
     text: string;
@@ -185,8 +376,14 @@ export default function TranslateScreen() {
 
   // ChatSectionのモードを決定
   const chatSectionMode: ChatSectionMode = useMemo(() => {
-    if (!selectedText) return 'default';
-    return selectedText.isSingleWord ? 'word' : 'text';
+    const mode = !selectedText ? 'default' : (selectedText.isSingleWord ? 'word' : 'text');
+    logger.debug('[Translate] chatSectionMode calculated', {
+      mode,
+      hasSelectedText: !!selectedText,
+      selectedText: selectedText?.text,
+      isSingleWord: selectedText?.isSingleWord,
+    });
+    return mode;
   }, [selectedText]);
 
   // wordモード用の単語詳細データ
@@ -703,6 +900,21 @@ export default function TranslateScreen() {
       }
     };
 
+    // 画像翻訳データの読み込み中は待機
+    if (isLoadingImageData) {
+      logger.info('[Translate] Waiting for image data to load from AsyncStorage...');
+      return;
+    }
+
+    // 画像翻訳からの遷移で、既に翻訳済みデータがある場合はスキップ
+    if (initialTranslation && fromImageTranslation) {
+      logger.info('[Translate] Skipping auto-translation (using initialTranslation from AsyncStorage):', {
+        initialTranslationLength: initialTranslation.length,
+        textLength: text.length,
+      });
+      return;
+    }
+
     if (text && !isDetectingLanguage) {
       performProgressiveTranslation();
     } else if (isDetectingLanguage) {
@@ -714,7 +926,7 @@ export default function TranslateScreen() {
       logger.info('[Translate] Translation cancelled due to dependency change');
       isActive = false;
     };
-  }, [text, sourceLang, selectedTranslateTargetLang, isDetectingLanguage]); // isDetectingLanguageも追加して言語検出完了を監視
+  }, [text, sourceLang, selectedTranslateTargetLang, isDetectingLanguage, initialTranslation, fromImageTranslation, isLoadingImageData]); // initialTranslation と fromImageTranslation、isLoadingImageData も追加してスキップロジックが動作するように
 
   // 言語検出完了時に翻訳を開始するuseEffectは削除
   // 代わりに、メインuseEffect内で isDetectingLanguage を直接チェック
@@ -1444,35 +1656,35 @@ export default function TranslateScreen() {
 
         {/* Translation Card - Scrollable */}
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-          <Pressable
-            // 常に押せるようにして、選択中はonPressで解除処理を行う
-            onPress={() => {
-              logger.debug('[Translate] Pressable onPress', {
-                selectedText: selectedText?.text || null,
-                chatSectionMode,
-              });
-              if (selectedText) {
-                setSelectedText(null);
-                setWordContextInfo(null);
-                setClearSelectionKey(prev => prev + 1);
-                setQAPairs([]); // チャットセクションをリセット
-              }
-            }}
-            onTouchStart={() => {
-              logger.debug('[Translate] Pressable onTouchStart', {
-                chatSectionMode,
-                pointerEvents: chatSectionMode === 'word' ? 'none' : 'auto',
-              });
-            }}
-            onPressIn={() => {
-              logger.debug('[Translate] Pressable onPressIn', {
-                chatSectionMode,
-                disabled: chatSectionMode === 'word',
-              });
-            }}
-          >
-            <View style={styles.translateCardContainer}>
+          <View style={styles.translateCardContainer}>
+            <Pressable
+              onPress={() => {
+                logger.debug('[Translate] Pressable onPress', {
+                  selectedText: selectedText?.text || null,
+                  chatSectionMode,
+                });
+                if (selectedText) {
+                  setSelectedText(null);
+                  setWordContextInfo(null);
+                  setClearSelectionKey(prev => prev + 1);
+                  setQAPairs([]); // チャットセクションをリセット
+                }
+              }}
+              onTouchStart={() => {
+                logger.debug('[Translate] Pressable onTouchStart', {
+                  chatSectionMode,
+                  pointerEvents: chatSectionMode === 'word' ? 'none' : 'auto',
+                });
+              }}
+              onPressIn={() => {
+                logger.debug('[Translate] Pressable onPressIn', {
+                  chatSectionMode,
+                  disabled: chatSectionMode === 'word',
+                });
+              }}
+            >
               <TranslateCard
+                key={`translate-card-${currentParagraphIndex}`}
                 paragraphs={paragraphs.length > 0 ? paragraphs : [{
                   id: 'loading',
                   originalText: '',
@@ -1497,14 +1709,22 @@ export default function TranslateScreen() {
                 }}
                 clearSelectionKey={clearSelectionKey}
               />
-            </View>
-          </Pressable>
+            </Pressable>
+          </View>
         </ScrollView>
       </View>
 
       {/* Chat Section - Fixed at bottom */}
-      <View style={styles.keyboardAvoidingView} pointerEvents="box-none">
-        <View pointerEvents="box-none" style={styles.chatContainerFixed} collapsable={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'position' : 'height'}
+        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={0}
+      >
+        <View
+          pointerEvents="box-none"
+          style={styles.chatContainerFixed}
+          collapsable={false}
+        >
           <ChatSection
             key={`${translationData?.originalText}-${selectedText?.text || 'default'}`}
             placeholder={t('translate.chatPlaceholder')}
@@ -1543,7 +1763,7 @@ export default function TranslateScreen() {
             onSwitchToWordCard={handleSwitchToWordCard}
           />
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       {/* Bookmark Toast */}
       <BookmarkToast
@@ -1621,7 +1841,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    top: 0, // 全画面を覆うように変更（タッチ判定のクリッピングを防ぐため）
     zIndex: 1000,
     justifyContent: 'flex-end', // コンテンツを下部に配置
   },

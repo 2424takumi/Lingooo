@@ -51,27 +51,37 @@ export function SelectableText({
   clearSelectionKey
 }: SelectableTextProps) {
   const [selection, setSelection] = useState({ start: 0, end: 0 });
+  const [contentHeight, setContentHeight] = useState<number | undefined>(undefined);
   const textRef = useRef(text);
   const inputRef = useRef<TextInput>(null);
 
   // textが変更されたら更新
   textRef.current = text;
 
+  // clearSelectionKey の前回値を保持
+  const prevClearSelectionKey = useRef(clearSelectionKey);
+
   // clearSelectionKeyが変更されたら選択をクリア
   useEffect(() => {
-    if (clearSelectionKey !== undefined && clearSelectionKey > 0) {
+    // 実際に値が変更された時のみクリア（初期マウント時は除外）
+    if (prevClearSelectionKey.current !== clearSelectionKey && clearSelectionKey > 0) {
       setSelection({ start: 0, end: 0 });
       onSelectionCleared?.();
     }
+
+    // 前回値を更新
+    prevClearSelectionKey.current = clearSelectionKey;
   }, [clearSelectionKey]);
 
   const handleSelectionChange = (e: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
     const { start, end } = e.nativeEvent.selection;
+    console.log('[SelectableText] handleSelectionChange', { start, end, hasSelection: start !== end });
     setSelection({ start, end });
 
     // テキストが選択されている場合は通知
     if (start !== end) {
       const selectedText = textRef.current.substring(start, end);
+      console.log('[SelectableText] Selected text:', selectedText);
 
       // 旧APIとの互換性のため両方呼び出す
       onSelectionChange?.(selectedText);
@@ -88,6 +98,7 @@ export function SelectableText({
       }
     } else {
       // 選択が解除された場合も通知
+      console.log('[SelectableText] Selection cleared, calling onSelectionCleared');
       onSelectionCleared?.();
     }
   };
@@ -99,21 +110,22 @@ export function SelectableText({
       editable={false}
       multiline
       scrollEnabled={false}
-      showSoftInputOnFocus={false} // キーボードを表示しない
-      caretHidden={true} // カーソルを非表示
+      selectionColor="rgba(0, 122, 255, 0.2)" // 選択ハイライトの色（iOS標準の青）
       style={[
         style,
         {
           padding: 0,
           margin: 0,
+          height: contentHeight,
         },
       ]}
       onSelectionChange={handleSelectionChange}
       selection={selection}
       numberOfLines={numberOfLines}
       textAlignVertical="top"
-      contextMenuHidden={false}
-      inputAccessoryViewID={undefined}
+      onContentSizeChange={(e) => {
+        setContentHeight(e.nativeEvent.contentSize.height);
+      }}
       // 短いタップは親に伝播、長押しでテキスト選択
       delayLongPress={300}
     />

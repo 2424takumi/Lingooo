@@ -1186,7 +1186,7 @@ export default function WordDetailScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'position' : 'height'}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? -48 : 0}
+        keyboardVerticalOffset={0}
       >
         <View pointerEvents="box-none" style={styles.chatContainerFixed}>
           <ChatSection
