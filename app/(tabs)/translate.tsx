@@ -1718,7 +1718,7 @@ export default function TranslateScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        keyboardVerticalOffset={0}
       >
         <View
           pointerEvents="box-none"
@@ -1741,6 +1741,7 @@ export default function TranslateScreen() {
             onBookmarkAdded={handleBookmarkAdded}
             onFollowUpQuestion={handleFollowUpQuestion}
             onEnterFollowUpMode={handleEnterFollowUpMode}
+            activeFollowUpPairId={activeFollowUpPairId}
             prefilledInputText={prefilledChatText}
             onPrefillConsumed={() => setPrefilledChatText(null)}
             selectedText={selectedText}
