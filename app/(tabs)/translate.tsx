@@ -1716,9 +1716,9 @@ export default function TranslateScreen() {
 
       {/* Chat Section - Fixed at bottom */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'position' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
         <View
           pointerEvents="box-none"

@@ -26,7 +26,6 @@ interface ChatInputAreaProps {
   isStreaming: boolean;
   isSubmitting: boolean;
   handleActionButtonPress: () => void;
-  keyboardAccessoryID?: string;
   inputAnimatedStyle: StyleProp<ViewStyle>;
   inputBackground: string;
 }
@@ -46,7 +45,6 @@ export const ChatInputArea = forwardRef<TextInput, ChatInputAreaProps>(
       isStreaming,
       isSubmitting,
       handleActionButtonPress,
-      keyboardAccessoryID,
       inputAnimatedStyle,
       inputBackground,
     },
@@ -115,9 +113,6 @@ export const ChatInputArea = forwardRef<TextInput, ChatInputAreaProps>(
                 selectionColor="#242424"
                 selectTextOnFocus={false}
                 contextMenuHidden={false}
-                inputAccessoryViewID={
-                  Platform.OS === 'ios' ? keyboardAccessoryID : undefined
-                }
               />
             </View>
 
