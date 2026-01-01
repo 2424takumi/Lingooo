@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Dimensions, Switch, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Dimensions, Switch, ScrollView } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import { SettingsIcon, TokenIcon, LanguageIcon, ChevronRightIcon, CloseIcon, MessageCircleIcon } from './icons';
@@ -12,8 +12,6 @@ import { AVAILABLE_LANGUAGES, Language } from '@/types/language';
 import { getUsageStats, UsageStats } from '@/services/api/usage';
 import { logger } from '@/utils/logger';
 import Svg, { Path } from 'react-native-svg';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/lib/supabase';
 import { useTranslation } from 'react-i18next';
 
 // Star Icon for premium features
@@ -141,47 +139,6 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
     for (const id of added) {
       await addLearningLanguage(id);
     }
-  };
-
-  // 開発用: アプリをリセットして初回起動状態に戻す
-  const handleResetApp = () => {
-    Alert.alert(
-      t('settingsBottomSheet.resetConfirmTitle'),
-      t('settingsBottomSheet.resetConfirmMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settingsBottomSheet.resetApp'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // AsyncStorageをクリア
-              await AsyncStorage.clear();
-
-              // Supabase認証をサインアウト
-              await supabase.auth.signOut();
-
-              // ボトムシートを閉じる
-              onClose();
-
-              // 完了メッセージ
-              Alert.alert(
-                t('settingsBottomSheet.resetComplete'),
-                t('settingsBottomSheet.resetCompleteMessage'),
-                [
-                  {
-                    text: t('common.ok'),
-                  },
-                ]
-              );
-            } catch (error) {
-              console.error('リセットエラー:', error);
-              Alert.alert(t('common.error'), t('settingsBottomSheet.resetError'));
-            }
-          },
-        },
-      ]
-    );
   };
 
   return (
@@ -314,20 +271,6 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                 onMultiSelect={handleLearningLanguagesChange}
                 multiSelect
               />
-            </View>
-
-            {/* Developer Tools */}
-            <View style={styles.developerToolsContainer}>
-              <Text style={styles.sectionTitle}>{t('settingsBottomSheet.developerTools')}</Text>
-              <TouchableOpacity
-                style={styles.resetButton}
-                onPress={handleResetApp}
-              >
-                <Text style={styles.resetButtonText}>{t('settingsBottomSheet.resetApp')}</Text>
-                <Text style={styles.resetButtonSubtext}>
-                  {t('settingsBottomSheet.resetAppDescription')}
-                </Text>
-              </TouchableOpacity>
             </View>
 
             {/* Footer Links */}
@@ -571,27 +514,5 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 11,
     color: '#CCCCCC',
-  },
-  developerToolsContainer: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-  },
-  resetButton: {
-    backgroundColor: '#FFF5F5',
-    borderWidth: 1,
-    borderColor: '#FFE0E0',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-  },
-  resetButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FF4444',
-    marginBottom: 4,
-  },
-  resetButtonSubtext: {
-    fontSize: 12,
-    color: '#666666',
   },
 });
