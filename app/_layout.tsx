@@ -111,6 +111,8 @@ function AppContent() {
 export default function RootLayout() {
   // バックエンドのKeepaliveを開始（Renderのスリープ防止）
   useEffect(() => {
+    // 即座にウォームアップを実行（startKeepalive内で自動的に/warmupを呼び出す）
+    // これによりLangfuseプロンプト、Gemini API、Groq APIをウォームアップ
     startKeepalive();
 
     // TEMPORARY: Clear mobile-side Langfuse prompt cache on app start
@@ -119,35 +121,9 @@ export default function RootLayout() {
       console.log('[RootLayout] Cleared dictionary-additional cache');
     });
 
-    // 自動ウォームアップ: アプリ起動後5秒待ってから裏で辞書生成を実行
-    // これによりGemini API、Langfuseキャッシュ、ネットワーク層を全てウォームアップ
-    const warmupTimeout = setTimeout(async () => {
-      try {
-        logger.info('[RootLayout] Starting silent warmup generation...');
-        // 辞書生成を実行してキャッシュにヒットさせる
-        // 日本語で「こんにちは」を検索（日本語最適化版なので）
-        await generateWordDetailWithHintStreaming({
-          lemma: 'こんにちは',
-          targetLang: 'en', // 英語辞書として検索
-          nativeLang: 'ja',
-          onData: () => {}, // データは無視
-          onComplete: () => {
-            logger.info('[RootLayout] Silent warmup generation completed successfully');
-          },
-          onError: (error) => {
-            logger.warn('[RootLayout] Silent warmup generation failed (non-critical):', error);
-          },
-        });
-      } catch (error) {
-        // エラーは無視（ウォームアップ失敗は致命的ではない）
-        logger.warn('[RootLayout] Silent warmup failed:', error);
-      }
-    }, 5000);
-
     // クリーンアップ時に停止
     return () => {
       stopKeepalive();
-      clearTimeout(warmupTimeout);
     };
   }, []);
 

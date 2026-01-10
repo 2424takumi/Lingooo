@@ -8,7 +8,7 @@
 import { logger } from '@/utils/logger';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-const KEEPALIVE_INTERVAL = 10 * 60 * 1000; // 10分ごと（15分のスリープより前）
+const KEEPALIVE_INTERVAL = 5 * 60 * 1000; // 5分ごと（15分のスリープより前、3倍の安全マージン）
 const HEALTH_ENDPOINT = '/health';
 const WARMUP_ENDPOINT = '/warmup';
 
