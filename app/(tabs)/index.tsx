@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { router } from 'expo-router';
@@ -17,6 +17,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/auth-context';
 import { useSubscription } from '@/contexts/subscription-context';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/lib/supabase';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -80,7 +82,6 @@ export default function HomeScreen() {
   const handleImagePreviewClose = () => {
     setImagePreviewVisible(false);
     setSelectedImageUri(null);
-    setSelectedImageMimeType(undefined);
   };
 
   return (

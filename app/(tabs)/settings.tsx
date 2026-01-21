@@ -156,34 +156,36 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* Developer Tools */}
-          <View style={[styles.section, styles.lastSection]}>
-            <Text style={styles.sectionTitle}>{t('settings.developer.title')}</Text>
+          {/* Developer Tools - Only shown in development mode */}
+          {__DEV__ && (
+            <View style={[styles.section, styles.lastSection]}>
+              <Text style={styles.sectionTitle}>{t('settings.developer.title')}</Text>
 
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={handleClearPromptCache}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Clear Prompt Cache</Text>
-                <Text style={styles.settingDescription}>
-                  Clear cached AI prompts (for testing language changes)
-                </Text>
-              </View>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.settingItem}
+                onPress={handleClearPromptCache}
+              >
+                <View style={styles.settingInfo}>
+                  <Text style={styles.settingLabel}>Clear Prompt Cache</Text>
+                  <Text style={styles.settingDescription}>
+                    Clear cached AI prompts (for testing language changes)
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.settingItem, styles.dangerItem]}
-              onPress={handleResetApp}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.dangerLabel}>{t('settings.developer.resetApp')}</Text>
-                <Text style={styles.settingDescription}>
-                  {t('settings.developer.resetAppDescription')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={[styles.settingItem, styles.dangerItem]}
+                onPress={handleResetApp}
+              >
+                <View style={styles.settingInfo}>
+                  <Text style={styles.dangerLabel}>{t('settings.developer.resetApp')}</Text>
+                  <Text style={styles.settingDescription}>
+                    {t('settings.developer.resetAppDescription')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
       </View>
     </ThemedView>

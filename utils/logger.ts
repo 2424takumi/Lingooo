@@ -28,7 +28,7 @@ interface LoggerConfig {
 
 const defaultConfig: LoggerConfig = {
   enabledInProduction: false, // 本番環境ではログを無効化
-  minLevel: LogLevel.DEBUG,
+  minLevel: LogLevel.INFO, // 本番環境ではINFO以上のログのみ出力
 };
 
 let config = { ...defaultConfig };

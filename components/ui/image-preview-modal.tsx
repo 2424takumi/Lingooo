@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { translateImage, uriToBase64, getMimeTypeFromUri } from '../../services/api/image-translate';
 import { saveImageTranslationData } from '../../services/storage/image-translation-storage';
 import { useRouter } from 'expo-router';
+import { ScanningOverlay } from './scanning-overlay';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -134,6 +135,7 @@ export function ImagePreviewModal({
               style={styles.image}
               resizeMode="contain"
             />
+            {isTranslating && <ScanningOverlay />}
           </View>
 
           {/* Instructions */}
@@ -208,6 +210,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
+    overflow: 'hidden', // Prevent scan line from extending outside image area
   },
   image: {
     width: SCREEN_WIDTH - 32,
