@@ -15,12 +15,14 @@ import { ChatSection, type ChatSectionMode } from '@/components/ui/chat-section'
 import type { WordDetail } from '@/components/ui/word-detail-card';
 import { ShimmerHeader, ShimmerDefinitions, ShimmerMetrics, ShimmerExamples, ShimmerHint } from '@/components/ui/shimmer';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
+import { TutorialCompletionToast } from '@/components/ui/tutorial-completion-toast';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
+import { useTutorial } from '@/contexts/tutorial-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
@@ -45,6 +47,7 @@ export default function WordDetailScreen() {
   const { currentLanguage, nativeLanguage, learningLanguages } = useLearningLanguages();
   const { isPremium } = useSubscription();
   const safeAreaInsets = useSafeAreaInsets();
+  const { tutorialState, completeTutorial, markTrialOffered } = useTutorial();
 
   const [wordData, setWordData] = useState<Partial<WordDetailResponse> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,6 +64,11 @@ export default function WordDetailScreen() {
   // Quota exceeded modal state
   const [isQuotaModalVisible, setIsQuotaModalVisible] = useState(false);
   const [quotaErrorType, setQuotaErrorType] = useState<'translation_tokens' | 'question_count' | undefined>();
+
+  // Tutorial completion state
+  const [showCompletionToast, setShowCompletionToast] = useState(false);
+  const [isTutorialSubscriptionModalOpen, setIsTutorialSubscriptionModalOpen] = useState(false);
+  const [isTutorialQuestionInProgress, setIsTutorialQuestionInProgress] = useState(false);
 
   // 選択テキスト管理
   const [selectedText, setSelectedText] = useState<{ text: string; isSingleWord: boolean } | null>(null);
@@ -178,6 +186,33 @@ export default function WordDetailScreen() {
       });
     });
   }, [chatMessages, chatError]);
+
+  // チュートリアルStep 3: 質問タグ回答完了検出
+  const prevIsChatStreamingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    // チュートリアル質問が進行中で、ストリーミングが完了した時を検出
+    if (!isTutorialQuestionInProgress) {
+      prevIsChatStreamingRef.current = isChatStreaming;
+      return;
+    }
+
+    const wasStreaming = prevIsChatStreamingRef.current;
+    const isNowComplete = !isChatStreaming;
+
+    // streaming → 完了 遷移を検出
+    if (wasStreaming && isNowComplete && qaPairs.length > 0) {
+      const lastPair = qaPairs[qaPairs.length - 1];
+      logger.info('[WordDetail Tutorial] Step 3 complete - AI response finished', {
+        question: lastPair.q.substring(0, 50),
+        answerLength: lastPair.a.length,
+      });
+      setIsTutorialQuestionInProgress(false);
+      setShowCompletionToast(true);
+    }
+
+    prevIsChatStreamingRef.current = isChatStreaming;
+  }, [isChatStreaming, isTutorialQuestionInProgress, qaPairs]);
 
   // クリップボードからの質問入力
   // 注: クリップボード監視は _layout.tsx で一元管理されているため、ここでは不要
@@ -853,7 +888,21 @@ export default function WordDetailScreen() {
     }
   };
 
-  const handleQuestionPress = (question: string | import('@/constants/question-tags').QuestionTag) => {
+  const handleQuestionPress = async (question: string | import('@/constants/question-tags').QuestionTag) => {
+    console.log('[WordDetail] handleQuestionPress called', {
+      isActive: tutorialState.isActive,
+      currentStep: tutorialState.currentStep,
+    });
+
+    // チュートリアル: Step 3の場合、質問を送信してAIの回答を待つ
+    if (tutorialState.isActive && tutorialState.currentStep === 3) {
+      console.log('[WordDetail Tutorial] *** Step 3: Question tag tapped, completing tutorial to hide overlay ***');
+      logger.info('[WordDetail Tutorial] Step 3 - question tag tapped, completing tutorial immediately to hide overlay');
+      setIsTutorialQuestionInProgress(true);
+      await completeTutorial(); // オーバーレイをすぐに非表示
+      // 質問を送信（下のコードで実行される）
+    }
+
     // QuestionTagオブジェクトの場合はpromptを取得
     const questionText = typeof question === 'string' ? question : question.prompt;
     const questionLabel = typeof question === 'string' ? question : question.label;
@@ -1049,6 +1098,16 @@ export default function WordDetailScreen() {
         setIsQuotaModalVisible(true);
       }
     }
+  };
+
+  const handleTutorialCompletionToastComplete = () => {
+    setShowCompletionToast(false);
+
+    // チュートリアルは既に完了済み（質問タグタップ時に完了）
+    // トライアルマークとモーダル表示のみ実行
+    markTrialOffered().then(() => {
+      setIsTutorialSubscriptionModalOpen(true);
+    });
   };
 
   const handleEnterFollowUpMode = (pairId: string, question: string) => {
@@ -1268,6 +1327,18 @@ export default function WordDetailScreen() {
       <SubscriptionBottomSheet
         visible={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
+      />
+
+      {/* Tutorial Completion Toast */}
+      <TutorialCompletionToast
+        visible={showCompletionToast}
+        onComplete={handleTutorialCompletionToastComplete}
+      />
+
+      {/* Tutorial Subscription Modal */}
+      <SubscriptionBottomSheet
+        visible={isTutorialSubscriptionModalOpen}
+        onClose={() => setIsTutorialSubscriptionModalOpen(false)}
       />
     </ThemedView>
   );

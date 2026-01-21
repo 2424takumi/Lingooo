@@ -38,16 +38,33 @@ export default function SubscriptionScreen() {
 
     setIsPurchasing(true);
     try {
-      const success = await purchasePackage(selectedPackage);
-      if (success) {
-        Alert.alert(
-          '購入完了',
-          'プレミアムプランへようこそ！',
-          [{ text: 'OK', onPress: () => router.back() }]
-        );
+      await purchasePackage(selectedPackage);
+      // Purchase successful
+      Alert.alert(
+        '購入完了',
+        'プレミアムプランへようこそ！',
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+    } catch (error: any) {
+      // Show user-friendly error message
+      let errorMessage = '購入処理中にエラーが発生しました。';
+
+      if (error?.message) {
+        // Map common errors to Japanese messages
+        if (error.message.includes('cancelled') || error.message.includes('canceled')) {
+          errorMessage = '購入がキャンセルされました。';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'ネットワークエラーが発生しました。接続を確認してください。';
+        } else if (error.message.includes('already')) {
+          errorMessage = 'すでに購入済みです。「購入を復元する」をお試しください。';
+        } else if (error.message.includes('payment') || error.message.includes('billing')) {
+          errorMessage = '決済処理でエラーが発生しました。お支払い方法をご確認ください。';
+        } else {
+          errorMessage = `購入エラー: ${error.message}`;
+        }
       }
-    } catch (error) {
-      // Error already handled in context
+
+      Alert.alert('購入エラー', errorMessage);
     } finally {
       setIsPurchasing(false);
     }
@@ -56,8 +73,9 @@ export default function SubscriptionScreen() {
   const handleRestore = async () => {
     setIsRestoring(true);
     try {
-      const success = await restorePurchases();
-      if (success) {
+      await restorePurchases();
+      // Restore successful - check if premium status was activated
+      if (isPremium) {
         Alert.alert(
           '復元完了',
           'プレミアムプランを復元しました。',
@@ -66,8 +84,19 @@ export default function SubscriptionScreen() {
       } else {
         Alert.alert('購入履歴なし', '復元可能な購入履歴が見つかりませんでした。');
       }
-    } catch (error) {
-      // Error already handled in context
+    } catch (error: any) {
+      // Show user-friendly error message
+      let errorMessage = '復元処理中にエラーが発生しました。';
+
+      if (error?.message) {
+        if (error.message.includes('network')) {
+          errorMessage = 'ネットワークエラーが発生しました。接続を確認してください。';
+        } else {
+          errorMessage = `復元エラー: ${error.message}`;
+        }
+      }
+
+      Alert.alert('復元エラー', errorMessage);
     } finally {
       setIsRestoring(false);
     }

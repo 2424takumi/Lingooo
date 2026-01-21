@@ -313,5 +313,34 @@
       "label": "Usage Context",
       "prompt": "Tell me in what situations these words are used"
     }
+  },
+  "tutorial": {
+    "step1": {
+      "title": "Select a Word",
+      "description": "Long press on a word in the translated text to select it"
+    },
+    "step2": {
+      "title": "Word Card Displayed",
+      "description": "You can see the meaning and part of speech. Tap \"More Details\" to see more information"
+    },
+    "step3": {
+      "title": "Ask Questions About Words",
+      "description": "Try tapping the \"Etymology\" button to learn about the word's origin"
+    },
+    "completed": {
+      "title": "You've learned how to use Lingooo!",
+      "premiumTitle": "🎉 Try Premium Free\nfor 7 Days",
+      "feature1": "Unlimited translations",
+      "feature2": "Unlimited AI questions",
+      "feature3": "All features unlocked",
+      "tryButton": "Try 7 days free",
+      "laterButton": "Later"
+    },
+    "skip": "Skip",
+    "sampleText": "I love learning languages"
+  },
+  "tutorialCompletion": {
+    "step1": "Question answered! ✨",
+    "step2": "Let's get started for real!"
   }
 }

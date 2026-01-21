@@ -313,5 +313,34 @@
       "label": "使用場面",
       "prompt": "これらの単語がどんな場面で使われるか教えてください"
     }
+  },
+  "tutorial": {
+    "step1": {
+      "title": "単語を選択してみましょう",
+      "description": "翻訳された文章の単語を長押しして選択してください"
+    },
+    "step2": {
+      "title": "単語カードが表示されました",
+      "description": "意味や品詞が確認できます。「もっと詳しく」をタップしてさらに詳しい情報を見ましょう"
+    },
+    "step3": {
+      "title": "単語について質問できます",
+      "description": "試しに「語源」ボタンをタップして、語源について聞いてみましょう"
+    },
+    "completed": {
+      "title": "Lingoooの使い方がわかりました！",
+      "premiumTitle": "🎉 今なら7日間無料で\nプレミアムを体験できます",
+      "feature1": "無制限の翻訳",
+      "feature2": "無制限のAI質問",
+      "feature3": "すべての機能が使い放題",
+      "tryButton": "7日間無料で試す",
+      "laterButton": "後で"
+    },
+    "skip": "スキップ",
+    "sampleText": "I love learning languages"
+  },
+  "tutorialCompletion": {
+    "step1": "質問に答えてくれました！✨",
+    "step2": "それでは本格的に始めましょう！"
   }
 }

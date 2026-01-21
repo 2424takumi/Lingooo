@@ -167,11 +167,21 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       await checkSubscriptionStatus();
       logger.info('[Subscription] Purchase successful');
     } catch (error: any) {
-      if (!error.userCancelled) {
-        logger.error('[Subscription] Purchase failed:', error);
-        throw error;
+      if (error.userCancelled) {
+        logger.info('[Subscription] Purchase cancelled by user');
+        // Don't throw for user cancellation - it's not an error
+        return;
       }
-      logger.info('[Subscription] Purchase cancelled by user');
+
+      logger.error('[Subscription] Purchase failed:', error);
+
+      // Create user-friendly error message
+      const errorMessage = error.message || 'Unknown error occurred during purchase';
+
+      // Re-throw with enhanced error information
+      const enhancedError = new Error(errorMessage);
+      enhancedError.name = error.code || 'PurchaseError';
+      throw enhancedError;
     }
   };
 
@@ -182,9 +192,16 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       setCustomerInfo(info);
       await checkSubscriptionStatus();
       logger.info('[Subscription] Restore successful');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[Subscription] Restore failed:', error);
-      throw error;
+
+      // Create user-friendly error message
+      const errorMessage = error.message || 'Unknown error occurred during restore';
+
+      // Re-throw with enhanced error information
+      const enhancedError = new Error(errorMessage);
+      enhancedError.name = error.code || 'RestoreError';
+      throw enhancedError;
     }
   };
 

@@ -313,5 +313,34 @@
       "label": "Contexto de Uso",
       "prompt": "Diga-me em que situações estas palavras são usadas"
     }
+  },
+  "tutorial": {
+    "step1": {
+      "title": "Selecione uma Palavra",
+      "description": "Pressione e segure uma palavra no texto traduzido para selecioná-la"
+    },
+    "step2": {
+      "title": "Cartão de Palavra Exibido",
+      "description": "Você pode ver o significado e classe gramatical. Toque em \"Mais Detalhes\" para ver mais informações"
+    },
+    "step3": {
+      "title": "Faça Perguntas Sobre Palavras",
+      "description": "Experimente tocar no botão \"Etimologia\" para aprender sobre a origem da palavra"
+    },
+    "completed": {
+      "title": "Você aprendeu a usar o Lingooo!",
+      "premiumTitle": "🎉 Experimente Premium\nGrátis por 7 Dias",
+      "feature1": "Traduções ilimitadas",
+      "feature2": "Perguntas AI ilimitadas",
+      "feature3": "Todos os recursos desbloqueados",
+      "tryButton": "Experimentar 7 dias grátis",
+      "laterButton": "Depois"
+    },
+    "skip": "Pular",
+    "sampleText": "I love learning languages"
+  },
+  "tutorialCompletion": {
+    "step1": "Pergunta respondida! ✨",
+    "step2": "Vamos começar de verdade!"
   }
 }

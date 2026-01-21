@@ -461,24 +461,64 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                         {followUp.status === 'pending' ? (
                           <View style={styles.followUpPendingContainer}>
                             {followUp.a ? (
-                              <Text
-                                selectable
-                                selectionColor="#111111"
-                                style={[styles.answerText, { color: answerTextColor }]}
+                              <Markdown
+                                style={{
+                                  body: {
+                                    color: answerTextColor,
+                                    fontSize: 15,
+                                    lineHeight: 25,
+                                    letterSpacing: 0.3,
+                                  },
+                                  paragraph: {
+                                    marginTop: 0,
+                                    marginBottom: 8,
+                                  },
+                                  text: {
+                                    color: answerTextColor,
+                                  },
+                                  strong: {
+                                    fontWeight: '700',
+                                    color: answerTextColor,
+                                  },
+                                  em: {
+                                    fontStyle: 'italic',
+                                    color: answerTextColor,
+                                  },
+                                }}
                               >
                                 {followUp.a}
-                              </Text>
+                              </Markdown>
                             ) : null}
                             <TypingIndicator color="#2C2C2C" dotSize={6} />
                           </View>
                         ) : (
-                          <Text
-                            selectable
-                            selectionColor="#111111"
-                            style={[styles.answerText, { color: answerTextColor }]}
+                          <Markdown
+                            style={{
+                              body: {
+                                color: answerTextColor,
+                                fontSize: 15,
+                                lineHeight: 25,
+                                letterSpacing: 0.3,
+                              },
+                              paragraph: {
+                                marginTop: 0,
+                                marginBottom: 8,
+                              },
+                              text: {
+                                color: answerTextColor,
+                              },
+                              strong: {
+                                fontWeight: '700',
+                                color: answerTextColor,
+                              },
+                              em: {
+                                fontStyle: 'italic',
+                                color: answerTextColor,
+                              },
+                            }}
                           >
                             {followUp.a ?? (followUp.status === 'error' ? '回答を取得できませんでした。' : '')}
-                          </Text>
+                          </Markdown>
                         )}
 
                         {followUp.status === 'error' && followUp.errorMessage && (

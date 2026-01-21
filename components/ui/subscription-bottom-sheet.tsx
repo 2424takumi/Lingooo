@@ -112,9 +112,11 @@ interface SubscriptionBottomSheetProps {
   visible: boolean;
   onClose: () => void;
   source?: string;
+  tutorialMode?: boolean;
+  onLater?: () => void;
 }
 
-export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottomSheetProps) {
+export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false, onLater }: SubscriptionBottomSheetProps) {
   const windowHeight = Dimensions.get('window').height;
   const slideAnim = useRef(new Animated.Value(windowHeight)).current;
   const textColor = useThemeColor({}, 'text');
@@ -123,7 +125,7 @@ export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottom
   const { isPremium, isLoading, packages, purchasePackage, restorePurchases, customerInfo } = useSubscription();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly'>('yearly');
+  const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly'>('monthly');
 
   // 月額・年額パッケージを識別
   const monthlyPackage = packages.find(pkg => pkg.identifier.includes('monthly'));
@@ -313,12 +315,31 @@ export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottom
             >
               {/* Title */}
               <View style={styles.titleContainer}>
-                <Text style={[styles.title, { color: textColor }]}>
-                  プレミアムプランで
-                </Text>
-                <Text style={[styles.title, { color: textColor }]}>
-                  もっと快適な学習体験を
-                </Text>
+                {tutorialMode ? (
+                  <>
+                    <Text style={[styles.title, { color: textColor, fontSize: 20, marginBottom: 8 }]}>
+                      Lingoooの使い方が
+                    </Text>
+                    <Text style={[styles.title, { color: textColor, fontSize: 20, marginBottom: 16 }]}>
+                      わかりました！
+                    </Text>
+                    <Text style={[styles.premiumTitle, { color: textColor }]}>
+                      🎉 今なら7日間無料で
+                    </Text>
+                    <Text style={[styles.premiumTitle, { color: textColor }]}>
+                      プレミアムを体験できます
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={[styles.title, { color: textColor }]}>
+                      プレミアムプランで
+                    </Text>
+                    <Text style={[styles.title, { color: textColor }]}>
+                      もっと快適な学習体験を
+                    </Text>
+                  </>
+                )}
               </View>
 
               {/* Segmented Control */}
@@ -393,10 +414,24 @@ export function SubscriptionBottomSheet({ visible, onClose }: SubscriptionBottom
                   )}
                 </TouchableOpacity>
 
+                {/* Later Button (Tutorial Mode Only) */}
+                {tutorialMode && onLater && (
+                  <TouchableOpacity
+                    style={styles.laterButton}
+                    onPress={onLater}
+                  >
+                    <Text style={[styles.laterButtonText, { color: subTextColor }]}>
+                      後で
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
                 {/* Free Trial Notice */}
-                <Text style={[styles.freeTrialNotice, { color: subTextColor }]}>
-                  プランはいつでもキャンセルができます。
-                </Text>
+                {!tutorialMode && (
+                  <Text style={[styles.freeTrialNotice, { color: subTextColor }]}>
+                    プランはいつでもキャンセルができます。
+                  </Text>
+                )}
 
                 {/* Features */}
                 <View style={styles.featuresContainer}>
@@ -720,5 +755,20 @@ const styles = StyleSheet.create({
   },
   linkSeparator: {
     fontSize: 12,
+  },
+  premiumTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  laterButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  laterButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

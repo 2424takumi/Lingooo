@@ -177,10 +177,17 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
           {/* User Info Section */}
           <View style={styles.userInfoContainer}>
             <View style={styles.userAvatar}>
-              <Text style={styles.userAvatarText}>U</Text>
+              <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"
+                  stroke="#FFFFFF"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
             </View>
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>{t('settingsBottomSheet.user')}</Text>
               <View style={[
                 styles.planBadge,
                 { backgroundColor: plan === 'free' ? '#F8F8F8' : '#4CAF50' }
@@ -356,12 +363,6 @@ const styles = StyleSheet.create({
   userDetails: {
     flex: 1,
     justifyContent: 'center',
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111111',
-    marginBottom: 4,
   },
   usageStatsContainer: {
     backgroundColor: '#F8F8F8',
