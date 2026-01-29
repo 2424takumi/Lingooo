@@ -5,7 +5,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AVAILABLE_LANGUAGES } from '@/types/language';
 
 const INITIAL_SETUP_KEY = '@initial_language_setup_completed';
-const INTERACTIVE_TUTORIAL_KEY = '@lingooo_interactive_tutorial_completed';
 
 // 言語IDから言語コードへの変換ヘルパー
 const languageIdToCode = (languageId: string): string => {
@@ -18,7 +17,6 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   needsInitialSetup: boolean;
-  needsInteractiveTutorial: boolean;
   completeInitialSetup: (nativeLanguage: string, learningLanguages: string[]) => Promise<void>;
 }
 
@@ -27,7 +25,6 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   needsInitialSetup: false,
-  needsInteractiveTutorial: false,
   completeInitialSetup: async () => {},
 });
 
@@ -44,7 +41,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsInitialSetup, setNeedsInitialSetup] = useState(false);
-  const [needsInteractiveTutorial, setNeedsInteractiveTutorial] = useState(false);
 
   useEffect(() => {
     // 初期化処理
@@ -67,8 +63,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const initializeAuth = async () => {
     // 初期設定完了フラグをチェック
     const setupCompleted = await AsyncStorage.getItem(INITIAL_SETUP_KEY);
-    // インタラクティブチュートリアル完了フラグをチェック
-    const tutorialCompleted = await AsyncStorage.getItem(INTERACTIVE_TUTORIAL_KEY);
 
     // 初期セッションチェック
     const { data: { session } } = await supabase.auth.getSession();
@@ -88,12 +82,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } else {
       // セッションがある場合、usersテーブルにレコードがあるか確認
       ensureUserRecord(session.user.id);
-
-      // チュートリアルが未完了の場合はフラグを立てる
-      if (setupCompleted && !tutorialCompleted) {
-        setNeedsInteractiveTutorial(true);
-      }
-
       setLoading(false);
     }
   };
@@ -127,8 +115,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       console.log('[Auth] Initial setup complete, setting needsInitialSetup to false');
       setNeedsInitialSetup(false);
-      // 初期設定完了後はチュートリアルを表示
-      setNeedsInteractiveTutorial(true);
       setLoading(false);
     } catch (error) {
       console.error('初期設定完了エラー:', error);
@@ -219,7 +205,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, needsInitialSetup, needsInteractiveTutorial, completeInitialSetup }}>
+    <AuthContext.Provider value={{ user, session, loading, needsInitialSetup, completeInitialSetup }}>
       {children}
     </AuthContext.Provider>
   );

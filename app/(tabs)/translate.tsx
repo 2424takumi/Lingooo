@@ -7,7 +7,6 @@ import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { ChatSection, ChatSectionMode } from '@/components/ui/chat-section';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
-import { TutorialCompletionToast } from '@/components/ui/tutorial-completion-toast';
 import { TranslateCard } from '@/components/ui/translate-card';
 import { SelectionInfo } from '@/components/ui/selectable-text';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
@@ -28,7 +27,6 @@ import { languageDetectionEvents } from '@/services/events/language-detection-ev
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useBookmarkManagement } from '@/hooks/use-bookmark-management';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { useTutorial } from '@/contexts/tutorial-context';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useSubscription } from '@/contexts/subscription-context';
@@ -77,16 +75,6 @@ export default function TranslateScreen() {
   const safeAreaInsets = useSafeAreaInsets();
   const { currentLanguage, nativeLanguage, setCurrentLanguage } = useLearningLanguages();
   const { isPremium } = useSubscription();
-  const { tutorialState, nextStep, skipTutorial, completeTutorial, markTrialOffered } = useTutorial();
-
-  // デバッグ: チュートリアル状態を監視
-  useEffect(() => {
-    logger.info('[Translate] Tutorial state:', {
-      isActive: tutorialState.isActive,
-      currentStep: tutorialState.currentStep,
-      isCompleted: tutorialState.isCompleted,
-    });
-  }, [tutorialState]);
 
   // 画像翻訳から来た場合の全文テキストと翻訳を保持
   const [imageTranslationText, setImageTranslationText] = useState<string | null>(null);
@@ -161,12 +149,6 @@ export default function TranslateScreen() {
     handleCloseFolderSelectModal,
     handleCloseCreateFolderModal,
   } = useBookmarkManagement({ logPrefix: 'Translate' });
-
-  // チュートリアル用の状態
-  const [isTutorialSubscriptionModalOpen, setIsTutorialSubscriptionModalOpen] = useState(false);
-  const [showCompletionToast, setShowCompletionToast] = useState(false);
-  console.log('[Translate] Current showCompletionToast state:', showCompletionToast);
-  const tutorialSampleText = t('tutorial.sampleText');
 
   // 翻訳データと状態
   const [translationData, setTranslationData] = useState<{ originalText: string; translatedText: string; sourceLang: string; targetLang: string } | null>(null);
@@ -515,31 +497,6 @@ export default function TranslateScreen() {
 
     setQAPairs(mergedPairs);
   }, [chatMessages, chatError, chatContext]);
-
-  // チュートリアルStep 3: 質問タグ回答完了検出
-  const prevLastPairStatusRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (tutorialState.currentStep !== 3 || qaPairs.length === 0) {
-      prevLastPairStatusRef.current = null;
-      return;
-    }
-
-    const lastPair = qaPairs[qaPairs.length - 1];
-    const wasCompleting = prevLastPairStatusRef.current === 'pending';
-    const isNowComplete = lastPair.status === 'completed';
-
-    // pending → completed 遷移を検出
-    if (wasCompleting && isNowComplete) {
-      logger.info('[Translate Tutorial] Step 3 complete - Question answered', {
-        question: lastPair.q.substring(0, 50),
-        answerLength: lastPair.a.length,
-      });
-      setShowCompletionToast(true);
-    }
-
-    prevLastPairStatusRef.current = lastPair.status;
-  }, [qaPairs, tutorialState.currentStep]);
 
   // 翻訳先言語を決定（メモ化して不要な再計算を防止）
   const determineTranslateTargetLang = useCallback((srcLang: string): string => {
@@ -1282,15 +1239,6 @@ export default function TranslateScreen() {
   };
 
   const handleQuickQuestion = async (questionOrTag: string | QuestionTagType) => {
-    // チュートリアル: Step 3 → Complete (質問タグタップ時)
-    if (tutorialState.isActive && tutorialState.currentStep === 3) {
-      logger.info('[Translate Tutorial] Step 3 complete - question tag tapped, completing tutorial');
-      await completeTutorial();
-      await markTrialOffered();
-      setIsTutorialSubscriptionModalOpen(true);
-      return; // チュートリアル完了後は質問を送信しない
-    }
-
     // QuestionTagの場合は新しいAPI経由で送信
     if (typeof questionOrTag === 'object' && questionOrTag.promptId) {
       const tag = questionOrTag;
@@ -1482,12 +1430,6 @@ export default function TranslateScreen() {
       hasTranslationData: !!translationData,
     });
 
-    // チュートリアル: Step 1 → Step 2 (テキスト選択時)
-    if (tutorialState.isActive && tutorialState.currentStep === 1) {
-      logger.info('[Translate Tutorial] Step 1 complete - text selected, advancing to step 2');
-      nextStep();
-    }
-
     // 単語の場合、プリフェッチを開始（辞書で調べるボタンを押す前に準備）
     if (selectionInfo.isSingleWord && selectionInfo.text.trim()) {
       // 原文で選択 → sourceLang、訳文で選択 → selectedTranslateTargetLang を使う
@@ -1652,12 +1594,6 @@ export default function TranslateScreen() {
       return;
     }
 
-    // チュートリアル: Step 2 → Step 3 (「もっと詳しく」ボタンタップ時)
-    if (tutorialState.isActive && tutorialState.currentStep === 2) {
-      logger.info('[Translate Tutorial] Step 2 complete - more details tapped, advancing to step 3');
-      nextStep();
-    }
-
     // 選択されたテキストの言語を検出
     const detectedLang = detectLang(selectedText.text);
 
@@ -1702,20 +1638,7 @@ export default function TranslateScreen() {
       // isSingleWordはtrueのまま維持して単語モードの質問タグを表示
       // ChatSectionにフォーカスを当てて入力を促す
       logger.info('[Translate] Opening chat for word questions (keeping word mode)');
-
-      // チュートリアルStep 3では質問タグが表示されるだけで、まだ完了しない
-      // 完了は質問タグをタップしたときに行われる（handleQuickQuestion内）
     }
-  };
-
-  const handleTutorialCompletionToastComplete = () => {
-    setShowCompletionToast(false);
-
-    // チュートリアル完了
-    completeTutorial().then(() => {
-      markTrialOffered();
-      setIsTutorialSubscriptionModalOpen(true);
-    });
   };
 
   const handleSwitchToWordCard = () => {
@@ -1865,12 +1788,6 @@ export default function TranslateScreen() {
         showFolderButton={isPremium}
       />
 
-      {/* Tutorial Completion Toast */}
-      <TutorialCompletionToast
-        visible={showCompletionToast}
-        onComplete={handleTutorialCompletionToastComplete}
-      />
-
       {/* Folder Select Modal */}
       <FolderSelectModal
         visible={isFolderSelectModalOpen}
@@ -1894,18 +1811,6 @@ export default function TranslateScreen() {
         visible={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
       />
-
-      {/* Tutorial Subscription Bottom Sheet */}
-      <SubscriptionBottomSheet
-        visible={isTutorialSubscriptionModalOpen}
-        onClose={() => setIsTutorialSubscriptionModalOpen(false)}
-        tutorialMode={true}
-        onLater={async () => {
-          setIsTutorialSubscriptionModalOpen(false);
-          await completeTutorial();
-        }}
-      />
-
 
       {/* Quota Exceeded Modal */}
       <QuotaExceededModal
