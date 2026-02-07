@@ -9,6 +9,55 @@ import { useAuth } from './auth-context';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
 
+// ヘルパー関数: RevenueCatエラーの詳細ログ
+function logRevenueCatError(context: string, error: any) {
+  logger.error(`[Subscription] ${context} error details:`, {
+    message: error.message,
+    code: error.code,
+    userCancelled: error.userCancelled,
+    underlyingErrorMessage: error.underlyingErrorMessage,
+    userInfo: error.userInfo,
+  });
+}
+
+// ヘルパー関数: ユーザーフレンドリーなエラーメッセージに変換
+function createUserFriendlyError(error: any): Error {
+  let userMessage = '';
+
+  switch (error.code) {
+    case 'INVALID_CREDENTIALS_ERROR':
+      userMessage = 'アプリの設定に問題があります。開発者にお問い合わせください。';
+      break;
+    case 'PRODUCT_NOT_AVAILABLE_FOR_PURCHASE_ERROR':
+      userMessage = 'この商品は現在購入できません。しばらくしてから再度お試しください。';
+      break;
+    case 'NETWORK_ERROR':
+      userMessage = 'ネットワーク接続を確認してください。';
+      break;
+    case 'PAYMENT_PENDING_ERROR':
+      userMessage = '支払いが保留中です。承認後に反映されます。';
+      break;
+    case 'PURCHASE_INVALID_ERROR':
+      userMessage = 'この購入は無効です。アカウント設定を確認してください。';
+      break;
+    case 'PURCHASE_NOT_ALLOWED_ERROR':
+      userMessage = 'このデバイスでは購入が許可されていません。';
+      break;
+    case 'STORE_PROBLEM_ERROR':
+      userMessage = 'App Store に問題が発生しています。しばらくしてから再度お試しください。';
+      break;
+    default:
+      userMessage = error.message || '購入中にエラーが発生しました。';
+  }
+
+  const enhancedError = new Error(userMessage);
+  enhancedError.name = error.code || 'PurchaseError';
+  // 元のエラーも保持（デバッグ用）
+  (enhancedError as any).originalError = error;
+
+  return enhancedError;
+}
+
 interface SubscriptionContextType {
   isPremium: boolean;
   isLoading: boolean;
@@ -63,6 +112,13 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         return;
       }
 
+      // 初期化パラメータをログ
+      logger.info('[Subscription] Initializing RevenueCat:', {
+        platform: Platform.OS,
+        userId: user.id,
+        hasApiKey: !!apiKey,
+      });
+
       // RevenueCat初期化
       await Purchases.configure({
         apiKey,
@@ -73,9 +129,21 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
 
       // オファリング取得
       const offerings: PurchasesOfferings = await Purchases.getOfferings();
+
+      // オファリング詳細をログ
       if (offerings.current) {
         setPackages(offerings.current.availablePackages);
-        logger.info('[Subscription] Available packages:', offerings.current.availablePackages.length);
+        logger.info('[Subscription] Available packages:', {
+          count: offerings.current.availablePackages.length,
+          packages: offerings.current.availablePackages.map(pkg => ({
+            identifier: pkg.identifier,
+            productId: pkg.product.identifier,
+            price: pkg.product.priceString,
+            period: pkg.product.subscriptionPeriod,
+          })),
+        });
+      } else {
+        logger.warn('[Subscription] No current offering available');
       }
 
       // サブスク状態チェック
@@ -84,9 +152,12 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       // Expo GoではStoreKitが動作しないためエラーになる - 警告レベルに抑制
       if (error?.message?.includes('None of the products') ||
           error?.message?.includes('offerings')) {
-        logger.warn('[Subscription] Could not fetch offerings (expected in Expo Go)');
+        logger.warn('[Subscription] Could not fetch offerings (expected in Expo Go):', {
+          message: error.message,
+          code: error.code,
+        });
       } else {
-        logger.error('[Subscription] Failed to initialize:', error);
+        logRevenueCatError('Failed to initialize', error);
       }
     } finally {
       setIsLoading(false);
@@ -161,7 +232,12 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
 
   const purchasePackage = async (pkg: PurchasesPackage) => {
     try {
-      logger.info('[Subscription] Starting purchase:', pkg.identifier);
+      logger.info('[Subscription] Starting purchase:', {
+        identifier: pkg.identifier,
+        productIdentifier: pkg.product.identifier,
+        price: pkg.product.priceString,
+        subscriptionPeriod: pkg.product.subscriptionPeriod,
+      });
       const { customerInfo: info } = await Purchases.purchasePackage(pkg);
       setCustomerInfo(info);
       await checkSubscriptionStatus();
@@ -173,14 +249,10 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         return;
       }
 
-      logger.error('[Subscription] Purchase failed:', error);
+      logRevenueCatError('Purchase failed', error);
 
       // Create user-friendly error message
-      const errorMessage = error.message || 'Unknown error occurred during purchase';
-
-      // Re-throw with enhanced error information
-      const enhancedError = new Error(errorMessage);
-      enhancedError.name = error.code || 'PurchaseError';
+      const enhancedError = createUserFriendlyError(error);
       throw enhancedError;
     }
   };
@@ -193,14 +265,10 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       await checkSubscriptionStatus();
       logger.info('[Subscription] Restore successful');
     } catch (error: any) {
-      logger.error('[Subscription] Restore failed:', error);
+      logRevenueCatError('Restore failed', error);
 
       // Create user-friendly error message
-      const errorMessage = error.message || 'Unknown error occurred during restore';
-
-      // Re-throw with enhanced error information
-      const enhancedError = new Error(errorMessage);
-      enhancedError.name = error.code || 'RestoreError';
+      const enhancedError = createUserFriendlyError(error);
       throw enhancedError;
     }
   };

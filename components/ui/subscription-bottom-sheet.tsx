@@ -160,16 +160,22 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
 
     setIsPurchasing(true);
     try {
-      const success = await purchasePackage(selectedPackage);
-      if (success) {
-        Alert.alert(
-          '購入完了',
-          'プレミアムプランへようこそ！',
-          [{ text: 'OK', onPress: onClose }]
-        );
-      }
-    } catch (error) {
-      // Error already handled in context
+      await purchasePackage(selectedPackage);
+      // Success - context already updated isPremium
+      Alert.alert(
+        '購入完了',
+        'プレミアムプランへようこそ！',
+        [{ text: 'OK', onPress: onClose }]
+      );
+    } catch (error: any) {
+      // ユーザーにエラーを表示
+      logger.error('[SubscriptionBottomSheet] Purchase error caught:', error);
+
+      Alert.alert(
+        '購入エラー',
+        error.message || '購入中にエラーが発生しました。しばらくしてから再度お試しください。',
+        [{ text: 'OK' }]
+      );
     } finally {
       setIsPurchasing(false);
     }
@@ -178,8 +184,10 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
   const handleRestore = async () => {
     setIsRestoring(true);
     try {
-      const success = await restorePurchases();
-      if (success) {
+      await restorePurchases();
+
+      // 復元成功を確認してから表示
+      if (isPremium) {
         Alert.alert(
           '復元完了',
           'プレミアムプランを復元しました。',
@@ -188,8 +196,15 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
       } else {
         Alert.alert('購入履歴なし', '復元可能な購入履歴が見つかりませんでした。');
       }
-    } catch (error) {
-      // Error already handled in context
+    } catch (error: any) {
+      // ユーザーにエラーを表示
+      logger.error('[SubscriptionBottomSheet] Restore error caught:', error);
+
+      Alert.alert(
+        '復元エラー',
+        error.message || '復元中にエラーが発生しました。しばらくしてから再度お試しください。',
+        [{ text: 'OK' }]
+      );
     } finally {
       setIsRestoring(false);
     }
@@ -407,7 +422,12 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
                   onPress={handlePurchase}
                   disabled={isPurchasing || isLoading}
                 >
-                  {isPurchasing ? (
+                  {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator color="#FFFFFF" />
+                      <Text style={styles.loadingText}>プランを読み込んでいます...</Text>
+                    </View>
+                  ) : isPurchasing ? (
                     <ActivityIndicator color="#FFFFFF" />
                   ) : (
                     <Text style={styles.purchaseButtonText}>７日間無料で体験する</Text>
@@ -689,6 +709,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     letterSpacing: 1,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '400',
   },
 
   // Free Trial Notice
