@@ -49,11 +49,29 @@
       "dataManagement": "Data Management",
       "dataManagementDescription": "Backup and restore learning data"
     },
+    "subscription": {
+      "title": "Subscription",
+      "manage": "Manage Subscription",
+      "manageDescription": "Change or cancel your plan"
+    },
     "info": {
       "title": "Information",
       "privacyPolicy": "Privacy Policy",
       "termsOfService": "Terms of Service",
+      "contact": "Contact Us",
       "version": "Version"
+    },
+    "deleteAccount": {
+      "title": "Account",
+      "button": "Delete Account",
+      "confirmTitle": "Delete Account",
+      "confirmMessage": "Deleting your account will permanently remove all your learning data, bookmarks, and history. This action cannot be undone.",
+      "finalConfirmTitle": "Are you sure?",
+      "finalConfirmMessage": "This action cannot be undone. All your data will be permanently deleted.",
+      "delete": "Delete",
+      "completeTitle": "Account Deleted",
+      "completeMessage": "Your account has been deleted.",
+      "error": "Failed to delete account. Please try again later."
     },
     "developer": {
       "title": "Developer Tools",
@@ -342,5 +360,42 @@
   "tutorialCompletion": {
     "step1": "Question answered! ✨",
     "step2": "Let's get started for real!"
+  },
+  "subscription": {
+    "premiumMember": "Premium Member",
+    "allFeaturesAvailable": "All features are available",
+    "nextRenewal": "Next renewal: {{date}}",
+    "manageSubscription": "Manage Subscription",
+    "heroTitle": "Go Premium\nfor a Better Experience",
+    "feature1": "1,000 questions per month",
+    "feature2": "Up to 50,000 characters translation",
+    "feature3": "Bookmark folders",
+    "feature4": "Detailed AI responses",
+    "yearlyPlan": "Yearly Plan",
+    "yearlyPrice": "¥5,000/year (approx. ¥417/month)",
+    "recommended": "Recommended",
+    "monthlyPlan": "Monthly Plan",
+    "monthlyPrice": "¥500/month",
+    "trialInfo": "After the 7-day free trial, {{price}}",
+    "tryFree": "Try for Free",
+    "restorePurchase": "Restore Purchase",
+    "terms": "If you don't cancel at least 24 hours before the end of the free trial, your subscription will automatically renew and you will be charged {{price}}.\n\nYou can cancel anytime. Free trials and subscriptions automatically renew unless cancelled at least 24 hours before the end of the current period.",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "purchaseComplete": "Purchase Complete",
+    "welcomePremium": "Welcome to Premium!",
+    "purchaseError": "Purchase Error",
+    "purchaseErrorGeneral": "An error occurred during purchase.",
+    "purchaseCancelled": "Purchase was cancelled.",
+    "purchaseNetworkError": "A network error occurred. Please check your connection.",
+    "purchaseAlready": "Already purchased. Please try \"Restore Purchase\".",
+    "purchasePaymentError": "A payment error occurred. Please check your payment method.",
+    "planLoadError": "Loading plans. Please wait a moment.",
+    "restoreComplete": "Restore Complete",
+    "restoreSuccess": "Premium plan has been restored.",
+    "restoreNoHistory": "No Purchase History",
+    "restoreNotFound": "No restorable purchase history found.",
+    "restoreError": "Restore Error",
+    "restoreErrorGeneral": "An error occurred during restoration."
   }
 }

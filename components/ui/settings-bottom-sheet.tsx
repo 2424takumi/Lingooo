@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Dimensions, Switch, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Dimensions, Switch, ScrollView, Alert, Linking } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import { SettingsIcon, TokenIcon, LanguageIcon, ChevronRightIcon, CloseIcon, MessageCircleIcon } from './icons';
@@ -8,11 +8,15 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useAISettings } from '@/contexts/ai-settings-context';
 import { useSubscription } from '@/contexts/subscription-context';
+import { useAuth } from '@/contexts/auth-context';
 import { AVAILABLE_LANGUAGES, Language } from '@/types/language';
 import { getUsageStats, UsageStats } from '@/services/api/usage';
 import { logger } from '@/utils/logger';
 import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/lib/supabase';
+import Constants from 'expo-constants';
 
 // Star Icon for premium features
 function StarIcon({ size = 16 }: { size?: number }) {
@@ -54,6 +58,56 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
     removeLearningLanguage,
   } = useLearningLanguages();
   const { isPremium } = useSubscription();
+  const { user } = useAuth();
+
+  const appVersion = Constants.expoConfig?.version ?? '1.0.0';
+
+  const executeDeleteAccount = async () => {
+    try {
+      const userId = user?.id;
+      if (userId) {
+        await supabase.from('users').delete().eq('id', userId);
+      }
+      await AsyncStorage.clear();
+      await supabase.auth.signOut();
+      onClose();
+      Alert.alert(
+        t('settings.deleteAccount.completeTitle'),
+        t('settings.deleteAccount.completeMessage')
+      );
+    } catch (error) {
+      console.error('アカウント削除エラー:', error);
+      Alert.alert(t('common.error'), t('settings.deleteAccount.error'));
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      t('settings.deleteAccount.confirmTitle'),
+      t('settings.deleteAccount.confirmMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.deleteAccount.delete'),
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              t('settings.deleteAccount.finalConfirmTitle'),
+              t('settings.deleteAccount.finalConfirmMessage'),
+              [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                  text: t('settings.deleteAccount.delete'),
+                  style: 'destructive',
+                  onPress: executeDeleteAccount,
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
 
   // 使用量のデフォルト値
   const tokenUsage = usageStats?.translationTokens ?? { used: 0, limit: 50000 };
@@ -280,6 +334,31 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
               />
             </View>
 
+            {/* Account Section */}
+            <View style={styles.accountSectionContainer}>
+              <Text style={styles.sectionTitle}>{t('settings.deleteAccount.title')}</Text>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => Linking.openURL('mailto:support@lingooo.app')}
+              >
+                <Text style={styles.menuItemText}>{t('settings.info.contact')}</Text>
+                <ChevronRightIcon size={18} color="#CCCCCC" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => Linking.openURL('https://apps.apple.com/account/subscriptions')}
+              >
+                <Text style={styles.menuItemText}>{t('settings.subscription.manage')}</Text>
+                <ChevronRightIcon size={18} color="#CCCCCC" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={handleDeleteAccount}
+              >
+                <Text style={[styles.menuItemText, styles.menuItemDanger]}>{t('settings.deleteAccount.button')}</Text>
+              </TouchableOpacity>
+            </View>
+
             {/* Footer Links */}
             <View style={styles.footerContainer}>
               <TouchableOpacity onPress={() => { onClose(); router.push('/privacy-policy'); }}>
@@ -292,7 +371,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
             </View>
 
             <View style={styles.versionContainer}>
-              <Text style={styles.versionText}>{t('settingsBottomSheet.version')} 1.0.0</Text>
+              <Text style={styles.versionText}>{t('settingsBottomSheet.version')} {appVersion}</Text>
             </View>
           </ScrollView>
         </Animated.View>
@@ -489,6 +568,33 @@ const styles = StyleSheet.create({
   aiSettingDescription: {
     fontSize: 13,
     color: '#666666',
+  },
+  accountSectionContainer: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  menuItemText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#111111',
+  },
+  menuItemDanger: {
+    color: '#FF4444',
   },
   footerContainer: {
     flexDirection: 'row',

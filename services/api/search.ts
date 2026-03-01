@@ -267,25 +267,34 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en',
     };
   }
 
-  // ローカル辞書になければ、2段階生成（並列版）を開始
+  // ローカル辞書になければ、2段階生成（並列版）を開始（リトライ付き）
   logger.info(`[searchJaToEn] Not in local dictionary, starting AI generation for: ${trimmedQuery} (${targetLanguage}, native: ${nativeLanguage})`);
-  const result = await tryGenerateAiSuggestionsTwoStage(trimmedQuery, targetLanguage, nativeLanguage);
 
-  if (result && result.basic.length > 0) {
-    // ステージ1: 基本情報を即座に返す & キャッシュ
-    setCachedSuggestions(trimmedQuery, result.basic, targetLanguage);
-    logger.info('[searchJaToEn] Returning basic suggestions immediately');
+  const MAX_RETRIES = 1; // 1回リトライ（合計2回試行）
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const result = await tryGenerateAiSuggestionsTwoStage(trimmedQuery, targetLanguage, nativeLanguage);
 
-    // ステージ2はバックグラウンドで並列実行（各ヒント完成次第キャッシュ更新）
-    // enhancePromiseは内部で個別にsetCachedSuggestionsを呼ぶ
+    if (result && result.basic.length > 0) {
+      // ステージ1: 基本情報を即座に返す & キャッシュ
+      setCachedSuggestions(trimmedQuery, result.basic, targetLanguage);
+      logger.info('[searchJaToEn] Returning basic suggestions immediately');
 
-    return {
-      items: result.basic,
-    };
+      // ステージ2はバックグラウンドで並列実行（各ヒント完成次第キャッシュ更新）
+      // enhancePromiseは内部で個別にsetCachedSuggestionsを呼ぶ
+
+      return {
+        items: result.basic,
+      };
+    }
+
+    if (attempt < MAX_RETRIES) {
+      logger.warn(`[searchJaToEn] AI generation attempt ${attempt + 1} failed, retrying...`);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1秒待ってリトライ
+    }
   }
 
   // AI生成失敗時はモックデータにフォールバック
-  logger.warn('[searchJaToEn] AI generation failed, falling back to mock data');
+  logger.warn('[searchJaToEn] AI generation failed after retries, falling back to mock data');
   const mockItems = findMockSuggestions(trimmedQuery);
   if (mockItems.length > 0) {
     setCachedSuggestions(trimmedQuery, mockItems, targetLanguage);
@@ -352,7 +361,7 @@ export async function getWordDetail(
   if (!detail) {
     throw {
       type: 'not_found',
-      message: `「${word}」はサンプル辞書に含まれていません。\n\nすべての単語を検索するには、設定からGemini APIキーを設定してください。`
+      message: `「${word}」が見つかりませんでした。\n\nサーバーに接続できませんでした。しばらくしてからもう一度お試しください。`
     } as SearchError;
   }
 
@@ -404,7 +413,7 @@ export async function getWordDetailStream(
     if (!detail) {
       throw {
         type: 'not_found',
-        message: `「${word}」はサンプル辞書に含まれていません。\n\nオンライン時にGemini APIキーを設定すると、すべての単語を検索できます。`
+        message: `「${word}」が見つかりませんでした。\n\nオフラインのため検索できません。インターネットに接続してからもう一度お試しください。`
       } as SearchError;
     }
 

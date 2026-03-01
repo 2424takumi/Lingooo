@@ -106,7 +106,7 @@ async function sendWarmup(): Promise<boolean> {
     logger.info('[Keepalive] Sending warmup request to:', url);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒タイムアウト
+    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45秒タイムアウト（Render.comコールドスタート対応）
 
     const response = await fetch(url, {
       method: 'GET',

@@ -49,11 +49,29 @@
       "dataManagement": "データ管理",
       "dataManagementDescription": "学習データのバックアップと復元"
     },
+    "subscription": {
+      "title": "サブスクリプション",
+      "manage": "サブスクリプション管理",
+      "manageDescription": "プランの変更・解約"
+    },
     "info": {
       "title": "情報",
       "privacyPolicy": "プライバシーポリシー",
       "termsOfService": "利用規約",
+      "contact": "お問い合わせ",
       "version": "バージョン"
+    },
+    "deleteAccount": {
+      "title": "アカウント",
+      "button": "アカウントを削除",
+      "confirmTitle": "アカウントの削除",
+      "confirmMessage": "アカウントを削除すると、すべての学習データ、ブックマーク、履歴が完全に削除されます。この操作は取り消せません。",
+      "finalConfirmTitle": "本当に削除しますか？",
+      "finalConfirmMessage": "この操作は取り消せません。すべてのデータが完全に削除されます。",
+      "delete": "削除する",
+      "completeTitle": "削除完了",
+      "completeMessage": "アカウントが削除されました。",
+      "error": "アカウントの削除に失敗しました。しばらくしてから再度お試しください。"
     },
     "developer": {
       "title": "開発者ツール",
@@ -342,5 +360,42 @@
   "tutorialCompletion": {
     "step1": "質問に答えてくれました！✨",
     "step2": "それでは本格的に始めましょう！"
+  },
+  "subscription": {
+    "premiumMember": "プレミアム会員",
+    "allFeaturesAvailable": "すべての機能をご利用いただけます",
+    "nextRenewal": "次回更新日: {{date}}",
+    "manageSubscription": "サブスクリプションを管理",
+    "heroTitle": "プレミアムプラン\nでもっと快適に",
+    "feature1": "月間1,000回の質問",
+    "feature2": "最大50,000文字の翻訳",
+    "feature3": "ブックマークフォルダ",
+    "feature4": "詳細なAI返答",
+    "yearlyPlan": "年額プラン",
+    "yearlyPrice": "¥5,000/年 (月換算 約¥417)",
+    "recommended": "おすすめ",
+    "monthlyPlan": "月額プラン",
+    "monthlyPrice": "¥500/月",
+    "trialInfo": "7日間の無料体験の終了後は{{price}}",
+    "tryFree": "無料で体験してみる",
+    "restorePurchase": "購入を復元する",
+    "terms": "無料体験終了の24時間前までに解約しなかった場合、自動的に月極購読へ移行し、{{price}}が請求されます。\n\nいつでも解約できます。無料体験や月極購読は、期間終了の24時間前までに解約しない限り自動的に更新されます。",
+    "termsOfService": "利用規約",
+    "privacyPolicy": "プライバシーポリシー",
+    "purchaseComplete": "購入完了",
+    "welcomePremium": "プレミアムプランへようこそ！",
+    "purchaseError": "購入エラー",
+    "purchaseErrorGeneral": "購入処理中にエラーが発生しました。",
+    "purchaseCancelled": "購入がキャンセルされました。",
+    "purchaseNetworkError": "ネットワークエラーが発生しました。接続を確認してください。",
+    "purchaseAlready": "すでに購入済みです。「購入を復元する」をお試しください。",
+    "purchasePaymentError": "決済処理でエラーが発生しました。お支払い方法をご確認ください。",
+    "planLoadError": "プランの読み込み中です。しばらくお待ちください。",
+    "restoreComplete": "復元完了",
+    "restoreSuccess": "プレミアムプランを復元しました。",
+    "restoreNoHistory": "購入履歴なし",
+    "restoreNotFound": "復元可能な購入履歴が見つかりませんでした。",
+    "restoreError": "復元エラー",
+    "restoreErrorGeneral": "復元処理中にエラーが発生しました。"
   }
 }

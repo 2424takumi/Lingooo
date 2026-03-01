@@ -9,7 +9,7 @@ const path = require('path');
 
 // 環境変数からGemini API Keyを取得
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 if (!GEMINI_API_KEY) {
   console.error('❌ Error: GEMINI_API_KEY environment variable is not set');

@@ -256,7 +256,7 @@ export function useSearch() {
 
     // プリフェッチを開始（非同期）
     const prefetchPromise = prefetchWordDetail(word, (onProgress) =>
-      getWordDetailStream(word, targetLanguage, nativeLanguage.code, 'concise', onProgress)
+      getWordDetailStream(word, targetLanguage, nativeLanguage.code, onProgress)
     );
 
     // プリフェッチが確実に開始されるように、わずかな遅延を入れる（体感速度への影響は最小限）

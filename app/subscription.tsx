@@ -4,7 +4,7 @@
  * プレミアムプランの説明と購入画面
  */
 
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Linking } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ThemedView } from '@/components/themed-view';
@@ -12,8 +12,10 @@ import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSubscription } from '@/contexts/subscription-context';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function SubscriptionScreen() {
+  const { t } = useTranslation();
   const pageBackground = useThemeColor({ light: '#F5F7FA', dark: '#000000' }, 'pageBackground');
   const cardBackground = useThemeColor({ light: '#FFFFFF', dark: '#1C1C1E' }, 'cardBackground');
   const textColor = useThemeColor({}, 'text');
@@ -28,43 +30,44 @@ export default function SubscriptionScreen() {
   const monthlyPackage = packages.find(pkg => pkg.identifier.includes('monthly'));
   const yearlyPackage = packages.find(pkg => pkg.identifier.includes('yearly'));
 
+  const selectedPrice = selectedPackageIndex === 0 ? t('subscription.monthlyPrice') : t('subscription.yearlyPrice');
+
   const handlePurchase = async () => {
     const selectedPackage = selectedPackageIndex === 0 ? monthlyPackage : yearlyPackage;
 
     if (!selectedPackage) {
-      Alert.alert('エラー', 'プランの読み込み中です。しばらくお待ちください。');
+      Alert.alert(t('common.error'), t('subscription.planLoadError'));
       return;
     }
 
     setIsPurchasing(true);
     try {
-      await purchasePackage(selectedPackage);
-      // Purchase successful
-      Alert.alert(
-        '購入完了',
-        'プレミアムプランへようこそ！',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      const success = await purchasePackage(selectedPackage);
+      if (success) {
+        Alert.alert(
+          t('subscription.purchaseComplete'),
+          t('subscription.welcomePremium'),
+          [{ text: t('common.ok'), onPress: () => router.back() }]
+        );
+      }
     } catch (error: any) {
-      // Show user-friendly error message
-      let errorMessage = '購入処理中にエラーが発生しました。';
+      let errorMessage = t('subscription.purchaseErrorGeneral');
 
       if (error?.message) {
-        // Map common errors to Japanese messages
         if (error.message.includes('cancelled') || error.message.includes('canceled')) {
-          errorMessage = '購入がキャンセルされました。';
+          errorMessage = t('subscription.purchaseCancelled');
         } else if (error.message.includes('network')) {
-          errorMessage = 'ネットワークエラーが発生しました。接続を確認してください。';
+          errorMessage = t('subscription.purchaseNetworkError');
         } else if (error.message.includes('already')) {
-          errorMessage = 'すでに購入済みです。「購入を復元する」をお試しください。';
+          errorMessage = t('subscription.purchaseAlready');
         } else if (error.message.includes('payment') || error.message.includes('billing')) {
-          errorMessage = '決済処理でエラーが発生しました。お支払い方法をご確認ください。';
+          errorMessage = t('subscription.purchasePaymentError');
         } else {
-          errorMessage = `購入エラー: ${error.message}`;
+          errorMessage = `${t('subscription.purchaseError')}: ${error.message}`;
         }
       }
 
-      Alert.alert('購入エラー', errorMessage);
+      Alert.alert(t('subscription.purchaseError'), errorMessage);
     } finally {
       setIsPurchasing(false);
     }
@@ -74,29 +77,27 @@ export default function SubscriptionScreen() {
     setIsRestoring(true);
     try {
       await restorePurchases();
-      // Restore successful - check if premium status was activated
       if (isPremium) {
         Alert.alert(
-          '復元完了',
-          'プレミアムプランを復元しました。',
-          [{ text: 'OK', onPress: () => router.back() }]
+          t('subscription.restoreComplete'),
+          t('subscription.restoreSuccess'),
+          [{ text: t('common.ok'), onPress: () => router.back() }]
         );
       } else {
-        Alert.alert('購入履歴なし', '復元可能な購入履歴が見つかりませんでした。');
+        Alert.alert(t('subscription.restoreNoHistory'), t('subscription.restoreNotFound'));
       }
     } catch (error: any) {
-      // Show user-friendly error message
-      let errorMessage = '復元処理中にエラーが発生しました。';
+      let errorMessage = t('subscription.restoreErrorGeneral');
 
       if (error?.message) {
         if (error.message.includes('network')) {
-          errorMessage = 'ネットワークエラーが発生しました。接続を確認してください。';
+          errorMessage = t('subscription.purchaseNetworkError');
         } else {
-          errorMessage = `復元エラー: ${error.message}`;
+          errorMessage = `${t('subscription.restoreError')}: ${error.message}`;
         }
       }
 
-      Alert.alert('復元エラー', errorMessage);
+      Alert.alert(t('subscription.restoreError'), errorMessage);
     } finally {
       setIsRestoring(false);
     }
@@ -106,7 +107,6 @@ export default function SubscriptionScreen() {
   const formatExpiryDate = () => {
     if (!customerInfo?.entitlements?.active) return '';
 
-    // Get the first active entitlement's expiration date
     const activeEntitlements = Object.values(customerInfo.entitlements.active);
     if (activeEntitlements.length === 0) return '';
 
@@ -114,7 +114,7 @@ export default function SubscriptionScreen() {
     if (!expirationDate) return '';
 
     const date = new Date(expirationDate);
-    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    return date.toLocaleDateString();
   };
 
   return (
@@ -140,24 +140,24 @@ export default function SubscriptionScreen() {
           {isPremium ? (
             <View style={styles.premiumStatusContainer}>
               <Text style={[styles.premiumStatusTitle, { color: textColor }]}>
-                プレミアム会員
+                {t('subscription.premiumMember')}
               </Text>
               <Text style={[styles.premiumStatusDescription, { color: subTextColor }]}>
-                すべての機能をご利用いただけます
+                {t('subscription.allFeaturesAvailable')}
               </Text>
               {formatExpiryDate() && (
                 <Text style={[styles.expiryText, { color: subTextColor }]}>
-                  次回更新日: {formatExpiryDate()}
+                  {t('subscription.nextRenewal', { date: formatExpiryDate() })}
                 </Text>
               )}
               <TouchableOpacity
                 style={[styles.manageButton, { backgroundColor: cardBackground }]}
                 onPress={() => {
-                  Alert.alert('管理', 'App Storeの設定からサブスクリプションを管理できます。');
+                  Linking.openURL('https://apps.apple.com/account/subscriptions');
                 }}
               >
                 <Text style={[styles.manageButtonText, { color: textColor }]}>
-                  サブスクリプションを管理
+                  {t('subscription.manageSubscription')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -166,7 +166,7 @@ export default function SubscriptionScreen() {
               {/* Hero */}
               <View style={styles.heroContainer}>
                 <Text style={[styles.heroTitle, { color: textColor }]}>
-                  プレミアムプラン{'\n'}でもっと快適に
+                  {t('subscription.heroTitle')}
                 </Text>
               </View>
 
@@ -177,7 +177,7 @@ export default function SubscriptionScreen() {
                     <Text style={styles.featureEmoji}>💬</Text>
                   </View>
                   <Text style={[styles.featureText, { color: textColor }]}>
-                    月間1,000回の質問
+                    {t('subscription.feature1')}
                   </Text>
                 </View>
 
@@ -186,7 +186,7 @@ export default function SubscriptionScreen() {
                     <Text style={styles.featureEmoji}>📝</Text>
                   </View>
                   <Text style={[styles.featureText, { color: textColor }]}>
-                    最大50,000文字の翻訳
+                    {t('subscription.feature2')}
                   </Text>
                 </View>
 
@@ -195,7 +195,7 @@ export default function SubscriptionScreen() {
                     <Text style={styles.featureEmoji}>📚</Text>
                   </View>
                   <Text style={[styles.featureText, { color: textColor }]}>
-                    ブックマークフォルダ
+                    {t('subscription.feature3')}
                   </Text>
                 </View>
 
@@ -204,7 +204,7 @@ export default function SubscriptionScreen() {
                     <Text style={styles.featureEmoji}>🎯</Text>
                   </View>
                   <Text style={[styles.featureText, { color: textColor }]}>
-                    詳細なAI返答
+                    {t('subscription.feature4')}
                   </Text>
                 </View>
               </View>
@@ -226,15 +226,15 @@ export default function SubscriptionScreen() {
                           {selectedPackageIndex === 1 && <View style={styles.radioInner} />}
                         </View>
                         <View>
-                          <Text style={[styles.planOptionTitle, { color: textColor }]}>年額プラン</Text>
+                          <Text style={[styles.planOptionTitle, { color: textColor }]}>{t('subscription.yearlyPlan')}</Text>
                           <Text style={[styles.planOptionPrice, { color: subTextColor }]}>
-                            ¥5,000/年 (月換算 約¥417)
+                            {t('subscription.yearlyPrice')}
                           </Text>
                         </View>
                       </View>
                       {selectedPackageIndex === 1 && (
                         <View style={styles.recommendedBadge}>
-                          <Text style={styles.recommendedBadgeText}>おすすめ</Text>
+                          <Text style={styles.recommendedBadgeText}>{t('subscription.recommended')}</Text>
                         </View>
                       )}
                     </TouchableOpacity>
@@ -254,8 +254,8 @@ export default function SubscriptionScreen() {
                           {selectedPackageIndex === 0 && <View style={styles.radioInner} />}
                         </View>
                         <View>
-                          <Text style={[styles.planOptionTitle, { color: textColor }]}>月額プラン</Text>
-                          <Text style={[styles.planOptionPrice, { color: subTextColor }]}>¥500/月</Text>
+                          <Text style={[styles.planOptionTitle, { color: textColor }]}>{t('subscription.monthlyPlan')}</Text>
+                          <Text style={[styles.planOptionPrice, { color: subTextColor }]}>{t('subscription.monthlyPrice')}</Text>
                         </View>
                       </View>
                     </TouchableOpacity>
@@ -265,7 +265,7 @@ export default function SubscriptionScreen() {
 
               {/* Pricing Info */}
               <Text style={[styles.pricingInfo, { color: '#007AFF' }]}>
-                7日間の無料体験の終了後は{selectedPackageIndex === 0 ? '¥500/月' : '¥5,000/年'}
+                {t('subscription.trialInfo', { price: selectedPrice })}
               </Text>
 
               {/* Purchase Button */}
@@ -280,7 +280,7 @@ export default function SubscriptionScreen() {
                 {isPurchasing ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.purchaseButtonText}>無料で体験してみる</Text>
+                  <Text style={styles.purchaseButtonText}>{t('subscription.tryFree')}</Text>
                 )}
               </TouchableOpacity>
 
@@ -294,26 +294,24 @@ export default function SubscriptionScreen() {
                   <ActivityIndicator color={subTextColor} size="small" />
                 ) : (
                   <Text style={[styles.restoreButtonText, { color: subTextColor }]}>
-                    購入を復元する
+                    {t('subscription.restorePurchase')}
                   </Text>
                 )}
               </TouchableOpacity>
 
               {/* Terms */}
               <Text style={[styles.termsText, { color: subTextColor }]}>
-                無料体験終了の24時間前までに解約しなかった場合、自動的に月極購読へ移行し、{selectedPackageIndex === 0 ? '¥500/月' : '¥5,000/年'}が請求されます。
-                {'\n\n'}
-                いつでも解約できます。無料体験や月極購読は、期間終了の24時間前までに解約しない限り自動的に更新されます。
+                {t('subscription.terms', { price: selectedPrice })}
               </Text>
 
               {/* Legal Links */}
               <View style={styles.legalLinks}>
                 <TouchableOpacity onPress={() => router.push('/terms-of-service')}>
-                  <Text style={[styles.linkText, { color: subTextColor }]}>利用規約</Text>
+                  <Text style={[styles.linkText, { color: subTextColor }]}>{t('subscription.termsOfService')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.linkSeparator, { color: subTextColor }]}>  •  </Text>
                 <TouchableOpacity onPress={() => router.push('/privacy-policy')}>
-                  <Text style={[styles.linkText, { color: subTextColor }]}>プライバシーポリシー</Text>
+                  <Text style={[styles.linkText, { color: subTextColor }]}>{t('subscription.privacyPolicy')}</Text>
                 </TouchableOpacity>
               </View>
             </>

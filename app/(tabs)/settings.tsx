@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, Linking } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
@@ -9,6 +9,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from 'react-i18next';
 import { clearPromptCache } from '@/services/ai/langfuse-client';
+import { useSubscription } from '@/contexts/subscription-context';
+import { useAuth } from '@/contexts/auth-context';
+import Constants from 'expo-constants';
 
 // Icons
 function ChevronRightIcon({ size = 24, color = '#686868' }: { size?: number; color?: string }) {
@@ -28,6 +31,10 @@ function ChevronRightIcon({ size = 24, color = '#686868' }: { size?: number; col
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const { isPremium } = useSubscription();
+  const { user } = useAuth();
+
+  const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 
   // 開発用: プロンプトキャッシュをクリア
   const handleClearPromptCache = async () => {
@@ -56,26 +63,71 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // AsyncStorageをクリア
               await AsyncStorage.clear();
-
-              // Supabase認証をサインアウト
               await supabase.auth.signOut();
-
-              // 完了メッセージ
               Alert.alert(
                 t('settings.developer.resetCompleteTitle'),
                 t('settings.developer.resetCompleteMessage'),
-                [
-                  {
-                    text: t('common.ok'),
-                  },
-                ]
+                [{ text: t('common.ok') }]
               );
             } catch (error) {
               console.error('リセットエラー:', error);
               Alert.alert(t('common.error'), t('settings.developer.resetError'));
             }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleManageSubscription = () => {
+    Linking.openURL('https://apps.apple.com/account/subscriptions');
+  };
+
+  const handleContact = () => {
+    Linking.openURL('mailto:support@lingooo.app');
+  };
+
+  const executeDeleteAccount = async () => {
+    try {
+      const userId = user?.id;
+      if (userId) {
+        await supabase.from('users').delete().eq('id', userId);
+      }
+      await AsyncStorage.clear();
+      await supabase.auth.signOut();
+      Alert.alert(
+        t('settings.deleteAccount.completeTitle'),
+        t('settings.deleteAccount.completeMessage')
+      );
+    } catch (error) {
+      console.error('アカウント削除エラー:', error);
+      Alert.alert(t('common.error'), t('settings.deleteAccount.error'));
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      t('settings.deleteAccount.confirmTitle'),
+      t('settings.deleteAccount.confirmMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.deleteAccount.delete'),
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              t('settings.deleteAccount.finalConfirmTitle'),
+              t('settings.deleteAccount.finalConfirmMessage'),
+              [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                  text: t('settings.deleteAccount.delete'),
+                  style: 'destructive',
+                  onPress: executeDeleteAccount,
+                },
+              ]
+            );
           },
         },
       ]
@@ -97,32 +149,23 @@ export default function SettingsScreen() {
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* Account Settings */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('settings.account.title')}</Text>
+          {/* Subscription - Only shown for premium users */}
+          {isPremium && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('settings.subscription.title')}</Text>
 
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => router.push('/profile')}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>{t('settings.account.profile')}</Text>
-                <Text style={styles.settingDescription}>{t('settings.account.profileDescription')}</Text>
-              </View>
-              <ChevronRightIcon />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => router.push('/data-management')}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>{t('settings.account.dataManagement')}</Text>
-                <Text style={styles.settingDescription}>{t('settings.account.dataManagementDescription')}</Text>
-              </View>
-              <ChevronRightIcon />
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={styles.settingItem}
+                onPress={handleManageSubscription}
+              >
+                <View style={styles.settingInfo}>
+                  <Text style={styles.settingLabel}>{t('settings.subscription.manage')}</Text>
+                  <Text style={styles.settingDescription}>{t('settings.subscription.manageDescription')}</Text>
+                </View>
+                <ChevronRightIcon />
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* About */}
           <View style={styles.section}>
@@ -148,12 +191,36 @@ export default function SettingsScreen() {
               <ChevronRightIcon />
             </TouchableOpacity>
 
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={handleContact}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>{t('settings.info.contact')}</Text>
+              </View>
+              <ChevronRightIcon />
+            </TouchableOpacity>
+
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>{t('settings.info.version')}</Text>
               </View>
-              <Text style={styles.versionText}>1.0.0</Text>
+              <Text style={styles.versionText}>{appVersion}</Text>
             </View>
+          </View>
+
+          {/* Account */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('settings.deleteAccount.title')}</Text>
+
+            <TouchableOpacity
+              style={[styles.settingItem, styles.dangerItem]}
+              onPress={handleDeleteAccount}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.dangerLabel}>{t('settings.deleteAccount.button')}</Text>
+              </View>
+            </TouchableOpacity>
           </View>
 
           {/* Developer Tools - Only shown in development mode */}

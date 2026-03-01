@@ -216,8 +216,22 @@ export default function TranslateScreen() {
           // stateに保存して、既存のinitialTranslationロジックで処理
           setImageTranslationText(data.extractedText);
           setImageTranslatedText(data.translatedText);
-          setSourceLang(data.detectedLanguage);
-          setSelectedTranslateTargetLang(data.targetLanguage);
+
+          // セーフティネット: 検出言語とターゲット言語が同じ場合は誤検出の可能性が高い
+          // 例: 数字や英単語を含む日本語テキストが英語と誤判定され、source=en, target=en になるケース
+          if (data.detectedLanguage === data.targetLanguage) {
+            logger.warn('[Translate] Detected language same as target, likely misdetection. Falling back to native language as source.', {
+              detectedLanguage: data.detectedLanguage,
+              targetLanguage: data.targetLanguage,
+              nativeLanguage: nativeLanguage.code,
+            });
+            setSourceLang(nativeLanguage.code);
+            // ターゲットは元のまま（学習言語）
+            setSelectedTranslateTargetLang(data.targetLanguage);
+          } else {
+            setSourceLang(data.detectedLanguage);
+            setSelectedTranslateTargetLang(data.targetLanguage);
+          }
         } else {
           logger.warn('[Translate] No image translation data found in AsyncStorage');
         }

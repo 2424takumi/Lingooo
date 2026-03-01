@@ -3,7 +3,7 @@
     "name": "Lingooo",
     "slug": "lingooo-mobile",
     "owner": "2424_takumi",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "lingooomobile",
@@ -12,7 +12,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#242424"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -20,12 +20,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lingooo.mobile",
-      "buildNumber": "31",
-      "entitlements": {
-        "com.apple.developer.in-app-payments": [
-          "merchant.com.lingooo.mobile"
-        ]
-      },
+      "buildNumber": "36",
       "infoPlist": {
         "NSUserActivityTypes": [
           "com.lingooo.mobile.search"
@@ -74,10 +69,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#242424"
         }
       ],
       [

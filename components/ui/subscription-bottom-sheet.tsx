@@ -160,13 +160,14 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
 
     setIsPurchasing(true);
     try {
-      await purchasePackage(selectedPackage);
-      // Success - context already updated isPremium
-      Alert.alert(
-        '購入完了',
-        'プレミアムプランへようこそ！',
-        [{ text: 'OK', onPress: onClose }]
-      );
+      const success = await purchasePackage(selectedPackage);
+      if (success) {
+        Alert.alert(
+          '購入完了',
+          'プレミアムプランへようこそ！',
+          [{ text: 'OK', onPress: onClose }]
+        );
+      }
     } catch (error: any) {
       // ユーザーにエラーを表示
       logger.error('[SubscriptionBottomSheet] Purchase error caught:', error);

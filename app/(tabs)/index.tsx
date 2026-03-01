@@ -27,7 +27,7 @@ export default function HomeScreen() {
   const { handleSearch, isLoading, error, showTextLengthModal, setShowTextLengthModal } = useSearch();
   const { needsInitialSetup } = useAuth();
   const { isPremium } = useSubscription();
-  const { currentLanguage, defaultLanguage } = useLearningLanguages();
+  const { currentLanguage, defaultLanguage, nativeLanguage } = useLearningLanguages();
   const [searchText, setSearchText] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
@@ -179,6 +179,7 @@ export default function HomeScreen() {
         mimeType={selectedImageMimeType}
         onClose={handleImagePreviewClose}
         targetLanguage={currentLanguage?.code || defaultLanguage?.code || 'ja'}
+        sourceLanguage={nativeLanguage?.code}
       />
     </ThemedView>
   );

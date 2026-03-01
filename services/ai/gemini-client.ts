@@ -1033,26 +1033,74 @@ export async function detectLanguage(
   }
 }
 
+// isGeminiConfigured のキャッシュ（毎回ネットワークリクエストを避ける）
+let _geminiConfiguredCache: { value: boolean; timestamp: number } | null = null;
+const GEMINI_CONFIGURED_CACHE_TTL = 5 * 60 * 1000; // 5分
+
 export async function isGeminiConfigured(): Promise<boolean> {
-  try {
-    const statusUrl = getApiUrl('/status');
-    logger.info(`[GeminiClient] Checking backend status at: ${statusUrl}`);
+  // キャッシュが有効ならネットワークリクエストをスキップ
+  if (_geminiConfiguredCache && (Date.now() - _geminiConfiguredCache.timestamp) < GEMINI_CONFIGURED_CACHE_TTL) {
+    logger.debug(`[GeminiClient] Using cached configured status: ${_geminiConfiguredCache.value}`);
+    return _geminiConfiguredCache.value;
+  }
 
-    const response = await authenticatedFetch(statusUrl);
-    logger.info(`[GeminiClient] Status response: ${response.ok}, status: ${response.status}`);
+  const statusUrl = getApiUrl('/status');
+  const maxAttempts = 2; // 合計2回試行（初回 + リトライ1回）
+  const timeoutMs = 10000; // 10秒タイムアウト
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      logger.warn(`[GeminiClient] Status check failed: ${errorText}`);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      logger.info(`[GeminiClient] Checking backend status at: ${statusUrl} (attempt ${attempt}/${maxAttempts})`);
+
+      // /status は認証不要なので通常の fetch を使用（authenticatedFetch はSupabaseセッション取得で遅延する可能性がある）
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      const response = await fetch(statusUrl, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      logger.info(`[GeminiClient] Status response: ${response.ok}, status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.warn(`[GeminiClient] Status check failed: ${errorText}`);
+        // 最後の試行でなければリトライ
+        if (attempt < maxAttempts) {
+          logger.info(`[GeminiClient] Retrying status check...`);
+          continue;
+        }
+        return false;
+      }
+      const data = await response.json();
+      logger.info(`[GeminiClient] Backend configured: ${data.configured}`);
+
+      // 成功時のみキャッシュ
+      _geminiConfiguredCache = { value: data.configured, timestamp: Date.now() };
+      return data.configured;
+    } catch (error) {
+      const isTimeout = error instanceof DOMException && error.name === 'AbortError';
+      if (isTimeout) {
+        logger.warn(`[GeminiClient] Status check timed out after ${timeoutMs}ms (attempt ${attempt}/${maxAttempts})`);
+      } else {
+        logger.warn(`[GeminiClient] Status check failed (attempt ${attempt}/${maxAttempts}):`, error);
+      }
+
+      // 最後の試行でなければリトライ
+      if (attempt < maxAttempts) {
+        logger.info(`[GeminiClient] Retrying status check...`);
+        continue;
+      }
+
+      // 全リトライ失敗
+      logger.error('[GeminiClient] Backend server not available after all retries');
+      // 失敗時はキャッシュしない（次回リトライさせる）
       return false;
     }
-    const data = await response.json();
-    logger.info(`[GeminiClient] Backend configured: ${data.configured}`);
-    return data.configured;
-  } catch (error) {
-    // バックエンドサーバーが起動していない場合はモックデータを使用（正常な動作）
-    logger.error('[GeminiClient] Backend server not available:', error);
-    logger.debug('[GeminiClient] Backend server not available, using mock data');
-    return false;
   }
+
+  return false;
 }

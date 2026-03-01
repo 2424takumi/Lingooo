@@ -49,11 +49,29 @@
       "dataManagement": "Gerenciamento de Dados",
       "dataManagementDescription": "Backup e restauração de dados de aprendizado"
     },
+    "subscription": {
+      "title": "Assinatura",
+      "manage": "Gerenciar Assinatura",
+      "manageDescription": "Alterar ou cancelar seu plano"
+    },
     "info": {
       "title": "Informações",
       "privacyPolicy": "Política de Privacidade",
       "termsOfService": "Termos de Serviço",
+      "contact": "Fale Conosco",
       "version": "Versão"
+    },
+    "deleteAccount": {
+      "title": "Conta",
+      "button": "Excluir Conta",
+      "confirmTitle": "Excluir Conta",
+      "confirmMessage": "Excluir sua conta removerá permanentemente todos os seus dados de aprendizado, favoritos e histórico. Esta ação não pode ser desfeita.",
+      "finalConfirmTitle": "Tem certeza?",
+      "finalConfirmMessage": "Esta ação não pode ser desfeita. Todos os seus dados serão permanentemente excluídos.",
+      "delete": "Excluir",
+      "completeTitle": "Conta Excluída",
+      "completeMessage": "Sua conta foi excluída.",
+      "error": "Falha ao excluir conta. Por favor, tente novamente mais tarde."
     },
     "developer": {
       "title": "Ferramentas do Desenvolvedor",
@@ -342,5 +360,42 @@
   "tutorialCompletion": {
     "step1": "Pergunta respondida! ✨",
     "step2": "Vamos começar de verdade!"
+  },
+  "subscription": {
+    "premiumMember": "Membro Premium",
+    "allFeaturesAvailable": "Todos os recursos estão disponíveis",
+    "nextRenewal": "Próxima renovação: {{date}}",
+    "manageSubscription": "Gerenciar Assinatura",
+    "heroTitle": "Seja Premium\npara uma Experiência Melhor",
+    "feature1": "1.000 perguntas por mês",
+    "feature2": "Até 50.000 caracteres de tradução",
+    "feature3": "Pastas de favoritos",
+    "feature4": "Respostas detalhadas da IA",
+    "yearlyPlan": "Plano Anual",
+    "yearlyPrice": "¥5.000/ano (aprox. ¥417/mês)",
+    "recommended": "Recomendado",
+    "monthlyPlan": "Plano Mensal",
+    "monthlyPrice": "¥500/mês",
+    "trialInfo": "Após o período gratuito de 7 dias, {{price}}",
+    "tryFree": "Experimentar Grátis",
+    "restorePurchase": "Restaurar Compra",
+    "terms": "Se você não cancelar pelo menos 24 horas antes do fim do período gratuito, sua assinatura será renovada automaticamente e você será cobrado {{price}}.\n\nVocê pode cancelar a qualquer momento. Períodos gratuitos e assinaturas são renovados automaticamente, a menos que sejam cancelados pelo menos 24 horas antes do fim do período atual.",
+    "termsOfService": "Termos de Serviço",
+    "privacyPolicy": "Política de Privacidade",
+    "purchaseComplete": "Compra Concluída",
+    "welcomePremium": "Bem-vindo ao Premium!",
+    "purchaseError": "Erro na Compra",
+    "purchaseErrorGeneral": "Ocorreu um erro durante a compra.",
+    "purchaseCancelled": "A compra foi cancelada.",
+    "purchaseNetworkError": "Ocorreu um erro de rede. Verifique sua conexão.",
+    "purchaseAlready": "Já comprado. Tente \"Restaurar Compra\".",
+    "purchasePaymentError": "Ocorreu um erro no pagamento. Verifique seu método de pagamento.",
+    "planLoadError": "Carregando planos. Aguarde um momento.",
+    "restoreComplete": "Restauração Concluída",
+    "restoreSuccess": "O plano Premium foi restaurado.",
+    "restoreNoHistory": "Sem Histórico de Compras",
+    "restoreNotFound": "Nenhum histórico de compra restaurável encontrado.",
+    "restoreError": "Erro na Restauração",
+    "restoreErrorGeneral": "Ocorreu um erro durante a restauração."
   }
 }

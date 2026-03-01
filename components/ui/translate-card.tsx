@@ -1,8 +1,13 @@
-import { StyleSheet, Text, TouchableOpacity, View, Animated, PanResponder, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Animated, PanResponder, TouchableWithoutFeedback, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import * as Speech from 'expo-speech';
 import { useState, useEffect, useRef, useMemo } from 'react';
+
+// Android用LayoutAnimation有効化
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { useRouter } from 'expo-router';
 import { logger } from '@/utils/logger';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
@@ -94,15 +99,22 @@ export function TranslateCard({
   const { nativeLanguage, currentLanguage } = useLearningLanguages();
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
   const [isPlayingTranslated, setIsPlayingTranslated] = useState(false);
+  const [isSourceExpanded, setIsSourceExpanded] = useState(false);
 
   // 現在の段落を取得
   const currentParagraph = paragraphs[currentIndex] || paragraphs[0];
   const originalText = currentParagraph?.originalText || '';
+
+  // 長文判定: 120文字超 または 改行が5つ以上
+  const isLongText = originalText.length > 120 || originalText.split('\n').length > 5;
   const translatedText = currentParagraph?.translatedText || '';
   const isParagraphTranslating = currentParagraph?.isTranslating || false;
 
   // 段落が複数あるかどうか
   const hasMultipleParagraphs = paragraphs.length > 1;
+
+  // 折りたたみが必要: 長文 かつ セクション分割されていない場合のみ
+  const shouldCollapse = isLongText && !hasMultipleParagraphs;
 
   // アニメーション用の値
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -125,9 +137,10 @@ export function TranslateCard({
   // 翻訳文が変更されたらフェードインアニメーション（段落切り替え時のみ）
   // 翻訳完了時のフェードは削除（カードが消えて見えるため）
 
-  // 原文が変更されたら選択状態をリセット
+  // 原文が変更されたら選択状態をリセット＆折りたたみリセット
   useEffect(() => {
     onSelectionCleared?.();
+    setIsSourceExpanded(false);
   }, [originalText]);
 
   // 翻訳中のシマーアニメーション
@@ -365,25 +378,55 @@ export function TranslateCard({
               </View>
             ) : (
               <>
-                <SelectableText
-                  text={originalText}
-                  style={styles.originalText}
-                  onSelectionChange={handleOriginalSelection}
-                  onSelectionChangeWithInfo={handleOriginalSelectionWithInfo}
-                  onSelectionCleared={onSelectionCleared}
-                  clearSelectionKey={clearSelectionKey}
-                />
+                {/* 原文テキスト: 長文は折りたたみ、短文は全文表示 */}
+                {shouldCollapse && !isSourceExpanded ? (
+                  <View style={styles.sourcePreviewContainer}>
+                    <SelectableText
+                      text={originalText}
+                      style={styles.originalText}
+                      onSelectionChange={handleOriginalSelection}
+                      onSelectionChangeWithInfo={handleOriginalSelectionWithInfo}
+                      onSelectionCleared={onSelectionCleared}
+                      clearSelectionKey={clearSelectionKey}
+                    />
+                  </View>
+                ) : (
+                  <SelectableText
+                    text={originalText}
+                    style={styles.originalText}
+                    onSelectionChange={handleOriginalSelection}
+                    onSelectionChangeWithInfo={handleOriginalSelectionWithInfo}
+                    onSelectionCleared={onSelectionCleared}
+                    clearSelectionKey={clearSelectionKey}
+                  />
+                )}
 
                 {/* Original Actions */}
                 <View style={styles.originalActions}>
-                  {!isOriginalNative && (
-                    <TouchableOpacity onPress={handlePlayOriginal} style={styles.actionButton}>
-                      <SpeakerIcon size={20} color={isPlayingOriginal ? '#242424' : '#686868'} />
+                  <View style={styles.originalActionsLeft}>
+                    {!isOriginalNative && (
+                      <TouchableOpacity onPress={handlePlayOriginal} style={styles.actionButton}>
+                        <SpeakerIcon size={20} color={isPlayingOriginal ? '#242424' : '#686868'} />
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity onPress={handleCopy} style={styles.actionButton}>
+                      <CopyIcon size={20} color="#686868" />
+                    </TouchableOpacity>
+                  </View>
+                  {shouldCollapse && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                        setIsSourceExpanded(!isSourceExpanded);
+                      }}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={styles.showMoreText}>
+                        {isSourceExpanded ? '閉じる' : 'もっと見る'}
+                      </Text>
                     </TouchableOpacity>
                   )}
-                  <TouchableOpacity onPress={handleCopy} style={styles.actionButton}>
-                    <CopyIcon size={20} color="#686868" />
-                  </TouchableOpacity>
                 </View>
               </>
             )}
@@ -496,10 +539,14 @@ const styles = StyleSheet.create({
   originalTextCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
-    paddingTop: 16,
+    paddingTop: 12,
     paddingBottom: 12,
     paddingHorizontal: 16,
     gap: 10,
+  },
+  sourcePreviewContainer: {
+    maxHeight: 120,
+    overflow: 'hidden',
   },
   originalText: {
     fontSize: 16,
@@ -510,8 +557,19 @@ const styles = StyleSheet.create({
   },
   originalActions: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  originalActionsLeft: {
+    flexDirection: 'row',
     gap: 8,
     alignItems: 'center',
+  },
+  showMoreText: {
+    fontSize: 13,
+    color: '#686868',
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   translatedTextContainer: {
     paddingHorizontal: 9,

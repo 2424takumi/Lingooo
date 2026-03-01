@@ -62,7 +62,7 @@ interface SubscriptionContextType {
   isPremium: boolean;
   isLoading: boolean;
   packages: PurchasesPackage[];
-  purchasePackage: (pkg: PurchasesPackage) => Promise<void>;
+  purchasePackage: (pkg: PurchasesPackage) => Promise<boolean>;
   restorePurchases: () => Promise<void>;
   expiryDate: Date | null;
   customerInfo: CustomerInfo | null;
@@ -230,7 +230,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     }
   };
 
-  const purchasePackage = async (pkg: PurchasesPackage) => {
+  const purchasePackage = async (pkg: PurchasesPackage): Promise<boolean> => {
     try {
       logger.info('[Subscription] Starting purchase:', {
         identifier: pkg.identifier,
@@ -242,11 +242,11 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       setCustomerInfo(info);
       await checkSubscriptionStatus();
       logger.info('[Subscription] Purchase successful');
+      return true;
     } catch (error: any) {
       if (error.userCancelled) {
         logger.info('[Subscription] Purchase cancelled by user');
-        // Don't throw for user cancellation - it's not an error
-        return;
+        return false;
       }
 
       logRevenueCatError('Purchase failed', error);
