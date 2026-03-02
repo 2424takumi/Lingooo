@@ -25,6 +25,11 @@ export interface TranslateRequest {
   targetLang: string;
 }
 
+export interface ToneAnalysis {
+  label: string;        // e.g., "丁寧・やや急ぎ"
+  formality: number;    // 1-5 (1=カジュアル, 5=フォーマル)
+}
+
 export interface TranslateResponse {
   originalText: string;
   translatedText: string;
@@ -345,6 +350,47 @@ export async function getWordContext(
     return data;
   } catch (error) {
     logger.error('[WordContext] Word context error:', error);
+    throw error;
+  }
+}
+
+/**
+ * テキストのトーンとフォーマル度を分析する
+ */
+export async function analyzeTone(
+  text: string,
+  sourceLang: string,
+  nativeLanguage?: string
+): Promise<ToneAnalysis> {
+  logger.info('[ToneAnalysis] analyzeTone called:', {
+    textLength: text.length,
+    sourceLang,
+  });
+
+  try {
+    const response = await authenticatedFetch(`${BACKEND_URL}/api/translate/tone`, {
+      method: 'POST',
+      body: JSON.stringify({
+        text,
+        sourceLang,
+        nativeLanguage,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Tone analysis failed: ${response.statusText}`);
+    }
+
+    const data: ToneAnalysis = await response.json();
+    logger.info('[ToneAnalysis] Result:', {
+      label: data.label,
+      formality: data.formality,
+    });
+
+    return data;
+  } catch (error) {
+    logger.error('[ToneAnalysis] Error:', error);
     throw error;
   }
 }

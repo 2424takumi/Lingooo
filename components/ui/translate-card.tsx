@@ -15,6 +15,7 @@ import { SPEECH_LANGUAGE_MAP, LANGUAGE_NAME_MAP } from '@/constants/languages';
 import { formatMarkdownText } from '@/utils/text-formatter';
 import { SelectableText, SelectionInfo } from './selectable-text';
 import type { Paragraph } from '@/services/api/paragraph-splitter';
+import type { ToneAnalysis } from '@/services/api/translate';
 
 interface TranslateCardProps {
   // 段落配列（単一段落の場合も配列で渡す）
@@ -30,6 +31,7 @@ interface TranslateCardProps {
   onTextSelectionWithInfo?: (selectionInfo: SelectionInfo, type: 'original' | 'translated') => void;
   onSelectionCleared?: () => void;
   clearSelectionKey?: number; // 値が変わると選択がクリアされる
+  tone?: ToneAnalysis | null;
 }
 
 function SpeakerIcon({ size = 20, color = '#686868' }: { size?: number; color?: string }) {
@@ -94,6 +96,7 @@ export function TranslateCard({
   onTextSelectionWithInfo,
   onSelectionCleared,
   clearSelectionKey,
+  tone,
 }: TranslateCardProps) {
   const router = useRouter();
   const { nativeLanguage, currentLanguage } = useLearningLanguages();
@@ -432,6 +435,24 @@ export function TranslateCard({
             )}
           </View>
 
+          {/* Tone Analysis Badge */}
+          {tone && !isTranslating && !isParagraphTranslating && (
+            <View style={styles.toneBadgeContainer}>
+              <Text style={styles.toneBadgeLabel}>{tone.label}</Text>
+              <View style={styles.formalityDots}>
+                {[1, 2, 3, 4, 5].map((level) => (
+                  <View
+                    key={level}
+                    style={[
+                      styles.formalityDot,
+                      level <= tone.formality && styles.formalityDotActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+          )}
+
           {/* Translated Text Section (No Background) */}
           <View style={styles.translatedTextContainer}>
             {(isTranslating || isParagraphTranslating) ? (
@@ -570,6 +591,32 @@ const styles = StyleSheet.create({
     color: '#686868',
     fontWeight: '500',
     letterSpacing: 0.3,
+  },
+  toneBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 9,
+  },
+  toneBadgeLabel: {
+    fontSize: 12,
+    color: '#888888',
+    fontWeight: '500',
+    letterSpacing: 0.3,
+  },
+  formalityDots: {
+    flexDirection: 'row',
+    gap: 3,
+    alignItems: 'center',
+  },
+  formalityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E0E0E0',
+  },
+  formalityDotActive: {
+    backgroundColor: '#888888',
   },
   translatedTextContainer: {
     paddingHorizontal: 9,

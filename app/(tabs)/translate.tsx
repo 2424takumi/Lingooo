@@ -13,7 +13,8 @@ import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
-import { translateText, getWordContext, splitOriginalText, translateParagraph, translateParagraphStream, splitOriginalTextStream, splitOriginalTextStreamSSE } from '@/services/api/translate';
+import { translateText, getWordContext, analyzeTone, splitOriginalText, translateParagraph, translateParagraphStream, splitOriginalTextStream, splitOriginalTextStreamSSE } from '@/services/api/translate';
+import type { ToneAnalysis } from '@/services/api/translate';
 import { splitIntoParagraphs } from '@/services/api/paragraph-splitter';
 import { getWordDetailStream } from '@/services/api/search';
 import { sendQuestionTagQuery } from '@/services/api/chat';
@@ -155,6 +156,9 @@ export default function TranslateScreen() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [selectedTranslateTargetLang, setSelectedTranslateTargetLang] = useState(initialTargetLang);
   const [error, setError] = useState<string | null>(null);
+
+  // トーン分析
+  const [toneAnalysis, setToneAnalysis] = useState<ToneAnalysis | null>(null);
 
   // Quota exceeded modal state
   const [isQuotaModalVisible, setIsQuotaModalVisible] = useState(false);
@@ -1084,6 +1088,23 @@ export default function TranslateScreen() {
     }
   }, [paragraphs, sourceLang, selectedTranslateTargetLang, isTranslating, text]);
 
+  // 翻訳完了時にトーン分析を実行
+  useEffect(() => {
+    if (!translationData || isTranslating) return;
+
+    setToneAnalysis(null);
+    analyzeTone(
+      translationData.originalText,
+      translationData.sourceLang,
+      nativeLanguage.code
+    ).then(tone => {
+      setToneAnalysis(tone);
+      logger.info('[Translate] Tone analysis complete:', tone);
+    }).catch(err => {
+      logger.warn('[Translate] Tone analysis failed (non-critical):', err);
+    });
+  }, [translationData, isTranslating]);
+
   // 学習言語変更時の再翻訳トリガー
   const prevTargetLangRef = useRef(selectedTranslateTargetLang);
 
@@ -1736,6 +1757,7 @@ export default function TranslateScreen() {
                   setQAPairs([]); // チャットセクションをリセット
                 }}
                 clearSelectionKey={clearSelectionKey}
+                tone={toneAnalysis}
               />
             </Pressable>
           </View>
