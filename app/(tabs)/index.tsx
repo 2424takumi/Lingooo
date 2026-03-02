@@ -1,4 +1,5 @@
 import { StyleSheet, View, Text, ActivityIndicator, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { router } from 'expo-router';
@@ -54,6 +55,7 @@ export default function HomeScreen() {
   };
 
   const onSearch = async (text: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const success = await handleSearch(text);
     // 検索成功後、入力をクリアして履歴を更新
     if (success) {

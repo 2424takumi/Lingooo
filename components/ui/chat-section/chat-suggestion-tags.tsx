@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
 import { QuestionTag } from '@/components/ui/question-tag';
 import type { QuestionTag as QuestionTagType } from '@/constants/question-tags';
@@ -95,6 +96,7 @@ export function ChatSuggestionTags({
                 label={label}
                 icon={tag?.icon}
                 onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   onOpenChat();
                   // questionTagの場合はタグオブジェクトを、それ以外は質問文を送信
                   if (tag) {
@@ -128,6 +130,7 @@ export function ChatSuggestionTags({
               label={tag.label}
               icon={tag.icon}
               onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onOpenChat();
                 onQuickQuestion?.(tag);
               }}

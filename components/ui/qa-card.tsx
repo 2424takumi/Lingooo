@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, Alert, TextInput, TouchableOpacity } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
 import Markdown from 'react-native-markdown-display';
 
@@ -210,6 +211,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
     try {
       if (isBookmarked) {
         // ブックマークを削除
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         logger.debug('[QACard] Removing bookmark...');
         const bookmark = await findBookmark(pair.q, pair.a);
         if (bookmark) {
@@ -219,6 +221,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
         }
       } else {
         // ブックマークを追加（追加質問も含める）
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         logger.debug('[QACard] Adding bookmark...', { scope, identifier, question: pair.q });
         const newBookmark = await addBookmark({
           question: pair.q,

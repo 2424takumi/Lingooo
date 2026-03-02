@@ -1,4 +1,5 @@
 import { StyleSheet, View, ScrollView, Dimensions, Platform, Pressable, KeyboardAvoidingView } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
@@ -631,6 +632,7 @@ export default function TranslateScreen() {
         return;
       }
 
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setIsTranslating(true);
       setError(null);
       setParagraphs([]);

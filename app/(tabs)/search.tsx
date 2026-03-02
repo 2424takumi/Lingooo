@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, Dimensions } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -590,6 +591,7 @@ export default function SearchScreen() {
   }, [suggestions, completedHintIndices]);
 
   const handleWordCardPress = async (item: SuggestionItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // 単語詳細画面でデータ取得後にトークン数と一緒に検索履歴に保存されるため、
     // ここでは保存しない
 
