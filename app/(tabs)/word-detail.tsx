@@ -303,6 +303,11 @@ export default function WordDetailScreen() {
               try {
                 logger.info('[WordDetail] Waiting for prefetch to complete...');
                 const fullData = await pendingPromise;
+                // DEBUG: プリフェッチデータの examples 状態
+                logger.info('[WordDetail] Prefetch data examples:', fullData.examples?.map((ex: any, i: number) => ({
+                  i, hasSrc: !!ex.textSrc, hasDst: !!ex.textDst,
+                  dstLen: ex.textDst?.length || 0,
+                })));
                 if (fullData.examples && fullData.examples.length > 0) {
                   logger.info('[WordDetail] Enriching with prefetched full data');
                   // 🚀 基本データのsensesを保持してマージ（検索結果の意味を優先）
@@ -441,7 +446,9 @@ export default function WordDetailScreen() {
                 } else if (updatedData.examples && updatedData.examples.length > 0 &&
                            (!cachedPartialData.examples || cachedPartialData.examples.length === 0)) {
                   // 完全データ（例文あり）が来た場合
-                  logger.info('[WordDetail] Full data arrived during polling');
+                  logger.info('[WordDetail] Full data arrived during polling, examples:', updatedData.examples.map((ex: any, i: number) => ({
+                    i, hasSrc: !!ex.textSrc, hasDst: !!ex.textDst, dstLen: ex.textDst?.length || 0,
+                  })));
                   setWordData(updatedData);
                   setLoadingProgress(100);
                   setIsLoading(false);
@@ -454,7 +461,9 @@ export default function WordDetailScreen() {
               // 完全なデータを待つ（バックグラウンド）
               const fullData = await pendingPromise;
               clearInterval(pollInterval);
-              logger.debug('[WordDetail] PRE-FLIGHT DATA RECEIVED');
+              logger.info('[WordDetail] PRE-FLIGHT DATA RECEIVED, examples:', fullData.examples?.map((ex: any, i: number) => ({
+                i, hasSrc: !!ex.textSrc, hasDst: !!ex.textDst, dstLen: ex.textDst?.length || 0,
+              })));
               setWordData(fullData);
               setLoadingProgress(100);
               setIsLoading(false);
@@ -537,6 +546,17 @@ export default function WordDetailScreen() {
                   // 部分データが来たらすぐに表示（段階的レンダリング）
                   if (partialData) {
                     logger.debug('[WordDetail] Partial data received, updating UI');
+
+                    // DEBUG: examples の textDst 状態をログ
+                    if (partialData.examples && partialData.examples.length > 0) {
+                      logger.info(`[WordDetail] Examples at ${progress}%:`, partialData.examples.map((ex: any, i: number) => ({
+                        i,
+                        hasSrc: !!ex.textSrc,
+                        hasDst: !!ex.textDst,
+                        srcLen: ex.textSrc?.length || 0,
+                        dstLen: ex.textDst?.length || 0,
+                      })));
+                    }
 
                     // 🚀 データをマージして蓄積（一度受信したデータは削除しない）
                     setWordData(prev => {

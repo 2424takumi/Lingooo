@@ -438,6 +438,13 @@ export async function generateAdditionalInfoStream<T>(
               } else if (event.type === 'complete') {
                 // 全体完了
                 logger.info('[GeminiClient] Complete data received');
+                // DEBUG: complete イベントの examples 状態
+                if (event.data?.examples) {
+                  logger.info('[GeminiClient] Complete examples:', event.data.examples.map((ex: any, i: number) => ({
+                    i, hasSrc: !!ex.textSrc, hasDst: !!ex.textDst,
+                    dstLen: ex.textDst?.length || 0,
+                  })));
+                }
                 finalProvider = event.provider || 'gemini';
                 accumulatedData = event.data;
               } else if (event.type === 'error') {
