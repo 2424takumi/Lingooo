@@ -271,6 +271,8 @@ export interface WordContextResponse {
   translation: string;
   partOfSpeech: string[];
   nuance: string;
+  contextMeaning?: string;
+  formality?: number;
 }
 
 export interface OriginalParagraph {

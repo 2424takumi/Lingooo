@@ -15,6 +15,8 @@ export interface WordDetail {
   meanings: string[];
   partOfSpeech: string[];
   nuance?: string;
+  contextMeaning?: string;
+  formality?: number;
   isBookmarked?: boolean;
 }
 
@@ -140,17 +142,41 @@ export function WordDetailCard({
           </TouchableOpacity>
         </View>
 
-        {/* ニュアンス（品詞タグの下に直接表示） */}
+        {/* contextMeaning（「この文脈では…」の説明） */}
         {isLoading ? (
           <View style={styles.nuanceContainer}>
             <Shimmer width="95%" height={22} borderRadius={4} style={{ marginBottom: 4 }} />
             <Shimmer width="90%" height={22} borderRadius={4} />
+          </View>
+        ) : word.contextMeaning ? (
+          <View style={styles.nuanceContainer}>
+            <Text style={styles.contextMeaningText}>{word.contextMeaning}</Text>
           </View>
         ) : word.nuance ? (
           <View style={styles.nuanceContainer}>
             <Text style={styles.nuanceText}>{word.nuance}</Text>
           </View>
         ) : null}
+
+        {/* フォーマル度バッジ */}
+        {!isLoading && word.formality != null && (
+          <View style={styles.formalityBadge}>
+            <View style={styles.formalityDotsRow}>
+              {[1, 2, 3, 4, 5].map((level) => (
+                <View
+                  key={level}
+                  style={[
+                    styles.formalityDotSmall,
+                    level <= word.formality! && styles.formalityDotSmallActive,
+                  ]}
+                />
+              ))}
+            </View>
+            <Text style={styles.formalityLabel}>
+              {word.formality <= 2 ? 'カジュアル' : word.formality === 3 ? '標準' : 'フォーマル'}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* 下部: 質問ボタン + もっと詳しくボタン */}
@@ -260,6 +286,39 @@ const styles = StyleSheet.create({
     color: '#242424',
     lineHeight: 24,
     letterSpacing: 0.3,
+  },
+  contextMeaningText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#333333',
+    lineHeight: 22,
+    letterSpacing: 0.3,
+  },
+  formalityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+    marginLeft: 4,
+  },
+  formalityDotsRow: {
+    flexDirection: 'row',
+    gap: 3,
+    alignItems: 'center',
+  },
+  formalityDotSmall: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#E0E0E0',
+  },
+  formalityDotSmallActive: {
+    backgroundColor: '#888888',
+  },
+  formalityLabel: {
+    fontSize: 11,
+    color: '#888888',
+    fontWeight: '500',
   },
   footer: {
     flexDirection: 'row',

@@ -387,6 +387,8 @@ export default function TranslateScreen() {
     translation: string;
     partOfSpeech: string[];
     nuance: string;
+    contextMeaning?: string;
+    formality?: number;
     sourceLang: string; // 選択された単語の言語
     targetLang: string; // 翻訳先の言語
   } | null>(null);
@@ -419,6 +421,8 @@ export default function TranslateScreen() {
         meanings: [],
         partOfSpeech: wordContextInfo.partOfSpeech,
         nuance: wordContextInfo.nuance,
+        contextMeaning: wordContextInfo.contextMeaning,
+        formality: wordContextInfo.formality,
         isBookmarked: false,
       };
     }
