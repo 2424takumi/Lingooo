@@ -59,6 +59,14 @@ export async function getAndClearImageTranslationData(): Promise<ImageTranslatio
       return null;
     }
 
+    // リテラル \n が残っている場合は実際の改行に変換
+    if (data.extractedText.includes('\\n')) {
+      data.extractedText = data.extractedText.replace(/\\n/g, '\n');
+    }
+    if (data.translatedText.includes('\\n')) {
+      data.translatedText = data.translatedText.replace(/\\n/g, '\n');
+    }
+
     logger.info('[ImageTranslationStorage] Retrieved translation data', {
       extractedLength: data.extractedText.length,
       translatedLength: data.translatedText.length,
