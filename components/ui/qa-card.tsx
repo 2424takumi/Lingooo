@@ -312,7 +312,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                   style={{
                     body: {
                       color: answerTextColor,
-                      fontSize: 15,
+                      fontSize: 16,
                       lineHeight: 25,
                       letterSpacing: 0.3,
                     },
@@ -344,7 +344,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
             style={{
               body: {
                 color: answerTextColor,
-                fontSize: 15,
+                fontSize: 16,
                 lineHeight: 25,
                 letterSpacing: 0.3,
               },
@@ -465,7 +465,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                                 style={{
                                   body: {
                                     color: answerTextColor,
-                                    fontSize: 15,
+                                    fontSize: 16,
                                     lineHeight: 25,
                                     letterSpacing: 0.3,
                                   },
@@ -496,7 +496,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                             style={{
                               body: {
                                 color: answerTextColor,
-                                fontSize: 15,
+                                fontSize: 16,
                                 lineHeight: 25,
                                 letterSpacing: 0.3,
                               },
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   },
       questionText: {
         flex: 1,
-      fontSize: 15,
+      fontSize: 16,
       lineHeight: 22,
       fontWeight: '500',
   },
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
       marginBottom: -4,
   },
       answerText: {
-        fontSize: 15,
+        fontSize: 16,
       lineHeight: 25,
       fontWeight: '400',
       letterSpacing: 0.3,

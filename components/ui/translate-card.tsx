@@ -14,7 +14,6 @@ import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { SPEECH_LANGUAGE_MAP, LANGUAGE_NAME_MAP } from '@/constants/languages';
 import { formatMarkdownText } from '@/utils/text-formatter';
 import { SelectableText, SelectionInfo } from './selectable-text';
-import { TranslationNotes } from './translation-notes';
 import type { Paragraph } from '@/services/api/paragraph-splitter';
 
 interface TranslateCardProps {
@@ -31,9 +30,6 @@ interface TranslateCardProps {
   onTextSelectionWithInfo?: (selectionInfo: SelectionInfo, type: 'original' | 'translated') => void;
   onSelectionCleared?: () => void;
   clearSelectionKey?: number; // 値が変わると選択がクリアされる
-  translationNotes?: string;
-  isNotesStreaming?: boolean;
-  streamingNotesText?: string;
 }
 
 function SpeakerIcon({ size = 20, color = '#686868' }: { size?: number; color?: string }) {
@@ -98,9 +94,6 @@ export function TranslateCard({
   onTextSelectionWithInfo,
   onSelectionCleared,
   clearSelectionKey,
-  translationNotes,
-  isNotesStreaming,
-  streamingNotesText,
 }: TranslateCardProps) {
   const router = useRouter();
   const { nativeLanguage, currentLanguage } = useLearningLanguages();
@@ -491,14 +484,6 @@ export function TranslateCard({
             )}
           </View>
 
-          {/* Translation Notes */}
-          {!isTranslating && !isParagraphTranslating && (
-            <TranslationNotes
-              notes={translationNotes || ''}
-              isStreaming={isNotesStreaming}
-              streamingText={streamingNotesText}
-            />
-          )}
         </Animated.View>
         </View>
       </TouchableWithoutFeedback>
@@ -511,7 +496,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   label: {
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 21,
     color: '#686868',
     fontWeight: '510',
@@ -565,7 +550,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   originalText: {
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 24,
     color: '#242424',
     fontWeight: '400',
@@ -582,7 +567,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   showMoreText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#686868',
     fontWeight: '500',
     letterSpacing: 0.3,
@@ -592,7 +577,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   translatedText: {
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 24,
     color: '#242424',
     fontWeight: '400',

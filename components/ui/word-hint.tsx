@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   hintText: {
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 25,
     color: '#000000',
     letterSpacing: 0.5,

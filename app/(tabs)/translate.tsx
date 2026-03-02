@@ -8,6 +8,7 @@ import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { ChatSection, ChatSectionMode } from '@/components/ui/chat-section';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
 import { TranslateCard } from '@/components/ui/translate-card';
+import { TranslationNotes } from '@/components/ui/translation-notes';
 import { SelectionInfo } from '@/components/ui/selectable-text';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
@@ -1777,10 +1778,14 @@ export default function TranslateScreen() {
                   setQAPairs([]); // チャットセクションをリセット
                 }}
                 clearSelectionKey={clearSelectionKey}
-                translationNotes={translationNotes}
-                isNotesStreaming={isNotesStreaming}
-                streamingNotesText={streamingNotesText}
               />
+              {!isTranslating && !isSplittingParagraphs && !isDetectingLanguage && (
+                <TranslationNotes
+                  notes={translationNotes}
+                  isStreaming={isNotesStreaming}
+                  streamingText={streamingNotesText}
+                />
+              )}
             </Pressable>
           </View>
         </ScrollView>

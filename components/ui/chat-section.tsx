@@ -1023,7 +1023,7 @@ const styles = StyleSheet.create({
     width: '100%',
     textAlignVertical: 'top',
     paddingHorizontal: 0,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '500',
     color: '#000000',
     letterSpacing: 1,
