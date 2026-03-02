@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View, Animated, PanResponder, TouchableWithoutFeedback, LayoutAnimation, Platform, UIManager } from 'react-native';
-import ReanimatedView, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import * as Speech from 'expo-speech';
@@ -431,7 +431,7 @@ export function TranslateCard({
               </View>
             ) : (
               <Animated.View style={{ opacity: fadeAnim }}>
-                <ReanimatedView style={[{ gap: 8 }, translatedTextAnimatedStyle]}>
+                <Reanimated.View style={[{ gap: 8 }, translatedTextAnimatedStyle]}>
                   <SelectableText
                     text={formatMarkdownText(translatedText)}
                     style={styles.translatedText}
@@ -449,7 +449,7 @@ export function TranslateCard({
                       </TouchableOpacity>
                     )}
                   </View>
-                </ReanimatedView>
+                </Reanimated.View>
               </Animated.View>
             )}
           </View>
