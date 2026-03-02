@@ -510,10 +510,12 @@ export async function generateWordDetailTwoStage(
 
     // 追加詳細をSSEストリーミングで取得
     // 各セクション完成時に即座にコールバックが呼ばれる
+    // flash-liteを使用: 例文JSON生成は軽量タスクのためthinkingなしモデルで高速化
+    const additionalModelConfig = { ...modelConfig, model: 'gemini-2.5-flash-lite' };
     let currentProgress = 30;
     const additionalResult = await generateAdditionalInfoStream<Partial<WordDetailResponse>>(
       additionalPrompt,
-      modelConfig,
+      additionalModelConfig,
       (section, data) => {
         // セクションごとに進捗を更新
         if (section === 'hint') {
@@ -679,10 +681,12 @@ export async function generateWordDetailWithHintStreaming(
     // 現状はHintのみストリーミング、残りはJSON一括生成
     const additionalPrompt = await createAdditionalDetailsPrompt(word, targetLanguage, nativeLanguage);
 
+    // flash-liteを使用: 例文JSON生成は軽量タスクのためthinkingなしモデルで高速化
+    const additionalModelConfig = { ...modelConfig, model: 'gemini-2.5-flash-lite' };
     let currentProgress = 50;
     const additionalResult = await generateAdditionalInfoStream<Partial<WordDetailResponse>>(
       additionalPrompt,
-      modelConfig,
+      additionalModelConfig,
       (section, data) => {
         // Hintは既にストリーミング済みなのでスキップ
         if (section === 'hint') {
