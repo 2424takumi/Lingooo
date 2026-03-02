@@ -44,18 +44,14 @@ export function LanguageDropdown({
 
   const handleSelect = (language: Language) => {
     if (multiSelect) {
-      // 複数選択モード
-      const isSelected = tempSelected.some((lang) => lang.id === language.id);
-      if (isSelected) {
-        // 最低1つは残す
-        if (tempSelected.length > 1) {
-          setTempSelected(tempSelected.filter((lang) => lang.id !== language.id));
+      setTempSelected(prev => {
+        const isSelected = prev.some(lang => lang.id === language.id);
+        if (isSelected) {
+          return prev.length > 1 ? prev.filter(lang => lang.id !== language.id) : prev;
         }
-      } else {
-        setTempSelected([...tempSelected, language]);
-      }
+        return [...prev, language];
+      });
     } else {
-      // 単一選択モード
       onSelect?.(language);
       setIsOpen(false);
     }

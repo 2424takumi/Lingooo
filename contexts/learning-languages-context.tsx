@@ -123,17 +123,22 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     const language = AVAILABLE_LANGUAGES.find((lang) => lang.id === languageId);
     if (!language) return;
 
-    // すでに学習中の言語の場合は何もしない
-    if (learningLanguages.find((lang) => lang.id === languageId)) {
-      return;
-    }
+    let updatedLanguages: Language[] = [];
 
-    const newLearningLanguages = [...learningLanguages, language];
-    setLearningLanguages(newLearningLanguages);
+    setLearningLanguages(prev => {
+      if (prev.find(lang => lang.id === languageId)) {
+        updatedLanguages = prev;
+        return prev; // すでに学習中
+      }
+      updatedLanguages = [...prev, language];
+      return updatedLanguages;
+    });
+
+    // updatedLanguages が変わっていない場合はDB更新不要
+    if (updatedLanguages.length === 0) return;
 
     try {
-      // データベースには言語コードを保存
-      const codes = newLearningLanguages.map((lang) => lang.code);
+      const codes = updatedLanguages.map(lang => lang.code);
       const { error } = await supabase
         .from('users')
         .update({ learning_languages: codes })
@@ -149,20 +154,25 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
 
   const removeLearningLanguage = async (languageId: string) => {
     if (!user) return;
-    // 最後の1つは削除できない
-    if (learningLanguages.length <= 1) return;
 
-    const newLearningLanguages = learningLanguages.filter((lang) => lang.id !== languageId);
-    setLearningLanguages(newLearningLanguages);
+    let updatedLanguages: Language[] = [];
+
+    setLearningLanguages(prev => {
+      if (prev.length <= 1) {
+        updatedLanguages = prev;
+        return prev; // 最低1つは残す
+      }
+      updatedLanguages = prev.filter(lang => lang.id !== languageId);
+      return updatedLanguages;
+    });
 
     // 削除した言語が現在の言語だった場合、最初の言語に切り替え
-    if (currentLanguage.id === languageId) {
-      setCurrentLanguageState(newLearningLanguages[0]);
+    if (currentLanguage.id === languageId && updatedLanguages.length > 0) {
+      setCurrentLanguageState(updatedLanguages[0]);
     }
 
     try {
-      // データベースには言語コードを保存
-      const codes = newLearningLanguages.map((lang) => lang.code);
+      const codes = updatedLanguages.map(lang => lang.code);
       const { error } = await supabase
         .from('users')
         .update({ learning_languages: codes })
