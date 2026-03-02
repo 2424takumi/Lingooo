@@ -109,12 +109,12 @@
   "onboarding": {
     "skip": "Skip",
     "start": "Get Started",
-    "step1Title": "Translation misses the point",
-    "step1Description": "You can read the translation,\nbut you still don't know the sender's intent.",
-    "step2Title": "See the tone behind the words",
-    "step2Description": "Polite? Urgent? Frustrated?\nSee the nuance that translation leaves out.",
-    "step3Title": "Tap any word to learn more",
-    "step3Description": "Tap an unfamiliar word and\nget its meaning in context, instantly."
+    "step1Title": "AI translates naturally",
+    "step1Description": "Just enter your text.\nAI generates a natural translation that captures the nuance.",
+    "step2Title": "Tap any word you're curious about",
+    "step2Description": "Tap a word in the translation\nand AI explains its meaning in that context.",
+    "step3Title": "Still confused? Ask AI",
+    "step3Description": "Nuance, usage, grammar.\nAsk AI anything you want to know."
   },
   "wordDetail": {
     "bookmarked": "Added to bookmarks",

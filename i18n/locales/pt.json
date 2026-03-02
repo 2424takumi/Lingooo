@@ -109,12 +109,12 @@
   "onboarding": {
     "skip": "Pular",
     "start": "Começar",
-    "step1Title": "Traduzir não basta",
-    "step1Description": "Você lê a tradução,\nmas não sabe a intenção de quem escreveu.",
-    "step2Title": "Veja o tom por trás das palavras",
-    "step2Description": "Educado? Com pressa? Irritado?\nVeja as nuances que a tradução não mostra.",
-    "step3Title": "Toque em qualquer palavra",
-    "step3Description": "Toque em uma palavra desconhecida e\nveja o significado no contexto, na hora."
+    "step1Title": "A IA traduz naturalmente",
+    "step1Description": "Basta digitar o texto.\nA IA gera uma tradução natural que captura as nuances.",
+    "step2Title": "Toque na palavra que te interessa",
+    "step2Description": "Toque em uma palavra na tradução\ne a IA explica o significado naquele contexto.",
+    "step3Title": "Ainda com dúvida? Pergunte à IA",
+    "step3Description": "Nuances, uso, gramática.\nPergunte qualquer coisa à IA."
   },
   "wordDetail": {
     "bookmarked": "Adicionado aos favoritos",

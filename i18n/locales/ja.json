@@ -109,12 +109,12 @@
   "onboarding": {
     "skip": "スキップ",
     "start": "はじめる",
-    "step1Title": "翻訳だけじゃ、伝わらない",
-    "step1Description": "訳された文章を読んでも、\n相手がどんなつもりで書いたかまではわからない。",
-    "step2Title": "文章のトーンが見える",
-    "step2Description": "丁寧なのか、急いでるのか、怒ってるのか。\n翻訳では消えてしまうニュアンスを表示します。",
-    "step3Title": "気になる単語はタップするだけ",
-    "step3Description": "わからない単語をタップすると、\nその文脈での意味をすぐに確認できます。"
+    "step1Title": "AIが、自然に翻訳する",
+    "step1Description": "テキストを入力すると、\nAIがニュアンスを汲んだ自然な訳を生成します。",
+    "step2Title": "気になる単語をタップ",
+    "step2Description": "翻訳文の中の単語をタップすると、\nその文脈での意味をAIが解説します。",
+    "step3Title": "わからなければ、AIに聞ける",
+    "step3Description": "ニュアンス、使い方、文法。\n何でもAIに質問できます。"
   },
   "wordDetail": {
     "bookmarked": "ブックマークに追加しました",

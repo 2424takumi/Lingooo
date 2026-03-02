@@ -151,17 +151,17 @@ export function OnboardingModal({ visible, onComplete }: OnboardingModalProps) {
 
   const steps = [
     {
-      icon: <QuestionBubbleIcon />,
+      icon: <MoodIcon />,
       title: t('onboarding.step1Title'),
       description: t('onboarding.step1Description'),
     },
     {
-      icon: <MoodIcon />,
+      icon: <TapGlowIcon />,
       title: t('onboarding.step2Title'),
       description: t('onboarding.step2Description'),
     },
     {
-      icon: <TapGlowIcon />,
+      icon: <QuestionBubbleIcon />,
       title: t('onboarding.step3Title'),
       description: t('onboarding.step3Description'),
     },
