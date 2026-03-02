@@ -106,6 +106,16 @@
     "nativeLanguageLabel": "Idioma Nativo",
     "learningLanguageLabel": "Idiomas de Aprendizado"
   },
+  "onboarding": {
+    "skip": "Pular",
+    "start": "Começar",
+    "step1Title": "Traduzir não é entender",
+    "step1Description": "O Google Tradutor dá palavras.\nMas ele mostra como o remetente se sente?",
+    "step2Title": "Veja o \"tom\" de qualquer texto",
+    "step2Description": "Educado? Urgente? Irritado?\nLingooo mostra o tom em um instante.",
+    "step3Title": "Toque para entender de verdade",
+    "step3Description": "Toque em uma palavra e a IA explica\no que ela significa neste contexto específico."
+  },
   "wordDetail": {
     "bookmarked": "Adicionado aos favoritos",
     "examples": "Exemplos",

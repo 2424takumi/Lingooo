@@ -14,8 +14,10 @@ import { ChatProvider } from '@/contexts/chat-context';
 import { AISettingsProvider } from '@/contexts/ai-settings-context';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { InitialLanguageSetupModal } from '@/components/modals/InitialLanguageSetupModal';
+import { OnboardingModal } from '@/components/modals/OnboardingModal';
 import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { startKeepalive, stopKeepalive } from '@/services/keepalive/backend-keepalive';
 import { clearPromptCache } from '@/services/ai/langfuse-client';
 import { useClipboardSearch } from '@/hooks/use-clipboard-search';
@@ -75,9 +77,32 @@ function ClipboardMonitor() {
   );
 }
 
+const ONBOARDING_COMPLETED_KEY = '@lingooo:onboarding_completed';
+
 function AppContent() {
   const colorScheme = useColorScheme();
   const { needsInitialSetup, completeInitialSetup } = useAuth();
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+
+  // オンボーディング完了状態をチェック
+  useEffect(() => {
+    AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY).then(value => {
+      if (!value) {
+        setNeedsOnboarding(true);
+      }
+    });
+  }, []);
+
+  const handleInitialSetupComplete = (nativeLanguage: string, learningLanguages: string[]) => {
+    completeInitialSetup(nativeLanguage, learningLanguages);
+    // 初期セットアップ完了後にオンボーディングを表示
+    setNeedsOnboarding(true);
+  };
+
+  const handleOnboardingComplete = async () => {
+    await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
+    setNeedsOnboarding(false);
+  };
 
   return (
     <>
@@ -103,7 +128,13 @@ function AppContent() {
       {/* 初期言語設定モーダル */}
       <InitialLanguageSetupModal
         visible={needsInitialSetup}
-        onComplete={completeInitialSetup}
+        onComplete={handleInitialSetupComplete}
+      />
+
+      {/* オンボーディングモーダル（初期設定完了後に表示） */}
+      <OnboardingModal
+        visible={!needsInitialSetup && needsOnboarding}
+        onComplete={handleOnboardingComplete}
       />
     </>
   );
