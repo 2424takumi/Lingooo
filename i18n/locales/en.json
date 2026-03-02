@@ -198,6 +198,7 @@
   "translate": {
     "error": "Translation failed",
     "chatPlaceholder": "Ask a question about this text...",
+    "notesLabel": "Translation Notes",
     "imageTranslation": {
       "ocrParseFailed": "Could not read text from image. Please check if the image is clear and contains text.",
       "ocrProcessingFailed": "Text was recognized but an error occurred during processing. Please try again.",

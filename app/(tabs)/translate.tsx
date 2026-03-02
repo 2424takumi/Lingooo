@@ -13,8 +13,7 @@ import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
-import { translateText, getWordContext, analyzeTone, splitOriginalText, translateParagraph, translateParagraphStream, splitOriginalTextStream, splitOriginalTextStreamSSE } from '@/services/api/translate';
-import type { ToneAnalysis } from '@/services/api/translate';
+import { translateText, getWordContext, analyzeTone, splitOriginalText, translateParagraph, translateParagraphStream, splitOriginalTextStream, splitOriginalTextStreamSSE, generateTranslationNotesStream } from '@/services/api/translate';
 import { splitIntoParagraphs } from '@/services/api/paragraph-splitter';
 import { getWordDetailStream } from '@/services/api/search';
 import { sendQuestionTagQuery } from '@/services/api/chat';
@@ -157,8 +156,10 @@ export default function TranslateScreen() {
   const [selectedTranslateTargetLang, setSelectedTranslateTargetLang] = useState(initialTargetLang);
   const [error, setError] = useState<string | null>(null);
 
-  // トーン分析
-  const [toneAnalysis, setToneAnalysis] = useState<ToneAnalysis | null>(null);
+  // 翻訳ノート
+  const [translationNotes, setTranslationNotes] = useState<string>('');
+  const [isNotesStreaming, setIsNotesStreaming] = useState(false);
+  const [streamingNotesText, setStreamingNotesText] = useState<string>('');
 
   // Quota exceeded modal state
   const [isQuotaModalVisible, setIsQuotaModalVisible] = useState(false);
@@ -1092,22 +1093,37 @@ export default function TranslateScreen() {
     }
   }, [paragraphs, sourceLang, selectedTranslateTargetLang, isTranslating, text]);
 
-  // 翻訳完了時にトーン分析を実行
+  // 翻訳完了時に翻訳ノートをストリーミング生成
   useEffect(() => {
-    if (!translationData || isTranslating) return;
+    const currentParagraph = paragraphs[currentParagraphIndex];
+    if (!currentParagraph?.translatedText || isTranslating || isSplittingParagraphs) return;
+    if (!translationData) return;
 
-    setToneAnalysis(null);
-    analyzeTone(
-      translationData.originalText,
+    // リセット
+    setTranslationNotes('');
+    setStreamingNotesText('');
+    setIsNotesStreaming(true);
+
+    generateTranslationNotesStream(
+      currentParagraph.originalText,
+      currentParagraph.translatedText,
       translationData.sourceLang,
-      nativeLanguage.code
-    ).then(tone => {
-      setToneAnalysis(tone);
-      logger.info('[Translate] Tone analysis complete:', tone);
-    }).catch(err => {
-      logger.warn('[Translate] Tone analysis failed (non-critical):', err);
-    });
-  }, [translationData, isTranslating]);
+      translationData.targetLang,
+      nativeLanguage.code,
+      (chunk) => {
+        setStreamingNotesText(prev => prev + chunk);
+      },
+      (fullText) => {
+        setTranslationNotes(fullText);
+        setIsNotesStreaming(false);
+        logger.info('[Translate] Translation notes complete:', { length: fullText.length });
+      },
+      (err) => {
+        setIsNotesStreaming(false);
+        logger.warn('[Translate] Translation notes failed (non-critical):', err);
+      }
+    );
+  }, [paragraphs, currentParagraphIndex, isTranslating, isSplittingParagraphs, translationData, nativeLanguage.code]);
 
   // 学習言語変更時の再翻訳トリガー
   const prevTargetLangRef = useRef(selectedTranslateTargetLang);
@@ -1761,7 +1777,9 @@ export default function TranslateScreen() {
                   setQAPairs([]); // チャットセクションをリセット
                 }}
                 clearSelectionKey={clearSelectionKey}
-                tone={toneAnalysis}
+                translationNotes={translationNotes}
+                isNotesStreaming={isNotesStreaming}
+                streamingNotesText={streamingNotesText}
               />
             </Pressable>
           </View>

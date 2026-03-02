@@ -800,3 +800,110 @@ export async function translateParagraphStream(
     }
   });
 }
+
+/**
+ * 翻訳ノートをSSEストリーミングで生成
+ */
+export async function generateTranslationNotesStream(
+  originalText: string,
+  translatedText: string,
+  sourceLang: string,
+  targetLang: string,
+  nativeLanguage: string,
+  onChunk: (chunk: string) => void,
+  onComplete: (fullText: string) => void,
+  onError: (error: Error) => void
+): Promise<void> {
+  logger.info('[TranslationNotes] Starting stream:', {
+    originalLength: originalText.length,
+    translatedLength: translatedText.length,
+    sourceLang,
+    targetLang,
+    nativeLanguage,
+  });
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      const authHeaders = await getAuthHeaders();
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${BACKEND_URL}/api/translate/notes-stream`, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+
+      if (authHeaders.Authorization) {
+        xhr.setRequestHeader('Authorization', authHeaders.Authorization);
+      }
+
+      let processedLength = 0;
+
+      xhr.onprogress = () => {
+        const newData = xhr.responseText.substring(processedLength);
+        processedLength = xhr.responseText.length;
+
+        const lines = newData.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.substring(6);
+            if (jsonStr === '[DONE]') continue;
+
+            try {
+              const data = JSON.parse(jsonStr);
+
+              if (data.type === 'chunk') {
+                onChunk(data.text);
+              } else if (data.type === 'complete') {
+                onComplete(data.fullText);
+              } else if (data.type === 'error') {
+                onError(new Error(data.error));
+              }
+            } catch {
+              // ignore parse errors for partial chunks
+            }
+          }
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          logger.info('[TranslationNotes] Stream ended successfully');
+          resolve();
+        } else {
+          const error = new Error(`HTTP ${xhr.status}: ${xhr.statusText}`);
+          logger.error('[TranslationNotes] Stream failed:', error);
+          onError(error);
+          reject(error);
+        }
+      };
+
+      xhr.onerror = () => {
+        const error = new Error('Translation notes SSE connection failed');
+        logger.error('[TranslationNotes] Connection error');
+        onError(error);
+        reject(error);
+      };
+
+      xhr.timeout = 30000;
+
+      xhr.ontimeout = () => {
+        const error = new Error('Translation notes SSE timeout');
+        logger.error('[TranslationNotes] Timeout');
+        onError(error);
+        reject(error);
+      };
+
+      xhr.send(JSON.stringify({
+        originalText: originalText.substring(0, 500),
+        translatedText: translatedText.substring(0, 500),
+        sourceLang,
+        targetLang,
+        nativeLanguage,
+      }));
+
+      logger.info('[TranslationNotes] Request sent');
+    } catch (error) {
+      logger.error('[TranslationNotes] Setup error:', error);
+      onError(error instanceof Error ? error : new Error(String(error)));
+      reject(error);
+    }
+  });
+}
