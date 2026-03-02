@@ -322,7 +322,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
               <LanguageDropdown
                 label={t('settingsBottomSheet.defaultLanguage')}
                 selectedLanguage={defaultLanguage}
-                availableLanguages={AVAILABLE_LANGUAGES}
+                availableLanguages={learningLanguages}
                 onSelect={(lang) => setDefaultLanguage(lang.id)}
               />
               <LanguageDropdown

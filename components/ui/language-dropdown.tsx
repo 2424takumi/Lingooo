@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useState } from 'react';
 import { Language } from '@/types/language';
 import Svg, { Path } from 'react-native-svg';
@@ -128,7 +128,7 @@ export function LanguageDropdown({
                 </TouchableOpacity>
               )}
             </View>
-            <ScrollView style={styles.scrollView} nestedScrollEnabled>
+            <View>
               {availableLanguages.map((language) => {
                 const isSelected = multiSelect
                   ? tempSelected.some((lang) => lang.id === language.id)
@@ -153,15 +153,13 @@ export function LanguageDropdown({
                   </TouchableOpacity>
                 );
               })}
-            </ScrollView>
+            </View>
           </View>
         </TouchableOpacity>
       </Modal>
     </>
   );
 }
-
-const { height: screenHeight } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -212,7 +210,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     width: '100%',
-    maxHeight: screenHeight * 0.5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
@@ -238,9 +235,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#4CAF50',
-  },
-  scrollView: {
-    maxHeight: screenHeight * 0.4,
   },
   option: {
     flexDirection: 'row',
