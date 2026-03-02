@@ -109,12 +109,12 @@
   "onboarding": {
     "skip": "Skip",
     "start": "Get Started",
-    "step1Title": "Translation alone isn't enough",
-    "step1Description": "Google Translate gives you words.\nBut does it tell you how the sender feels?",
-    "step2Title": "See the \"vibe\" of any text",
-    "step2Description": "Polite? Urgent? Angry?\nLingooo shows you the tone at a glance.",
-    "step3Title": "Tap any word to truly understand",
-    "step3Description": "Tap a word and AI instantly explains\nwhat it means in this specific context."
+    "step1Title": "Translation misses the point",
+    "step1Description": "You can read the translation,\nbut you still don't know the sender's intent.",
+    "step2Title": "See the tone behind the words",
+    "step2Description": "Polite? Urgent? Frustrated?\nSee the nuance that translation leaves out.",
+    "step3Title": "Tap any word to learn more",
+    "step3Description": "Tap an unfamiliar word and\nget its meaning in context, instantly."
   },
   "wordDetail": {
     "bookmarked": "Added to bookmarks",

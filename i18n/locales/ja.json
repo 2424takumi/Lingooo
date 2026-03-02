@@ -109,12 +109,12 @@
   "onboarding": {
     "skip": "スキップ",
     "start": "はじめる",
-    "step1Title": "翻訳だけで、本当にわかる？",
-    "step1Description": "Google翻訳は「訳す」だけ。\nでも翻訳文だけで、相手の気持ちまで伝わりますか？",
-    "step2Title": "テキストの「空気」が見える",
-    "step2Description": "丁寧？急いでる？怒ってる？\nLingoooなら、テキストの雰囲気まで一目でわかります。",
-    "step3Title": "タップするだけで、深く理解",
-    "step3Description": "気になる単語をタップすると、\nこの文脈での意味をAIが即座に教えます。"
+    "step1Title": "翻訳だけじゃ、伝わらない",
+    "step1Description": "訳された文章を読んでも、\n相手がどんなつもりで書いたかまではわからない。",
+    "step2Title": "文章のトーンが見える",
+    "step2Description": "丁寧なのか、急いでるのか、怒ってるのか。\n翻訳では消えてしまうニュアンスを表示します。",
+    "step3Title": "気になる単語はタップするだけ",
+    "step3Description": "わからない単語をタップすると、\nその文脈での意味をすぐに確認できます。"
   },
   "wordDetail": {
     "bookmarked": "ブックマークに追加しました",

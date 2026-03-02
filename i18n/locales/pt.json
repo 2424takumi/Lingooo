@@ -109,12 +109,12 @@
   "onboarding": {
     "skip": "Pular",
     "start": "Começar",
-    "step1Title": "Traduzir não é entender",
-    "step1Description": "O Google Tradutor dá palavras.\nMas ele mostra como o remetente se sente?",
-    "step2Title": "Veja o \"tom\" de qualquer texto",
-    "step2Description": "Educado? Urgente? Irritado?\nLingooo mostra o tom em um instante.",
-    "step3Title": "Toque para entender de verdade",
-    "step3Description": "Toque em uma palavra e a IA explica\no que ela significa neste contexto específico."
+    "step1Title": "Traduzir não basta",
+    "step1Description": "Você lê a tradução,\nmas não sabe a intenção de quem escreveu.",
+    "step2Title": "Veja o tom por trás das palavras",
+    "step2Description": "Educado? Com pressa? Irritado?\nVeja as nuances que a tradução não mostra.",
+    "step3Title": "Toque em qualquer palavra",
+    "step3Description": "Toque em uma palavra desconhecida e\nveja o significado no contexto, na hora."
   },
   "wordDetail": {
     "bookmarked": "Adicionado aos favoritos",
