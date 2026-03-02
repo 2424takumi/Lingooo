@@ -1,8 +1,10 @@
 import { StyleSheet, Text, TouchableOpacity, View, Animated, PanResponder, TouchableWithoutFeedback, LayoutAnimation, Platform, UIManager } from 'react-native';
+import ReanimatedView, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import * as Speech from 'expo-speech';
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { Shimmer } from './shimmer';
 
 // Android用LayoutAnimation有効化
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -118,7 +120,11 @@ export function TranslateCard({
 
   // アニメーション用の値
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+  // 翻訳テキストフェードイン用（Reanimated - fadeAnimとは独立）
+  const translatedTextOpacity = useSharedValue(1);
+  const translatedTextTranslateY = useSharedValue(0);
+  const wasTranslating = useRef(false);
 
   // 母国語かどうかを判定
   const isOriginalNative = sourceLang === nativeLanguage.code;
@@ -143,21 +149,27 @@ export function TranslateCard({
     setIsSourceExpanded(false);
   }, [originalText]);
 
-  // 翻訳中のシマーアニメーション
+  // 翻訳完了時のフェードインアニメーション
   useEffect(() => {
-    if (isTranslating || isParagraphTranslating) {
-      shimmerAnim.setValue(0);
-      const animation = Animated.loop(
-        Animated.timing(shimmerAnim, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true,
-        })
-      );
-      animation.start();
-      return () => animation.stop();
+    if (wasTranslating.current && !isParagraphTranslating && translatedText) {
+      translatedTextOpacity.value = 0;
+      translatedTextTranslateY.value = 6;
+      translatedTextOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) });
+      translatedTextTranslateY.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.ease) });
     }
-  }, [isTranslating, isParagraphTranslating]);
+    wasTranslating.current = isParagraphTranslating;
+  }, [isParagraphTranslating, translatedText]);
+
+  // 段落切り替え時にフェードイン値をリセット
+  useEffect(() => {
+    translatedTextOpacity.value = 1;
+    translatedTextTranslateY.value = 0;
+  }, [currentIndex]);
+
+  const translatedTextAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: translatedTextOpacity.value,
+    transform: [{ translateY: translatedTextTranslateY.value }],
+  }));
 
   // 言語名を取得
   const targetLanguageName = LANGUAGE_NAME_MAP[targetLang] || targetLang;
@@ -345,35 +357,9 @@ export function TranslateCard({
                   文章を解析中...
                 </Text>
                 <View style={styles.shimmerContainer}>
-                  {[...Array(3)].map((_, i) => (
-                    <Animated.View
-                      key={i}
-                      style={[
-                        styles.shimmerBarWrapper,
-                        {
-                          width: i === 2 ? '70%' : '100%',
-                        },
-                      ]}
-                    >
-                      <View style={styles.shimmerBar}>
-                        <Animated.View
-                          style={[
-                            styles.shimmerOverlay,
-                            {
-                              transform: [
-                                {
-                                  translateX: shimmerAnim.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: [-100, 500],
-                                  }),
-                                },
-                              ],
-                            },
-                          ]}
-                        />
-                      </View>
-                    </Animated.View>
-                  ))}
+                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
+                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
+                  <Shimmer width="70%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
                 </View>
               </View>
             ) : (
@@ -438,48 +424,32 @@ export function TranslateCard({
               <View style={styles.loadingContainer}>
                 {/* Shimmer skeleton bars */}
                 <View style={styles.shimmerContainer}>
-                  {[0, 1, 2].map((index) => {
-                    const shimmerTranslate = shimmerAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-300, 300],
-                    });
-
-                    return (
-                      <View key={index} style={styles.shimmerBarWrapper}>
-                        <View style={[styles.shimmerBar, { width: index === 2 ? '60%' : '100%' }]}>
-                          <Animated.View
-                            style={[
-                              styles.shimmerOverlay,
-                              {
-                                transform: [{ translateX: shimmerTranslate }],
-                              },
-                            ]}
-                          />
-                        </View>
-                      </View>
-                    );
-                  })}
+                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
+                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
+                  <Shimmer width="60%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
                 </View>
               </View>
             ) : (
-              <Animated.View style={{ opacity: fadeAnim, gap: 8 }}>
-                <SelectableText
-                  text={formatMarkdownText(translatedText)}
-                  style={styles.translatedText}
-                  onSelectionChange={handleTranslatedSelection}
-                  onSelectionChangeWithInfo={handleTranslatedSelectionWithInfo}
-                  onSelectionCleared={onSelectionCleared}
-                  clearSelectionKey={clearSelectionKey}
-                />
+              <Animated.View style={{ opacity: fadeAnim }}>
+                <ReanimatedView style={[{ gap: 8 }, translatedTextAnimatedStyle]}>
+                  <SelectableText
+                    text={formatMarkdownText(translatedText)}
+                    style={styles.translatedText}
+                    onSelectionChange={handleTranslatedSelection}
+                    onSelectionChangeWithInfo={handleTranslatedSelectionWithInfo}
+                    onSelectionCleared={onSelectionCleared}
+                    clearSelectionKey={clearSelectionKey}
+                  />
 
-                {/* Translated Actions */}
-                <View style={styles.translatedActions}>
-                  {!isTranslatedNative && (
-                    <TouchableOpacity onPress={handlePlayTranslated} style={styles.actionButton}>
-                      <SpeakerIcon size={20} color={isPlayingTranslated ? '#242424' : '#686868'} />
-                    </TouchableOpacity>
-                  )}
-                </View>
+                  {/* Translated Actions */}
+                  <View style={styles.translatedActions}>
+                    {!isTranslatedNative && (
+                      <TouchableOpacity onPress={handlePlayTranslated} style={styles.actionButton}>
+                        <SpeakerIcon size={20} color={isPlayingTranslated ? '#242424' : '#686868'} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </ReanimatedView>
               </Animated.View>
             )}
           </View>
@@ -596,20 +566,5 @@ const styles = StyleSheet.create({
   },
   shimmerContainer: {
     gap: 10,
-  },
-  shimmerBarWrapper: {
-    width: '100%',
-    height: 16,
-  },
-  shimmerBar: {
-    height: 16,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  shimmerOverlay: {
-    width: 100,
-    height: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
 });
