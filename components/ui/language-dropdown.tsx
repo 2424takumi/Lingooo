@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Dimensions } from 'react-native';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Language } from '@/types/language';
 import Svg, { Path } from 'react-native-svg';
 
@@ -39,8 +39,6 @@ export function LanguageDropdown({
 }: LanguageDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [tempSelected, setTempSelected] = useState<Language[]>(selectedLanguages);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
-  const triggerRef = useRef<View>(null);
 
   const handleSelect = (language: Language) => {
     if (multiSelect) {
@@ -68,20 +66,12 @@ export function LanguageDropdown({
     if (multiSelect) {
       setTempSelected(selectedLanguages);
     }
-    // トリガーの位置を測定
-    triggerRef.current?.measureInWindow((x, y, width, height) => {
-      setDropdownPosition({
-        top: y + height,
-        left: x,
-        width: width,
-      });
-      setIsOpen(true);
-    });
+    setIsOpen(true);
   };
 
   return (
     <>
-      <View ref={triggerRef} collapsable={false}>
+      <View>
         <TouchableOpacity style={styles.container} onPress={handleOpen}>
         <Text style={styles.label}>{label}</Text>
         {multiSelect ? (
@@ -118,7 +108,7 @@ export function LanguageDropdown({
       <Modal
         visible={isOpen}
         transparent
-        animationType="none"
+        animationType="fade"
         onRequestClose={() => setIsOpen(false)}
       >
         <TouchableOpacity
@@ -127,25 +117,17 @@ export function LanguageDropdown({
           onPress={() => setIsOpen(false)}
         >
           <View
-            style={[
-              styles.dropdownMenu,
-              {
-                position: 'absolute',
-                top: dropdownPosition.top,
-                left: dropdownPosition.left,
-                width: dropdownPosition.width,
-              }
-            ]}
+            style={styles.menuContainer}
             onStartShouldSetResponder={() => true}
           >
-            {multiSelect && (
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{label}</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{label}</Text>
+              {multiSelect && (
                 <TouchableOpacity onPress={handleDone}>
                   <Text style={styles.doneButton}>完了</Text>
                 </TouchableOpacity>
-              </View>
-            )}
+              )}
+            </View>
             <ScrollView style={styles.scrollView} nestedScrollEnabled>
               {availableLanguages.map((language) => {
                 const isSelected = multiSelect
@@ -221,17 +203,21 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
   },
-  dropdownMenu: {
+  menuContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    maxHeight: screenHeight * 0.4,
+    borderRadius: 16,
+    width: '100%',
+    maxHeight: screenHeight * 0.5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 12,
     overflow: 'hidden',
   },
   modalHeader: {
@@ -254,7 +240,7 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
   },
   scrollView: {
-    maxHeight: screenHeight * 0.35,
+    maxHeight: screenHeight * 0.4,
   },
   option: {
     flexDirection: 'row',
