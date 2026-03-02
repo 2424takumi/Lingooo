@@ -155,6 +155,8 @@ Requirements:
 - Generate ONLY the "examples" array (do NOT include hint or metrics)
 - Provide EXACTLY 4 practical and natural {{targetLanguageName}} example sentences
 - Each example must have BOTH textSrc ({{targetLanguageName}} sentence) and textDst ({{nativeLanguageName}} translation)
+- CRITICAL: ALL textSrc sentences MUST be written ENTIRELY in {{targetLanguageName}}. NEVER mix languages. Do NOT write English sentences with a {{targetLanguageName}} word inserted.
+- The word "{{word}}" should appear naturally within full {{targetLanguageName}} sentences
 - IMPORTANT: Keep sentences concise - textSrc should be 8-12 words, textDst should be 15-25 characters
 - Examples should demonstrate different usage contexts and sentence patterns
 - Translations should be natural and appropriate for the context (use appropriate formality level for each sentence)
@@ -225,6 +227,7 @@ Requirements:
 - Hint should be 2-3 sentences in ${nativeLanguageName}, covering 2 most important features (usage context, nuance, grammar, differences from similar words, etc.)
 - 2-3 senses only, main meanings (each within 10 chars)
 - 3-5 practical and natural ${targetLanguageName} example sentences
+- CRITICAL: ALL example textSrc sentences MUST be written ENTIRELY in ${targetLanguageName}. NEVER mix languages. Do NOT write English sentences with a ${targetLanguageName} word inserted.
 - Metrics should reflect actual usage frequency
 - ${nativeLanguageName} explanations should be natural and clear`;
 }
