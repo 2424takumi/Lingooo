@@ -54,23 +54,6 @@ export function SearchBar({
   const buttonBackground = useThemeColor({}, 'buttonGray');
   const buttonIconColor = useThemeColor({}, 'buttonText');
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
-  const hasInitialized = useRef(false);
-
-  // デフォルト言語が設定されたらcurrentLanguageを初期化（初回のみ）
-  useEffect(() => {
-    if (!hasInitialized.current && defaultLanguage && defaultLanguage.id) {
-      // 初期化フラグを先にセットして、他の更新を防ぐ
-      hasInitialized.current = true;
-
-      // currentLanguageがデフォルトと異なる場合のみ更新
-      if (currentLanguage.id !== defaultLanguage.id) {
-        setCurrentLanguage(defaultLanguage.id);
-        logger.info('[SearchBar] Initialized with default language:', defaultLanguage.id);
-      } else {
-        logger.info('[SearchBar] Already on default language:', defaultLanguage.id);
-      }
-    }
-  }, [defaultLanguage, defaultLanguage.id, currentLanguage.id, setCurrentLanguage]);
 
   // プランに応じた文字数制限
   const maxLength = useMemo(() => getMaxTextLength(isPremium), [isPremium]);
