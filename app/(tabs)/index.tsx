@@ -180,8 +180,11 @@ export default function HomeScreen() {
         imageUri={selectedImageUri}
         mimeType={selectedImageMimeType}
         onClose={handleImagePreviewClose}
-        targetLanguage={currentLanguage?.code || defaultLanguage?.code || 'ja'}
-        sourceLanguage={nativeLanguage?.code}
+        targetLanguage={
+          currentLanguage?.code && currentLanguage.code !== nativeLanguage?.code
+            ? currentLanguage.code
+            : defaultLanguage?.code || 'en'
+        }
       />
     </ThemedView>
   );
