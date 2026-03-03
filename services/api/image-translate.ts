@@ -1,5 +1,6 @@
 import { getAuthHeaders } from './client';
 import { logger } from '@/utils/logger';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 
 const BACKEND_URL = (() => {
   const url = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -22,6 +23,7 @@ export interface ImageTranslateRequest {
   mimeType: string; // image/jpeg, image/png, application/pdf
   targetLang: string;
   sourceLang?: string; // Optional, auto-detect if not provided
+  nativeLanguage?: string; // User's native language for better translation quality
 }
 
 export interface ImageTranslateResponse {
@@ -29,6 +31,7 @@ export interface ImageTranslateResponse {
   translatedText: string;
   detectedLanguage: string;
   targetLanguage: string;
+  noTextFound?: boolean;
 }
 
 export interface ImageTranslateError {
@@ -129,5 +132,33 @@ export function getMimeTypeFromUri(uri: string): string {
       return 'application/pdf';
     default:
       return 'image/jpeg'; // Default to JPEG
+  }
+}
+
+/**
+ * Resize image if it exceeds max dimension (preserves aspect ratio)
+ * Returns the resized image URI, or original URI if no resize needed
+ */
+export async function resizeImageIfNeeded(
+  uri: string,
+  maxDimension: number = 2048
+): Promise<{ uri: string; resized: boolean }> {
+  try {
+    // PDFはリサイズ不可
+    if (uri.toLowerCase().endsWith('.pdf')) {
+      return { uri, resized: false };
+    }
+
+    const result = await manipulateAsync(
+      uri,
+      [{ resize: { width: maxDimension } }],
+      { compress: 0.8, format: SaveFormat.JPEG }
+    );
+
+    console.log(`[ImageTranslate] Resized image: ${result.width}x${result.height}`);
+    return { uri: result.uri, resized: true };
+  } catch (error) {
+    console.warn('[ImageTranslate] Resize failed, using original:', error);
+    return { uri, resized: false };
   }
 }

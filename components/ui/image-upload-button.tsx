@@ -133,33 +133,28 @@ export function ImageUploadButton({ onImageSelected, onError }: ImageUploadButto
   };
 
   const showOptions = () => {
-    if (Platform.OS === 'ios') {
-      Alert.alert(
-        t('imageUpload.selectSource', '画像を選択'),
-        undefined,
-        [
-          {
-            text: t('imageUpload.camera', 'カメラで撮影'),
-            onPress: handleTakePhoto,
-          },
-          {
-            text: t('imageUpload.library', 'フォトライブラリ'),
-            onPress: handlePickImage,
-          },
-          {
-            text: t('imageUpload.files', 'ファイルから選択'),
-            onPress: handlePickDocument,
-          },
-          {
-            text: t('common.cancel', 'キャンセル'),
-            style: 'cancel',
-          },
-        ]
-      );
-    } else {
-      // Android: Show simple picker
-      handlePickImage();
-    }
+    Alert.alert(
+      t('imageUpload.selectSource', '画像を選択'),
+      undefined,
+      [
+        {
+          text: t('imageUpload.camera', 'カメラで撮影'),
+          onPress: handleTakePhoto,
+        },
+        {
+          text: t('imageUpload.library', 'フォトライブラリ'),
+          onPress: handlePickImage,
+        },
+        {
+          text: t('imageUpload.files', 'ファイルから選択'),
+          onPress: handlePickDocument,
+        },
+        {
+          text: t('common.cancel', 'キャンセル'),
+          style: 'cancel',
+        },
+      ]
+    );
   };
 
   if (isSelecting) {

@@ -185,6 +185,7 @@ export default function HomeScreen() {
             ? currentLanguage.code
             : defaultLanguage?.code || 'en'
         }
+        nativeLanguage={nativeLanguage?.code}
       />
     </ThemedView>
   );
