@@ -300,16 +300,27 @@ export default function TranslateScreen() {
   // 画像翻訳から遷移した場合の初期データ設定
   useEffect(() => {
     if (initialTranslation && text && !translationData) {
+      // 画像翻訳の場合: sourceLang と selectedTranslateTargetLang は画像データ useEffect で
+      // 正しく設定済み（detectedLanguage と targetLanguage を使用）。
+      // デフォルトの initialSourceLang/initialTargetLang で上書きしない。
+      const effectiveSourceLang = fromImageTranslation ? sourceLang : initialSourceLang;
+      const effectiveTargetLang = fromImageTranslation ? selectedTranslateTargetLang : initialTargetLang;
+
       logger.info('[Translate] Setting translation data (initial from image):', {
         originalLength: text.length,
         translatedLength: initialTranslation.length,
-        sourceLang: initialSourceLang,
-        targetLang: initialTargetLang,
+        sourceLang: effectiveSourceLang,
+        targetLang: effectiveTargetLang,
+        fromImageTranslation,
       });
 
       // 言語検出をスキップ（すでに検出済み）
       setIsDetectingLanguage(false);
-      setSourceLang(initialSourceLang);
+
+      // 画像翻訳の場合は sourceLang を上書きしない（画像データ useEffect で設定済み）
+      if (!fromImageTranslation) {
+        setSourceLang(initialSourceLang);
+      }
 
       // 段落分割処理を開始
       const processParagraphs = async () => {
@@ -355,16 +366,21 @@ export default function TranslateScreen() {
             setParagraphs(newParagraphs);
           }
 
-          // 翻訳データを設定
+          // 翻訳データを設定（画像翻訳の場合は実際の検出言語を使用）
           setTranslationData({
             originalText: text,
             translatedText: initialTranslation,
-            sourceLang: initialSourceLang,
-            targetLang: initialTargetLang,
+            sourceLang: effectiveSourceLang,
+            targetLang: effectiveTargetLang,
           });
 
+          // 再翻訳の誤発火を防止（初期値 → 画像データの言語変更をトリガーにしない）
+          if (fromImageTranslation) {
+            prevTargetLangRef.current = selectedTranslateTargetLang;
+          }
+
           // 検索履歴に追加
-          addSearchHistory(text, initialSourceLang, 'translation');
+          addSearchHistory(text, effectiveSourceLang, 'translation');
         } catch (error) {
           logger.error('[Translate] Error processing image translation paragraphs:', error);
           // エラー時は1つの段落として扱う
@@ -380,7 +396,7 @@ export default function TranslateScreen() {
 
       processParagraphs();
     }
-  }, [initialTranslation, text, initialSourceLang, initialTargetLang, translationData]);
+  }, [initialTranslation, text, initialSourceLang, initialTargetLang, translationData, fromImageTranslation, sourceLang, selectedTranslateTargetLang]);
 
   // 選択テキスト管理
   const [selectedText, setSelectedText] = useState<{
