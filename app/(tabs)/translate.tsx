@@ -211,6 +211,8 @@ export default function TranslateScreen() {
   // 画像翻訳から来た場合、AsyncStorageから全文データを読み込む
   useEffect(() => {
     if (fromImageTranslation) {
+      // ページが既にマウント済みの場合でも確実にローディング状態にする
+      setIsLoadingImageData(true);
       logger.info('[Translate] Loading image translation data from AsyncStorage');
 
       getAndClearImageTranslationData().then((data) => {
