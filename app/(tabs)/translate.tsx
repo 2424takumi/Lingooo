@@ -346,13 +346,19 @@ export default function TranslateScreen() {
           // 段落が1つしかない場合や分割が合わない場合、1つの段落として扱う
           if (originalParagraphs.length !== translatedParagraphs.length || originalParagraphs.length === 0) {
             logger.info('[Translate] Using single paragraph for image translation');
-            setParagraphs([{
+            const singleParagraph = [{
               id: generateId('paragraph'),
               originalText: text,
               translatedText: initialTranslation,
               index: 0,
               isTranslating: false,
-            }]);
+            }];
+            logger.info('[Translate] setParagraphs called (image, single):', {
+              count: 1,
+              translatedTextLength: initialTranslation.length,
+              translatedTextLines: initialTranslation.split('\n').length,
+            });
+            setParagraphs(singleParagraph);
           } else {
             // 複数段落に分割
             logger.info('[Translate] Split image translation into paragraphs:', originalParagraphs.length);
@@ -363,6 +369,11 @@ export default function TranslateScreen() {
               index,
               isTranslating: false,
             }));
+            logger.info('[Translate] setParagraphs called (image, multi):', {
+              count: newParagraphs.length,
+              translatedTextLengths: newParagraphs.map(p => p.translatedText.length),
+              translatedTextLines: newParagraphs.map(p => p.translatedText.split('\n').length),
+            });
             setParagraphs(newParagraphs);
           }
 
@@ -657,13 +668,27 @@ export default function TranslateScreen() {
         sourceLang,
         targetLang: selectedTranslateTargetLang,
         paragraphsExist: paragraphs.length > 0,
+        fromImageTranslation,
       });
+
+      // 画像翻訳からの遷移時はプログレッシブ翻訳を実行しない
+      if (fromImageTranslation) {
+        logger.info('[Translate] Skipping progressive translation (fromImageTranslation)');
+        return;
+      }
 
       // 既に段落が存在する場合（タイムアウト後の再実行など）はスキップ
       if (paragraphs.length > 0) {
         logger.info('[Translate] Paragraphs already exist, skipping re-translation');
         return;
       }
+
+      logger.warn('[Translate] ⚠️ performProgressiveTranslation EXECUTING', {
+        fromImageTranslation,
+        paragraphsLength: paragraphs.length,
+        initialTranslationLength: initialTranslation?.length,
+        textLength: text.length,
+      });
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setIsTranslating(true);
@@ -1010,6 +1035,19 @@ export default function TranslateScreen() {
       return;
     }
 
+    // 画像翻訳の初回表示時は再翻訳しない（言語変更はAsyncStorageで設定済み）
+    if (fromImageTranslation && !translationData) {
+      logger.info('[Translate] Skipping retranslation (fromImageTranslation, initial load)');
+      return;
+    }
+
+    logger.warn('[Translate] ⚠️ retranslateParagraphs EXECUTING', {
+      fromImageTranslation,
+      paragraphsLength: paragraphs.length,
+      prevTargetLang: prevTargetLangRef.current,
+      currentTargetLang: selectedTranslateTargetLang,
+    });
+
     logger.info('[Translate] Re-translating paragraphs to new target language:', selectedTranslateTargetLang);
     setIsTranslating(true);
     setError(null);
@@ -1127,7 +1165,7 @@ export default function TranslateScreen() {
     } finally {
       setIsTranslating(false);
     }
-  }, [paragraphs, sourceLang, selectedTranslateTargetLang, isTranslating, text]);
+  }, [paragraphs, sourceLang, selectedTranslateTargetLang, isTranslating, text, fromImageTranslation, translationData]);
 
   // 翻訳完了時に翻訳ノートをストリーミング生成
   useEffect(() => {
@@ -1789,7 +1827,7 @@ export default function TranslateScreen() {
               }}
             >
               <TranslateCard
-                key={`translate-card-${currentParagraphIndex}`}
+                key={`translate-card-${clearSelectionKey}-${currentParagraphIndex}`}
                 paragraphs={paragraphs.length > 0 ? paragraphs : [{
                   id: 'loading',
                   originalText: '',
