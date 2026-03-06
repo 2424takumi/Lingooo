@@ -557,6 +557,10 @@ export default function TranslateScreen() {
 
   // AI言語検出イベントリスナー（バックグラウンド検出結果を受信）
   useEffect(() => {
+    // 画像翻訳の場合はCloud Visionで言語検出済みのため、AI言語検出イベントを無視
+    if (fromImageTranslation) {
+      return;
+    }
     const unsubscribe = languageDetectionEvents.subscribe((event) => {
       logger.info('[Translate] Received language detection event:', {
         language: event.language,
@@ -593,7 +597,7 @@ export default function TranslateScreen() {
     });
 
     return unsubscribe;
-  }, [text, sourceLang, setCurrentLanguage]);
+  }, [text, sourceLang, setCurrentLanguage, fromImageTranslation]);
 
   // AI言語検出は use-search.ts で既に実行されているため、ここでは不要
   // イベントリスナー（上記のuseEffect）で検出結果を受け取る
@@ -630,13 +634,18 @@ export default function TranslateScreen() {
 
   // 言語切り替えを監視して再翻訳
   useEffect(() => {
+    // 画像翻訳からの遷移時は、AsyncStorageから読み込んだ言語設定を優先
+    // determineTranslateTargetLangによる自動上書きをスキップ
+    if (fromImageTranslation) {
+      return;
+    }
     if (currentLanguage) {
       const newTargetLang = determineTranslateTargetLang(sourceLang);
       if (newTargetLang !== selectedTranslateTargetLang) {
         setSelectedTranslateTargetLang(newTargetLang);
       }
     }
-  }, [currentLanguage, sourceLang, selectedTranslateTargetLang, determineTranslateTargetLang]);
+  }, [currentLanguage, sourceLang, selectedTranslateTargetLang, determineTranslateTargetLang, fromImageTranslation]);
 
   // 翻訳実行（プログレッシブアプローチ: 段落分割→順次翻訳）
   useEffect(() => {
