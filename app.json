@@ -3,7 +3,7 @@
     "name": "Lingooo",
     "slug": "lingooo-mobile",
     "owner": "2424_takumi",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "lingooomobile",
@@ -20,7 +20,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lingooo.mobile",
-      "buildNumber": "40",
+      "buildNumber": "41",
       "infoPlist": {
         "NSUserActivityTypes": [
           "com.lingooo.mobile.search"
