@@ -82,6 +82,8 @@ export default function TranslateScreen() {
   const [imageTranslationText, setImageTranslationText] = useState<string | null>(null);
   const [imageTranslatedText, setImageTranslatedText] = useState<string | null>(null);
   const [isLoadingImageData, setIsLoadingImageData] = useState(fromImageTranslation);
+  // useRefで同期的にフラグを管理（stateは非同期のためuseEffect間のレースコンディション対策）
+  const isLoadingImageDataRef = useRef(fromImageTranslation);
 
   // パラメータから文章と言語を取得
   // 画像翻訳の場合はimageTranslationTextを優先（AsyncStorageから読み込んだ全文）
@@ -212,6 +214,8 @@ export default function TranslateScreen() {
   useEffect(() => {
     if (fromImageTranslation) {
       // ページが既にマウント済みの場合でも確実にローディング状態にする
+      // useRefで同期的に設定（同レンダーサイクルで他のuseEffectが参照できるように）
+      isLoadingImageDataRef.current = true;
       setIsLoadingImageData(true);
       logger.info('[Translate] Loading image translation data from AsyncStorage');
 
@@ -245,9 +249,11 @@ export default function TranslateScreen() {
           logger.warn('[Translate] No image translation data found in AsyncStorage');
         }
         // データ読み込み完了（データがあってもなくても）
+        isLoadingImageDataRef.current = false;
         setIsLoadingImageData(false);
       }).catch((error) => {
         logger.error('[Translate] Failed to load image translation data', error);
+        isLoadingImageDataRef.current = false;
         setIsLoadingImageData(false);
       });
     }
@@ -942,8 +948,8 @@ export default function TranslateScreen() {
       }
     };
 
-    // 画像翻訳データの読み込み中は待機
-    if (isLoadingImageData) {
+    // 画像翻訳データの読み込み中は待機（refで同期チェック + stateでも二重チェック）
+    if (isLoadingImageDataRef.current || isLoadingImageData) {
       logger.info('[Translate] Waiting for image data to load from AsyncStorage...');
       return;
     }
