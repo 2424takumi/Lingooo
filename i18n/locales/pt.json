@@ -199,6 +199,12 @@
     "error": "Falha na tradução",
     "chatPlaceholder": "Faça uma pergunta sobre este texto...",
     "notesLabel": "Notas de Tradução",
+    "urlTranslation": {
+      "extracting": "Extraindo texto...",
+      "extractionFailed": "Não foi possível extrair texto do URL",
+      "truncatedNotice": "A página era muito longa, mostrando tradução parcial",
+      "invalidUrl": "Por favor, insira um URL válido"
+    },
     "imageTranslation": {
       "ocrParseFailed": "Não foi possível ler o texto da imagem. Verifique se a imagem está clara e contém texto.",
       "ocrProcessingFailed": "O texto foi reconhecido, mas ocorreu um erro durante o processamento. Por favor, tente novamente.",

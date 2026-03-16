@@ -199,6 +199,12 @@
     "error": "Translation failed",
     "chatPlaceholder": "Ask a question about this text...",
     "notesLabel": "Translation Notes",
+    "urlTranslation": {
+      "extracting": "Extracting text...",
+      "extractionFailed": "Could not extract text from URL",
+      "truncatedNotice": "Page was too long, showing partial translation",
+      "invalidUrl": "Please enter a valid URL"
+    },
     "imageTranslation": {
       "ocrParseFailed": "Could not read text from image. Please check if the image is clear and contains text.",
       "ocrProcessingFailed": "Text was recognized but an error occurred during processing. Please try again.",

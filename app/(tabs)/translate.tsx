@@ -24,6 +24,7 @@ import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { getWordContextCache, setWordContextCache } from '@/services/cache/word-context-cache';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import { getAndClearImageTranslationData } from '@/services/storage/image-translation-storage';
+import { getAndClearUrlTranslationData } from '@/services/storage/url-translation-storage';
 import { detectLang, resolveLanguageCode } from '@/services/utils/language-detect';
 import { languageDetectionEvents } from '@/services/events/language-detection-events';
 import { useChatSession } from '@/hooks/use-chat-session';
@@ -78,6 +79,13 @@ export default function TranslateScreen() {
   const { currentLanguage, nativeLanguage, setCurrentLanguage } = useLearningLanguages();
   const { isPremium } = useSubscription();
 
+  // パラメータからフラグを先に解析（state初期化で使用するため）
+  const fromImageTranslation = (params.fromImageTranslation as string) === 'true';
+  const fromUrlTranslation = (params.fromUrlTranslation as string) === 'true';
+  const needsAiDetection = (params.needsAiDetection as string) === 'true';
+  const initialSourceLang = (params.sourceLang as string) || 'en';
+  const initialTargetLang = (params.targetLang as string) || 'ja';
+
   // 画像翻訳から来た場合の全文テキストと翻訳を保持
   const [imageTranslationText, setImageTranslationText] = useState<string | null>(null);
   const [imageTranslatedText, setImageTranslatedText] = useState<string | null>(null);
@@ -85,16 +93,17 @@ export default function TranslateScreen() {
   // useRefで同期的にフラグを管理（stateは非同期のためuseEffect間のレースコンディション対策）
   const isLoadingImageDataRef = useRef(fromImageTranslation);
 
+  // URL翻訳から来た場合のテキストを保持
+  const [urlTranslationText, setUrlTranslationText] = useState<string | null>(null);
+  const [isLoadingUrlData, setIsLoadingUrlData] = useState(fromUrlTranslation);
+  const isLoadingUrlDataRef = useRef(fromUrlTranslation);
+
   // パラメータから文章と言語を取得
-  // 画像翻訳の場合はimageTranslationTextを優先（AsyncStorageから読み込んだ全文）
+  // URL翻訳 → 画像翻訳 → パラメータの優先順
   const text = useMemo(
-    () => imageTranslationText || (params.word as string) || (params.initialText as string) || '',
-    [imageTranslationText, params.word, params.initialText]
+    () => urlTranslationText || imageTranslationText || (params.word as string) || (params.initialText as string) || '',
+    [urlTranslationText, imageTranslationText, params.word, params.initialText]
   );
-  const initialSourceLang = (params.sourceLang as string) || 'en';
-  const initialTargetLang = (params.targetLang as string) || 'ja';
-  const needsAiDetection = (params.needsAiDetection as string) === 'true';
-  const fromImageTranslation = (params.fromImageTranslation as string) === 'true';
 
   // 画像翻訳から来た場合の初期翻訳結果
   // AsyncStorageから読み込んだ翻訳を優先
@@ -258,6 +267,33 @@ export default function TranslateScreen() {
       });
     }
   }, [fromImageTranslation]);
+
+  // URL翻訳から来た場合、AsyncStorageからテキストデータを読み込む
+  useEffect(() => {
+    if (fromUrlTranslation) {
+      isLoadingUrlDataRef.current = true;
+      setIsLoadingUrlData(true);
+      logger.info('[Translate] Loading URL translation data from AsyncStorage');
+
+      getAndClearUrlTranslationData().then((data) => {
+        if (data) {
+          logger.info('[Translate] URL translation data loaded', {
+            extractedLength: data.extractedText.length,
+            title: data.title,
+          });
+          setUrlTranslationText(data.extractedText);
+        } else {
+          logger.warn('[Translate] No URL translation data found in AsyncStorage');
+        }
+        isLoadingUrlDataRef.current = false;
+        setIsLoadingUrlData(false);
+      }).catch((error) => {
+        logger.error('[Translate] Failed to load URL translation data', error);
+        isLoadingUrlDataRef.current = false;
+        setIsLoadingUrlData(false);
+      });
+    }
+  }, [fromUrlTranslation]);
 
   // デバッグログ: text と initialTranslation の値を確認
   useEffect(() => {
@@ -998,9 +1034,13 @@ export default function TranslateScreen() {
       }
     };
 
-    // 画像翻訳データの読み込み中は待機（refで同期チェック + stateでも二重チェック）
+    // 画像/URL翻訳データの読み込み中は待機（refで同期チェック + stateでも二重チェック）
     if (isLoadingImageDataRef.current || isLoadingImageData) {
       logger.info('[Translate] Waiting for image data to load from AsyncStorage...');
+      return;
+    }
+    if (isLoadingUrlDataRef.current || isLoadingUrlData) {
+      logger.info('[Translate] Waiting for URL data to load from AsyncStorage...');
       return;
     }
 
@@ -1024,7 +1064,7 @@ export default function TranslateScreen() {
       logger.info('[Translate] Translation cancelled due to dependency change');
       isActive = false;
     };
-  }, [text, sourceLang, selectedTranslateTargetLang, isDetectingLanguage, initialTranslation, fromImageTranslation, isLoadingImageData]); // initialTranslation と fromImageTranslation、isLoadingImageData も追加してスキップロジックが動作するように
+  }, [text, sourceLang, selectedTranslateTargetLang, isDetectingLanguage, initialTranslation, fromImageTranslation, isLoadingImageData, fromUrlTranslation, isLoadingUrlData]);
 
   // 言語検出完了時に翻訳を開始するuseEffectは削除
   // 代わりに、メインuseEffect内で isDetectingLanguage を直接チェック

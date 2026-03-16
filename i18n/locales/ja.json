@@ -199,6 +199,12 @@
     "error": "翻訳に失敗しました",
     "chatPlaceholder": "質問をしてみましょう",
     "notesLabel": "翻訳メモ",
+    "urlTranslation": {
+      "extracting": "テキストを抽出中...",
+      "extractionFailed": "URLからテキストを抽出できませんでした",
+      "truncatedNotice": "ページが長いため一部を翻訳しています",
+      "invalidUrl": "有効なURLを入力してください"
+    },
     "imageTranslation": {
       "ocrParseFailed": "画像からテキストを読み取れませんでした。画像が鮮明か、テキストが含まれているか確認してください。",
       "ocrProcessingFailed": "テキストは認識できましたが、処理中にエラーが発生しました。もう一度お試しください。",

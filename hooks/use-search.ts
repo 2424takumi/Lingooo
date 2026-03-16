@@ -23,7 +23,9 @@ import { addSearchHistory } from '@/services/storage/search-history-storage';
 import { languageDetectionEvents } from '@/services/events/language-detection-events';
 import type { SearchError } from '@/types/search';
 import { logger } from '@/utils/logger';
-import { isSentence } from '@/utils/text-detector';
+import { isSentence, isUrl, normalizeUrl } from '@/utils/text-detector';
+import { extractTextFromUrl } from '@/services/api/url-extract';
+import { saveUrlTranslationData } from '@/services/storage/url-translation-storage';
 import { getMaxTextLength } from '@/constants/validation';
 
 export function useSearch() {
@@ -58,6 +60,13 @@ export function useSearch() {
     try {
       // 2. 正規化
       const normalizedQuery = normalizeQuery(query);
+
+      // 2.4. URL検出 - URLの場合はテキスト抽出して翻訳モードに遷移
+      if (isUrl(normalizedQuery)) {
+        logger.info('[Search] Detected URL, extracting text');
+        await searchAndNavigateFromUrl(normalizedQuery);
+        return true;
+      }
 
       // 2.5. 文章検出 - 文章の場合は翻訳モードとして遷移
       if (isSentence(normalizedQuery)) {
@@ -272,6 +281,41 @@ export function useSearch() {
         // dataパラメータなし = ページ上でAPI呼び出し
       },
     });
+  };
+
+  /**
+   * URLからテキストを抽出して翻訳ページに遷移
+   */
+  const searchAndNavigateFromUrl = async (rawUrl: string) => {
+    const url = normalizeUrl(rawUrl);
+    logger.info('[Search] Extracting text from URL:', url);
+
+    try {
+      const result = await extractTextFromUrl(url);
+
+      if (!result.text || result.text.length < 10) {
+        throw new Error('ページからテキストが見つかりませんでした。テキストをコピーして直接貼り付けてください。');
+      }
+
+      // AsyncStorageに保存
+      await saveUrlTranslationData({
+        extractedText: result.text,
+        title: result.title,
+        sourceUrl: result.url,
+        truncated: result.truncated,
+      });
+
+      // 翻訳ページに遷移
+      router.push({
+        pathname: '/(tabs)/translate',
+        params: {
+          fromUrlTranslation: 'true',
+        },
+      });
+    } catch (error: any) {
+      logger.error('[Search] URL extraction failed:', error);
+      throw new Error(error.message || 'URLからテキストを抽出できませんでした');
+    }
   };
 
   /**

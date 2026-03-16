@@ -1,4 +1,32 @@
 /**
+ * 入力されたテキストがURLかどうかを判定する
+ */
+export function isUrl(text: string): boolean {
+  if (!text || !text.trim()) return false;
+  const trimmed = text.trim();
+
+  // http:// or https:// で始まる
+  if (/^https?:\/\//i.test(trimmed)) return true;
+
+  // example.com 形式（プロトコルなし）
+  // ドメインっぽいパターン: xxx.xxx（スペースなし、2文字以上のTLD）
+  if (/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+([\/\?#].*)?$/.test(trimmed) && !trimmed.includes(' ')) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * URLを正規化する（プロトコルがなければhttps://を付与）
+ */
+export function normalizeUrl(url: string): string {
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+/**
  * 入力されたテキストが単語か文章かを判定する
  */
 export function isSentence(text: string): boolean {
