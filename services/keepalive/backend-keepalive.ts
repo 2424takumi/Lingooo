@@ -65,7 +65,7 @@ export function startKeepalive(): void {
 
   logger.info('[Keepalive] Starting keepalive service');
 
-  // 初回はウォームアップリクエストを送信（Langfuseプロンプトをキャッシュ）
+  // 初回はウォームアップリクエストを送信（AI APIを事前接続）
   sendWarmup().catch((error) => {
     logger.warn('[Keepalive] Initial warmup failed:', error);
   });
@@ -90,9 +90,9 @@ export function stopKeepalive(): void {
 }
 
 /**
- * ウォームアップリクエストを送信（Langfuseプロンプトを事前キャッシュ）
+ * ウォームアップリクエストを送信（AI APIを事前接続）
  *
- * 起動時に1回実行して、Langfuseプロンプトをキャッシュに読み込みます。
+ * 起動時に1回実行して、Gemini/Groq APIとのHTTP接続を確立します。
  * これにより初回リクエストの遅延を削減します。
  */
 async function sendWarmup(): Promise<boolean> {

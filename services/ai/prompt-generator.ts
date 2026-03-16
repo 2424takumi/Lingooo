@@ -79,7 +79,7 @@ function hasGrammaticalGender(languageCode: string): boolean {
  *
  * 超高速表示用：0.2~0.3秒で返却
  */
-export async function createBasicInfoPrompt(word: string, targetLanguage: string = 'en', nativeLanguage: string = 'ja'): Promise<string> {
+export function createBasicInfoPrompt(word: string, targetLanguage: string = 'en', nativeLanguage: string = 'ja'): string {
   const targetLanguageName = getLanguageNameEn(targetLanguage);
   const nativeLanguageName = getLanguageNameEn(nativeLanguage);
   const needsGender = hasGrammaticalGender(targetLanguage);
@@ -97,7 +97,7 @@ Requirements:
 - {{nativeLanguageName}} explanations should be concise and clear
 - Minimal information only for ultra-fast response`;
 
-  return await fetchPromptWithFallback(
+  return fetchPromptWithFallback(
     'dictionary-basic',
     fallback,
     {
@@ -121,11 +121,11 @@ Requirements:
  * @param targetLanguage - ターゲット言語コード
  * @param nativeLanguage - 母国語コード
  */
-export async function createAdditionalDetailsPrompt(
+export function createAdditionalDetailsPrompt(
   word: string,
   targetLanguage: string = 'en',
   nativeLanguage: string = 'ja'
-): Promise<string> {
+): string {
   const targetLanguageName = getLanguageNameEn(targetLanguage);
   const nativeLanguageName = getLanguageNameEn(nativeLanguage);
 
@@ -162,7 +162,7 @@ Requirements:
 - Translations should be natural and appropriate for the context (use appropriate formality level for each sentence)
 - Keep translations clear and contextually accurate`;
 
-  const prompt = await fetchPromptWithFallback(
+  const prompt = fetchPromptWithFallback(
     'dictionary-additional',
     fallback,
     {

@@ -19,7 +19,7 @@ import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { startKeepalive, stopKeepalive } from '@/services/keepalive/backend-keepalive';
-import { clearPromptCache } from '@/services/ai/langfuse-client';
+
 import { useClipboardSearch } from '@/hooks/use-clipboard-search';
 import { useSearch } from '@/hooks/use-search';
 import { MAX_TEXT_LENGTH_FREE, MAX_TEXT_LENGTH_PREMIUM } from '@/constants/validation';
@@ -144,14 +144,8 @@ export default function RootLayout() {
   // バックエンドのKeepaliveを開始（Renderのスリープ防止）
   useEffect(() => {
     // 即座にウォームアップを実行（startKeepalive内で自動的に/warmupを呼び出す）
-    // これによりLangfuseプロンプト、Gemini API、Groq APIをウォームアップ
+    // これによりGemini API、Groq APIをウォームアップ
     startKeepalive();
-
-    // TEMPORARY: Clear mobile-side Langfuse prompt cache on app start
-    // Remove this after confirming the fix works
-    clearPromptCache('dictionary-additional').then(() => {
-      console.log('[RootLayout] Cleared dictionary-additional cache');
-    });
 
     // クリーンアップ時に停止
     return () => {

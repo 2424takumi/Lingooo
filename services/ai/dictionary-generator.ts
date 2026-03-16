@@ -148,7 +148,7 @@ Requirements:
 - nuance is a score indicating the formality level of the word (0=very casual/slang, 30=casual, 50=neutral, 70=formal, 100=very formal/academic)`;
 
   // Langfuseからプロンプトを取得（フォールバック付き）
-  const prompt = await fetchPromptWithFallback(
+  const prompt = fetchPromptWithFallback(
     'suggestions-fast',
     fallback,
     {
@@ -229,7 +229,7 @@ Requirements:
 - nuance is a score indicating the formality level of the word (0=very casual/slang, 30=casual, 50=neutral, 70=formal, 100=very formal/academic)`;
 
   // Langfuseからプロンプトを取得（フォールバック付き）
-  const prompt = await fetchPromptWithFallback(
+  const prompt = fetchPromptWithFallback(
     'suggestions-fast',
     fallback,
     {
