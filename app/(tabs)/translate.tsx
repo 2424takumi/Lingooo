@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Dimensions, Platform, Pressable, KeyboardAvoidingView } from 'react-native';
+import { StyleSheet, View, ScrollView, Dimensions, Platform, Pressable, KeyboardAvoidingView, ActivityIndicator, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
@@ -24,7 +24,7 @@ import { prefetchWordDetail } from '@/services/cache/word-detail-cache';
 import { getWordContextCache, setWordContextCache } from '@/services/cache/word-context-cache';
 import { addSearchHistory } from '@/services/storage/search-history-storage';
 import { getAndClearImageTranslationData } from '@/services/storage/image-translation-storage';
-import { getAndClearUrlTranslationData } from '@/services/storage/url-translation-storage';
+import { extractTextFromUrl } from '@/services/api/url-extract';
 import { detectLang, resolveLanguageCode } from '@/services/utils/language-detect';
 import { languageDetectionEvents } from '@/services/events/language-detection-events';
 import { useChatSession } from '@/hooks/use-chat-session';
@@ -268,32 +268,36 @@ export default function TranslateScreen() {
     }
   }, [fromImageTranslation]);
 
-  // URL翻訳から来た場合、AsyncStorageからテキストデータを読み込む
+  // URL翻訳から来た場合、APIでテキストを抽出する
+  const urlToExtract = params.urlToExtract as string;
   useEffect(() => {
-    if (fromUrlTranslation) {
+    if (fromUrlTranslation && urlToExtract) {
       isLoadingUrlDataRef.current = true;
       setIsLoadingUrlData(true);
-      logger.info('[Translate] Loading URL translation data from AsyncStorage');
+      logger.info('[Translate] Extracting text from URL:', urlToExtract);
 
-      getAndClearUrlTranslationData().then((data) => {
-        if (data) {
-          logger.info('[Translate] URL translation data loaded', {
-            extractedLength: data.extractedText.length,
-            title: data.title,
+      extractTextFromUrl(urlToExtract).then((result) => {
+        if (result.text && result.text.length >= 10) {
+          logger.info('[Translate] URL text extracted', {
+            textLength: result.text.length,
+            title: result.title,
+            truncated: result.truncated,
           });
-          setUrlTranslationText(data.extractedText);
+          setUrlTranslationText(result.text);
         } else {
-          logger.warn('[Translate] No URL translation data found in AsyncStorage');
+          logger.warn('[Translate] No readable text found from URL');
+          setError(t('translate.urlTranslation.extractionFailed'));
         }
         isLoadingUrlDataRef.current = false;
         setIsLoadingUrlData(false);
       }).catch((error) => {
-        logger.error('[Translate] Failed to load URL translation data', error);
+        logger.error('[Translate] URL extraction failed', error);
+        setError(error.message || t('translate.urlTranslation.extractionFailed'));
         isLoadingUrlDataRef.current = false;
         setIsLoadingUrlData(false);
       });
     }
-  }, [fromUrlTranslation]);
+  }, [fromUrlTranslation, urlToExtract]);
 
   // デバッグログ: text と initialTranslation の値を確認
   useEffect(() => {
@@ -1839,6 +1843,12 @@ export default function TranslateScreen() {
 
         {/* Translation Card - Scrollable */}
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
+          {isLoadingUrlData ? (
+            <View style={styles.urlLoadingContainer}>
+              <ActivityIndicator size="small" color="#00AA69" />
+              <Text style={styles.urlLoadingText}>{t('translate.urlTranslation.extracting')}</Text>
+            </View>
+          ) : null}
           <View style={styles.translateCardContainer}>
             <Pressable
               onPress={() => {
@@ -2018,6 +2028,17 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  urlLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 10,
+  },
+  urlLoadingText: {
+    fontSize: 15,
+    color: '#686868',
   },
   scrollViewContent: {
     paddingHorizontal: 16,

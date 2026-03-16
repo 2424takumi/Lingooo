@@ -24,8 +24,6 @@ import { languageDetectionEvents } from '@/services/events/language-detection-ev
 import type { SearchError } from '@/types/search';
 import { logger } from '@/utils/logger';
 import { isSentence, isUrl, normalizeUrl } from '@/utils/text-detector';
-import { extractTextFromUrl } from '@/services/api/url-extract';
-import { saveUrlTranslationData } from '@/services/storage/url-translation-storage';
 import { getMaxTextLength } from '@/constants/validation';
 
 export function useSearch() {
@@ -284,38 +282,19 @@ export function useSearch() {
   };
 
   /**
-   * URLからテキストを抽出して翻訳ページに遷移
+   * URLを翻訳ページに渡して即座に遷移（テキスト抽出はページ側で実行）
    */
   const searchAndNavigateFromUrl = async (rawUrl: string) => {
     const url = normalizeUrl(rawUrl);
-    logger.info('[Search] Extracting text from URL:', url);
+    logger.info('[Search] Navigating to translate with URL:', url);
 
-    try {
-      const result = await extractTextFromUrl(url);
-
-      if (!result.text || result.text.length < 10) {
-        throw new Error('ページからテキストが見つかりませんでした。テキストをコピーして直接貼り付けてください。');
-      }
-
-      // AsyncStorageに保存
-      await saveUrlTranslationData({
-        extractedText: result.text,
-        title: result.title,
-        sourceUrl: result.url,
-        truncated: result.truncated,
-      });
-
-      // 翻訳ページに遷移
-      router.push({
-        pathname: '/(tabs)/translate',
-        params: {
-          fromUrlTranslation: 'true',
-        },
-      });
-    } catch (error: any) {
-      logger.error('[Search] URL extraction failed:', error);
-      throw new Error(error.message || 'URLからテキストを抽出できませんでした');
-    }
+    router.push({
+      pathname: '/(tabs)/translate',
+      params: {
+        fromUrlTranslation: 'true',
+        urlToExtract: url,
+      },
+    });
   };
 
   /**
