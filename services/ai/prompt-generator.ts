@@ -103,9 +103,9 @@ Requirements:
     {
       word,
       targetLanguage,
-      langName: targetLanguageName,
+      targetLanguageName,
       nativeLanguage,
-      nativeLangName: nativeLanguageName,
+      nativeLanguageName,
       genderField,
     }
   );
