@@ -27,7 +27,7 @@ import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useSubscription } from '@/contexts/subscription-context';
 import { getWordDetailStream } from '@/services/api/search';
 import type { WordDetailResponse } from '@/types/search';
-import { getCachedWordDetail, getPendingPromise, prefetchWordDetail } from '@/services/cache/word-detail-cache';
+import { getCachedWordDetail, getCachedWordDetailAsync, getPendingPromise, prefetchWordDetail, setCachedWordDetail } from '@/services/cache/word-detail-cache';
 import { toQAPairs } from '@/utils/chat';
 import { logger } from '@/utils/logger';
 import { parseQuotaError } from '@/utils/quota-error';
@@ -36,6 +36,7 @@ import { generateId } from '@/utils/id';
 import type { QAPair } from '@/types/chat';
 import { AVAILABLE_LANGUAGES } from '@/types/language';
 import { detectLang } from '@/services/utils/language-detect';
+import { getCachedLanguage } from '@/services/cache/language-detection-cache';
 
 export default function WordDetailScreen() {
   const { t } = useTranslation();
@@ -384,8 +385,11 @@ export default function WordDetailScreen() {
 
           return; // 基本情報は即座に表示完了
         } else if (word) {
-          // キャッシュをチェック（状態リセット前に）
-          const cachedData = getCachedWordDetail(word);
+          // キャッシュをチェック（メモリ → AsyncStorage の順）
+          let cachedData = getCachedWordDetail(word);
+          if (!cachedData) {
+            cachedData = await getCachedWordDetailAsync(word) || undefined;
+          }
           if (cachedData && isWordDetailComplete(cachedData)) {
             // 完全なキャッシュヒット：即座に表示
             logger.debug('[WordDetail] USING CACHED DATA (complete)');
@@ -492,26 +496,31 @@ export default function WordDetailScreen() {
 
           logger.info('[WordDetail] Languages to try:', languagesToTry);
 
-          // まず言語を検出（Gemini APIが設定されている場合のみ、かつskipLanguageDetectionがfalseの場合）
+          // まず言語を検出（キャッシュ → API の順）
           let detectedLang: string | null = null;
           if (!skipLanguageDetection) {
-            try {
-              const { isGeminiConfigured } = await import('@/services/ai/gemini-client');
-              const isConfigured = await isGeminiConfigured();
+            // B3: キャッシュを先に確認（200-500ms節約）
+            const cachedLang = await getCachedLanguage(word);
+            if (cachedLang) {
+              detectedLang = cachedLang;
+              logger.info('[WordDetail] Language from cache:', cachedLang);
+            } else {
+              try {
+                const { isGeminiConfigured } = await import('@/services/ai/gemini-client');
+                const isConfigured = await isGeminiConfigured();
 
-              if (isConfigured) {
-                const { detectWordLanguage } = await import('@/services/ai/dictionary-generator');
-                logger.info('[WordDetail] Detecting language for word:', word);
-                const detectionResult = await detectWordLanguage(word, languagesToTry);
-                // detectWordLanguageはオブジェクト {language, confidence, provider} を返すため、.languageを取得
-                detectedLang = detectionResult?.language || null;
-                logger.info('[WordDetail] Language detection result:', detectionResult);
-              } else {
-                logger.info('[WordDetail] Skipping language detection (Gemini not configured)');
+                if (isConfigured) {
+                  const { detectWordLanguage } = await import('@/services/ai/dictionary-generator');
+                  logger.info('[WordDetail] Detecting language for word:', word);
+                  const detectionResult = await detectWordLanguage(word, languagesToTry);
+                  detectedLang = detectionResult?.language || null;
+                  logger.info('[WordDetail] Language detection result:', detectionResult);
+                } else {
+                  logger.info('[WordDetail] Skipping language detection (Gemini not configured)');
+                }
+              } catch (detectionError) {
+                logger.warn('[WordDetail] Language detection failed:', detectionError);
               }
-            } catch (detectionError) {
-              logger.warn('[WordDetail] Language detection failed:', detectionError);
-              // 検出失敗時は元の順番で試す
             }
           } else {
             logger.info('[WordDetail] Skipping language detection (skipLanguageDetection=true)');
@@ -630,8 +639,10 @@ export default function WordDetailScreen() {
           setWordData(result.data);
           setLoadingProgress(100);
           setIsLoading(false);
-          // Hintストリーミング完了（念のため）
           setIsHintStreaming(false);
+
+          // B4: 完了データをAsyncStorageに永続化
+          setCachedWordDetail(word, result.data);
 
           // 検索履歴にトークン数を含めて保存（実際に見つかった言語で保存）
           try {

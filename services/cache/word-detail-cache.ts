@@ -1,10 +1,11 @@
 /**
- * 単語詳細データのメモリキャッシュ
+ * 単語詳細データのキャッシュ（メモリ + AsyncStorage永続化）
  *
- * Pre-flight request用：検索結果をタップした瞬間にAPI呼び出しを開始し、
- * 詳細画面に遷移した時点で既にデータが準備できている状態を目指す
+ * - メモリキャッシュ: 5分TTL（Pre-flight用、高速アクセス）
+ * - AsyncStorageキャッシュ: 7日TTL（アプリ再起動後も即表示）
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { WordDetailResponse } from '@/types/search';
 import { logger } from '@/utils/logger';
 
@@ -18,8 +19,17 @@ interface CacheEntry {
 // メモリキャッシュ（単語 → データ）
 const cache = new Map<string, CacheEntry>();
 
-// キャッシュの有効期限（5分）
-const CACHE_TTL = 5 * 60 * 1000;
+// メモリキャッシュの有効期限（5分）
+const MEMORY_CACHE_TTL = 5 * 60 * 1000;
+
+// AsyncStorageキャッシュの有効期限（7日）
+const STORAGE_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+const STORAGE_PREFIX = '@lingooo:word_detail:';
+
+interface StorageCacheEntry {
+  data: WordDetailResponse;
+  timestamp: number;
+}
 
 /**
  * キャッシュをクリア（古いエントリを削除）
@@ -27,17 +37,14 @@ const CACHE_TTL = 5 * 60 * 1000;
 function cleanupCache() {
   const now = Date.now();
   for (const [key, entry] of cache.entries()) {
-    if (now - entry.timestamp > CACHE_TTL) {
+    if (now - entry.timestamp > MEMORY_CACHE_TTL) {
       cache.delete(key);
     }
   }
 }
 
 /**
- * キャッシュからデータを取得
- *
- * @param word - 単語
- * @returns キャッシュされたデータ、または undefined
+ * メモリキャッシュからデータを取得
  */
 export function getCachedWordDetail(word: string): WordDetailResponse | undefined {
   cleanupCache();
@@ -45,7 +52,6 @@ export function getCachedWordDetail(word: string): WordDetailResponse | undefine
   const entry = cache.get(word);
   if (!entry) return undefined;
 
-  // データが完了している場合は返す
   if (entry.data) {
     logger.debug('[Cache] HIT:', word);
     return entry.data;
@@ -56,10 +62,52 @@ export function getCachedWordDetail(word: string): WordDetailResponse | undefine
 }
 
 /**
+ * AsyncStorageから永続キャッシュを取得
+ */
+export async function getCachedWordDetailAsync(word: string): Promise<WordDetailResponse | undefined> {
+  // まずメモリキャッシュを確認
+  const memCached = getCachedWordDetail(word);
+  if (memCached) return memCached;
+
+  // AsyncStorageを確認
+  try {
+    const key = `${STORAGE_PREFIX}${word.trim().toLowerCase()}`;
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) return undefined;
+
+    const entry: StorageCacheEntry = JSON.parse(raw);
+
+    if (Date.now() - entry.timestamp > STORAGE_CACHE_TTL) {
+      await AsyncStorage.removeItem(key);
+      return undefined;
+    }
+
+    logger.debug('[Cache] AsyncStorage HIT:', word);
+    // メモリキャッシュにも復元
+    cache.set(word, { data: entry.data, timestamp: Date.now() });
+    return entry.data;
+  } catch (error) {
+    logger.error('[Cache] AsyncStorage read error:', error);
+    return undefined;
+  }
+}
+
+/**
+ * AsyncStorageに永続キャッシュとして保存
+ */
+async function persistToStorage(word: string, data: WordDetailResponse): Promise<void> {
+  try {
+    const key = `${STORAGE_PREFIX}${word.trim().toLowerCase()}`;
+    const entry: StorageCacheEntry = { data, timestamp: Date.now() };
+    await AsyncStorage.setItem(key, JSON.stringify(entry));
+    logger.debug('[Cache] Persisted to AsyncStorage:', word);
+  } catch (error) {
+    logger.error('[Cache] AsyncStorage write error:', error);
+  }
+}
+
+/**
  * 実行中のPromiseを取得
- *
- * @param word - 単語
- * @returns 実行中のPromise、または undefined
  */
 export function getPendingPromise(word: string): Promise<WordDetailResponse> | undefined {
   const entry = cache.get(word);
@@ -68,15 +116,11 @@ export function getPendingPromise(word: string): Promise<WordDetailResponse> | u
 
 /**
  * Pre-flight request: API呼び出しを開始してキャッシュに保存
- *
- * @param word - 単語
- * @param fetchFn - データ取得関数（進捗コールバック付き）
  */
 export function prefetchWordDetail(
   word: string,
   fetchFn: (onProgress?: (progress: number, partialData?: Partial<WordDetailResponse>) => void) => Promise<{ data: WordDetailResponse; tokensUsed: number }>
 ): void {
-  // 既にキャッシュされている場合はスキップ
   if (cache.has(word)) {
     logger.debug('[Cache] Already cached or pending:', word);
     return;
@@ -84,16 +128,14 @@ export function prefetchWordDetail(
 
   logger.debug('[Cache] PRE-FLIGHT STARTED (2-stage):', word);
 
-  // 進捗コールバック付きでPromiseを開始して、dataプロパティを抽出
   const promise = fetchFn((progress, partialData) => {
-    // 基本情報が来た瞬間にキャッシュを更新（0.2~0.3秒）
     if (progress >= 30 && partialData && partialData.headword) {
       logger.debug('[Cache] PRE-FLIGHT basic info ready:', word, progress);
       const currentEntry = cache.get(word);
       if (currentEntry) {
         cache.set(word, {
           ...currentEntry,
-          data: partialData as WordDetailResponse, // 部分データを保存
+          data: partialData as WordDetailResponse,
           timestamp: Date.now(),
         });
       }
@@ -105,7 +147,6 @@ export function prefetchWordDetail(
     timestamp: Date.now(),
   });
 
-  // 完了したらデータをキャッシュに保存
   promise
     .then((data) => {
       logger.debug('[Cache] PRE-FLIGHT COMPLETED (full data):', word);
@@ -114,12 +155,21 @@ export function prefetchWordDetail(
         promise,
         timestamp: Date.now(),
       });
+      // 完了データをAsyncStorageに永続化
+      persistToStorage(word, data);
     })
     .catch((error) => {
       logger.error('[Cache] PRE-FLIGHT FAILED:', word, error);
-      // エラーの場合はキャッシュから削除
       cache.delete(word);
     });
+}
+
+/**
+ * データをキャッシュに保存（メモリ + AsyncStorage）
+ */
+export function setCachedWordDetail(word: string, data: WordDetailResponse): void {
+  cache.set(word, { data, timestamp: Date.now() });
+  persistToStorage(word, data);
 }
 
 /**

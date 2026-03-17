@@ -606,6 +606,26 @@ export default function TranslateScreen() {
     return currentLanguage.code;
   }, [nativeLanguage.code, currentLanguage.code]);
 
+  // ヘッダーからのソース言語変更
+  const handleSourceLangChange = useCallback((langCode: string) => {
+    setIsDetectingLanguage(false);
+    if (langCode === selectedTranslateTargetLang) {
+      // ソース=ターゲット → スワップ
+      setSelectedTranslateTargetLang(sourceLang);
+    }
+    setSourceLang(langCode);
+  }, [sourceLang, selectedTranslateTargetLang]);
+
+  // ヘッダーからのターゲット言語変更
+  const handleTargetLangChange = useCallback((langCode: string) => {
+    if (langCode === sourceLang) {
+      // ターゲット=ソース → スワップ
+      setSourceLang(selectedTranslateTargetLang);
+    }
+    setSelectedTranslateTargetLang(langCode);
+    setCurrentLanguage(langCode);
+  }, [sourceLang, selectedTranslateTargetLang, setCurrentLanguage]);
+
   // AI言語検出イベントリスナー（バックグラウンド検出結果を受信）
   useEffect(() => {
     // 画像翻訳の場合はCloud Visionで言語検出済みのため、AI言語検出イベントを無視
@@ -1925,6 +1945,8 @@ export default function TranslateScreen() {
             isDetectingLanguage={isDetectingLanguage}
             sourceLang={translationData?.sourceLang || sourceLang}
             targetLang={translationData?.targetLang || selectedTranslateTargetLang}
+            onSourceLangChange={handleSourceLangChange}
+            onTargetLangChange={handleTargetLangChange}
           />
         </View>
 

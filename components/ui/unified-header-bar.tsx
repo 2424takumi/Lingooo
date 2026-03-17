@@ -4,6 +4,7 @@ import { MenuIcon, SettingsIcon } from './icons';
 import Svg, { Path } from 'react-native-svg';
 import { PosTag } from './pos-tag';
 import { LanguageSwitcher } from './language-switcher';
+import { LanguagePairSelector } from './language-pair-selector';
 import { useTranslation } from 'react-i18next';
 import { AVAILABLE_LANGUAGES } from '@/types/language';
 import { Shimmer } from './shimmer';
@@ -110,6 +111,8 @@ interface UnifiedHeaderBarProps {
   // Translate - language pair
   sourceLang?: string;
   targetLang?: string;
+  onSourceLangChange?: (langCode: string) => void;
+  onTargetLangChange?: (langCode: string) => void;
 }
 
 export function UnifiedHeaderBar({
@@ -129,6 +132,8 @@ export function UnifiedHeaderBar({
   isOffline = false,
   sourceLang,
   targetLang,
+  onSourceLangChange,
+  onTargetLangChange,
 }: UnifiedHeaderBarProps) {
   const { t } = useTranslation();
   const menuButtonRef = useRef<any>(null);
@@ -214,29 +219,22 @@ export function UnifiedHeaderBar({
 
   // Translate variant
   if (pageType === 'translate') {
-    const sourceFlag = sourceLang ? getFlagByCode(sourceLang) : '';
-    const targetFlag = targetLang ? getFlagByCode(targetLang) : '';
-
     return (
       <View style={styles.container}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
           <ChevronLeftIcon size={28} />
         </TouchableOpacity>
 
-        {/* Language pair display */}
-        <View style={styles.languagePairContainer}>
-          {isDetectingLanguage ? (
-            <Shimmer width={80} height={20} borderRadius={4} />
-          ) : sourceLang ? (
-            <View style={styles.languagePairRow}>
-              <Text style={styles.languagePairFlag}>{sourceFlag}</Text>
-              <ArrowRightIcon size={14} />
-              <Text style={styles.languagePairFlag}>{targetFlag}</Text>
-            </View>
-          ) : null}
-        </View>
+        <LanguagePairSelector
+          sourceLang={sourceLang || 'en'}
+          targetLang={targetLang || 'ja'}
+          isDetectingLanguage={isDetectingLanguage}
+          onSourceLangChange={onSourceLangChange || (() => {})}
+          onTargetLangChange={onTargetLangChange || (() => {})}
+        />
 
-        <LanguageSwitcher isDetectingLanguage={isDetectingLanguage} />
+        {/* Right spacer to balance the back button */}
+        <View style={styles.placeholder} />
       </View>
     );
   }

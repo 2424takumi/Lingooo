@@ -11,6 +11,7 @@ import { createBasicInfoPrompt, createAdditionalDetailsPrompt, createDictionaryP
 import { fetchPromptWithFallback } from './langfuse-client';
 import type { WordDetailResponse } from '@/types/search';
 import { logger } from '@/utils/logger';
+import { getCachedHint, setCachedHint } from '@/services/cache/hint-cache';
 
 /**
  * 単語の言語を検出（専用エンドポイント使用、Groq優先）
@@ -641,50 +642,60 @@ export async function generateWordDetailWithHintStreaming(
       onProgress(30, basicResult.data); // ヘッダー + 意味だけ表示
     }
 
-    // ステージ2A: Hintをプレーンテキストストリーミング（5-10文字ずつ）
-    await generateHintStream(
-      word,
-      targetLanguage,
-      nativeLanguage,
-      {
-        onChunk: (chunk: string) => {
-          accumulatedHintText += chunk;
-          // リアルタイムでチャンクを通知（チャットと同じ体験）
-          if (onHintChunk) {
-            onHintChunk(chunk);
-          }
-          logger.debug(`[WordDetail Hint Streaming] Hint chunk: "${chunk}"`);
-        },
-        onComplete: (fullText: string) => {
-          logger.info(`[WordDetail Hint Streaming] Hint complete: "${fullText}"`);
-          // Hint完成後、50%まで進捗を進める
-          if (onProgress) {
-            const partialData = {
-              ...basicResult.data,
-              hint: { text: fullText },
-            };
-            onProgress(50, partialData);
-          }
-        },
-        onError: (error: Error) => {
-          logger.error('[WordDetail Hint Streaming] Hint stream error:', error);
-          // エラー時は空のHintで続行
-          accumulatedHintText = '';
-        },
-      }
-    );
+    // ステージ2: Hint と Additional Info を並列実行
+    // B1: 並列化でレイテンシを短縮
+    // B2: Hintキャッシュで2回目以降を即表示
 
-    // ステージ2B: Metrics + Examples をJSONで生成
-    // TODO: ここもストリーミング化するなら、別のendpointを使う
-    // 現状はHintのみストリーミング、残りはJSON一括生成
+    // Hintキャッシュ確認
+    const cachedHint = await getCachedHint(word, targetLanguage, nativeLanguage);
+
+    // ステージ2A: Hint（キャッシュヒット時はスキップ）
+    const hintPromise = cachedHint
+      ? Promise.resolve().then(() => {
+          accumulatedHintText = cachedHint;
+          logger.info(`[WordDetail Hint Streaming] Hint from cache: "${cachedHint}"`);
+          if (onHintChunk) {
+            onHintChunk(cachedHint);
+          }
+          if (onProgress) {
+            onProgress(50, { ...basicResult.data, hint: { text: cachedHint } });
+          }
+        })
+      : generateHintStream(
+          word,
+          targetLanguage,
+          nativeLanguage,
+          {
+            onChunk: (chunk: string) => {
+              accumulatedHintText += chunk;
+              if (onHintChunk) {
+                onHintChunk(chunk);
+              }
+              logger.debug(`[WordDetail Hint Streaming] Hint chunk: "${chunk}"`);
+            },
+            onComplete: (fullText: string) => {
+              logger.info(`[WordDetail Hint Streaming] Hint complete: "${fullText}"`);
+              // キャッシュに保存
+              setCachedHint(word, targetLanguage, nativeLanguage, fullText);
+              if (onProgress) {
+                onProgress(50, { ...basicResult.data, hint: { text: fullText } });
+              }
+            },
+            onError: (error: Error) => {
+              logger.error('[WordDetail Hint Streaming] Hint stream error:', error);
+              accumulatedHintText = '';
+            },
+          }
+        );
+
+    // ステージ2B: Metrics + Examples をJSONで生成（並列開始）
     const additionalPrompt = await createAdditionalDetailsPrompt(word, targetLanguage, nativeLanguage);
 
     let currentProgress = 50;
-    const additionalResult = await generateAdditionalInfoStream<Partial<WordDetailResponse>>(
+    const additionalPromise = generateAdditionalInfoStream<Partial<WordDetailResponse>>(
       additionalPrompt,
       modelConfig,
       (section, data) => {
-        // Hintは既にストリーミング済みなのでスキップ
         if (section === 'hint') {
           return;
         }
@@ -697,7 +708,6 @@ export async function generateWordDetailWithHintStreaming(
           logger.info('[WordDetail Hint Streaming] Examples received via SSE');
         }
 
-        // 基本情報 + Hint + 新しいセクションをマージして即座に表示
         if (onProgress) {
           const partialMerged = {
             ...basicResult.data,
@@ -708,6 +718,9 @@ export async function generateWordDetailWithHintStreaming(
         }
       }
     );
+
+    // 並列実行して両方の完了を待つ
+    const [, additionalResult] = await Promise.all([hintPromise, additionalPromise]);
 
     totalTokens += additionalResult.tokensUsed;
     logger.info('[WordDetail Hint Streaming] Additional details received, tokens:', additionalResult.tokensUsed);
