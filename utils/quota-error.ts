@@ -5,7 +5,7 @@
 
 export interface QuotaErrorInfo {
   isQuotaError: boolean;
-  quotaType?: 'translation_tokens' | 'question_count' | 'text_length';
+  quotaType?: 'translation_tokens' | 'question_count' | 'text_length' | 'url_extraction' | 'image_translation';
   message: string;
   userFriendlyMessage: string;
 }
@@ -69,6 +69,32 @@ export function parseQuotaError(error: unknown): QuotaErrorInfo {
       quotaType: 'translation_tokens',
       message: error.message,
       userFriendlyMessage: '今月の翻訳トークン上限に達しました',
+    };
+  }
+
+  // URL extraction limit
+  if (
+    errorMessage.includes('url extraction limit') ||
+    errorMessage.includes('url翻訳上限')
+  ) {
+    return {
+      isQuotaError: true,
+      quotaType: 'url_extraction',
+      message: error.message,
+      userFriendlyMessage: '今月のURL翻訳回数の上限に達しました',
+    };
+  }
+
+  // Image translation limit
+  if (
+    errorMessage.includes('image translation limit') ||
+    errorMessage.includes('画像翻訳上限')
+  ) {
+    return {
+      isQuotaError: true,
+      quotaType: 'image_translation',
+      message: error.message,
+      userFriendlyMessage: '今月の画像翻訳回数の上限に達しました',
     };
   }
 

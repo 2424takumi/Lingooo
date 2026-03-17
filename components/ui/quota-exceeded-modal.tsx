@@ -35,7 +35,7 @@ interface QuotaExceededModalProps {
   remainingQuestions: number;
   isPremium: boolean;
   onUpgradePress?: () => void;
-  quotaType?: 'translation_tokens' | 'question_count' | 'text_length';
+  quotaType?: 'translation_tokens' | 'question_count' | 'text_length' | 'url_extraction' | 'image_translation';
 }
 
 export function QuotaExceededModal({
@@ -73,6 +73,12 @@ export function QuotaExceededModal({
     if (quotaType === 'translation_tokens') {
       return isPremium ? '本日の翻訳トークンに達しました' : '月間翻訳トークンに達しました';
     }
+    if (quotaType === 'url_extraction') {
+      return isPremium ? '本日のURL翻訳回数に達しました' : '月間URL翻訳回数に達しました';
+    }
+    if (quotaType === 'image_translation') {
+      return isPremium ? '本日の画像翻訳回数に達しました' : '月間画像翻訳回数に達しました';
+    }
     return isPremium ? '本日の質問回数に達しました' : '月間質問回数に達しました';
   };
 
@@ -87,6 +93,16 @@ export function QuotaExceededModal({
         ? `本日の翻訳トークン制限に達しました。\n明日リセットされます。`
         : `無料プランの月間翻訳トークン制限に達しました。\n\nプレミアムプランにアップグレードすると、より多くの翻訳が可能になります。`;
     }
+    if (quotaType === 'url_extraction') {
+      return isPremium
+        ? `本日のURL翻訳制限に達しました。\n明日リセットされます。`
+        : `無料プランの月間URL翻訳回数（10回）に達しました。\n\nプレミアムプランにアップグレードすると、月間100回まで利用できます。`;
+    }
+    if (quotaType === 'image_translation') {
+      return isPremium
+        ? `本日の画像翻訳制限に達しました。\n明日リセットされます。`
+        : `無料プランの月間画像翻訳回数（10回）に達しました。\n\nプレミアムプランにアップグレードすると、月間200回まで利用できます。`;
+    }
     return isPremium
       ? `本日の質問回数制限に達しました。\n明日リセットされます。`
       : `無料プランの月間質問回数（100回）に達しました。\n\nプレミアムプランにアップグレードすると、月間1,000回まで質問できます。`;
@@ -96,7 +112,7 @@ export function QuotaExceededModal({
     if (quotaType === 'text_length') {
       return 'もっと長い文章を翻訳したい';
     }
-    if (quotaType === 'translation_tokens') {
+    if (quotaType === 'translation_tokens' || quotaType === 'url_extraction' || quotaType === 'image_translation') {
       return 'もっと翻訳したい';
     }
     return 'もっと質問したい';

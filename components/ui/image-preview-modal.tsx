@@ -16,6 +16,9 @@ import { translateImage, uriToBase64, getMimeTypeFromUri, resizeImageIfNeeded } 
 import { saveImageTranslationData } from '../../services/storage/image-translation-storage';
 import { useRouter } from 'expo-router';
 import { ScanningOverlay } from './scanning-overlay';
+import { parseQuotaError } from '../../utils/quota-error';
+import { QuotaExceededModal } from './quota-exceeded-modal';
+import { useSubscription } from '../../contexts/subscription-context';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -42,8 +45,11 @@ export function ImagePreviewModal({
 }: ImagePreviewModalProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const { isPremium } = useSubscription();
   const [translateStatus, setTranslateStatus] = useState<TranslateStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isQuotaModalVisible, setIsQuotaModalVisible] = useState(false);
+  const [quotaErrorType, setQuotaErrorType] = useState<'image_translation' | undefined>();
   const progressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset state when modal opens/closes
@@ -146,14 +152,20 @@ export function ImagePreviewModal({
         clearTimeout(progressTimerRef.current);
         progressTimerRef.current = null;
       }
+      const quotaError = parseQuotaError(error);
+      if (quotaError.isQuotaError) {
+        setQuotaErrorType(quotaError.quotaType as 'image_translation' | undefined);
+        setIsQuotaModalVisible(true);
+      }
       setTranslateStatus('error');
-      setErrorMessage(error.message || t('imageTranslate.errorMessage', '画像の翻訳に失敗しました'));
+      setErrorMessage(quotaError.isQuotaError ? quotaError.userFriendlyMessage : (error.message || t('imageTranslate.errorMessage', '画像の翻訳に失敗しました')));
     }
   };
 
   if (!imageUri) return null;
 
   return (
+    <>
     <Modal
       visible={visible}
       animationType="slide"
@@ -265,6 +277,15 @@ export function ImagePreviewModal({
         </View>
       </View>
     </Modal>
+
+    <QuotaExceededModal
+      visible={isQuotaModalVisible}
+      onClose={() => setIsQuotaModalVisible(false)}
+      remainingQuestions={0}
+      isPremium={isPremium}
+      quotaType={quotaErrorType}
+    />
+    </>
   );
 }
 

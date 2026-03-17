@@ -176,7 +176,7 @@ export default function TranslateScreen() {
 
   // Quota exceeded modal state
   const [isQuotaModalVisible, setIsQuotaModalVisible] = useState(false);
-  const [quotaErrorType, setQuotaErrorType] = useState<'translation_tokens' | 'question_count' | 'text_length' | undefined>();
+  const [quotaErrorType, setQuotaErrorType] = useState<'translation_tokens' | 'question_count' | 'text_length' | 'url_extraction' | 'image_translation' | undefined>();
 
   // 段落管理
   const [paragraphs, setParagraphs] = useState<TranslatedParagraph[]>([]);
@@ -293,7 +293,12 @@ export default function TranslateScreen() {
         setIsLoadingUrlData(false);
       }).catch((error) => {
         logger.error('[Translate] URL extraction failed', error);
-        setError(error.message || t('translate.urlTranslation.extractionFailed'));
+        const quotaError = parseQuotaError(error);
+        if (quotaError.isQuotaError) {
+          setQuotaErrorType(quotaError.quotaType);
+          setIsQuotaModalVisible(true);
+        }
+        setError(quotaError.isQuotaError ? quotaError.userFriendlyMessage : (error.message || t('translate.urlTranslation.extractionFailed')));
         isLoadingUrlDataRef.current = false;
         setIsLoadingUrlData(false);
       });
