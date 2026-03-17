@@ -6,7 +6,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { useEffect, useState } from 'react';
 
-LogBox.ignoreLogs(['Unsupported top level event type "topSvgLayout"']);
+LogBox.ignoreLogs([
+  'Unsupported top level event type "topSvgLayout"',
+  'Failed to sync to Supabase RPC',
+]);
 import { useTranslation } from 'react-i18next';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
