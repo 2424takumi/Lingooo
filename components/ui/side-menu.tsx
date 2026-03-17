@@ -31,7 +31,7 @@ interface SideMenuProps {
 }
 
 // Icons
-function BookmarkIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+function BookmarkIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 12 16" fill="none">
       <Path
@@ -45,7 +45,7 @@ function BookmarkIcon({ size = 24, color = '#242424' }: { size?: number; color?:
   );
 }
 
-function MessagePlusIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+function MessagePlusIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 18 18" fill="none">
       <Path
@@ -59,7 +59,7 @@ function MessagePlusIcon({ size = 24, color = '#242424' }: { size?: number; colo
   );
 }
 
-function CloseIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+function CloseIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -174,7 +174,7 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
             accessibilityRole="button"
             accessibilityLabel="Close menu"
           >
-            <CloseIcon size={24} color="#242424" />
+            <CloseIcon size={24} color="#1A1A1A" />
           </TouchableOpacity>
         </View>
 
@@ -185,12 +185,12 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
           showsVerticalScrollIndicator={false}
         >
           <MenuItem
-            icon={<BookmarkIcon size={24} color="#242424" />}
+            icon={<BookmarkIcon size={24} color="#1A1A1A" />}
             label={t('menu.bookmarks')}
             onPress={() => handleNavigation('/bookmarks')}
           />
           <MenuItem
-            icon={<MessagePlusIcon size={24} color="#242424" />}
+            icon={<MessagePlusIcon size={24} color="#1A1A1A" />}
             label={t('menu.customQuestions')}
             onPress={() => handleNavigation('/custom-questions')}
           />

@@ -45,7 +45,7 @@ function StarIcon({ filled = false, size = 24 }: { filled?: boolean; size?: numb
   );
 }
 
-function ArrowRightIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+function ArrowRightIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -196,7 +196,7 @@ export function WordDetailCard({
             onPress={onViewDetails}
           >
             <Text style={styles.detailsButtonText}>もっと詳しく</Text>
-            <ArrowRightIcon size={20} color="#242424" />
+            <ArrowRightIcon size={20} color="#1A1A1A" />
           </TouchableOpacity>
         )}
       </View>
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   closeButtonInner: {
-    backgroundColor: '#242424',
+    backgroundColor: '#1A1A1A',
     borderRadius: 11,
     width: 34,
     height: 34,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   nuanceText: {
     fontSize: 16,
     fontWeight: '510',
-    color: '#242424',
+    color: '#1A1A1A',
     lineHeight: 24,
     letterSpacing: 0.3,
   },
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   detailsButtonText: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#242424',
+    color: '#1A1A1A',
     lineHeight: 22,
     letterSpacing: 0.5,
     marginRight: -2,

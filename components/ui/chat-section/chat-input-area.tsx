@@ -110,7 +110,7 @@ export const ChatInputArea = forwardRef<TextInput, ChatInputAreaProps>(
                 multiline
                 textAlignVertical="top"
                 scrollEnabled={false}
-                selectionColor="#242424"
+                selectionColor="#1A1A1A"
                 selectTextOnFocus={false}
                 contextMenuHidden={false}
               />
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#242424',
+    backgroundColor: '#1A1A1A',
     alignItems: 'center',
     justifyContent: 'center',
   },

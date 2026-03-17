@@ -11,27 +11,27 @@ const NUANCE_CONFIG = {
   casual: {
     emoji: '😊',
     backgroundColor: '#E5F8D7',
-    textColor: '#242424',
+    textColor: '#1A1A1A',
   },
   formal: {
     emoji: '💼',
     backgroundColor: '#F8DED7',
-    textColor: '#242424',
+    textColor: '#1A1A1A',
   },
   neutral: {
     emoji: '⚖️',
     backgroundColor: '#D7E8F8',
-    textColor: '#242424',
+    textColor: '#1A1A1A',
   },
   academic: {
     emoji: '📚',
     backgroundColor: '#D7E5F8',
-    textColor: '#242424',
+    textColor: '#1A1A1A',
   },
   slang: {
     emoji: '🔥',
     backgroundColor: '#F8D7E5',
-    textColor: '#242424',
+    textColor: '#1A1A1A',
   },
 };
 

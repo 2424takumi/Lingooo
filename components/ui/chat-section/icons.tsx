@@ -44,7 +44,7 @@ export function SendIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-export function ArrowRightIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+export function ArrowRightIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -58,7 +58,7 @@ export function ArrowRightIcon({ size = 24, color = '#242424' }: { size?: number
   );
 }
 
-export function CloseIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+export function CloseIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -72,7 +72,7 @@ export function CloseIcon({ size = 24, color = '#242424' }: { size?: number; col
   );
 }
 
-export function CornerDownRightIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+export function CornerDownRightIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -93,7 +93,7 @@ export function CornerDownRightIcon({ size = 24, color = '#242424' }: { size?: n
   );
 }
 
-export function CornerUpRightIcon({ size = 16, color = '#242424' }: { size?: number; color?: string }) {
+export function CornerUpRightIcon({ size = 16, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path

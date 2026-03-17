@@ -68,7 +68,7 @@ function ChevronIcon({ size = 16, color = '#ACACAC', expanded = false }: { size?
   );
 }
 
-function CloseIcon({ size = 16, color = '#242424' }: { size?: number; color?: string }) {
+function CloseIcon({ size = 16, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
       <Path
@@ -417,7 +417,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                   accessibilityRole="button"
                   accessibilityLabel="閉じる"
                 >
-                  <CloseIcon size={14} color="#242424" />
+                  <CloseIcon size={14} color="#1A1A1A" />
                 </TouchableOpacity>
               )}
             </View>

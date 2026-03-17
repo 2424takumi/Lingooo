@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
 
   // Purchase Button
   purchaseButton: {
-    backgroundColor: '#242424',
+    backgroundColor: '#1A1A1A',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',

@@ -392,7 +392,7 @@ export function TranslateCard({
                   <View style={styles.originalActionsLeft}>
                     {!isOriginalNative && (
                       <TouchableOpacity onPress={handlePlayOriginal} style={styles.actionButton}>
-                        <SpeakerIcon size={20} color={isPlayingOriginal ? '#242424' : '#686868'} />
+                        <SpeakerIcon size={20} color={isPlayingOriginal ? '#1A1A1A' : '#686868'} />
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity onPress={handleCopy} style={styles.actionButton}>
@@ -445,7 +445,7 @@ export function TranslateCard({
                   <View style={styles.translatedActions}>
                     {!isTranslatedNative && (
                       <TouchableOpacity onPress={handlePlayTranslated} style={styles.actionButton}>
-                        <SpeakerIcon size={20} color={isPlayingTranslated ? '#242424' : '#686868'} />
+                        <SpeakerIcon size={20} color={isPlayingTranslated ? '#1A1A1A' : '#686868'} />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
   originalText: {
     fontSize: 17,
     lineHeight: 24,
-    color: '#242424',
+    color: '#1A1A1A',
     fontWeight: '400',
     letterSpacing: 0.5,
   },
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
   translatedText: {
     fontSize: 17,
     lineHeight: 24,
-    color: '#242424',
+    color: '#1A1A1A',
     fontWeight: '400',
     letterSpacing: 0.3,
   },

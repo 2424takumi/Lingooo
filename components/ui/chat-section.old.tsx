@@ -100,7 +100,7 @@ function SliderIcon({ size = 24 }: { size?: number }) {
     <Svg width={width} height={height} viewBox="0 0 20 18" fill="none">
       <Path
         d="M7.75 14.75H18.75M0.75 14.75H3.75M3.75 14.75V16.75M3.75 14.75V12.75M17.75 8.75H18.75M0.75 8.75H13.75M13.75 8.75V10.75M13.75 8.75V6.75M11.75 2.75H18.75M0.75 2.75H7.75M7.75 2.75V4.75M7.75 2.75V0.75"
-        stroke="#242424"
+        stroke="#1A1A1A"
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -123,7 +123,7 @@ function PlusIcon({ size = 24 }: { size?: number }) {
   );
 }
 
-function ArrowRightIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+function ArrowRightIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -137,7 +137,7 @@ function ArrowRightIcon({ size = 24, color = '#242424' }: { size?: number; color
   );
 }
 
-function CloseIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+function CloseIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -151,7 +151,7 @@ function CloseIcon({ size = 24, color = '#242424' }: { size?: number; color?: st
   );
 }
 
-function CornerDownRightIcon({ size = 24, color = '#242424' }: { size?: number; color?: string }) {
+function CornerDownRightIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -593,7 +593,7 @@ export function ChatSection({
                 onPress={onDictionaryLookup}
               >
                 <Text style={styles.dictionaryButtonText} numberOfLines={1}>単語を調べる</Text>
-                <ArrowRightIcon size={16} color="#242424" />
+                <ArrowRightIcon size={16} color="#1A1A1A" />
               </TouchableOpacity>
             )}
           </View>
@@ -699,7 +699,7 @@ export function ChatSection({
                 multiline
                 textAlignVertical="top"
                 scrollEnabled={false}
-                selectionColor="#242424"
+                selectionColor="#1A1A1A"
                 selectTextOnFocus={false}
                 contextMenuHidden={false}
                 inputAccessoryViewID={Platform.OS === 'ios' ? keyboardAccessoryID : undefined}
@@ -994,7 +994,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 11,
-    backgroundColor: '#242424',
+    backgroundColor: '#1A1A1A',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'flex-end',
@@ -1177,7 +1177,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#242424',
+    backgroundColor: '#1A1A1A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1242,7 +1242,7 @@ const styles = StyleSheet.create({
   dictionaryButtonText: {
     fontSize: 11,
     lineHeight: 22,
-    color: '#242424',
+    color: '#1A1A1A',
     fontWeight: '400',
     letterSpacing: 1,
     marginRight: -2,

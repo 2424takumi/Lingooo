@@ -34,7 +34,7 @@ export function HistoryTag({ item, onPress }: HistoryTagProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#242424',
+    backgroundColor: '#1A1A1A',
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 8,
