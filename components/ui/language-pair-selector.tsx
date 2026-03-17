@@ -56,34 +56,22 @@ export function LanguagePairSelector({
   const targetInfo = getLanguageInfo(targetLang);
 
   const handleSelect = (langCode: string) => {
-    if (activeDropdown === 'source') {
-      onSourceLangChange(langCode);
-    } else if (activeDropdown === 'target') {
-      onTargetLangChange(langCode);
-    }
+    onTargetLangChange(langCode);
     setActiveDropdown(null);
   };
 
-  const dropdownItems = activeDropdown === 'source'
-    ? AVAILABLE_LANGUAGES
-    : learningLanguages.map(ll => AVAILABLE_LANGUAGES.find(al => al.code === ll.code || al.id === ll.id)).filter(Boolean);
-
-  const currentSelected = activeDropdown === 'source' ? sourceLang : targetLang;
+  const dropdownItems = learningLanguages.map(ll => AVAILABLE_LANGUAGES.find(al => al.code === ll.code || al.id === ll.id)).filter(Boolean);
 
   return (
     <View style={styles.container}>
-      {/* Source language button */}
+      {/* Source language (display only) */}
       {isDetectingLanguage ? (
         <Shimmer width={90} height={22} borderRadius={4} />
       ) : (
-        <TouchableOpacity
-          style={styles.langButton}
-          onPress={() => setActiveDropdown('source')}
-        >
+        <View style={styles.langButton}>
           <Text style={styles.flag}>{sourceInfo?.flag}</Text>
           <Text style={styles.langName} numberOfLines={1}>{sourceInfo?.name}</Text>
-          <ChevronDownIcon size={20} color="#686868" />
-        </TouchableOpacity>
+        </View>
       )}
 
       <Text style={styles.arrow}>{'→'}</Text>
@@ -115,7 +103,7 @@ export function LanguagePairSelector({
               <View style={[styles.dropdown, { backgroundColor: dropdownBackground }]}>
                 {dropdownItems.map((lang) => {
                   if (!lang) return null;
-                  const isSelected = lang.code === currentSelected;
+                  const isSelected = lang.code === targetLang;
                   return (
                     <TouchableOpacity
                       key={lang.id}
