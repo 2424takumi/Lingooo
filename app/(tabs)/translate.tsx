@@ -182,6 +182,7 @@ export default function TranslateScreen() {
   const [paragraphs, setParagraphs] = useState<TranslatedParagraph[]>([]);
   const paragraphsRef = useRef(paragraphs); // 常に最新のparagraphsを参照するためのRef
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
+  const [showFullText, setShowFullText] = useState(false);
   const [isSplittingParagraphs, setIsSplittingParagraphs] = useState(false);
 
   // paragraphsが更新されるたびにRefも更新
@@ -757,6 +758,7 @@ export default function TranslateScreen() {
       setError(null);
       setParagraphs([]);
       setCurrentParagraphIndex(0);
+      setShowFullText(false);
 
       logger.info('[Translate] Starting progressive translation flow:', {
         sourceLang,
@@ -2022,6 +2024,8 @@ export default function TranslateScreen() {
                 }}
                 clearSelectionKey={clearSelectionKey}
                 onRetryParagraph={handleRetryParagraph}
+                showFullText={showFullText}
+                onToggleFullText={() => setShowFullText(prev => !prev)}
               />
               {!isTranslating && !isSplittingParagraphs && !isDetectingLanguage && (
                 <TranslationNotes

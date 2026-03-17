@@ -55,6 +55,9 @@ interface TranslateCardProps {
   onSelectionCleared?: () => void;
   clearSelectionKey?: number; // 値が変わると選択がクリアされる
   onRetryParagraph?: (index: number) => void;
+  // 全文表示トグル
+  showFullText?: boolean;
+  onToggleFullText?: () => void;
 }
 
 function SpeakerIcon({ size = 20, color = '#686868' }: { size?: number; color?: string }) {
@@ -108,6 +111,21 @@ function CaretIcon({ rotation = 0, size = 24 }: { rotation?: number; size?: numb
   );
 }
 
+// 全文表示アイコン（段落分割なし）
+function FullTextIcon({ size = 18, color = '#686868', active = false }: { size?: number; color?: string; active?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 6h18M3 12h18M3 18h18"
+        stroke={active ? '#00AA69' : color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 export function TranslateCard({
   paragraphs,
   currentIndex,
@@ -120,6 +138,8 @@ export function TranslateCard({
   onSelectionCleared,
   clearSelectionKey,
   onRetryParagraph,
+  showFullText = false,
+  onToggleFullText,
 }: TranslateCardProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -130,12 +150,24 @@ export function TranslateCard({
 
   // 現在の段落を取得
   const currentParagraph = paragraphs[currentIndex] || paragraphs[0];
-  const originalText = currentParagraph?.originalText || '';
+
+  // 全文表示モード: 全段落を結合
+  const fullOriginalText = useMemo(() =>
+    paragraphs.map(p => p.originalText).filter(Boolean).join('\n\n'),
+    [paragraphs]
+  );
+  const fullTranslatedText = useMemo(() =>
+    paragraphs.map(p => p.translatedText).filter(Boolean).join('\n\n'),
+    [paragraphs]
+  );
+  const isAnyTranslating = paragraphs.some(p => p.isTranslating);
+
+  const originalText = showFullText ? fullOriginalText : (currentParagraph?.originalText || '');
 
   // 長文判定: 120文字超 または 改行が5つ以上
   const isLongText = originalText.length > 120 || originalText.split('\n').length > 5;
-  const translatedText = currentParagraph?.translatedText || '';
-  const isParagraphTranslating = currentParagraph?.isTranslating || false;
+  const translatedText = showFullText ? fullTranslatedText : (currentParagraph?.translatedText || '');
+  const isParagraphTranslating = showFullText ? isAnyTranslating : (currentParagraph?.isTranslating || false);
   const isParagraphError = translatedText.startsWith('❌');
 
   // 段落が複数あるかどうか
@@ -291,10 +323,11 @@ export function TranslateCard({
     }
   };
 
-  // 横スワイプジェスチャー
+  // 横スワイプジェスチャー（全文表示時は無効）
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (evt, gestureState) => {
+        if (showFullText) return false;
         // 横方向のスワイプのみ反応（50px以上）
         return Math.abs(gestureState.dx) > 50 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
       },
@@ -340,17 +373,28 @@ export function TranslateCard({
   return (
     <View style={styles.wrapper}>
       {/* Label - Outside of card */}
-      <Text style={styles.label}>
-        {isParagraphTranslating || isTranslating
-          ? `${targetLanguageName}に翻訳しています`
-          : `${targetLanguageName}に翻訳しました`}
-      </Text>
+      <View style={styles.labelRow}>
+        <Text style={styles.label}>
+          {isParagraphTranslating || isTranslating
+            ? `${targetLanguageName}に翻訳しています`
+            : `${targetLanguageName}に翻訳しました`}
+        </Text>
+        {hasMultipleParagraphs && onToggleFullText && (
+          <TouchableOpacity
+            style={styles.fullTextToggle}
+            onPress={onToggleFullText}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <FullTextIcon size={16} active={showFullText} />
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* Card Container */}
       <TouchableWithoutFeedback onPress={handleCardPress}>
         <View style={styles.container} {...panResponder.panHandlers}>
-        {/* Section Navigation - 段落が複数ある場合のみ表示 */}
-        {hasMultipleParagraphs && (
+        {/* Section Navigation - 段落が複数あり全文表示でない場合のみ表示 */}
+        {hasMultipleParagraphs && !showFullText && (
           <View style={styles.sectionNav}>
             <TouchableOpacity
               style={[styles.navButton, currentIndex === 0 && styles.navButtonDisabled]}
@@ -504,6 +548,11 @@ const styles = StyleSheet.create({
   wrapper: {
     gap: 2,
   },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   label: {
     fontSize: 13,
     lineHeight: 21,
@@ -511,6 +560,9 @@ const styles = StyleSheet.create({
     fontWeight: '510',
     letterSpacing: 1,
     marginLeft: 0,
+  },
+  fullTextToggle: {
+    padding: 4,
   },
   container: {
     backgroundColor: '#F5F5F5',
