@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
   langButton: {
     flexDirection: 'row',
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   caret: {
-    fontSize: 12,
+    fontSize: 16,
     color: '#686868',
     marginTop: 1,
   },
