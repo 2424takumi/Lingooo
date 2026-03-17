@@ -58,6 +58,11 @@ export function SelectableText({
   // textが変更されたら更新
   textRef.current = text;
 
+  // テキストが変更されたらcontentHeightをリセット（全文→段落切替時にTextInputが縮むように）
+  useEffect(() => {
+    setContentHeight(undefined);
+  }, [text]);
+
   // clearSelectionKey の前回値を保持
   const prevClearSelectionKey = useRef(clearSelectionKey);
 

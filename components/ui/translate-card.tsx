@@ -128,20 +128,20 @@ function MiniToggle({ active = false, onPress }: { active?: boolean; onPress?: (
 
 const miniToggleStyles = StyleSheet.create({
   track: {
-    width: 32,
-    height: 18,
-    borderRadius: 9,
+    width: 42,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: '#D1D1D6',
     justifyContent: 'center',
-    paddingHorizontal: 2,
+    paddingHorizontal: 3,
   },
   trackActive: {
     backgroundColor: '#00AA69',
   },
   thumb: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: '#FFFFFF',
   },
   thumbActive: {
@@ -569,7 +569,7 @@ export function TranslateCard({
                   </View>
                 </Reanimated.View>
               </Animated.View>
-            ) : (isTranslating || isParagraphTranslating) ? (
+            ) : ((isTranslating || isParagraphTranslating) && !translatedText) ? (
               <View style={styles.loadingContainer}>
                 {/* Shimmer skeleton bars */}
                 <View style={styles.shimmerContainer}>

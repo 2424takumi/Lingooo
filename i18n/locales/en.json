@@ -207,7 +207,6 @@
   "translate": {
     "error": "Translation failed",
     "retranslateError": "Re-translation failed",
-    "progress": "{{completed}}/{{total}} paragraphs",
     "chatPlaceholder": "Ask a question about this text...",
     "notesLabel": "Translation Notes",
     "urlTranslation": {

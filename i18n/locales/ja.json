@@ -207,7 +207,6 @@
   "translate": {
     "error": "翻訳に失敗しました",
     "retranslateError": "再翻訳に失敗しました",
-    "progress": "{{completed}}/{{total}} 段落",
     "chatPlaceholder": "質問をしてみましょう",
     "notesLabel": "翻訳メモ",
     "urlTranslation": {

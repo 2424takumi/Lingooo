@@ -207,7 +207,6 @@
   "translate": {
     "error": "Falha na tradução",
     "retranslateError": "Falha na retradução",
-    "progress": "{{completed}}/{{total}} parágrafos",
     "chatPlaceholder": "Faça uma pergunta sobre este texto...",
     "notesLabel": "Notas de Tradução",
     "urlTranslation": {

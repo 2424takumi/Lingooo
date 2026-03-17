@@ -1989,15 +1989,6 @@ export default function TranslateScreen() {
                 });
               }}
             >
-              {/* 段落翻訳の進捗表示 */}
-              {paragraphs.length > 1 && paragraphs.some(p => p.isTranslating) && (
-                <Text style={styles.progressText}>
-                  {t('translate.progress', {
-                    completed: paragraphs.filter(p => !p.isTranslating && p.translatedText && !p.translatedText.startsWith('❌')).length,
-                    total: paragraphs.length,
-                  })}
-                </Text>
-              )}
               <TranslateCard
                 key={`translate-card-${clearSelectionKey}-${currentParagraphIndex}`}
                 paragraphs={paragraphs.length > 0 ? paragraphs : [{
@@ -2015,7 +2006,7 @@ export default function TranslateScreen() {
                 }}
                 sourceLang={translationData?.sourceLang || sourceLang}
                 targetLang={translationData?.targetLang || selectedTranslateTargetLang}
-                isTranslating={isDetectingLanguage || isTranslating || isSplittingParagraphs}
+                isTranslating={isDetectingLanguage || (isTranslating && paragraphs.length === 0)}
                 onTextSelectionWithInfo={handleTextSelectionWithInfo}
                 onSelectionCleared={() => {
                   setSelectedText(null);
@@ -2168,14 +2159,6 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingHorizontal: 16,
     paddingBottom: 16, // コンテンツのパディングのみ（ChatSection分はtranslateCardContainerで確保）
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#686868',
-    textAlign: 'center',
-    marginBottom: 4,
-    fontWeight: '500',
-    letterSpacing: 0.5,
   },
   translateCardContainer: {
     paddingTop: 0,
