@@ -1089,7 +1089,7 @@ export async function isGeminiConfigured(): Promise<boolean> {
       _geminiConfiguredCache = { value: data.configured, timestamp: Date.now() };
       return data.configured;
     } catch (error) {
-      const isTimeout = error instanceof DOMException && error.name === 'AbortError';
+      const isTimeout = error instanceof Error && error.name === 'AbortError';
       if (isTimeout) {
         logger.warn(`[GeminiClient] Status check timed out after ${timeoutMs}ms (attempt ${attempt}/${maxAttempts})`);
       } else {
