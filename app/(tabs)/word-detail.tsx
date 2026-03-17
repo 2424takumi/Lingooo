@@ -171,6 +171,8 @@ export default function WordDetailScreen() {
 
     // 既存のfollowUpQAsを保持しながらqaPairsを更新
     setQAPairs(prevPairs => {
+      // 空→空の場合はbail out（無限ループ防止）
+      if (newPairs.length === 0 && prevPairs.length === 0) return prevPairs;
       return newPairs.map(newPair => {
         const existingPair = prevPairs.find(p => p.id === newPair.id);
         if (existingPair?.followUpQAs) {

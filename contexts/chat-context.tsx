@@ -152,6 +152,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
     sessionsRef.current = sessions;
   }, [sessions]);
 
+  // 空セッションのキャッシュ（getSessionで毎回新規オブジェクトを生成しないため）
+  const emptySessionCache = useRef<Record<string, ChatSessionState>>({});
+
   const ensureSession = useCallback(
     (key: ChatSessionKey): ChatSessionState => {
       const mapKey = toKey(key);
@@ -230,11 +233,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
         return cached;
       }
 
-      // どちらもない場合は空のセッションを返す（dispatchは呼ばない）
-      logger.info('[ChatContext] getSession returning empty (no dispatch):', {
-        mapKey,
-      });
-      return createEmptySession(key);
+      // どちらもない場合はキャッシュ済みの空セッションを返す（安定した参照）
+      if (!emptySessionCache.current[mapKey]) {
+        emptySessionCache.current[mapKey] = createEmptySession(key);
+      }
+      return emptySessionCache.current[mapKey];
     },
     [sessions]
   );

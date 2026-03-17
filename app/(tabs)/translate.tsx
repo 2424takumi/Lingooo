@@ -595,6 +595,8 @@ export default function TranslateScreen() {
       return newPair;
     });
 
+    // 空→空の場合はbail out（無限ループ防止）
+    if (mergedPairs.length === 0 && qaPairs.length === 0) return;
     setQAPairs(mergedPairs);
   }, [chatMessages, chatError, chatContext]);
 
