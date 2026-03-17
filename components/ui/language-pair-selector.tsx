@@ -214,7 +214,8 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   arrow: {
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: '600',
     color: '#686868',
   },
   checkMark: {
