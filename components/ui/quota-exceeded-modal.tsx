@@ -54,11 +54,15 @@ export function QuotaExceededModal({
 
   const handleUpgrade = () => {
     onClose();
-    // ホームに戻ってからサブスクリプションモーダルを表示
     router.replace({
       pathname: '/(tabs)/',
       params: { showSubscription: 'true' },
     });
+  };
+
+  const handleClose = () => {
+    onClose();
+    router.replace('/(tabs)/');
   };
 
   // Calculate days until reset (end of month)
@@ -164,7 +168,7 @@ export function QuotaExceededModal({
                 styles.closeButton,
                 isPremium && styles.closeButtonPrimary,
               ]}
-              onPress={onClose}
+              onPress={handleClose}
             >
               <Text
                 style={[
