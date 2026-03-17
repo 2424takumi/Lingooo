@@ -111,20 +111,43 @@ function CaretIcon({ rotation = 0, size = 24 }: { rotation?: number; size?: numb
   );
 }
 
-// 全文表示アイコン（段落分割なし）
-function FullTextIcon({ size = 18, color = '#686868', active = false }: { size?: number; color?: string; active?: boolean }) {
+// ミニトグルスイッチ
+function MiniToggle({ active = false, onPress }: { active?: boolean; onPress?: () => void }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M3 6h18M3 12h18M3 18h18"
-        stroke={active ? '#00AA69' : color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+    >
+      <View style={[miniToggleStyles.track, active && miniToggleStyles.trackActive]}>
+        <View style={[miniToggleStyles.thumb, active && miniToggleStyles.thumbActive]} />
+      </View>
+    </TouchableOpacity>
   );
 }
+
+const miniToggleStyles = StyleSheet.create({
+  track: {
+    width: 32,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#D1D1D6',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  trackActive: {
+    backgroundColor: '#00AA69',
+  },
+  thumb: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#FFFFFF',
+  },
+  thumbActive: {
+    alignSelf: 'flex-end',
+  },
+});
 
 export function TranslateCard({
   paragraphs,
@@ -147,6 +170,7 @@ export function TranslateCard({
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
   const [isPlayingTranslated, setIsPlayingTranslated] = useState(false);
   const [isSourceExpanded, setIsSourceExpanded] = useState(false);
+  const [isFullTextOriginalExpanded, setIsFullTextOriginalExpanded] = useState(false);
 
   // 現在の段落を取得
   const currentParagraph = paragraphs[currentIndex] || paragraphs[0];
@@ -175,6 +199,11 @@ export function TranslateCard({
 
   // 折りたたみが必要: 長文 かつ セクション分割されていない場合のみ
   const shouldCollapse = isLongText && !hasMultipleParagraphs;
+
+  // 全文表示モードが切り替わったらアコーディオンをリセット
+  useEffect(() => {
+    setIsFullTextOriginalExpanded(false);
+  }, [showFullText]);
 
   // アニメーション用の値
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -375,18 +404,17 @@ export function TranslateCard({
       {/* Label - Outside of card */}
       <View style={styles.labelRow}>
         <Text style={styles.label}>
-          {isParagraphTranslating || isTranslating
-            ? `${targetLanguageName}に翻訳しています`
-            : `${targetLanguageName}に翻訳しました`}
+          {(showFullText && translatedText)
+            ? `${targetLanguageName}に翻訳しました`
+            : (isParagraphTranslating || isTranslating)
+              ? `${targetLanguageName}に翻訳しています`
+              : `${targetLanguageName}に翻訳しました`}
         </Text>
         {hasMultipleParagraphs && onToggleFullText && (
-          <TouchableOpacity
-            style={styles.fullTextToggle}
-            onPress={onToggleFullText}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <FullTextIcon size={16} active={showFullText} />
-          </TouchableOpacity>
+          <View style={styles.fullTextToggleRow}>
+            <Text style={styles.fullTextToggleLabel}>全文</Text>
+            <MiniToggle active={showFullText} onPress={onToggleFullText} />
+          </View>
         )}
       </View>
 
@@ -434,8 +462,20 @@ export function TranslateCard({
               </View>
             ) : (
               <>
-                {/* 原文テキスト: 長文は折りたたみ、短文は全文表示 */}
-                {shouldCollapse && !isSourceExpanded ? (
+                {/* 原文テキスト */}
+                {/* 全文表示モード: 3行で折りたたみ */}
+                {showFullText && !isFullTextOriginalExpanded ? (
+                  <View style={styles.fullTextOriginalPreview}>
+                    <SelectableText
+                      text={originalText}
+                      style={styles.originalText}
+                      onSelectionChange={handleOriginalSelection}
+                      onSelectionChangeWithInfo={handleOriginalSelectionWithInfo}
+                      onSelectionCleared={onSelectionCleared}
+                      clearSelectionKey={clearSelectionKey}
+                    />
+                  </View>
+                ) : shouldCollapse && !isSourceExpanded ? (
                   <View style={styles.sourcePreviewContainer}>
                     <SelectableText
                       text={originalText}
@@ -469,7 +509,23 @@ export function TranslateCard({
                       <CopyIcon size={20} color="#686868" />
                     </TouchableOpacity>
                   </View>
-                  {shouldCollapse && (
+                  {/* 全文表示モードの展開/折りたたみ */}
+                  {showFullText && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                        setIsFullTextOriginalExpanded(!isFullTextOriginalExpanded);
+                      }}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={styles.showMoreText}>
+                        {isFullTextOriginalExpanded ? '閉じる' : '全て表示'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {/* 通常モードの展開/折りたたみ */}
+                  {!showFullText && shouldCollapse && (
                     <TouchableOpacity
                       onPress={() => {
                         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -490,7 +546,30 @@ export function TranslateCard({
 
           {/* Translated Text Section (No Background) */}
           <View style={styles.translatedTextContainer}>
-            {(isTranslating || isParagraphTranslating) ? (
+            {/* 全文表示モード: 翻訳済みテキストがあれば即座に表示（一部翻訳中でも） */}
+            {showFullText && translatedText ? (
+              <Animated.View style={{ opacity: fadeAnim }}>
+                <Reanimated.View style={[{ gap: 8 }, translatedTextAnimatedStyle]}>
+                  <SelectableText
+                    text={formatMarkdownText(translatedText)}
+                    style={styles.translatedText}
+                    onSelectionChange={handleTranslatedSelection}
+                    onSelectionChangeWithInfo={handleTranslatedSelectionWithInfo}
+                    onSelectionCleared={onSelectionCleared}
+                    clearSelectionKey={clearSelectionKey}
+                  />
+
+                  {/* Translated Actions */}
+                  <View style={styles.translatedActions}>
+                    {!isTranslatedNative && (
+                      <TouchableOpacity onPress={handlePlayTranslated} style={styles.actionButton}>
+                        <SpeakerIcon size={20} color={isPlayingTranslated ? '#1A1A1A' : '#686868'} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </Reanimated.View>
+              </Animated.View>
+            ) : (isTranslating || isParagraphTranslating) ? (
               <View style={styles.loadingContainer}>
                 {/* Shimmer skeleton bars */}
                 <View style={styles.shimmerContainer}>
@@ -561,8 +640,19 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginLeft: 0,
   },
-  fullTextToggle: {
-    padding: 4,
+  fullTextToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  fullTextToggleLabel: {
+    fontSize: 12,
+    color: '#686868',
+    fontWeight: '510',
+  },
+  fullTextOriginalPreview: {
+    maxHeight: 72, // 3行分 (lineHeight 24 × 3)
+    overflow: 'hidden',
   },
   container: {
     backgroundColor: '#F5F5F5',
