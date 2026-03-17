@@ -232,9 +232,6 @@ export function UnifiedHeaderBar({
           onSourceLangChange={onSourceLangChange || (() => {})}
           onTargetLangChange={onTargetLangChange || (() => {})}
         />
-
-        {/* Right spacer to balance the back button */}
-        <View style={styles.placeholder} />
       </View>
     );
   }
