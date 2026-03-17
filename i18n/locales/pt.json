@@ -239,6 +239,8 @@
     "premiumPlan": "Plano Premium",
     "tokens": "Tokens",
     "questions": "Perguntas",
+    "imageTranslation": "Imagem",
+    "urlTranslation": "URL",
     "resetIn": "Redefine em {{days}} dias",
     "tryPremium": "Experimente o Premium por 7 dias grátis",
     "premiumSubtext": "Depois ¥500/mês para 1.000 perguntas e 50.000 caracteres de tradução",

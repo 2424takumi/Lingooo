@@ -239,6 +239,8 @@
     "premiumPlan": "プレミアムプラン",
     "tokens": "トークン",
     "questions": "質問回数",
+    "imageTranslation": "画像翻訳",
+    "urlTranslation": "URL翻訳",
     "resetIn": "あと{{days}}日でリセット",
     "tryPremium": "7日間無料でプレミアムプランを試す",
     "premiumSubtext": "その後、月500円で月間1,000回質問・最大50,000文字翻訳可能",

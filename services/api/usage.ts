@@ -12,6 +12,14 @@ export interface UsageStats {
     used: number;
     limit: number;
   };
+  imageTranslationCount: {
+    used: number;
+    limit: number;
+  };
+  urlExtractionCount: {
+    used: number;
+    limit: number;
+  };
   isPremium: boolean;
 }
 
@@ -54,6 +62,14 @@ export async function getUsageStats(): Promise<UsageStats | null> {
       questionCount: {
         used: data.questionCountUsed,
         limit: data.questionCountLimit,
+      },
+      imageTranslationCount: {
+        used: data.imageTranslationCountUsed ?? 0,
+        limit: data.imageTranslationCountLimit ?? 10,
+      },
+      urlExtractionCount: {
+        used: data.urlExtractionCountUsed ?? 0,
+        limit: data.urlExtractionCountLimit ?? 10,
       },
       isPremium: data.isPremium,
     };

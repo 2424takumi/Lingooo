@@ -54,7 +54,7 @@ export function QuotaExceededModal({
 
   const handleUpgrade = () => {
     onClose();
-    router.replace({
+    router.navigate({
       pathname: '/(tabs)/',
       params: { showSubscription: 'true' },
     });
@@ -62,7 +62,7 @@ export function QuotaExceededModal({
 
   const handleClose = () => {
     onClose();
-    router.replace('/(tabs)/');
+    router.navigate('/(tabs)/');
   };
 
   // Calculate days until reset (end of month)

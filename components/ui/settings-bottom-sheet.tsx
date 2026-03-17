@@ -112,6 +112,8 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
   // 使用量のデフォルト値
   const tokenUsage = usageStats?.translationTokens ?? { used: 0, limit: 50000 };
   const questionCount = usageStats?.questionCount ?? { used: 0, limit: 100 };
+  const imageTranslationCount = usageStats?.imageTranslationCount ?? { used: 0, limit: 10 };
+  const urlExtractionCount = usageStats?.urlExtractionCount ?? { used: 0, limit: 10 };
   const plan = usageStats?.isPremium ? 'plus' : 'free';
 
   useEffect(() => {
@@ -166,6 +168,8 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
 
   const tokenPercentage = tokenUsage.limit > 0 ? (tokenUsage.used / tokenUsage.limit) * 100 : 0;
   const questionPercentage = questionCount.limit > 0 ? (questionCount.used / questionCount.limit) * 100 : 0;
+  const imagePercentage = imageTranslationCount.limit > 0 ? (imageTranslationCount.used / imageTranslationCount.limit) * 100 : 0;
+  const urlPercentage = urlExtractionCount.limit > 0 ? (urlExtractionCount.used / urlExtractionCount.limit) * 100 : 0;
 
   // 月末までの残り日数を計算
   const getDaysUntilReset = () => {
@@ -293,7 +297,42 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
               </View>
             </View>
 
-            {/* Second Row: Reset Days */}
+            {/* Second Row: Image and URL */}
+            <View style={styles.statsRow}>
+              {/* Image Translation Count */}
+              <View style={styles.statItem}>
+                <CircularProgress
+                  size={28}
+                  strokeWidth={3}
+                  percentage={imagePercentage}
+                  color="#111111"
+                />
+                <View style={styles.statTextContainer}>
+                  <Text style={styles.statLabel}>{t('settingsBottomSheet.imageTranslation')}</Text>
+                  <Text style={styles.statNumbers}>
+                    {imageTranslationCount.used} / {imageTranslationCount.limit}
+                  </Text>
+                </View>
+              </View>
+
+              {/* URL Extraction Count */}
+              <View style={styles.statItem}>
+                <CircularProgress
+                  size={28}
+                  strokeWidth={3}
+                  percentage={urlPercentage}
+                  color="#111111"
+                />
+                <View style={styles.statTextContainer}>
+                  <Text style={styles.statLabel}>{t('settingsBottomSheet.urlTranslation')}</Text>
+                  <Text style={styles.statNumbers}>
+                    {urlExtractionCount.used} / {urlExtractionCount.limit}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Third Row: Reset Days */}
             <View style={styles.resetRow}>
               <Text style={styles.resetText}>{t('settingsBottomSheet.resetIn', { days: daysUntilReset })}</Text>
             </View>
