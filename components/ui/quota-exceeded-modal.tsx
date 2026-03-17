@@ -6,6 +6,7 @@
 
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 
 function AlertCircleIcon({ size = 64, color = '#FF9800' }: { size?: number; color?: string }) {
@@ -49,10 +50,15 @@ export function QuotaExceededModal({
   const cardBackground = useThemeColor({ light: '#FFFFFF', dark: '#1C1C1E' }, 'cardBackground');
   const textColor = useThemeColor({}, 'text');
   const subTextColor = useThemeColor({ light: '#666666', dark: '#999999' }, 'icon');
+  const router = useRouter();
 
   const handleUpgrade = () => {
     onClose();
-    onUpgradePress?.();
+    // ホームに戻ってからサブスクリプションモーダルを表示
+    router.replace({
+      pathname: '/(tabs)/',
+      params: { showSubscription: 'true' },
+    });
   };
 
   // Calculate days until reset (end of month)
