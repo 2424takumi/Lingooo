@@ -171,7 +171,7 @@ export function ImageUploadButton({ onImageSelected, onError }: ImageUploadButto
       onPress={showOptions}
       activeOpacity={0.7}
     >
-      <Ionicons name="attach" size={24} color="#000000" />
+      <Ionicons name="attach" size={28} color="#000000" />
     </TouchableOpacity>
   );
 }

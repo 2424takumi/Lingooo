@@ -2,13 +2,11 @@ import { StyleSheet, View, Text, ActivityIndicator, ScrollView, Alert, Touchable
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useCallback } from 'react';
-import { router } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SearchHistoryList } from '@/components/ui/search-history-list';
-import { SideMenu } from '@/components/ui/side-menu';
 import { SettingsBottomSheet } from '@/components/ui/settings-bottom-sheet';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
@@ -20,7 +18,6 @@ import { useAuth } from '@/contexts/auth-context';
 import { useSubscription } from '@/contexts/subscription-context';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/lib/supabase';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -30,10 +27,8 @@ export default function HomeScreen() {
   const { isPremium } = useSubscription();
   const { currentLanguage, defaultLanguage, nativeLanguage } = useLearningLanguages();
   const [searchText, setSearchText] = useState('');
-  const [menuVisible, setMenuVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [subscriptionVisible, setSubscriptionVisible] = useState(false);
-  const [menuButtonLayout, setMenuButtonLayout] = useState<{ x: number; y: number; width: number; height: number } | undefined>(undefined);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
@@ -50,11 +45,6 @@ export default function HomeScreen() {
       });
     }, [])
   );
-
-  const handleMenuPress = (layout: { x: number; y: number; width: number; height: number }) => {
-    setMenuButtonLayout(layout);
-    setMenuVisible(true);
-  };
 
   const handleSettingsPress = () => {
     setSettingsVisible(true);
@@ -111,7 +101,6 @@ export default function HomeScreen() {
           <View style={styles.headerContainer}>
             <UnifiedHeaderBar
               pageType="home"
-              onMenuPress={handleMenuPress}
               onSettingsPress={handleSettingsPress}
             />
           </View>
@@ -156,9 +145,6 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-
-      {/* Side Menu */}
-      <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} menuButtonLayout={menuButtonLayout} />
 
       {/* Settings Bottom Sheet */}
       <SettingsBottomSheet
