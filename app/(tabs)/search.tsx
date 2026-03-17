@@ -197,6 +197,9 @@ export default function SearchScreen() {
       if (currentQuery === query) {
         logger.debug('[Search] Received updated suggestions from subscription');
         setSuggestions(items);
+        if (items.length > 0) {
+          setIsLoading(false); // 最初の結果が来たらローディング解除
+        }
       }
     }, currentLanguage.code);
 

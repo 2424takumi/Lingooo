@@ -266,16 +266,13 @@ export function useSearch() {
       getWordDetailStream(word, targetLanguage, nativeLanguage.code, onProgress)
     );
 
-    // プリフェッチが確実に開始されるように、わずかな遅延を入れる（体感速度への影響は最小限）
-    // これにより、ページ遷移時にはプリフェッチが既に進行中となる
-    await new Promise(resolve => setTimeout(resolve, 50));
-
     // ページ遷移（プリフェッチは継続中）
     router.push({
       pathname: '/(tabs)/word-detail',
       params: {
         word,
         targetLanguage, // タブで選択された言語を渡す
+        skipLanguageDetection: 'true', // 検索で言語検出済みのため再検出不要
         // dataパラメータなし = ページ上でAPI呼び出し
       },
     });
