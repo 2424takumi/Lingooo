@@ -5,6 +5,8 @@ import Svg, { Path } from 'react-native-svg';
 import { PosTag } from './pos-tag';
 import { LanguageSwitcher } from './language-switcher';
 import { useTranslation } from 'react-i18next';
+import { AVAILABLE_LANGUAGES } from '@/types/language';
+import { Shimmer } from './shimmer';
 
 // Icons
 function ChevronLeftIcon({ size = 28 }: { size?: number }) {
@@ -63,6 +65,25 @@ function UserIcon({ size = 24 }: { size?: number }) {
   );
 }
 
+function ArrowRightIcon({ size = 14 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M5 12h14M12 5l7 7-7 7"
+        stroke="#686868"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function getFlagByCode(code: string): string {
+  const lang = AVAILABLE_LANGUAGES.find(l => l.code === code);
+  return lang?.flag || '';
+}
+
 type PageType = 'home' | 'jpSearch' | 'wordDetail' | 'translate' | 'other';
 
 interface UnifiedHeaderBarProps {
@@ -86,6 +107,9 @@ interface UnifiedHeaderBarProps {
   isOffline?: boolean;
   // Language detection
   isDetectingLanguage?: boolean;
+  // Translate - language pair
+  sourceLang?: string;
+  targetLang?: string;
 }
 
 export function UnifiedHeaderBar({
@@ -103,6 +127,8 @@ export function UnifiedHeaderBar({
   onPronouncePress,
   isDetectingLanguage = false,
   isOffline = false,
+  sourceLang,
+  targetLang,
 }: UnifiedHeaderBarProps) {
   const { t } = useTranslation();
   const menuButtonRef = useRef<any>(null);
@@ -188,13 +214,27 @@ export function UnifiedHeaderBar({
 
   // Translate variant
   if (pageType === 'translate') {
+    const sourceFlag = sourceLang ? getFlagByCode(sourceLang) : '';
+    const targetFlag = targetLang ? getFlagByCode(targetLang) : '';
+
     return (
       <View style={styles.container}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
           <ChevronLeftIcon size={28} />
         </TouchableOpacity>
 
-        <View style={styles.placeholder} />
+        {/* Language pair display */}
+        <View style={styles.languagePairContainer}>
+          {isDetectingLanguage ? (
+            <Shimmer width={80} height={20} borderRadius={4} />
+          ) : sourceLang ? (
+            <View style={styles.languagePairRow}>
+              <Text style={styles.languagePairFlag}>{sourceFlag}</Text>
+              <ArrowRightIcon size={14} />
+              <Text style={styles.languagePairFlag}>{targetFlag}</Text>
+            </View>
+          ) : null}
+        </View>
 
         <LanguageSwitcher isDetectingLanguage={isDetectingLanguage} />
       </View>
@@ -333,5 +373,18 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 28,
     height: 28,
+  },
+  languagePairContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  languagePairRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  languagePairFlag: {
+    fontSize: 20,
   },
 });

@@ -1,4 +1,5 @@
-import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard, ScrollView, Text, Platform } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard, ScrollView, Text, Platform, Pressable } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { SearchIcon, ReloadIcon } from './icons';
 import { LanguageTag } from './language-tag';
@@ -11,6 +12,20 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { getMaxTextLength } from '@/constants/validation';
 import { isSentence } from '@/utils/text-detector';
 import { logger } from '@/utils/logger';
+
+function ClearIcon({ size = 16, color = '#999' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M18 6L6 18M6 6l12 12"
+        stroke={color}
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 const LINE_HEIGHT = 22;
 const MAX_LINES = 10;
@@ -157,6 +172,7 @@ export function SearchBar({
                 lineHeight: LINE_HEIGHT,
                 paddingTop: INPUT_TOP_PADDING,
                 paddingBottom: INPUT_BOTTOM_PADDING,
+                paddingRight: searchText.length > 0 ? 28 : 0,
               },
             ]}
             placeholder={placeholder}
@@ -179,6 +195,21 @@ export function SearchBar({
             textContentType="none"
             importantForAutofill="no"
           />
+          {searchText.length > 0 && (
+            <Pressable
+              style={styles.clearButton}
+              onPress={() => {
+                setSearchText('');
+                setInputHeight(MIN_INPUT_HEIGHT);
+                inputRef.current?.focus();
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <View style={styles.clearButtonCircle}>
+                <ClearIcon size={10} color="#FFFFFF" />
+              </View>
+            </Pressable>
+          )}
         </View>
         <View style={styles.actionArea}>
           {/* 翻訳モード表示 */}
@@ -259,6 +290,7 @@ const styles = StyleSheet.create({
     flex: 0,
     alignItems: 'flex-start',
     alignSelf: 'stretch',
+    position: 'relative',
   },
   input: {
     width: '100%',
@@ -292,9 +324,17 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '500',
   },
-  closeButton: {
+  clearButton: {
+    position: 'absolute',
+    top: 6,
+    right: 0,
+    padding: 2,
+  },
+  clearButtonCircle: {
     width: 18,
     height: 18,
+    borderRadius: 9,
+    backgroundColor: '#C0C0C0',
     justifyContent: 'center',
     alignItems: 'center',
   },

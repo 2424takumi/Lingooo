@@ -50,6 +50,7 @@ export default function WordDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null); // 実際に見つかった言語
   const [showLanguageNotification, setShowLanguageNotification] = useState(false); // 通知表示フラグ
   const [isLoadingAdditional, setIsLoadingAdditional] = useState(false); // 追加データ（例文など）の読み込み中
@@ -658,7 +659,7 @@ export default function WordDetailScreen() {
     };
 
     loadWordData();
-  }, [word, dataParam, targetLanguage]);
+  }, [word, dataParam, targetLanguage, retryKey]);
 
   // 検索履歴を正しい単語で更新（誤字の場合）
   useEffect(() => {
@@ -1039,7 +1040,7 @@ export default function WordDetailScreen() {
             setIsQuotaModalVisible(true);
             errorMessage = quotaError.userFriendlyMessage;
           } else {
-            errorMessage = error.message || '質問に失敗しました';
+            errorMessage = error.message || t('common.unknownError');
           }
 
           setQAPairs(prev => prev.map(pair => {
@@ -1091,12 +1092,24 @@ export default function WordDetailScreen() {
         <StatusBar style="auto" />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error || t('wordDetail.notFound')}</Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={handleBackPress}
-          >
-            <Text style={styles.backButtonText}>{t('wordDetail.backButton')}</Text>
-          </TouchableOpacity>
+          <View style={styles.errorButtonRow}>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => {
+                setError(null);
+                setIsLoading(true);
+                setRetryKey(prev => prev + 1);
+              }}
+            >
+              <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBackPress}
+            >
+              <Text style={styles.backButtonText}>{t('wordDetail.backButton')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ThemedView>
     );
@@ -1391,6 +1404,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#CC0000',
     textAlign: 'center',
+  },
+  errorButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  retryButton: {
+    backgroundColor: '#00AA69',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 11,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   backButton: {
     backgroundColor: '#111111',

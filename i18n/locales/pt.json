@@ -11,7 +11,12 @@
     "loading": "Carregando...",
     "next": "Próximo",
     "complete": "Concluir",
-    "ok": "OK"
+    "ok": "OK",
+    "retry": "Tentar novamente",
+    "networkError": "Ocorreu um erro de rede",
+    "serverError": "Não foi possível conectar ao servidor. Tente novamente mais tarde",
+    "unknownError": "Ocorreu um erro",
+    "serverBusy": "Servidor ocupado. Aguarde e tente novamente"
   },
   "settings": {
     "title": "Configurações",
@@ -96,6 +101,7 @@
   "search": {
     "placeholder": "Digite uma palavra ou frase para aprender...",
     "noResults": "Nenhum resultado encontrado para \"{{query}}\"",
+    "error": "Falha na pesquisa",
     "chatPlaceholder": "Faça uma pergunta sobre esta palavra..."
   },
   "initialSetup": {
@@ -195,8 +201,13 @@
     "followUpQuestion": "Continuação",
     "askFollowUp": "Fazer uma pergunta de acompanhamento"
   },
+  "offline": {
+    "banner": "Você está offline"
+  },
   "translate": {
     "error": "Falha na tradução",
+    "retranslateError": "Falha na retradução",
+    "progress": "{{completed}}/{{total}} parágrafos",
     "chatPlaceholder": "Faça uma pergunta sobre este texto...",
     "notesLabel": "Notas de Tradução",
     "urlTranslation": {

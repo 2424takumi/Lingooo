@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, Dimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, TouchableOpacity, Dimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -34,6 +34,7 @@ import type { SuggestionItem } from '@/types/search';
 import { generateId } from '@/utils/id';
 import type { QAPair } from '@/types/chat';
 import { detectLang } from '@/services/utils/language-detect';
+import { useTranslation } from 'react-i18next';
 
 // SuggestionItemのZodスキーマ定義
 const SuggestionItemSchema = z.object({
@@ -84,8 +85,10 @@ export default function SearchScreen() {
     }
   }, [resultsParam]);
 
+  const { t } = useTranslation();
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>(initialResults);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   // ハイブリッド表示用: 完了したヒントを追跡
   // suggestionsが更新されたら、usageHintがあるものは完了とみなす
@@ -145,6 +148,7 @@ export default function SearchScreen() {
       setSuggestions([]);
     }
     setCompletedHintIndices(new Set());
+    setSearchError(null);
     setIsLoading(true);
 
     // キャッシュチェック + API呼び出し
@@ -167,9 +171,10 @@ export default function SearchScreen() {
       } catch (error) {
         logger.error('[Search] Failed to fetch suggestions:', error);
         // API失敗時、initialResultsがあればそれを保持（既に設定済み）
-        // なければ空配列のまま
+        // なければ空配列のまま + エラー表示
         if (initialResults.length === 0) {
           setSuggestions([]);
+          setSearchError(t('search.error'));
         }
       } finally {
         setIsLoading(false);
@@ -521,7 +526,7 @@ export default function SearchScreen() {
             setIsQuotaModalVisible(true);
             errorMessage = quotaError.userFriendlyMessage;
           } else {
-            errorMessage = error.message || '質問に失敗しました';
+            errorMessage = error.message || t('common.unknownError');
           }
 
           setQAPairs(prev => prev.map(pair => {
@@ -686,10 +691,25 @@ export default function SearchScreen() {
                     </Pressable>
                   ))}
                 </View>
+              ) : searchError ? (
+                <View style={styles.noResultsContainer}>
+                  <Text style={styles.noResultsText}>{searchError}</Text>
+                  <TouchableOpacity
+                    style={styles.retryButton}
+                    onPress={() => {
+                      setSearchError(null);
+                      setIsLoading(true);
+                      // Re-trigger fetch by forcing a re-render
+                      setSuggestions([]);
+                    }}
+                  >
+                    <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+                  </TouchableOpacity>
+                </View>
               ) : (
                 <View style={styles.noResultsContainer}>
                   <Text style={styles.noResultsText}>
-                    「{query}」の検索結果が見つかりませんでした
+                    {t('search.noResults', { query })}
                   </Text>
                 </View>
               )}
@@ -820,11 +840,23 @@ const styles = StyleSheet.create({
   noResultsContainer: {
     padding: 24,
     alignItems: 'center',
+    gap: 16,
   },
   noResultsText: {
     fontSize: 16,
     color: '#686868',
     textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#00AA69',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   // Modal styles
   modalOverlay: {

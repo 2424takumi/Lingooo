@@ -948,8 +948,8 @@ export default function TranslateScreen() {
                     } else {
                       const errorMessage = error.message;
                       errorText = errorMessage.includes('503')
-                        ? '翻訳サービスが混雑しています。しばらく待ってから再試行してください。'
-                        : '翻訳に失敗しました';
+                        ? t('common.serverBusy')
+                        : t('translate.error');
                     }
 
                     translatedParagraphs[paragraph.index] = {
@@ -981,8 +981,8 @@ export default function TranslateScreen() {
                 } else {
                   const errorMessage = error instanceof Error ? error.message : String(error);
                   errorText = errorMessage.includes('503')
-                    ? '翻訳サービスが混雑しています。しばらく待ってから再試行してください。'
-                    : '翻訳に失敗しました';
+                    ? t('common.serverBusy')
+                    : t('translate.error');
                 }
 
                 translatedParagraphs[paragraph.index] = {
@@ -1157,8 +1157,8 @@ export default function TranslateScreen() {
             } else {
               const errorMessage = error instanceof Error ? error.message : String(error);
               errorText = errorMessage.includes('503')
-                ? '翻訳サービスが混雑しています。しばらく待ってから再試行してください。'
-                : '翻訳に失敗しました';
+                ? t('common.serverBusy')
+                : t('translate.error');
             }
 
             translatedParagraphs[paragraph.index] = {
@@ -1204,12 +1204,93 @@ export default function TranslateScreen() {
         setIsQuotaModalVisible(true);
         setError(quotaError.userFriendlyMessage);
       } else {
-        setError('再翻訳に失敗しました。もう一度お試しください。');
+        setError(t('translate.retranslateError'));
       }
     } finally {
       setIsTranslating(false);
     }
   }, [paragraphs, sourceLang, selectedTranslateTargetLang, isTranslating, text, fromImageTranslation, translationData]);
+
+  // 特定段落のリトライ
+  const handleRetryParagraph = useCallback(async (index: number) => {
+    const paragraph = paragraphs[index];
+    if (!paragraph) return;
+
+    logger.info('[Translate] Retrying paragraph:', index);
+
+    // 段落を翻訳中状態にリセット
+    setParagraphs(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], translatedText: '', isTranslating: true };
+      return updated;
+    });
+
+    const targetLang = translationData?.targetLang || selectedTranslateTargetLang;
+    const prevParagraph = index > 0 ? paragraphs[index - 1] : undefined;
+    const nextParagraph = index < paragraphs.length - 1 ? paragraphs[index + 1] : undefined;
+
+    try {
+      await translateParagraphStream(
+        paragraph.originalText,
+        sourceLang,
+        targetLang,
+        index,
+        (chunk: string) => {
+          setParagraphs(prev => {
+            const updated = [...prev];
+            updated[index] = {
+              ...updated[index],
+              translatedText: (updated[index].translatedText || '') + chunk,
+            };
+            return updated;
+          });
+        },
+        (translatedText: string) => {
+          setParagraphs(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], translatedText, isTranslating: false };
+            return updated;
+          });
+        },
+        (error: Error) => {
+          const quotaError = parseQuotaError(error);
+          let errorText: string;
+          if (quotaError.isQuotaError) {
+            setQuotaErrorType(quotaError.quotaType);
+            setIsQuotaModalVisible(true);
+            errorText = quotaError.userFriendlyMessage;
+          } else {
+            const errorMessage = error.message || String(error);
+            errorText = errorMessage.includes('503')
+              ? t('common.serverBusy')
+              : t('translate.error');
+          }
+          setParagraphs(prev => {
+            const updated = [...prev];
+            updated[index] = {
+              ...updated[index],
+              translatedText: `❌ ${errorText}`,
+              isTranslating: false,
+            };
+            return updated;
+          });
+        },
+        prevParagraph?.translatedText || undefined,
+        nextParagraph?.translatedText || undefined,
+      );
+    } catch (err) {
+      logger.error('[Translate] Paragraph retry failed:', err);
+      setParagraphs(prev => {
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          translatedText: `❌ ${t('translate.error')}`,
+          isTranslating: false,
+        };
+        return updated;
+      });
+    }
+  }, [paragraphs, sourceLang, selectedTranslateTargetLang, translationData, t]);
 
   // 翻訳完了時に翻訳ノートをストリーミング生成
   useEffect(() => {
@@ -1516,7 +1597,7 @@ export default function TranslateScreen() {
                 ...pair,
                 a: '',
                 status: 'error',
-                errorMessage: error instanceof Error ? error.message : 'エラーが発生しました',
+                errorMessage: error instanceof Error ? error.message : t('common.unknownError'),
               }
               : pair
           ));
@@ -1838,7 +1919,13 @@ export default function TranslateScreen() {
             }
           }}
         >
-          <UnifiedHeaderBar pageType="translate" onBackPress={handleBackPress} isDetectingLanguage={isDetectingLanguage} />
+          <UnifiedHeaderBar
+            pageType="translate"
+            onBackPress={handleBackPress}
+            isDetectingLanguage={isDetectingLanguage}
+            sourceLang={translationData?.sourceLang || sourceLang}
+            targetLang={translationData?.targetLang || selectedTranslateTargetLang}
+          />
         </View>
 
         {/* Translation Card - Scrollable */}
@@ -1876,6 +1963,15 @@ export default function TranslateScreen() {
                 });
               }}
             >
+              {/* 段落翻訳の進捗表示 */}
+              {paragraphs.length > 1 && paragraphs.some(p => p.isTranslating) && (
+                <Text style={styles.progressText}>
+                  {t('translate.progress', {
+                    completed: paragraphs.filter(p => !p.isTranslating && p.translatedText && !p.translatedText.startsWith('❌')).length,
+                    total: paragraphs.length,
+                  })}
+                </Text>
+              )}
               <TranslateCard
                 key={`translate-card-${clearSelectionKey}-${currentParagraphIndex}`}
                 paragraphs={paragraphs.length > 0 ? paragraphs : [{
@@ -1901,6 +1997,7 @@ export default function TranslateScreen() {
                   setQAPairs([]); // チャットセクションをリセット
                 }}
                 clearSelectionKey={clearSelectionKey}
+                onRetryParagraph={handleRetryParagraph}
               />
               {!isTranslating && !isSplittingParagraphs && !isDetectingLanguage && (
                 <TranslationNotes
@@ -2043,6 +2140,14 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingHorizontal: 16,
     paddingBottom: 16, // コンテンツのパディングのみ（ChatSection分はtranslateCardContainerで確保）
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#686868',
+    textAlign: 'center',
+    marginBottom: 4,
+    fontWeight: '500',
+    letterSpacing: 0.5,
   },
   translateCardContainer: {
     paddingTop: 0,

@@ -25,6 +25,7 @@ import { useSearch } from '@/hooks/use-search';
 import { MAX_TEXT_LENGTH_FREE, MAX_TEXT_LENGTH_PREMIUM } from '@/constants/validation';
 import { generateWordDetailWithHintStreaming } from '@/services/ai/dictionary-generator';
 import { logger } from '@/utils/logger';
+import { OfflineBanner } from '@/components/ui/offline-banner';
 import '@/i18n'; // i18nを初期化
 
 export const unstable_settings = {
@@ -119,6 +120,7 @@ function AppContent() {
                   <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
                 </Stack>
                 <StatusBar style="auto" />
+                <OfflineBanner />
               </ThemeProvider>
             </ChatProvider>
           </LearningLanguagesProvider>

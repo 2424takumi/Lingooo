@@ -11,7 +11,12 @@
     "loading": "Loading...",
     "next": "Next",
     "complete": "Complete",
-    "ok": "OK"
+    "ok": "OK",
+    "retry": "Retry",
+    "networkError": "A network error occurred",
+    "serverError": "Cannot connect to server. Please try again later",
+    "unknownError": "An error occurred",
+    "serverBusy": "Server is busy. Please wait and try again"
   },
   "settings": {
     "title": "Settings",
@@ -96,6 +101,7 @@
   "search": {
     "placeholder": "Enter a word or phrase to learn...",
     "noResults": "No results found for \"{{query}}\"",
+    "error": "Search failed",
     "chatPlaceholder": "Ask a question about this word..."
   },
   "initialSetup": {
@@ -195,8 +201,13 @@
     "followUpQuestion": "Follow-up",
     "askFollowUp": "Ask a follow-up question"
   },
+  "offline": {
+    "banner": "You are offline"
+  },
   "translate": {
     "error": "Translation failed",
+    "retranslateError": "Re-translation failed",
+    "progress": "{{completed}}/{{total}} paragraphs",
     "chatPlaceholder": "Ask a question about this text...",
     "notesLabel": "Translation Notes",
     "urlTranslation": {

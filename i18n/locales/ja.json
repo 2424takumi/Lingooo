@@ -11,7 +11,12 @@
     "loading": "読み込み中...",
     "next": "次へ",
     "complete": "完了",
-    "ok": "OK"
+    "ok": "OK",
+    "retry": "再試行",
+    "networkError": "ネットワークエラーが発生しました",
+    "serverError": "サーバーに接続できません。しばらくしてからお試しください",
+    "unknownError": "エラーが発生しました",
+    "serverBusy": "サーバーが混雑しています。しばらく待ってから再試行してください"
   },
   "settings": {
     "title": "設定",
@@ -96,6 +101,7 @@
   "search": {
     "placeholder": "知りたい言葉や文章を入力...",
     "noResults": "「{{query}}」の検索結果が見つかりませんでした",
+    "error": "検索に失敗しました",
     "chatPlaceholder": "この単語について質問をする..."
   },
   "initialSetup": {
@@ -195,8 +201,13 @@
     "followUpQuestion": "追加質問",
     "askFollowUp": "さらに詳しく質問する"
   },
+  "offline": {
+    "banner": "オフラインです"
+  },
   "translate": {
     "error": "翻訳に失敗しました",
+    "retranslateError": "再翻訳に失敗しました",
+    "progress": "{{completed}}/{{total}} 段落",
     "chatPlaceholder": "質問をしてみましょう",
     "notesLabel": "翻訳メモ",
     "urlTranslation": {

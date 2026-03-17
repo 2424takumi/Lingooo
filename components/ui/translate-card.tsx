@@ -15,12 +15,34 @@ import { logger } from '@/utils/logger';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { SPEECH_LANGUAGE_MAP, LANGUAGE_NAME_MAP } from '@/constants/languages';
 import { formatMarkdownText } from '@/utils/text-formatter';
+import { useTranslation } from 'react-i18next';
 import { SelectableText, SelectionInfo } from './selectable-text';
 import type { Paragraph } from '@/services/api/paragraph-splitter';
 
+function RetryIcon({ size = 16, color = '#FFFFFF' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M1 4v6h6M23 20v-6h-6"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 interface TranslateCardProps {
   // 段落配列（単一段落の場合も配列で渡す）
-  paragraphs: Paragraph[];
+  paragraphs: (Paragraph & { isTranslating?: boolean })[];
   // 現在表示中の段落インデックス
   currentIndex: number;
   // 段落変更ハンドラー
@@ -32,6 +54,7 @@ interface TranslateCardProps {
   onTextSelectionWithInfo?: (selectionInfo: SelectionInfo, type: 'original' | 'translated') => void;
   onSelectionCleared?: () => void;
   clearSelectionKey?: number; // 値が変わると選択がクリアされる
+  onRetryParagraph?: (index: number) => void;
 }
 
 function SpeakerIcon({ size = 20, color = '#686868' }: { size?: number; color?: string }) {
@@ -96,7 +119,9 @@ export function TranslateCard({
   onTextSelectionWithInfo,
   onSelectionCleared,
   clearSelectionKey,
+  onRetryParagraph,
 }: TranslateCardProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { nativeLanguage, currentLanguage } = useLearningLanguages();
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
@@ -111,6 +136,7 @@ export function TranslateCard({
   const isLongText = originalText.length > 120 || originalText.split('\n').length > 5;
   const translatedText = currentParagraph?.translatedText || '';
   const isParagraphTranslating = currentParagraph?.isTranslating || false;
+  const isParagraphError = translatedText.startsWith('❌');
 
   // 段落が複数あるかどうか
   const hasMultipleParagraphs = paragraphs.length > 1;
@@ -429,6 +455,19 @@ export function TranslateCard({
                   <Shimmer width="60%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
                 </View>
               </View>
+            ) : isParagraphError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{translatedText.replace('❌ ', '')}</Text>
+                {onRetryParagraph && (
+                  <TouchableOpacity
+                    style={styles.retryButton}
+                    onPress={() => onRetryParagraph(currentIndex)}
+                  >
+                    <RetryIcon size={14} color="#FFFFFF" />
+                    <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             ) : (
               <Animated.View style={{ opacity: fadeAnim }}>
                 <Reanimated.View style={[{ gap: 8 }, translatedTextAnimatedStyle]}>
@@ -566,5 +605,30 @@ const styles = StyleSheet.create({
   },
   shimmerContainer: {
     gap: 10,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#CC0000',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#111111',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
