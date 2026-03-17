@@ -1,8 +1,9 @@
 import { StyleSheet, View, Text, ActivityIndicator, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
-import { useState, useEffect } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useState, useCallback } from 'react';
+import { router } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { SearchBar } from '@/components/ui/search-bar';
@@ -23,9 +24,7 @@ import { supabase } from '@/lib/supabase';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
-  const params = useLocalSearchParams();
   const pageBackground = useThemeColor({}, 'pageBackground');
-  const titleColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'text');
   const { handleSearch, isLoading, error, showTextLengthModal, setShowTextLengthModal } = useSearch();
   const { needsInitialSetup } = useAuth();
   const { isPremium } = useSubscription();
@@ -40,14 +39,17 @@ export default function HomeScreen() {
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [selectedImageMimeType, setSelectedImageMimeType] = useState<string | undefined>(undefined);
 
-  // クォータ制限からのアップグレード遷移: showSubscription パラメータでサブスクモーダルを自動表示
-  useEffect(() => {
-    if (params.showSubscription === 'true') {
-      setSubscriptionVisible(true);
-      // パラメータをクリア（戻る時に再発火しないように）
-      router.setParams({ showSubscription: '' });
-    }
-  }, [params.showSubscription]);
+  // クォータ制限からのアップグレード遷移: AsyncStorageフラグでサブスクモーダルを自動表示
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem('@lingooo:show_subscription').then((val) => {
+        if (val === 'true') {
+          AsyncStorage.removeItem('@lingooo:show_subscription');
+          setSubscriptionVisible(true);
+        }
+      });
+    }, [])
+  );
 
   const handleMenuPress = (layout: { x: number; y: number; width: number; height: number }) => {
     setMenuButtonLayout(layout);

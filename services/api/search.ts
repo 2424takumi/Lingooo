@@ -231,44 +231,8 @@ export async function searchJaToEn(query: string, targetLanguage: string = 'en',
     };
   }
 
-  // 🚀 LOCAL-FIRST OPTIMIZATION: ローカル辞書を先にチェック（高速化）
-  const localItems = findMockSuggestions(trimmedQuery);
-  if (localItems.length > 0) {
-    logger.info(`[searchJaToEn] ✨ Found ${localItems.length} items in local dictionary (instant)`);
-
-    // ローカル辞書の結果を即座に返す（キャッシュにも保存）
-    setCachedSuggestions(trimmedQuery, localItems, targetLanguage);
-
-    // 🔧 バックグラウンドでAIによるusageHint追加を実行
-    (async () => {
-      try {
-        logger.info('[searchJaToEn] Starting background AI enhancement for local items');
-        const lemmas = localItems.map(item => item.lemma);
-
-        // 並列生成：各ヒントが完成次第、キャッシュを更新
-        await addUsageHintsParallel(lemmas, trimmedQuery, nativeLanguage, (hint) => {
-          const currentItems = getCachedSuggestionsSync(trimmedQuery, targetLanguage) || localItems;
-          const updatedItems = currentItems.map(item =>
-            item.lemma === hint.lemma ? { ...item, usageHint: hint.usageHint } : item
-          );
-          setCachedSuggestions(trimmedQuery, updatedItems, targetLanguage);
-          logger.info(`[searchJaToEn] ✅ Hint added for: ${hint.lemma}`);
-        });
-
-        logger.info('[searchJaToEn] Background AI enhancement completed');
-      } catch (error) {
-        logger.error('[searchJaToEn] Background AI enhancement failed:', error);
-        // ヒント追加に失敗しても基本情報は既に表示されているので問題なし
-      }
-    })();
-
-    return {
-      items: localItems,
-    };
-  }
-
-  // ローカル辞書になければ、2段階生成（並列版）を開始（リトライ付き）
-  logger.info(`[searchJaToEn] Not in local dictionary, starting AI generation for: ${trimmedQuery} (${targetLanguage}, native: ${nativeLanguage})`);
+  // 2段階生成（並列版）を開始（リトライ付き）
+  logger.info(`[searchJaToEn] Starting AI generation for: ${trimmedQuery} (${targetLanguage}, native: ${nativeLanguage})`);
 
   const MAX_RETRIES = 1; // 1回リトライ（合計2回試行）
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {

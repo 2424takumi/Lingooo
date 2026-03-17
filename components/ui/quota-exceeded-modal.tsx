@@ -7,6 +7,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
 
 function AlertCircleIcon({ size = 64, color = '#FF9800' }: { size?: number; color?: string }) {
@@ -54,15 +55,13 @@ export function QuotaExceededModal({
 
   const handleUpgrade = () => {
     onClose();
-    router.navigate({
-      pathname: '/(tabs)/',
-      params: { showSubscription: 'true' },
-    });
+    AsyncStorage.setItem('@lingooo:show_subscription', 'true');
+    router.dismissAll();
   };
 
   const handleClose = () => {
     onClose();
-    router.navigate('/(tabs)/');
+    router.dismissAll();
   };
 
   // Calculate days until reset (end of month)
