@@ -21,10 +21,13 @@ import { AISettingsProvider } from '@/contexts/ai-settings-context';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { InitialLanguageSetupModal } from '@/components/modals/InitialLanguageSetupModal';
 import { OnboardingModal } from '@/components/modals/OnboardingModal';
+import { WhatsNewModal } from '@/components/modals/WhatsNewModal';
 import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { startKeepalive, stopKeepalive } from '@/services/keepalive/backend-keepalive';
+import Constants from 'expo-constants';
+import { getWhatsNewForVersion } from '@/constants/whats-new';
 
 import { useClipboardSearch } from '@/hooks/use-clipboard-search';
 import { useSearch } from '@/hooks/use-search';
@@ -85,11 +88,14 @@ function ClipboardMonitor() {
 }
 
 const ONBOARDING_COMPLETED_KEY = '@lingooo:onboarding_completed';
+const WHATS_NEW_VERSION_KEY = '@lingooo:whats_new_version';
 
 function AppContent() {
   const colorScheme = useColorScheme();
   const { needsInitialSetup, completeInitialSetup } = useAuth();
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const currentVersion = Constants.expoConfig?.version ?? '';
 
   // オンボーディング完了状態をチェック
   useEffect(() => {
@@ -100,6 +106,16 @@ function AppContent() {
     });
   }, []);
 
+  // What's New表示チェック
+  useEffect(() => {
+    if (needsInitialSetup || needsOnboarding) return;
+    AsyncStorage.getItem(WHATS_NEW_VERSION_KEY).then(lastVersion => {
+      if (lastVersion !== currentVersion && getWhatsNewForVersion(currentVersion)) {
+        setShowWhatsNew(true);
+      }
+    });
+  }, [needsInitialSetup, needsOnboarding, currentVersion]);
+
   const handleInitialSetupComplete = (nativeLanguage: string, learningLanguages: string[]) => {
     completeInitialSetup(nativeLanguage, learningLanguages);
     // 初期セットアップ完了後にオンボーディングを表示
@@ -109,6 +125,11 @@ function AppContent() {
   const handleOnboardingComplete = async () => {
     await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
     setNeedsOnboarding(false);
+  };
+
+  const handleWhatsNewClose = async () => {
+    await AsyncStorage.setItem(WHATS_NEW_VERSION_KEY, currentVersion);
+    setShowWhatsNew(false);
   };
 
   return (
@@ -143,6 +164,13 @@ function AppContent() {
       <OnboardingModal
         visible={!needsInitialSetup && needsOnboarding}
         onComplete={handleOnboardingComplete}
+      />
+
+      {/* What's Newモーダル（初期設定・オンボーディング完了後、新バージョン初回のみ） */}
+      <WhatsNewModal
+        visible={showWhatsNew}
+        version={currentVersion}
+        onClose={handleWhatsNewClose}
       />
     </>
   );

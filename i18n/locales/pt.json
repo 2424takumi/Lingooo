@@ -390,6 +390,17 @@
     "step1": "Pergunta respondida! ✨",
     "step2": "Vamos começar de verdade!"
   },
+  "whatsNew": {
+    "title": "Novidades na v{{version}}",
+    "dismiss": "OK",
+    "versions": {
+      "1.0.6": {
+        "items": [
+          "Agora você pode traduzir páginas inteiras da web apenas colando a URL"
+        ]
+      }
+    }
+  },
   "subscription": {
     "premiumMember": "Membro Premium",
     "allFeaturesAvailable": "Todos os recursos estão disponíveis",

@@ -390,6 +390,17 @@
     "step1": "質問に答えてくれました！✨",
     "step2": "それでは本格的に始めましょう！"
   },
+  "whatsNew": {
+    "title": "v{{version}} の新機能",
+    "dismiss": "OK",
+    "versions": {
+      "1.0.6": {
+        "items": [
+          "URLをコピペするだけで、Webページをまるごと翻訳できるようになりました"
+        ]
+      }
+    }
+  },
   "subscription": {
     "premiumMember": "プレミアム会員",
     "allFeaturesAvailable": "すべての機能をご利用いただけます",

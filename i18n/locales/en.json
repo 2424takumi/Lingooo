@@ -390,6 +390,17 @@
     "step1": "Question answered! ✨",
     "step2": "Let's get started for real!"
   },
+  "whatsNew": {
+    "title": "What's New in v{{version}}",
+    "dismiss": "OK",
+    "versions": {
+      "1.0.6": {
+        "items": [
+          "You can now translate entire web pages just by pasting a URL"
+        ]
+      }
+    }
+  },
   "subscription": {
     "premiumMember": "Premium Member",
     "allFeaturesAvailable": "All features are available",
