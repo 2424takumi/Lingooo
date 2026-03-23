@@ -21,46 +21,67 @@ export interface TutorialDemoContent {
   highlightWord: string;
 }
 
-// 母語ごとのデモコンテンツ
+// 学習言語ごとのデモコンテンツ（学習言語→日本語の翻訳例文）
 export const TUTORIAL_DEMO_CONTENT: Record<string, TutorialDemoContent> = {
-  ja: {
+  en: {
     sourceLang: 'en',
     targetLang: 'ja',
     original: 'The weather was absolutely gorgeous, so we decided to take a stroll through the park.',
     translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
     highlightWord: 'gorgeous',
   },
-  en: {
-    sourceLang: 'ja',
-    targetLang: 'en',
-    original: '天気がとても素晴らしかったので、公園を散歩することにしました。',
-    translated: 'The weather was absolutely gorgeous, so we decided to take a stroll through the park.',
-    highlightWord: 'gorgeous',
-  },
   pt: {
-    sourceLang: 'en',
-    targetLang: 'pt',
-    original: 'The weather was absolutely gorgeous, so we decided to take a stroll through the park.',
-    translated: 'O tempo estava absolutamente lindo, então decidimos dar um passeio pelo parque.',
-    highlightWord: 'gorgeous',
+    sourceLang: 'pt',
+    targetLang: 'ja',
+    original: 'O tempo estava absolutamente lindo, então decidimos dar um passeio pelo parque.',
+    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
+    highlightWord: 'lindo',
   },
-  ko: {
-    sourceLang: 'en',
-    targetLang: 'ko',
-    original: 'The weather was absolutely gorgeous, so we decided to take a stroll through the park.',
-    translated: '날씨가 정말 아름다워서 공원을 산책하기로 했습니다.',
-    highlightWord: 'gorgeous',
+  fr: {
+    sourceLang: 'fr',
+    targetLang: 'ja',
+    original: 'Le temps était absolument magnifique, alors nous avons décidé de faire une promenade dans le parc.',
+    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
+    highlightWord: 'magnifique',
+  },
+  es: {
+    sourceLang: 'es',
+    targetLang: 'ja',
+    original: 'El tiempo estaba absolutamente precioso, así que decidimos dar un paseo por el parque.',
+    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
+    highlightWord: 'precioso',
   },
   zh: {
-    sourceLang: 'en',
-    targetLang: 'zh',
-    original: 'The weather was absolutely gorgeous, so we decided to take a stroll through the park.',
-    translated: '天气非常好，所以我们决定在公园里散步。',
-    highlightWord: 'gorgeous',
+    sourceLang: 'zh',
+    targetLang: 'ja',
+    original: '天气非常好，所以我们决定在公园里散步。',
+    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
+    highlightWord: '散步',
+  },
+  ko: {
+    sourceLang: 'ko',
+    targetLang: 'ja',
+    original: '날씨가 정말 아름다워서 공원을 산책하기로 했습니다.',
+    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
+    highlightWord: '아름다워서',
+  },
+  vi: {
+    sourceLang: 'vi',
+    targetLang: 'ja',
+    original: 'Thời tiết thật tuyệt vời nên chúng tôi quyết định đi dạo trong công viên.',
+    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
+    highlightWord: 'tuyệt vời',
+  },
+  id: {
+    sourceLang: 'id',
+    targetLang: 'ja',
+    original: 'Cuacanya sangat indah, jadi kami memutuskan untuk berjalan-jalan di taman.',
+    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
+    highlightWord: 'indah',
   },
 };
 
-// 母語コードからデモコンテンツを取得（フォールバック付き）
-export function getDemoContent(nativeLanguageCode: string): TutorialDemoContent {
-  return TUTORIAL_DEMO_CONTENT[nativeLanguageCode] || TUTORIAL_DEMO_CONTENT['ja'];
+// デフォルト学習言語のbaseCodeからデモコンテンツを取得（フォールバック: 英語）
+export function getDemoContent(learningLanguageBaseCode: string): TutorialDemoContent {
+  return TUTORIAL_DEMO_CONTENT[learningLanguageBaseCode] || TUTORIAL_DEMO_CONTENT['en'];
 }
