@@ -122,7 +122,8 @@ function AppContent() {
   }, [needsInitialSetup, needsOnboarding, shouldStartTutorial, isTutorialActive, currentVersion]);
 
   const handleInitialSetupComplete = async (nativeLanguage: string, learningLanguages: string[]) => {
-    completeInitialSetup(nativeLanguage, learningLanguages);
+    // モーダルが閉じるまで待つ（Supabase匿名ログイン + ユーザーレコード作成）
+    await completeInitialSetup(nativeLanguage, learningLanguages);
     // 静的オンボーディングをスキップして完了済みにする
     await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
     // needsOnboardingとshouldStartTutorialを同期的にセット（React batching）
