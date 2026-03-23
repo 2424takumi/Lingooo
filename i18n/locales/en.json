@@ -124,12 +124,12 @@
   },
   "tutorial": {
     "skip": "Skip",
-    "step1Title": "Long press to select a word",
-    "step1Description": "Try long pressing a word in the translation",
-    "step2Title": "Check the word card",
-    "step2Description": "View the dictionary or ask AI a question",
-    "step3Title": "Ask AI with question tags",
-    "step3Description": "Just tap a tag\nand AI answers right away",
+    "step1Title": "Give it a try!",
+    "step1Description": "Long press any word you're curious about",
+    "step2Title": "A word card appeared!",
+    "step2Description": "Tap \"More details\" for the dictionary,\nor \"Ask\" to chat with AI",
+    "step3Title": "Tap a tag!",
+    "step3Description": "Just tap any tag you like\nand AI will answer for you",
     "completeTitle": "You're all set!",
     "completeDescription": "Translate any text you like\nand tap on words to explore",
     "replayTutorial": "Replay Tutorial"
