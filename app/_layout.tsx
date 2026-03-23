@@ -47,14 +47,14 @@ function ClipboardMonitor() {
   const { isPremium } = useSubscription();
   const { handleSearch } = useSearch();
   const { needsInitialSetup } = useAuth();
-  const { isActive: isTutorialActive } = useTutorialContext();
+  const { isActive: isTutorialActive, shouldStartTutorial } = useTutorialContext();
   const [showTextLengthModal, setShowTextLengthModal] = useState(false);
   const [subscriptionVisible, setSubscriptionVisible] = useState(false);
 
   // アプリ全体でクリップボード監視（1回だけ）
-  // 初期設定中・チュートリアル中は無効化
+  // 初期設定中・チュートリアル中・チュートリアル開始待ち中は無効化
   useClipboardSearch({
-    enabled: !needsInitialSetup && !isTutorialActive,
+    enabled: !needsInitialSetup && !isTutorialActive && !shouldStartTutorial,
     onPaste: async (text: string) => {
       // 文字数制限チェック（無料プランのみ）
       const maxLength = isPremium ? MAX_TEXT_LENGTH_PREMIUM : MAX_TEXT_LENGTH_FREE;
@@ -129,10 +129,8 @@ function AppContent() {
     // インタラクティブチュートリアルを直接開始
     const tutorialDone = await isTutorialCompleted();
     if (!tutorialDone) {
+      setShouldStartTutorial(true);
       router.push('/(tabs)/translate');
-      setTimeout(() => {
-        setShouldStartTutorial(true);
-      }, 500);
     }
   };
 
@@ -143,10 +141,8 @@ function AppContent() {
     // 旧オンボーディング経由でもチュートリアルを開始
     const tutorialDone = await isTutorialCompleted();
     if (!tutorialDone) {
+      setShouldStartTutorial(true);
       router.push('/(tabs)/translate');
-      setTimeout(() => {
-        setShouldStartTutorial(true);
-      }, 500);
     }
   };
 
