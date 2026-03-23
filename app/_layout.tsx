@@ -47,13 +47,14 @@ function ClipboardMonitor() {
   const { isPremium } = useSubscription();
   const { handleSearch } = useSearch();
   const { needsInitialSetup } = useAuth();
+  const { isActive: isTutorialActive } = useTutorialContext();
   const [showTextLengthModal, setShowTextLengthModal] = useState(false);
   const [subscriptionVisible, setSubscriptionVisible] = useState(false);
 
   // アプリ全体でクリップボード監視（1回だけ）
-  // 初期設定中は無効化（モーダルの邪魔にならないように）
+  // 初期設定中・チュートリアル中は無効化
   useClipboardSearch({
-    enabled: !needsInitialSetup,
+    enabled: !needsInitialSetup && !isTutorialActive,
     onPaste: async (text: string) => {
       // 文字数制限チェック（無料プランのみ）
       const maxLength = isPremium ? MAX_TEXT_LENGTH_PREMIUM : MAX_TEXT_LENGTH_FREE;
