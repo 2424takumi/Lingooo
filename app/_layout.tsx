@@ -110,11 +110,12 @@ function AppContent() {
     });
   }, []);
 
-  // What's New表示チェック（チュートリアル中は表示しない）
+  // What's New表示チェック（チュートリアル中・初回インストール時は表示しない）
   useEffect(() => {
     if (needsInitialSetup || needsOnboarding || shouldStartTutorial || isTutorialActive) return;
     AsyncStorage.getItem(WHATS_NEW_VERSION_KEY).then(lastVersion => {
-      if (lastVersion !== currentVersion && getWhatsNewForVersion(currentVersion)) {
+      // lastVersionがnull = 初回インストール → WhatsNewは不要
+      if (lastVersion && lastVersion !== currentVersion && getWhatsNewForVersion(currentVersion)) {
         setShowWhatsNew(true);
       }
     });
@@ -192,12 +193,14 @@ function AppContent() {
         onComplete={handleOnboardingComplete}
       />
 
-      {/* What's Newモーダル（初期設定・オンボーディング完了後、新バージョン初回のみ） */}
-      <WhatsNewModal
-        visible={showWhatsNew}
-        version={currentVersion}
-        onClose={handleWhatsNewClose}
-      />
+      {/* What's Newモーダル（チュートリアル中はレンダリングしない） */}
+      {!shouldStartTutorial && !isTutorialActive && (
+        <WhatsNewModal
+          visible={showWhatsNew}
+          version={currentVersion}
+          onClose={handleWhatsNewClose}
+        />
+      )}
     </>
   );
 }
