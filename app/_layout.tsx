@@ -96,7 +96,7 @@ const WHATS_NEW_VERSION_KEY = '@lingooo:whats_new_version';
 function AppContent() {
   const colorScheme = useColorScheme();
   const { needsInitialSetup, completeInitialSetup } = useAuth();
-  const { setShouldStartTutorial } = useTutorialContext();
+  const { setShouldStartTutorial, shouldStartTutorial, isActive: isTutorialActive } = useTutorialContext();
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const currentVersion = Constants.expoConfig?.version ?? '';
@@ -110,15 +110,15 @@ function AppContent() {
     });
   }, []);
 
-  // What's New表示チェック
+  // What's New表示チェック（チュートリアル中は表示しない）
   useEffect(() => {
-    if (needsInitialSetup || needsOnboarding) return;
+    if (needsInitialSetup || needsOnboarding || shouldStartTutorial || isTutorialActive) return;
     AsyncStorage.getItem(WHATS_NEW_VERSION_KEY).then(lastVersion => {
       if (lastVersion !== currentVersion && getWhatsNewForVersion(currentVersion)) {
         setShowWhatsNew(true);
       }
     });
-  }, [needsInitialSetup, needsOnboarding, currentVersion]);
+  }, [needsInitialSetup, needsOnboarding, shouldStartTutorial, isTutorialActive, currentVersion]);
 
   const handleInitialSetupComplete = async (nativeLanguage: string, learningLanguages: string[]) => {
     completeInitialSetup(nativeLanguage, learningLanguages);
