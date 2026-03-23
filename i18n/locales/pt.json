@@ -112,16 +112,6 @@
     "nativeLanguageLabel": "Idioma Nativo",
     "learningLanguageLabel": "Idiomas que Quero Aprender (múltiplos)"
   },
-  "onboarding": {
-    "skip": "Pular",
-    "start": "Começar",
-    "step1Title": "A IA traduz naturalmente",
-    "step1Description": "Basta digitar o texto.\nA IA gera uma tradução natural que captura as nuances.",
-    "step2Title": "Toque na palavra que te interessa",
-    "step2Description": "Toque em uma palavra na tradução\ne a IA explica o significado naquele contexto.",
-    "step3Title": "Ainda com dúvida? Pergunte à IA",
-    "step3Description": "Nuances, uso, gramática.\nPergunte qualquer coisa à IA."
-  },
   "tutorial": {
     "skip": "Pular",
     "step1Title": "Pressione e segure uma palavra",

@@ -22,7 +22,6 @@ import { TutorialProvider, useTutorialContext } from '@/contexts/tutorial-contex
 import { isTutorialCompleted } from '@/services/storage/tutorial-storage';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { InitialLanguageSetupModal } from '@/components/modals/InitialLanguageSetupModal';
-import { OnboardingModal } from '@/components/modals/OnboardingModal';
 import { WhatsNewModal } from '@/components/modals/WhatsNewModal';
 import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
@@ -90,63 +89,34 @@ function ClipboardMonitor() {
   );
 }
 
-const ONBOARDING_COMPLETED_KEY = '@lingooo:onboarding_completed';
 const WHATS_NEW_VERSION_KEY = '@lingooo:whats_new_version';
 
 function AppContent() {
   const colorScheme = useColorScheme();
   const { needsInitialSetup, completeInitialSetup } = useAuth();
   const { setShouldStartTutorial, shouldStartTutorial, isActive: isTutorialActive } = useTutorialContext();
-  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const currentVersion = Constants.expoConfig?.version ?? '';
 
-  // オンボーディング完了状態をチェック
-  useEffect(() => {
-    AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY).then(value => {
-      if (!value) {
-        setNeedsOnboarding(true);
-      }
-    });
-  }, []);
-
   // What's New表示チェック（チュートリアル中・初回インストール時は表示しない）
   useEffect(() => {
-    if (needsInitialSetup || needsOnboarding || shouldStartTutorial || isTutorialActive) return;
+    if (needsInitialSetup || shouldStartTutorial || isTutorialActive) return;
     AsyncStorage.getItem(WHATS_NEW_VERSION_KEY).then(lastVersion => {
       // lastVersionがnull = 初回インストール → WhatsNewは不要
       if (lastVersion && lastVersion !== currentVersion && getWhatsNewForVersion(currentVersion)) {
         setShowWhatsNew(true);
       }
     });
-  }, [needsInitialSetup, needsOnboarding, shouldStartTutorial, isTutorialActive, currentVersion]);
+  }, [needsInitialSetup, shouldStartTutorial, isTutorialActive, currentVersion]);
 
   const handleInitialSetupComplete = async (nativeLanguage: string, learningLanguages: string[], defaultLanguage: string) => {
-    // OnboardingModal・WhatsNewが表示されないようにUI状態を先にセット
-    // （completeInitialSetup内でsetNeedsInitialSetup(false)が呼ばれた時のガード）
-    await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
-    setNeedsOnboarding(false);
+    // WhatsNewが表示されないようにUI状態を先にセット
     setShouldStartTutorial(true);
 
     // Supabase匿名ログイン + ユーザーレコード作成 → モーダルが閉じる
     await completeInitialSetup(nativeLanguage, learningLanguages, defaultLanguage);
 
     // インタラクティブチュートリアルを直接開始
-    const tutorialDone = await isTutorialCompleted();
-    if (!tutorialDone) {
-      router.push('/(tabs)/translate');
-    } else {
-      setShouldStartTutorial(false);
-    }
-  };
-
-  const handleOnboardingComplete = async () => {
-    await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
-    // needsOnboardingとshouldStartTutorialを同期的にセット（React batching）
-    setNeedsOnboarding(false);
-    setShouldStartTutorial(true);
-
-    // 旧オンボーディング経由でもチュートリアルを開始
     const tutorialDone = await isTutorialCompleted();
     if (!tutorialDone) {
       router.push('/(tabs)/translate');
@@ -186,12 +156,6 @@ function AppContent() {
       <InitialLanguageSetupModal
         visible={needsInitialSetup}
         onComplete={handleInitialSetupComplete}
-      />
-
-      {/* オンボーディングモーダル（初期設定完了後に表示） */}
-      <OnboardingModal
-        visible={!needsInitialSetup && needsOnboarding}
-        onComplete={handleOnboardingComplete}
       />
 
       {/* What's Newモーダル（チュートリアル中はレンダリングしない） */}

@@ -112,16 +112,6 @@
     "nativeLanguageLabel": "Native Language",
     "learningLanguageLabel": "Languages to Learn (multiple)"
   },
-  "onboarding": {
-    "skip": "Skip",
-    "start": "Get Started",
-    "step1Title": "AI translates naturally",
-    "step1Description": "Just enter your text.\nAI generates a natural translation that captures the nuance.",
-    "step2Title": "Tap any word you're curious about",
-    "step2Description": "Tap a word in the translation\nand AI explains its meaning in that context.",
-    "step3Title": "Still confused? Ask AI",
-    "step3Description": "Nuance, usage, grammar.\nAsk AI anything you want to know."
-  },
   "tutorial": {
     "skip": "Skip",
     "step1Title": "Try long-pressing a word",

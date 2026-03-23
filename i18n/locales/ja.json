@@ -112,16 +112,6 @@
     "nativeLanguageLabel": "母国語",
     "learningLanguageLabel": "学習したい言語（複数選択可）"
   },
-  "onboarding": {
-    "skip": "スキップ",
-    "start": "はじめる",
-    "step1Title": "AIが、自然に翻訳する",
-    "step1Description": "テキストを入力すると、\nAIがニュアンスを汲んだ自然な訳を生成します。",
-    "step2Title": "気になる単語をタップ",
-    "step2Description": "翻訳文の中の単語をタップすると、\nその文脈での意味をAIが解説します。",
-    "step3Title": "わからなければ、AIに聞ける",
-    "step3Description": "ニュアンス、使い方、文法。\n何でもAIに質問できます。"
-  },
   "tutorial": {
     "skip": "スキップ",
     "step1Title": "気になる単語を長押ししてみよう",
