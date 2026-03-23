@@ -45,15 +45,15 @@ export const unstable_settings = {
 function ClipboardMonitor() {
   const { isPremium } = useSubscription();
   const { handleSearch } = useSearch();
-  const { needsInitialSetup } = useAuth();
+  const { needsInitialSetup, loading } = useAuth();
   const { isActive: isTutorialActive, shouldStartTutorial } = useTutorialContext();
   const [showTextLengthModal, setShowTextLengthModal] = useState(false);
   const [subscriptionVisible, setSubscriptionVisible] = useState(false);
 
   // アプリ全体でクリップボード監視（1回だけ）
-  // 初期設定中・チュートリアル中・チュートリアル開始待ち中は無効化
+  // 認証初期化中・初期設定中・チュートリアル中・チュートリアル開始待ち中は無効化
   useClipboardSearch({
-    enabled: !needsInitialSetup && !isTutorialActive && !shouldStartTutorial,
+    enabled: !loading && !needsInitialSetup && !isTutorialActive && !shouldStartTutorial,
     onPaste: async (text: string) => {
       // 文字数制限チェック（無料プランのみ）
       const maxLength = isPremium ? MAX_TEXT_LENGTH_PREMIUM : MAX_TEXT_LENGTH_FREE;
