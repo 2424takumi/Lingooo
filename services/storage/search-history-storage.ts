@@ -7,6 +7,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { SearchHistoryItem } from '@/types/search';
 import { logger } from '@/utils/logger';
+import { getBaseLanguageCode } from '@/types/language';
 
 const STORAGE_KEY = '@lingooo_search_history';
 const MAX_HISTORY_ITEMS = 50; // 最大保存件数
@@ -60,8 +61,9 @@ export async function getSearchHistory(): Promise<SearchHistoryItem[]> {
 export async function getSearchHistoryByLanguage(language: string): Promise<SearchHistoryItem[]> {
   try {
     const history = await loadAllHistory();
+    const baseCode = getBaseLanguageCode(language);
     const filtered = history
-      .filter(item => item.language === language)
+      .filter(item => item.language === language || getBaseLanguageCode(item.language) === baseCode)
       .slice(0, MAX_HISTORY_ITEMS);
     return filtered;
   } catch (error) {
@@ -76,9 +78,10 @@ export async function getSearchHistoryByLanguage(language: string): Promise<Sear
 export async function getWordHistoryByLanguage(language: string): Promise<SearchHistoryItem[]> {
   try {
     const history = await loadAllHistory();
+    const baseCode = getBaseLanguageCode(language);
     const filtered = history
       .filter(item =>
-        item.language === language &&
+        (item.language === language || getBaseLanguageCode(item.language) === baseCode) &&
         item.searchType &&
         ['word', 'phrase'].includes(item.searchType)
       )
@@ -101,9 +104,10 @@ export async function getTranslationHistoryByLanguage(language: string): Promise
       items: history.map(item => ({ query: item.query.substring(0, 30), lang: item.language, type: item.searchType }))
     });
 
+    const baseCode = getBaseLanguageCode(language);
     const filtered = history
       .filter(item =>
-        item.language === language &&
+        (item.language === language || getBaseLanguageCode(item.language) === baseCode) &&
         item.searchType === 'translation'
       )
       .slice(0, MAX_HISTORY_ITEMS);

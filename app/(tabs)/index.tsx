@@ -11,6 +11,7 @@ import { SettingsBottomSheet } from '@/components/ui/settings-bottom-sheet';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
 import { QuotaExceededModal } from '@/components/ui/quota-exceeded-modal';
 import { ImagePreviewModal } from '@/components/ui/image-preview-modal';
+import { VariantMigrationModal } from '@/components/ui/variant-migration-modal';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSearch } from '@/hooks/use-search';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +26,7 @@ export default function HomeScreen() {
   const { handleSearch, isLoading, error, showTextLengthModal, setShowTextLengthModal } = useSearch();
   const { needsInitialSetup } = useAuth();
   const { isPremium } = useSubscription();
-  const { currentLanguage, defaultLanguage, nativeLanguage } = useLearningLanguages();
+  const { currentLanguage, defaultLanguage, nativeLanguage, needsVariantMigration, learningLanguages, completeVariantMigration } = useLearningLanguages();
   const [searchText, setSearchText] = useState('');
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [subscriptionVisible, setSubscriptionVisible] = useState(false);
@@ -181,9 +182,16 @@ export default function HomeScreen() {
         targetLanguage={
           currentLanguage?.code && currentLanguage.code !== nativeLanguage?.code
             ? currentLanguage.code
-            : defaultLanguage?.code || 'en'
+            : defaultLanguage?.code || 'en-US'
         }
         nativeLanguage={nativeLanguage?.code}
+      />
+
+      {/* Variant Migration Modal */}
+      <VariantMigrationModal
+        visible={needsVariantMigration}
+        languagesToMigrate={learningLanguages}
+        onComplete={completeVariantMigration}
       />
     </ThemedView>
   );

@@ -28,6 +28,55 @@ interface LanguageDropdownProps {
   multiSelect?: boolean;
 }
 
+/**
+ * 言語リストをグループ化して並び替え
+ * 同じgroupIdを持つ言語は連続して表示、グループ間にセパレータを挿入
+ */
+function groupLanguages(languages: Language[]): Array<{ type: 'language'; language: Language } | { type: 'separator' }> {
+  const result: Array<{ type: 'language'; language: Language } | { type: 'separator' }> = [];
+  let lastGroupId: string | undefined | null = null;
+
+  // グループ化のためにソート: groupIdあり → groupIdでソート、groupIdなし → 元の順序
+  const grouped: Language[] = [];
+  const withGroup: Language[] = [];
+  const withoutGroup: Language[] = [];
+
+  for (const lang of languages) {
+    if (lang.groupId) {
+      withGroup.push(lang);
+    } else {
+      withoutGroup.push(lang);
+    }
+  }
+
+  // groupIdでグループ化して並べる
+  const groupOrder: string[] = [];
+  for (const lang of withGroup) {
+    if (!groupOrder.includes(lang.groupId!)) {
+      groupOrder.push(lang.groupId!);
+    }
+  }
+
+  for (const gid of groupOrder) {
+    grouped.push(...withGroup.filter(l => l.groupId === gid));
+  }
+  grouped.push(...withoutGroup);
+
+  for (const lang of grouped) {
+    const currentGroupId = lang.groupId || lang.id;
+
+    if (lastGroupId !== null && currentGroupId !== lastGroupId) {
+      // グループが変わった場合、セパレータを挿入
+      result.push({ type: 'separator' });
+    }
+
+    result.push({ type: 'language', language: lang });
+    lastGroupId = currentGroupId;
+  }
+
+  return result;
+}
+
 export function LanguageDropdown({
   label,
   selectedLanguage,
@@ -68,6 +117,8 @@ export function LanguageDropdown({
     }
     setIsOpen(true);
   };
+
+  const groupedItems = groupLanguages(availableLanguages);
 
   return (
     <>
@@ -129,7 +180,12 @@ export function LanguageDropdown({
               )}
             </View>
             <View>
-              {availableLanguages.map((language) => {
+              {groupedItems.map((item, index) => {
+                if (item.type === 'separator') {
+                  return <View key={`sep-${index}`} style={styles.separator} />;
+                }
+
+                const language = item.language;
                 const isSelected = multiSelect
                   ? tempSelected.some((lang) => lang.id === language.id)
                   : selectedLanguage?.id === language.id;
@@ -262,5 +318,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#4CAF50',
     fontWeight: '600',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginHorizontal: 20,
+    marginVertical: 4,
   },
 });

@@ -30,8 +30,9 @@ export default function NativeLanguageSelectScreen() {
   const { nativeLanguage, setNativeLanguage } = useLearningLanguages();
 
   // 母国語として選択可能な言語（日本語、英語、ポルトガル語のみ）
+  // バリアントの場合は最初のバリアントのみ表示
   const nativeLanguageOptions = AVAILABLE_LANGUAGES.filter(
-    (lang) => lang.id === 'japanese' || lang.id === 'english' || lang.id === 'portuguese'
+    (lang) => lang.id === 'japanese' || lang.id === 'english-us' || lang.id === 'portuguese-br'
   );
 
   const handleLanguageSelect = async (languageId: string) => {

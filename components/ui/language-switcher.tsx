@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   dropdown: {
     borderRadius: 12,
     padding: 8,
-    minWidth: 180,
+    minWidth: 220,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,

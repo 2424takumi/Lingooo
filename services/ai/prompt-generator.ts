@@ -8,6 +8,7 @@
  */
 
 import { fetchPromptWithFallback } from './langfuse-client';
+import { AVAILABLE_LANGUAGES, getBaseLanguageCode } from '@/types/language';
 
 /**
  * 言語名マッピング（日本語表記）
@@ -15,7 +16,11 @@ import { fetchPromptWithFallback } from './langfuse-client';
 const LANGUAGE_NAMES_JA: Record<string, string> = {
   ja: '日本語',
   en: '英語',
+  'en-US': '英語（アメリカ）',
+  'en-GB': '英語（イギリス）',
   pt: 'ポルトガル語',
+  'pt-BR': 'ポルトガル語（ブラジル）',
+  'pt-PT': 'ポルトガル語（ポルトガル）',
   fr: 'フランス語',
   zh: '中国語',
   ko: '韓国語',
@@ -30,7 +35,11 @@ const LANGUAGE_NAMES_JA: Record<string, string> = {
 const LANGUAGE_NAMES_EN: Record<string, string> = {
   ja: 'Japanese',
   en: 'English',
+  'en-US': 'American English',
+  'en-GB': 'British English',
   pt: 'Portuguese',
+  'pt-BR': 'Brazilian Portuguese',
+  'pt-PT': 'European Portuguese',
   fr: 'French',
   zh: 'Chinese',
   ko: 'Korean',
@@ -52,7 +61,7 @@ function getLanguageNameJa(languageCode: string | undefined): string {
     console.warn('[PromptGenerator] languageCode is undefined, defaulting to "en"');
     return '英語';
   }
-  return LANGUAGE_NAMES_JA[languageCode] || languageCode.toUpperCase();
+  return LANGUAGE_NAMES_JA[languageCode] || LANGUAGE_NAMES_JA[getBaseLanguageCode(languageCode)] || languageCode.toUpperCase();
 }
 
 /**
@@ -63,15 +72,34 @@ export function getLanguageNameEn(languageCode: string | undefined): string {
     console.warn('[PromptGenerator] languageCode is undefined, defaulting to "en"');
     return 'English';
   }
-  return LANGUAGE_NAMES_EN[languageCode] || languageCode.toUpperCase();
+  return LANGUAGE_NAMES_EN[languageCode] || LANGUAGE_NAMES_EN[getBaseLanguageCode(languageCode)] || languageCode.toUpperCase();
+}
+
+/**
+ * 言語コードからAIプロンプト用の名前を取得
+ * バリアントがある言語は "American English", "Brazilian Portuguese" 等を返す
+ */
+export function getLanguagePromptName(code: string): string {
+  const lang = AVAILABLE_LANGUAGES.find(l => l.code === code);
+  if (lang) return lang.promptName;
+  return LANGUAGE_NAMES_EN[code] || LANGUAGE_NAMES_EN[getBaseLanguageCode(code)] || code.toUpperCase();
+}
+
+/**
+ * 言語コードからバリアント固有のプロンプトヒントを取得
+ */
+export function getLanguagePromptHint(code: string): string {
+  const lang = AVAILABLE_LANGUAGES.find(l => l.code === code);
+  return lang?.promptHint || '';
 }
 
 /**
  * 名詞に性別がある言語かチェック
  */
 function hasGrammaticalGender(languageCode: string): boolean {
-  const genderLanguages = ['es', 'pt', 'fr'];
-  return genderLanguages.includes(languageCode);
+  const genderLanguages = ['es', 'pt'];
+  const baseCode = getBaseLanguageCode(languageCode);
+  return genderLanguages.includes(baseCode);
 }
 
 /**
@@ -80,12 +108,14 @@ function hasGrammaticalGender(languageCode: string): boolean {
  * 超高速表示用：0.2~0.3秒で返却
  */
 export function createBasicInfoPrompt(word: string, targetLanguage: string = 'en', nativeLanguage: string = 'ja'): string {
-  const targetLanguageName = getLanguageNameEn(targetLanguage);
-  const nativeLanguageName = getLanguageNameEn(nativeLanguage);
+  const targetLanguageName = getLanguagePromptName(targetLanguage);
+  const nativeLanguageName = getLanguagePromptName(nativeLanguage);
+  const targetLanguageHint = getLanguagePromptHint(targetLanguage);
   const needsGender = hasGrammaticalGender(targetLanguage);
   const genderField = needsGender ? ', "gender": "m or f or n or mf (for nouns only)"' : '';
 
   const fallback = `Generate basic information for the {{targetLanguageName}} word "{{word}}" in the following JSON structure with minimal tokens:
+{{targetLanguageHint}}
 
 {
   "headword": {"lemma": "{{word}}", "lang": "{{targetLanguage}}", "pos": ["part of speech (English, e.g., verb, noun)"]{{genderField}}},
@@ -106,6 +136,7 @@ Requirements:
       targetLanguageName,
       nativeLanguage,
       nativeLanguageName,
+      targetLanguageHint,
       genderField,
     }
   );
@@ -126,8 +157,9 @@ export function createAdditionalDetailsPrompt(
   targetLanguage: string = 'en',
   nativeLanguage: string = 'ja'
 ): string {
-  const targetLanguageName = getLanguageNameEn(targetLanguage);
-  const nativeLanguageName = getLanguageNameEn(nativeLanguage);
+  const targetLanguageName = getLanguagePromptName(targetLanguage);
+  const nativeLanguageName = getLanguagePromptName(nativeLanguage);
+  const targetLanguageHint = getLanguagePromptHint(targetLanguage);
 
   console.log('[createAdditionalDetailsPrompt] Parameters:', {
     word,
@@ -140,6 +172,7 @@ export function createAdditionalDetailsPrompt(
   const fallback = `You are a bilingual dictionary engine that generates high-quality example sentences for language learners.
 
 For the {{targetLanguageName}} word "{{word}}", generate ONLY example sentences with translations.
+{{targetLanguageHint}}
 
 Output JSON format:
 {
@@ -171,6 +204,7 @@ Requirements:
       targetLanguageName,
       nativeLanguage,
       nativeLanguageName,
+      targetLanguageHint,
     }
   );
 
@@ -195,7 +229,7 @@ Requirements:
  * 詳細度はチャット機能のAI返答にのみ適用される
  *
  * @param word - 検索する単語
- * @param targetLanguage - ターゲット言語コード（例: 'en', 'es', 'pt', 'zh'）
+ * @param targetLanguage - ターゲット言語コード（例: 'en-US', 'es', 'pt-BR', 'zh'）
  * @param nativeLanguage - 母国語コード（例: 'ja', 'en', 'zh'）
  */
 export function createDictionaryPrompt(
@@ -203,12 +237,14 @@ export function createDictionaryPrompt(
   targetLanguage: string = 'en',
   nativeLanguage: string = 'ja'
 ): string {
-  const targetLanguageName = getLanguageNameEn(targetLanguage);
-  const nativeLanguageName = getLanguageNameEn(nativeLanguage);
+  const targetLanguageName = getLanguagePromptName(targetLanguage);
+  const nativeLanguageName = getLanguagePromptName(nativeLanguage);
+  const targetLanguageHint = getLanguagePromptHint(targetLanguage);
   const needsGender = hasGrammaticalGender(targetLanguage);
   const genderField = needsGender ? ', "gender": "m or f or n or mf (for nouns only)"' : '';
+  const hintLine = targetLanguageHint ? `\n${targetLanguageHint}` : '';
 
-  return `Generate dictionary information for the ${targetLanguageName} word "${word}" in the following JSON structure:
+  return `Generate dictionary information for the ${targetLanguageName} word "${word}" in the following JSON structure:${hintLine}
 
 {
   "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["part of speech (English, e.g., verb, noun)"]${genderField}},

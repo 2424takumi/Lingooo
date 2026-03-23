@@ -96,7 +96,7 @@ export default function WordDetailScreen() {
 
   // パラメータから単語を取得
   const word = params.word as string || '';
-  const targetLanguage = (params.targetLanguage as string) || 'en'; // 学習言語コード
+  const targetLanguage = (params.targetLanguage as string) || 'en-US'; // 学習言語コード
   const skipLanguageDetection = (params.skipLanguageDetection as string) === 'true'; // 翻訳ページから遷移時はtrue
   const dataParam = params.data as string;
   const fromPage = params.fromPage as string;
@@ -853,6 +853,7 @@ export default function WordDetailScreen() {
       }
 
       // 言語コードから音声言語コードへのマッピング
+      // BCP 47コード（'en-US', 'pt-BR'等）はそのまま使用
       const languageMap: Record<string, string> = {
         en: 'en-US',
         es: 'es-ES',
@@ -867,7 +868,9 @@ export default function WordDetailScreen() {
         hi: 'hi-IN',
       };
 
-      const speechLanguage = languageMap[targetLanguage] || 'en-US';
+      const speechLanguage = targetLanguage.includes('-')
+        ? targetLanguage
+        : (languageMap[targetLanguage] || 'en-US');
       logger.info('[Pronounce] Using language:', speechLanguage, 'for target:', targetLanguage);
 
       // 単語を発音

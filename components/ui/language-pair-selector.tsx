@@ -11,7 +11,7 @@ import { useState } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { AVAILABLE_LANGUAGES } from '@/types/language';
+import { AVAILABLE_LANGUAGES, findLanguageByCode } from '@/types/language';
 import { Shimmer } from './shimmer';
 
 function ChevronDownIcon({ size = 20, color = '#686868' }: { size?: number; color?: string }) {
@@ -37,7 +37,7 @@ interface LanguagePairSelectorProps {
 }
 
 function getLanguageInfo(code: string) {
-  return AVAILABLE_LANGUAGES.find(l => l.code === code);
+  return findLanguageByCode(code);
 }
 
 export function LanguagePairSelector({
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#000000',
-    maxWidth: 80,
+    maxWidth: 120,
   },
   backdrop: {
     flex: 1,

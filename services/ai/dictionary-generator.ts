@@ -7,7 +7,8 @@
 
 import { generateJSON, generateText, generateTextStream, generateJSONProgressive, generateBasicInfo, generateSuggestionsArray, generateSuggestionsArrayFast, generateUsageHint, generateUsageHints, detectLanguage, generateAdditionalInfoStream, generateSuggestionsStream, generateHintStream, type LanguageDetectionResult, type HintStreamCallbacks } from './gemini-client';
 import { selectModel } from './model-selector';
-import { createBasicInfoPrompt, createAdditionalDetailsPrompt, createDictionaryPrompt, createSuggestionsPrompt, getLanguageNameEn } from './prompt-generator';
+import { createBasicInfoPrompt, createAdditionalDetailsPrompt, createDictionaryPrompt, createSuggestionsPrompt, getLanguagePromptName } from './prompt-generator';
+import { getBaseLanguageCode } from '@/types/language';
 import { fetchPromptWithFallback } from './langfuse-client';
 import type { WordDetailResponse } from '@/types/search';
 import { logger } from '@/utils/logger';
@@ -125,12 +126,13 @@ export async function generateSuggestionsFast(
 
   // 性別が必要な言語かチェック
   const genderLanguages = ['es', 'pt', 'fr', 'de', 'it', 'ru', 'ar', 'hi'];
-  const needsGender = genderLanguages.includes(targetLanguage);
+  const baseTargetCode = getBaseLanguageCode(targetLanguage);
+  const needsGender = genderLanguages.includes(baseTargetCode);
   const genderField = needsGender ? ', "gender": "m/f/n（名詞のみ）"' : '';
 
-  // 言語名（英語表記）
-  const targetLanguageName = getLanguageNameEn(targetLanguage);
-  const nativeLanguageName = getLanguageNameEn(nativeLanguage);
+  // 言語名（AIプロンプト用）
+  const targetLanguageName = getLanguagePromptName(targetLanguage);
+  const nativeLanguageName = getLanguagePromptName(nativeLanguage);
 
   // フォールバックプロンプト
   const fallback = `Generate 3-5 {{targetLanguageName}} words corresponding to {{nativeLanguageName}} "{{query}}" in the following JSON array structure:
@@ -206,12 +208,13 @@ export async function generateSuggestionsStreamFast(
 
   // 性別が必要な言語かチェック
   const genderLanguages = ['es', 'pt', 'fr', 'de', 'it', 'ru', 'ar', 'hi'];
-  const needsGender = genderLanguages.includes(targetLanguage);
+  const baseTargetCode = getBaseLanguageCode(targetLanguage);
+  const needsGender = genderLanguages.includes(baseTargetCode);
   const genderField = needsGender ? ', "gender": "m/f/n（名詞のみ）"' : '';
 
-  // 言語名（英語表記）
-  const targetLanguageName = getLanguageNameEn(targetLanguage);
-  const nativeLanguageName = getLanguageNameEn(nativeLanguage);
+  // 言語名（AIプロンプト用）
+  const targetLanguageName = getLanguagePromptName(targetLanguage);
+  const nativeLanguageName = getLanguagePromptName(nativeLanguage);
 
   // フォールバックプロンプト
   const fallback = `Generate 3-5 {{targetLanguageName}} words corresponding to {{nativeLanguageName}} "{{query}}" in the following JSON array structure:

@@ -5,25 +5,28 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AVAILABLE_LANGUAGES, Language } from '@/types/language';
+import { AVAILABLE_LANGUAGES, Language, LEGACY_CODE_MIGRATION, findLanguageByCode } from '@/types/language';
 import { logger } from '@/utils/logger';
 import { useAuth } from './auth-context';
 import { supabase } from '@/lib/supabase';
 import i18n from '@/i18n';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// AsyncStorageキーは削除（Supabaseに移行）
+const VARIANT_MIGRATION_KEY = '@lingooo_variant_migration_done';
 
 interface LearningLanguagesContextType {
   learningLanguages: Language[];
   defaultLanguage: Language;
   currentLanguage: Language;
   nativeLanguage: Language;
+  needsVariantMigration: boolean;
   addLearningLanguage: (languageId: string) => Promise<void>;
   removeLearningLanguage: (languageId: string) => Promise<void>;
   setDefaultLanguage: (languageId: string) => Promise<void>;
-  setCurrentLanguage: (languageId: string) => Promise<void>;
+  setCurrentLanguage: (languageIdOrCode: string) => Promise<void>;
   setNativeLanguage: (languageId: string) => Promise<void>;
   isLearning: (languageId: string) => boolean;
+  completeVariantMigration: (selections: Record<string, string>) => Promise<void>;
 }
 
 const LearningLanguagesContext = createContext<LearningLanguagesContextType | undefined>(
@@ -34,20 +37,37 @@ interface LearningLanguagesProviderProps {
   children: ReactNode;
 }
 
+/**
+ * レガシー言語コードを新コードに変換
+ * 'pt' → 'pt-BR', 'en' → 'en-US'
+ */
+function migrateLanguageCode(code: string): string {
+  return LEGACY_CODE_MIGRATION[code] || code;
+}
+
+/**
+ * 言語コードからLanguageオブジェクトを解決
+ * レガシーコード('pt', 'en')にも対応
+ */
+function resolveLanguage(code: string): Language | undefined {
+  return findLanguageByCode(code);
+}
+
 export function LearningLanguagesProvider({ children }: LearningLanguagesProviderProps) {
   const { user, loading: authLoading, needsInitialSetup } = useAuth();
   const [learningLanguages, setLearningLanguages] = useState<Language[]>([
-    AVAILABLE_LANGUAGES[0], // デフォルトは英語
+    AVAILABLE_LANGUAGES[1], // デフォルトはenglish-us
   ]);
   const [defaultLanguage, setDefaultLanguageState] = useState<Language>(
-    AVAILABLE_LANGUAGES[0]
+    AVAILABLE_LANGUAGES[1]
   );
   const [currentLanguage, setCurrentLanguageState] = useState<Language>(
-    AVAILABLE_LANGUAGES[0]
+    AVAILABLE_LANGUAGES[1]
   );
   // 日本語に固定（Japanese-only optimization for initial release）
   const JAPANESE_LANGUAGE = AVAILABLE_LANGUAGES.find(lang => lang.code === 'ja')!;
   const [nativeLanguage] = useState<Language>(JAPANESE_LANGUAGE);
+  const [needsVariantMigration, setNeedsVariantMigration] = useState(false);
 
   // 初期化（userが取得されたら、かつ初期設定が完了していたら実行）
   useEffect(() => {
@@ -91,24 +111,36 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
         logger.info('[LearningLanguages] Setting i18n language to: ja (Japanese-only mode)');
         await i18n.changeLanguage('ja');
 
-        // デフォルト言語を設定（データベースには言語コードが保存されている）
+        // デフォルト言語を設定（レガシーコード対応）
         if (data.default_language) {
-          const language = AVAILABLE_LANGUAGES.find((lang) => lang.code === data.default_language);
+          const language = resolveLanguage(data.default_language);
           if (language) {
             logger.info('[LearningLanguages] Setting default language:', language.name);
             setDefaultLanguageState(language);
-            setCurrentLanguageState(language); // 初期表示用
+            setCurrentLanguageState(language);
           }
         }
 
-        // 学習中の言語を設定（データベースには言語コードが保存されている）
+        // 学習中の言語を設定（レガシーコード対応）
         if (data.learning_languages && Array.isArray(data.learning_languages)) {
           const languages = data.learning_languages
-            .map((code: string) => AVAILABLE_LANGUAGES.find((lang) => lang.code === code))
+            .map((code: string) => resolveLanguage(code))
             .filter((lang): lang is Language => lang !== undefined);
           if (languages.length > 0) {
             logger.info('[LearningLanguages] Setting learning languages:', languages.map(l => l.name));
             setLearningLanguages(languages);
+          }
+
+          // バリアント移行チェック: レガシーコードが含まれていて、まだ移行していない場合
+          const hasLegacyCodes = data.learning_languages.some(
+            (code: string) => code in LEGACY_CODE_MIGRATION
+          );
+          if (hasLegacyCodes) {
+            const migrationDone = await AsyncStorage.getItem(VARIANT_MIGRATION_KEY);
+            if (!migrationDone) {
+              logger.info('[LearningLanguages] Legacy codes detected, needs variant migration');
+              setNeedsVariantMigration(true);
+            }
           }
         }
       }
@@ -195,7 +227,7 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     setDefaultLanguageState(language);
 
     try {
-      // データベースには言語コードを保存
+      // データベースには言語コード（BCP 47）を保存
       const { error } = await supabase
         .from('users')
         .update({ default_language: language.code })
@@ -217,9 +249,8 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
 
     // 学習言語リストにない場合は、全言語から検索（翻訳時の一時表示用）
     if (!language) {
-      language = AVAILABLE_LANGUAGES.find(
-        (lang) => lang.id === languageIdOrCode || lang.code === languageIdOrCode
-      );
+      language = findLanguageByCode(languageIdOrCode) ||
+        AVAILABLE_LANGUAGES.find((lang) => lang.id === languageIdOrCode);
     }
 
     if (!language) {
@@ -243,6 +274,70 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
     return learningLanguages.some((lang) => lang.id === languageId);
   };
 
+  /**
+   * バリアント移行完了処理
+   * @param selections - { 'english': 'english-us', 'portuguese': 'portuguese-br' } の形式
+   */
+  const completeVariantMigration = async (selections: Record<string, string>) => {
+    if (!user) return;
+
+    try {
+      logger.info('[LearningLanguages] Completing variant migration with selections:', selections);
+
+      // 現在の学習言語リストを更新
+      const updatedLanguages = learningLanguages.map(lang => {
+        if (lang.groupId && selections[lang.groupId]) {
+          const selectedId = selections[lang.groupId];
+          const selectedLang = AVAILABLE_LANGUAGES.find(l => l.id === selectedId);
+          return selectedLang || lang;
+        }
+        return lang;
+      });
+
+      setLearningLanguages(updatedLanguages);
+
+      // デフォルト言語も更新
+      if (defaultLanguage.groupId && selections[defaultLanguage.groupId]) {
+        const selectedId = selections[defaultLanguage.groupId];
+        const selectedLang = AVAILABLE_LANGUAGES.find(l => l.id === selectedId);
+        if (selectedLang) {
+          setDefaultLanguageState(selectedLang);
+          setCurrentLanguageState(selectedLang);
+        }
+      }
+
+      // Supabaseに保存
+      const codes = updatedLanguages.map(lang => lang.code);
+      const defaultCode = updatedLanguages.find(l => {
+        if (defaultLanguage.groupId && selections[defaultLanguage.groupId]) {
+          return l.id === selections[defaultLanguage.groupId];
+        }
+        return l.id === defaultLanguage.id;
+      })?.code || updatedLanguages[0].code;
+
+      const { error } = await supabase
+        .from('users')
+        .update({
+          learning_languages: codes,
+          default_language: defaultCode,
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        logger.error('Failed to save variant migration:', error);
+        return;
+      }
+
+      // 移行完了フラグを保存
+      await AsyncStorage.setItem(VARIANT_MIGRATION_KEY, 'true');
+      setNeedsVariantMigration(false);
+
+      logger.info('[LearningLanguages] Variant migration completed successfully');
+    } catch (error) {
+      logger.error('Failed to complete variant migration:', error);
+    }
+  };
+
   return (
     <LearningLanguagesContext.Provider
       value={{
@@ -250,12 +345,14 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
         defaultLanguage,
         currentLanguage,
         nativeLanguage,
+        needsVariantMigration,
         addLearningLanguage,
         removeLearningLanguage,
         setDefaultLanguage,
         setCurrentLanguage,
         setNativeLanguage,
         isLearning,
+        completeVariantMigration,
       }}
     >
       {children}
