@@ -24,6 +24,7 @@ interface TutorialContextType {
   reportEvent: (event: TutorialEvent) => void;
   startTutorial: () => void;
   skipTutorial: () => void;
+  dismissTutorial: () => void;
   resetAndRestart: () => Promise<void>;
   shouldStartTutorial: boolean;
   setShouldStartTutorial: (value: boolean) => void;
@@ -66,11 +67,13 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     logger.info('[Tutorial] Tutorial completed');
     setCurrentStep(TUTORIAL_STEPS.COMPLETE);
     await setTutorialCompleted();
-    // 完了メッセージを1.5秒表示してから終了
-    setTimeout(() => {
-      setIsActive(false);
-      setTargetRect(null);
-    }, 1500);
+    // ボタンタップでdismissTutorialを呼ぶまで表示し続ける
+  }, []);
+
+  const dismissTutorial = useCallback(() => {
+    logger.info('[Tutorial] Tutorial dismissed');
+    setIsActive(false);
+    setTargetRect(null);
   }, []);
 
   const skipTutorial = useCallback(async () => {
@@ -133,6 +136,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
         reportEvent,
         startTutorial,
         skipTutorial,
+        dismissTutorial,
         resetAndRestart,
         shouldStartTutorial,
         setShouldStartTutorial,

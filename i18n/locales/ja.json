@@ -122,6 +122,7 @@
     "step3Description": "気になるタグをタップするだけでAIが答えてくれます",
     "completeTitle": "準備完了！",
     "completeDescription": "翻訳した文章の中から気になる単語を長押しして、AIに質問してみましょう。\n\nLingoooがあなたの語学学習をサポートします。",
+    "startTranslating": "早速翻訳する",
     "replayTutorial": "チュートリアルをやり直す"
   },
   "wordDetail": {

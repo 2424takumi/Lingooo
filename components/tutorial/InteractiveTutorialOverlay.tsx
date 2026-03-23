@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { router } from 'expo-router';
 import { useTutorialContext } from '@/contexts/tutorial-context';
 import { TUTORIAL_STEPS } from '@/constants/tutorial';
 import SpotlightOverlay from './SpotlightOverlay';
@@ -19,17 +20,25 @@ export default function InteractiveTutorialOverlay({
   questionButtonPosition,
 }: InteractiveTutorialOverlayProps) {
   const { t } = useTranslation();
-  const { isActive, currentStep, targetRect, skipTutorial } = useTutorialContext();
+  const { isActive, currentStep, targetRect, skipTutorial, dismissTutorial } = useTutorialContext();
 
   if (!isActive) return null;
 
   // Step 3: 完了メッセージ
   if (currentStep === TUTORIAL_STEPS.COMPLETE) {
+    const handleStartTranslating = () => {
+      dismissTutorial();
+      router.replace('/(tabs)');
+    };
+
     return (
       <View style={styles.completeOverlay} pointerEvents="auto">
         <View style={styles.completeCard}>
           <Text style={styles.completeTitle}>{t('tutorial.completeTitle')}</Text>
           <Text style={styles.completeDescription}>{t('tutorial.completeDescription')}</Text>
+          <TouchableOpacity style={styles.completeButton} onPress={handleStartTranslating}>
+            <Text style={styles.completeButtonText}>{t('tutorial.startTranslating')}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -160,5 +169,19 @@ const styles = StyleSheet.create({
     color: '#444444',
     textAlign: 'center',
     lineHeight: 26,
+  },
+  completeButton: {
+    marginTop: 24,
+    backgroundColor: '#00AA69',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    width: '100%',
+    alignItems: 'center',
+  },
+  completeButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
