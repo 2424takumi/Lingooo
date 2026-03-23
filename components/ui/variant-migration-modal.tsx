@@ -2,11 +2,12 @@
  * バリアント選択モーダル
  *
  * 既存ユーザーの初回起動時に、言語バリアント（ブラジルPT vs ポルトガルPT等）を選択するモーダル
+ * 複数バリアントの選択が可能（両方の違いを学びたいユーザー向け）
  */
 
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { useState } from 'react';
-import { AVAILABLE_LANGUAGES, Language, LEGACY_CODE_MIGRATION } from '@/types/language';
+import { AVAILABLE_LANGUAGES, Language } from '@/types/language';
 
 interface VariantGroup {
   groupId: string;
@@ -18,7 +19,7 @@ interface VariantGroup {
 interface VariantMigrationModalProps {
   visible: boolean;
   languagesToMigrate: Language[];
-  onComplete: (selections: Record<string, string>) => void;
+  onComplete: (selections: Record<string, string[]>) => void;
 }
 
 /**
@@ -61,15 +62,26 @@ export function VariantMigrationModal({
 }: VariantMigrationModalProps) {
   const variantGroups = getVariantGroups(languagesToMigrate);
 
-  // 各グループのデフォルト選択を初期化
-  const initialSelections: Record<string, string> = {};
+  // 各グループのデフォルト選択を初期化（デフォルトは1つ選択済み）
+  const initialSelections: Record<string, string[]> = {};
   for (const group of variantGroups) {
-    initialSelections[group.groupId] = group.defaultVariantId;
+    initialSelections[group.groupId] = [group.defaultVariantId];
   }
-  const [selections, setSelections] = useState<Record<string, string>>(initialSelections);
+  const [selections, setSelections] = useState<Record<string, string[]>>(initialSelections);
 
-  const handleSelect = (groupId: string, variantId: string) => {
-    setSelections(prev => ({ ...prev, [groupId]: variantId }));
+  const handleToggle = (groupId: string, variantId: string) => {
+    setSelections(prev => {
+      const current = prev[groupId] || [];
+      const isSelected = current.includes(variantId);
+
+      if (isSelected) {
+        // 最低1つは選択が必要
+        if (current.length <= 1) return prev;
+        return { ...prev, [groupId]: current.filter(id => id !== variantId) };
+      } else {
+        return { ...prev, [groupId]: [...current, variantId] };
+      }
+    });
   };
 
   const handleComplete = () => {
@@ -91,14 +103,15 @@ export function VariantMigrationModal({
             <Text style={styles.title}>言語のバリアントを選択</Text>
             <Text style={styles.description}>
               学習中の言語にバリアントが追加されました。{'\n'}
-              お使いのバリアントを選択してください。
+              学びたいバリアントを選択してください。{'\n'}
+              両方選択することもできます。
             </Text>
 
             {variantGroups.map((group) => (
               <View key={group.groupId} style={styles.groupContainer}>
                 <Text style={styles.groupTitle}>{group.groupName}</Text>
                 {group.variants.map((variant) => {
-                  const isSelected = selections[group.groupId] === variant.id;
+                  const isSelected = (selections[group.groupId] || []).includes(variant.id);
                   return (
                     <TouchableOpacity
                       key={variant.id}
@@ -106,7 +119,7 @@ export function VariantMigrationModal({
                         styles.variantItem,
                         isSelected && styles.variantItemSelected,
                       ]}
-                      onPress={() => handleSelect(group.groupId, variant.id)}
+                      onPress={() => handleToggle(group.groupId, variant.id)}
                     >
                       <Text style={styles.variantFlag}>{variant.flag}</Text>
                       <Text style={[

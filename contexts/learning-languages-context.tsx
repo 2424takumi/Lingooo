@@ -26,7 +26,7 @@ interface LearningLanguagesContextType {
   setCurrentLanguage: (languageIdOrCode: string) => Promise<void>;
   setNativeLanguage: (languageId: string) => Promise<void>;
   isLearning: (languageId: string) => boolean;
-  completeVariantMigration: (selections: Record<string, string>) => Promise<void>;
+  completeVariantMigration: (selections: Record<string, string[]>) => Promise<void>;
 }
 
 const LearningLanguagesContext = createContext<LearningLanguagesContextType | undefined>(
@@ -276,30 +276,44 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
 
   /**
    * バリアント移行完了処理
-   * @param selections - { 'english': 'english-us', 'portuguese': 'portuguese-br' } の形式
+   * @param selections - { 'english': ['english-us', 'english-gb'], 'portuguese': ['portuguese-br'] } の形式
+   * 各グループから複数バリアントを選択可能
    */
-  const completeVariantMigration = async (selections: Record<string, string>) => {
+  const completeVariantMigration = async (selections: Record<string, string[]>) => {
     if (!user) return;
 
     try {
       logger.info('[LearningLanguages] Completing variant migration with selections:', selections);
 
       // 現在の学習言語リストを更新
-      const updatedLanguages = learningLanguages.map(lang => {
+      // レガシー言語を選択されたバリアントに置き換え（複数バリアント対応）
+      const updatedLanguages: Language[] = [];
+      for (const lang of learningLanguages) {
         if (lang.groupId && selections[lang.groupId]) {
-          const selectedId = selections[lang.groupId];
-          const selectedLang = AVAILABLE_LANGUAGES.find(l => l.id === selectedId);
-          return selectedLang || lang;
+          // このグループの選択されたバリアントを追加（重複防止）
+          const selectedIds = selections[lang.groupId];
+          for (const selectedId of selectedIds) {
+            if (!updatedLanguages.find(l => l.id === selectedId)) {
+              const selectedLang = AVAILABLE_LANGUAGES.find(l => l.id === selectedId);
+              if (selectedLang) {
+                updatedLanguages.push(selectedLang);
+              }
+            }
+          }
+        } else {
+          // バリアントグループに属さない言語はそのまま
+          if (!updatedLanguages.find(l => l.id === lang.id)) {
+            updatedLanguages.push(lang);
+          }
         }
-        return lang;
-      });
+      }
 
       setLearningLanguages(updatedLanguages);
 
-      // デフォルト言語も更新
+      // デフォルト言語も更新（グループの最初の選択をデフォルトに）
       if (defaultLanguage.groupId && selections[defaultLanguage.groupId]) {
-        const selectedId = selections[defaultLanguage.groupId];
-        const selectedLang = AVAILABLE_LANGUAGES.find(l => l.id === selectedId);
+        const firstSelectedId = selections[defaultLanguage.groupId][0];
+        const selectedLang = AVAILABLE_LANGUAGES.find(l => l.id === firstSelectedId);
         if (selectedLang) {
           setDefaultLanguageState(selectedLang);
           setCurrentLanguageState(selectedLang);
@@ -308,12 +322,13 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
 
       // Supabaseに保存
       const codes = updatedLanguages.map(lang => lang.code);
-      const defaultCode = updatedLanguages.find(l => {
+      const defaultLang = updatedLanguages.find(l => {
         if (defaultLanguage.groupId && selections[defaultLanguage.groupId]) {
-          return l.id === selections[defaultLanguage.groupId];
+          return l.id === selections[defaultLanguage.groupId][0];
         }
         return l.id === defaultLanguage.id;
-      })?.code || updatedLanguages[0].code;
+      });
+      const defaultCode = defaultLang?.code || updatedLanguages[0].code;
 
       const { error } = await supabase
         .from('users')
