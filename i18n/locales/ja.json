@@ -124,8 +124,8 @@
   },
   "tutorial": {
     "skip": "スキップ",
-    "step1Title": "やってみよう",
-    "step1Description": "気になる単語を長押ししてみてください",
+    "step1Title": "気になる単語を長押ししてみよう",
+    "step1Description": "単語や文章を長押しで選択して、文章の理解を深めましょう",
     "step2Title": "単語カードが出ました！",
     "step2Description": "「もっと詳しく」で辞書へ、\n「質問する」でAIに聞けます",
     "step3Title": "タグをタップ！",

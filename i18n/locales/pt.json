@@ -124,8 +124,8 @@
   },
   "tutorial": {
     "skip": "Pular",
-    "step1Title": "Experimente!",
-    "step1Description": "Pressione e segure uma palavra que te interessa",
+    "step1Title": "Pressione e segure uma palavra",
+    "step1Description": "Selecione palavras ou frases com um toque longo para aprofundar sua compreensão",
     "step2Title": "Um cartão apareceu!",
     "step2Description": "Toque em \"Mais detalhes\" para o dicionário,\nou \"Perguntar\" para conversar com a IA",
     "step3Title": "Toque em uma tag!",
