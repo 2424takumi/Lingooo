@@ -131,6 +131,9 @@ function AppContent() {
     setNeedsOnboarding(false);
     setShouldStartTutorial(true);
 
+    // モーダルのフェードアウトとstateフラッシュを待つ
+    await new Promise(resolve => setTimeout(resolve, 400));
+
     // インタラクティブチュートリアルを直接開始
     const tutorialDone = await isTutorialCompleted();
     if (!tutorialDone) {
