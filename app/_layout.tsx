@@ -122,17 +122,14 @@ function AppContent() {
   }, [needsInitialSetup, needsOnboarding, shouldStartTutorial, isTutorialActive, currentVersion]);
 
   const handleInitialSetupComplete = async (nativeLanguage: string, learningLanguages: string[], defaultLanguage: string) => {
-    // モーダルが閉じるまで待つ（Supabase匿名ログイン + ユーザーレコード作成）
-    await completeInitialSetup(nativeLanguage, learningLanguages, defaultLanguage);
-    // 静的オンボーディングをスキップして完了済みにする
+    // OnboardingModal・WhatsNewが表示されないようにUI状態を先にセット
+    // （completeInitialSetup内でsetNeedsInitialSetup(false)が呼ばれた時のガード）
     await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
-    // needsOnboardingとshouldStartTutorialを同期的にセット（React batching）
-    // awaitの前にセットしないとWhatsNew Modalが表示されるレースコンディションが発生
     setNeedsOnboarding(false);
     setShouldStartTutorial(true);
 
-    // モーダルのフェードアウトとstateフラッシュを待つ
-    await new Promise(resolve => setTimeout(resolve, 400));
+    // Supabase匿名ログイン + ユーザーレコード作成 → モーダルが閉じる
+    await completeInitialSetup(nativeLanguage, learningLanguages, defaultLanguage);
 
     // インタラクティブチュートリアルを直接開始
     const tutorialDone = await isTutorialCompleted();
