@@ -95,11 +95,11 @@ function getStepConfig(step: number, t: (key: string) => string) {
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 999,
+    zIndex: 5000,
   },
   completeOverlay: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 999,
+    zIndex: 5000,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',

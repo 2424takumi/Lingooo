@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 20,
     right: 20,
-    zIndex: 1002,
+    zIndex: 5003,
   },
   bubble: {
     backgroundColor: '#FFFFFF',

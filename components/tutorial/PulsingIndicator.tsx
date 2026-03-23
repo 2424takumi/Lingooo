@@ -87,6 +87,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 170, 105, 0.8)',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1001,
+    zIndex: 5002,
   },
 });

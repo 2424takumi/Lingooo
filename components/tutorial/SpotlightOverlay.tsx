@@ -75,7 +75,7 @@ export default function SpotlightOverlay({
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1000,
+    zIndex: 5001,
   },
   dark: {
     position: 'absolute',
