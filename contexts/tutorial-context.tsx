@@ -100,7 +100,12 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
         break;
       case 'QUESTION_TAG_TAPPED':
         if (currentStep === TUTORIAL_STEPS.ASK_QUESTION) {
-          completeTutorial();
+          // オーバーレイを先に消してAI応答を見せる
+          setTargetRect(null);
+          // 数秒後に完了モーダルを表示
+          setTimeout(() => {
+            completeTutorial();
+          }, 3500);
         }
         break;
       case 'NAVIGATED_AWAY':

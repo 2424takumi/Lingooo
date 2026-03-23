@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Dimensions, Platform, Pressable, KeyboardAvoidingView, ActivityIndicator, Text } from 'react-native';
+import { StyleSheet, View, ScrollView, Dimensions, Platform, Pressable, KeyboardAvoidingView, ActivityIndicator, Text, Keyboard } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
@@ -1670,7 +1670,10 @@ export default function TranslateScreen() {
       }
 
       // チュートリアルイベント: 質問タグタップ
-      if (isTutorialActive) reportQuestionTagTapped();
+      if (isTutorialActive) {
+        Keyboard.dismiss();
+        reportQuestionTagTapped();
+      }
       return;
     }
 
@@ -1721,7 +1724,10 @@ export default function TranslateScreen() {
     await sendQuickQuestion(finalQuestion, displayQuestion);
 
     // チュートリアルイベント: 質問タグタップ
-    if (isTutorialActive) reportQuestionTagTapped();
+    if (isTutorialActive) {
+      Keyboard.dismiss();
+      reportQuestionTagTapped();
+    }
   };
 
   const handleQACardRetry = (question: string) => {
