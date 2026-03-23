@@ -124,25 +124,32 @@ function AppContent() {
     completeInitialSetup(nativeLanguage, learningLanguages);
     // 静的オンボーディングをスキップして完了済みにする
     await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
+    // needsOnboardingとshouldStartTutorialを同期的にセット（React batching）
+    // awaitの前にセットしないとWhatsNew Modalが表示されるレースコンディションが発生
     setNeedsOnboarding(false);
+    setShouldStartTutorial(true);
 
     // インタラクティブチュートリアルを直接開始
     const tutorialDone = await isTutorialCompleted();
     if (!tutorialDone) {
-      setShouldStartTutorial(true);
       router.push('/(tabs)/translate');
+    } else {
+      setShouldStartTutorial(false);
     }
   };
 
   const handleOnboardingComplete = async () => {
     await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
+    // needsOnboardingとshouldStartTutorialを同期的にセット（React batching）
     setNeedsOnboarding(false);
+    setShouldStartTutorial(true);
 
     // 旧オンボーディング経由でもチュートリアルを開始
     const tutorialDone = await isTutorialCompleted();
     if (!tutorialDone) {
-      setShouldStartTutorial(true);
       router.push('/(tabs)/translate');
+    } else {
+      setShouldStartTutorial(false);
     }
   };
 
