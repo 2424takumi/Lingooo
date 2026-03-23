@@ -12,9 +12,8 @@ interface SpotlightOverlayProps {
 }
 
 /**
- * SVGベースのダークオーバーレイ（角丸の穴あき）
- * - SVG: evenodd fill-ruleで角丸の透過領域を描画（見た目のみ）
- * - 4分割の透明View: タッチブロック用（矩形近似）
+ * SVGベースのダークオーバーレイ（角丸の穴あき・見た目のみ）
+ * タッチブロックはInteractiveTutorialOverlayで管理
  */
 export default function SpotlightOverlay({
   targetRect,
@@ -29,8 +28,6 @@ export default function SpotlightOverlay({
   const w = targetRect.width + padding * 2;
   const h = targetRect.height + padding * 2;
   const r = borderRadius;
-  const right = x + w;
-  const bottom = y + h;
 
   // SVGパス: 全画面の矩形 + 角丸の穴（evenoddで反転）
   const fullScreen = `M0,0 H${SCREEN_WIDTH} V${SCREEN_HEIGHT} H0 Z`;
@@ -67,9 +64,7 @@ export default function SpotlightOverlay({
   ].join(' ');
 
   return (
-    <View style={styles.container} pointerEvents="box-none">
-      {/* 見た目: SVGで角丸の穴あきオーバーレイ（タッチ透過） */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={styles.container} pointerEvents="none">
       <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT}>
         <Path
           d={`${fullScreen} ${roundedHole}`}
@@ -83,13 +78,6 @@ export default function SpotlightOverlay({
           strokeWidth={2}
         />
       </Svg>
-      </View>
-
-      {/* タッチブロック: 4分割の透明View（スポットライト外のタップを吸収） */}
-      <View style={[styles.touchBlock, { top: 0, left: 0, right: 0, height: y }]} pointerEvents="auto" />
-      <View style={[styles.touchBlock, { top: y, left: 0, width: x, height: h }]} pointerEvents="auto" />
-      <View style={[styles.touchBlock, { top: y, left: right, right: 0, height: h }]} pointerEvents="auto" />
-      <View style={[styles.touchBlock, { top: bottom, left: 0, right: 0, bottom: 0 }]} pointerEvents="auto" />
     </View>
   );
 }
@@ -97,9 +85,6 @@ export default function SpotlightOverlay({
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 5001,
-  },
-  touchBlock: {
-    position: 'absolute',
+    zIndex: 0,
   },
 });

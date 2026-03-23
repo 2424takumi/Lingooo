@@ -1,11 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTutorialContext } from '@/contexts/tutorial-context';
 import { TUTORIAL_STEPS } from '@/constants/tutorial';
 import SpotlightOverlay from './SpotlightOverlay';
 import TooltipBubble from './TooltipBubble';
 import PulsingIndicator from './PulsingIndicator';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface InteractiveTutorialOverlayProps {
   highlightWordPosition?: { x: number; y: number } | null;
@@ -36,20 +38,38 @@ export default function InteractiveTutorialOverlay({
   const stepConfig = getStepConfig(currentStep, t);
   if (!stepConfig) return null;
 
+  // タッチブロック用の座標計算
+  const pad = stepConfig.spotlightPadding;
+  const sx = Math.max(0, targetRect.x - pad);
+  const sy = Math.max(0, targetRect.y - pad);
+  const sw = targetRect.width + pad * 2;
+  const sh = targetRect.height + pad * 2;
+  const sRight = sx + sw;
+  const sBottom = sy + sh;
+
   return (
     <View style={styles.container} pointerEvents="box-none">
+      {/* 1. 見た目のみ: SVGダークオーバーレイ（タッチ透過） */}
       <SpotlightOverlay
         targetRect={targetRect}
-        padding={stepConfig.spotlightPadding}
+        padding={pad}
         borderRadius={stepConfig.borderRadius}
       />
+
+      {/* 2. タッチブロック: スポットライト外のタップを吸収 */}
+      <View style={[styles.touchBlock, { top: 0, left: 0, right: 0, height: sy }]} pointerEvents="auto" />
+      <View style={[styles.touchBlock, { top: sy, left: 0, width: sx, height: sh }]} pointerEvents="auto" />
+      <View style={[styles.touchBlock, { top: sy, left: sRight, right: 0, height: sh }]} pointerEvents="auto" />
+      <View style={[styles.touchBlock, { top: sBottom, left: 0, right: 0, bottom: 0 }]} pointerEvents="auto" />
+
+      {/* 3. TooltipとPulsingIndicator（タッチブロックより後にレンダリング → 上に表示） */}
       <TooltipBubble
         title={stepConfig.title}
         description={stepConfig.description}
         position={stepConfig.tooltipPosition}
         targetRect={targetRect}
         onSkip={skipTutorial}
-        padding={stepConfig.spotlightPadding}
+        padding={pad}
       />
       {currentStep === TUTORIAL_STEPS.SELECT_WORD && highlightWordPosition && (
         <PulsingIndicator
@@ -96,6 +116,9 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 5000,
+  },
+  touchBlock: {
+    position: 'absolute',
   },
   completeOverlay: {
     ...StyleSheet.absoluteFillObject,
