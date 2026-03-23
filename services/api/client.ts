@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
+import { getDeviceId } from './auth';
 
 /**
  * Get authorization headers for API requests
@@ -19,9 +20,14 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
     });
 
     if (session?.access_token) {
-      return {
+      const headers: Record<string, string> = {
         Authorization: `Bearer ${session.access_token}`,
       };
+      const deviceId = await getDeviceId();
+      if (deviceId) {
+        headers['X-Device-ID'] = deviceId;
+      }
+      return headers;
     }
 
     logger.warn('[API Client] No access token available - session:', session);

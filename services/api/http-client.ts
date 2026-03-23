@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import Constants from 'expo-constants';
-import { getAuthToken } from './auth';
+import { getAuthToken, getDeviceId } from './auth';
 import { logger } from '@/utils/logger';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost:3000';
@@ -30,6 +30,10 @@ httpClient.interceptors.request.use(
       const token = await getAuthToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+      const deviceId = await getDeviceId();
+      if (deviceId) {
+        config.headers['X-Device-ID'] = deviceId;
       }
     } catch (error) {
       logger.warn('[HttpClient] Failed to get auth token:', error);
