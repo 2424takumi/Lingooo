@@ -13,6 +13,7 @@ import Svg, { Path } from 'react-native-svg';
 interface PulsingIndicatorProps {
   x: number;
   y: number;
+  size?: number;
 }
 
 function HandPressIcon({ size = 28 }: { size?: number }) {
@@ -36,9 +37,11 @@ function HandPressIcon({ size = 28 }: { size?: number }) {
   );
 }
 
-export default function PulsingIndicator({ x, y }: PulsingIndicatorProps) {
+export default function PulsingIndicator({ x, y, size = 40 }: PulsingIndicatorProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
+  const half = size / 2;
+  const iconSize = Math.round(size * 0.7);
 
   useEffect(() => {
     scale.value = withRepeat(
@@ -68,12 +71,12 @@ export default function PulsingIndicator({ x, y }: PulsingIndicatorProps) {
     <Animated.View
       style={[
         styles.container,
-        { left: x - 20, top: y - 20 },
+        { left: x - half, top: y - half, width: size, height: size, borderRadius: half },
         animatedStyle,
       ]}
       pointerEvents="none"
     >
-      <HandPressIcon />
+      <HandPressIcon size={iconSize} />
     </Animated.View>
   );
 }
@@ -81,9 +84,6 @@ export default function PulsingIndicator({ x, y }: PulsingIndicatorProps) {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     backgroundColor: 'rgba(0, 170, 105, 0.8)',
     alignItems: 'center',
     justifyContent: 'center',

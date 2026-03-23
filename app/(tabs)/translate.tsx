@@ -96,8 +96,10 @@ export default function TranslateScreen() {
     translatedTextRef,
     chatSectionRef,
     questionTagsRef,
+    questionButtonRef,
     measureTarget: measureTutorialTarget,
     highlightWordPosition,
+    questionButtonPosition,
   } = useTutorial();
 
   // パラメータからフラグを先に解析（state初期化で使用するため）
@@ -2141,6 +2143,7 @@ export default function TranslateScreen() {
             onSwitchToWordCard={handleSwitchToWordCard}
             tutorialWordCardRef={chatSectionRef}
             tutorialQuestionTagsRef={questionTagsRef}
+            tutorialQuestionButtonRef={questionButtonRef}
           />
         </View>
       </KeyboardAvoidingView>
@@ -2194,6 +2197,7 @@ export default function TranslateScreen() {
       {isTutorialActive && (
         <InteractiveTutorialOverlay
           highlightWordPosition={highlightWordPosition}
+          questionButtonPosition={questionButtonPosition}
         />
       )}
     </ThemedView>

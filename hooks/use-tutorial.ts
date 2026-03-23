@@ -27,8 +27,10 @@ interface UseTutorialResult {
   translatedTextRef: React.RefObject<View | null>;
   chatSectionRef: React.RefObject<View | null>;
   questionTagsRef: React.RefObject<View | null>;
+  questionButtonRef: React.RefObject<View | null>;
   measureTarget: () => void;
   highlightWordPosition: { x: number; y: number } | null;
+  questionButtonPosition: { x: number; y: number } | null;
 }
 
 export function useTutorial(): UseTutorialResult {
@@ -46,7 +48,9 @@ export function useTutorial(): UseTutorialResult {
   const translatedTextRef = useRef<View | null>(null);
   const chatSectionRef = useRef<View | null>(null);
   const questionTagsRef = useRef<View | null>(null);
+  const questionButtonRef = useRef<View | null>(null);
   const [highlightWordPosition, setHighlightWordPosition] = useState<{ x: number; y: number } | null>(null);
+  const [questionButtonPosition, setQuestionButtonPosition] = useState<{ x: number; y: number } | null>(null);
 
   // デモコンテンツを取得（useMemoで安定化し、毎レンダーの再生成を防ぐ）
   const needsDemo = isActive || shouldStartTutorial;
@@ -106,6 +110,20 @@ export function useTutorial(): UseTutorialResult {
         }
       });
     }
+
+    // Step 1（VIEW_CARD）の場合、質問ボタンの位置も計測
+    if (currentStep === TUTORIAL_STEPS.VIEW_CARD && questionButtonRef.current) {
+      questionButtonRef.current.measureInWindow((bx, by, bw, bh) => {
+        if (bw > 0 && bh > 0) {
+          setQuestionButtonPosition({
+            x: bx + bw / 2,
+            y: by + bh / 2,
+          });
+        }
+      });
+    } else {
+      setQuestionButtonPosition(null);
+    }
   }, [isActive, currentStep, setTargetRect]);
 
   // ステップ変更時に計測を実行
@@ -145,7 +163,9 @@ export function useTutorial(): UseTutorialResult {
     translatedTextRef,
     chatSectionRef,
     questionTagsRef,
+    questionButtonRef,
     measureTarget,
     highlightWordPosition,
+    questionButtonPosition,
   };
 }

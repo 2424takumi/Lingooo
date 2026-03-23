@@ -28,6 +28,7 @@ interface WordDetailCardProps {
   onAskQuestion?: () => void;
   isLoading?: boolean;
   animatedStyle?: ViewStyle; // アニメーションスタイル
+  questionButtonRef?: React.RefObject<View | null>; // チュートリアル用
 }
 
 function StarIcon({ filled = false, size = 24 }: { filled?: boolean; size?: number }) {
@@ -95,6 +96,7 @@ export function WordDetailCard({
   onAskQuestion,
   isLoading = false,
   animatedStyle,
+  questionButtonRef,
 }: WordDetailCardProps) {
   return (
     <Animated.View
@@ -182,12 +184,14 @@ export function WordDetailCard({
       {/* 下部: 質問ボタン + もっと詳しくボタン */}
       <View style={styles.footer}>
         {onAskQuestion && (
-          <TouchableOpacity
-            onPress={onAskQuestion}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <MessageCircleIcon size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View ref={questionButtonRef} collapsable={false}>
+            <TouchableOpacity
+              onPress={onAskQuestion}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <MessageCircleIcon size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
         )}
 
         {onViewDetails && (

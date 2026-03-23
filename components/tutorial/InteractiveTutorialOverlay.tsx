@@ -11,10 +11,12 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface InteractiveTutorialOverlayProps {
   highlightWordPosition?: { x: number; y: number } | null;
+  questionButtonPosition?: { x: number; y: number } | null;
 }
 
 export default function InteractiveTutorialOverlay({
   highlightWordPosition,
+  questionButtonPosition,
 }: InteractiveTutorialOverlayProps) {
   const { t } = useTranslation();
   const { isActive, currentStep, targetRect, skipTutorial } = useTutorialContext();
@@ -77,6 +79,13 @@ export default function InteractiveTutorialOverlay({
           y={highlightWordPosition.y}
         />
       )}
+      {currentStep === TUTORIAL_STEPS.VIEW_CARD && questionButtonPosition && (
+        <PulsingIndicator
+          x={questionButtonPosition.x + 14}
+          y={questionButtonPosition.y + 14}
+          size={34}
+        />
+      )}
     </View>
   );
 }
@@ -129,27 +138,27 @@ const styles = StyleSheet.create({
   },
   completeCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingHorizontal: 32,
-    paddingVertical: 28,
-    marginHorizontal: 40,
+    borderRadius: 24,
+    paddingHorizontal: 36,
+    paddingVertical: 36,
+    marginHorizontal: 28,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
   },
   completeTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '700',
     color: '#00AA69',
-    marginBottom: 10,
+    marginBottom: 16,
   },
   completeDescription: {
-    fontSize: 15,
-    color: '#555555',
+    fontSize: 16,
+    color: '#444444',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 26,
   },
 });

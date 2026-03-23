@@ -79,6 +79,7 @@ interface ChatSectionProps {
   // Tutorial Refs
   tutorialWordCardRef?: React.RefObject<View | null>;
   tutorialQuestionTagsRef?: React.RefObject<View | null>;
+  tutorialQuestionButtonRef?: React.RefObject<View | null>;
 }
 
 function ChevronUpIcon({ size = 18 }: { size?: number }) {
@@ -265,6 +266,7 @@ export function ChatSection({
   // Tutorial Refs
   tutorialWordCardRef,
   tutorialQuestionTagsRef,
+  tutorialQuestionButtonRef,
 }: ChatSectionProps) {
   const { customQuestions, addCustomQuestion } = useAISettings();
   const { isPremium } = useSubscription();
@@ -669,6 +671,7 @@ export function ChatSection({
               onWordAskQuestion?.();
             }}
             onClose={onSelectionCleared}
+            questionButtonRef={tutorialQuestionButtonRef}
           />
         </View>
       )}
