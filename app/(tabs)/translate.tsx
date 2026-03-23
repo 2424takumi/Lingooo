@@ -2016,7 +2016,7 @@ export default function TranslateScreen() {
               <Text style={styles.urlLoadingText}>{t('translate.urlTranslation.extracting')}</Text>
             </View>
           ) : null}
-          <View ref={translatedTextRef} collapsable={false} style={styles.translateCardContainer} onLayout={isTutorialActive ? measureTutorialTarget : undefined}>
+          <View style={styles.translateCardContainer}>
             <Pressable
               onPress={() => {
                 logger.debug('[Translate] Pressable onPress', {
@@ -2043,6 +2043,7 @@ export default function TranslateScreen() {
                 });
               }}
             >
+              <View ref={translatedTextRef} collapsable={false} onLayout={isTutorialActive ? measureTutorialTarget : undefined}>
               <TranslateCard
                 key={`translate-card-${clearSelectionKey}-${currentParagraphIndex}`}
                 paragraphs={paragraphs.length > 0 ? paragraphs : [{
@@ -2072,6 +2073,7 @@ export default function TranslateScreen() {
                 showFullText={showFullText}
                 onToggleFullText={() => setShowFullText(prev => !prev)}
               />
+              </View>
               {!isTranslating && !isSplittingParagraphs && !isDetectingLanguage && (
                 <TranslationNotes
                   notes={translationNotes}

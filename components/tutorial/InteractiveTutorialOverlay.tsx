@@ -67,7 +67,7 @@ function getStepConfig(step: number, t: (key: string) => string) {
       return {
         title: t('tutorial.step1Title'),
         description: t('tutorial.step1Description'),
-        tooltipPosition: 'above' as const,
+        tooltipPosition: 'below' as const,
         spotlightPadding: 8,
         borderRadius: 12,
       };
