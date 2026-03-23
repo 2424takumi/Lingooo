@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { View } from 'react-native';
 import { useTutorialContext } from '@/contexts/tutorial-context';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
@@ -48,28 +48,28 @@ export function useTutorial(): UseTutorialResult {
   const questionTagsRef = useRef<View | null>(null);
   const [highlightWordPosition, setHighlightWordPosition] = useState<{ x: number; y: number } | null>(null);
 
-  // デモコンテンツを取得
-  const demoContent = isActive || shouldStartTutorial
-    ? getDemoContent(nativeLanguage?.code || 'ja')
-    : null;
+  // デモコンテンツを取得（useMemoで安定化し、毎レンダーの再生成を防ぐ）
+  const needsDemo = isActive || shouldStartTutorial;
+  const langCode = nativeLanguage?.code || 'ja';
 
-  const demoParagraphs = demoContent
-    ? [{
-        id: generateId(),
-        originalText: demoContent.original,
-        translatedText: demoContent.translated,
-        index: 0,
-      }]
-    : null;
+  const demoContent = useMemo(
+    () => needsDemo ? getDemoContent(langCode) : null,
+    [needsDemo, langCode],
+  );
 
-  const demoTranslationData = demoContent
-    ? {
-        originalText: demoContent.original,
-        translatedText: demoContent.translated,
-        sourceLang: demoContent.sourceLang,
-        targetLang: demoContent.targetLang,
-      }
-    : null;
+  const demoParagraphs = useMemo(
+    () => demoContent
+      ? [{ id: generateId(), originalText: demoContent.original, translatedText: demoContent.translated, index: 0 }]
+      : null,
+    [demoContent],
+  );
+
+  const demoTranslationData = useMemo(
+    () => demoContent
+      ? { originalText: demoContent.original, translatedText: demoContent.translated, sourceLang: demoContent.sourceLang, targetLang: demoContent.targetLang }
+      : null,
+    [demoContent],
+  );
 
   // shouldStartTutorialフラグが立ったらチュートリアルを開始
   useEffect(() => {

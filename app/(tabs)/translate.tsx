@@ -1355,6 +1355,7 @@ export default function TranslateScreen() {
 
   // 翻訳完了時に翻訳ノートをストリーミング生成
   useEffect(() => {
+    if (isTutorialActive) return; // チュートリアル中はスキップ
     const currentParagraph = paragraphs[currentParagraphIndex];
     if (!currentParagraph?.translatedText || isTranslating || isSplittingParagraphs) return;
     if (!translationData) return;

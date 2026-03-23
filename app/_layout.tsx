@@ -119,22 +119,30 @@ function AppContent() {
     });
   }, [needsInitialSetup, needsOnboarding, currentVersion]);
 
-  const handleInitialSetupComplete = (nativeLanguage: string, learningLanguages: string[]) => {
+  const handleInitialSetupComplete = async (nativeLanguage: string, learningLanguages: string[]) => {
     completeInitialSetup(nativeLanguage, learningLanguages);
-    // 初期セットアップ完了後にオンボーディングを表示
-    setNeedsOnboarding(true);
+    // 静的オンボーディングをスキップして完了済みにする
+    await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
+    setNeedsOnboarding(false);
+
+    // インタラクティブチュートリアルを直接開始
+    const tutorialDone = await isTutorialCompleted();
+    if (!tutorialDone) {
+      router.push('/(tabs)/translate');
+      setTimeout(() => {
+        setShouldStartTutorial(true);
+      }, 500);
+    }
   };
 
   const handleOnboardingComplete = async () => {
     await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
     setNeedsOnboarding(false);
 
-    // オンボーディング完了後、インタラクティブチュートリアルを開始
+    // 旧オンボーディング経由でもチュートリアルを開始
     const tutorialDone = await isTutorialCompleted();
     if (!tutorialDone) {
-      // 翻訳ページに遷移してからチュートリアルを開始
       router.push('/(tabs)/translate');
-      // 少し遅延して遷移完了後に開始
       setTimeout(() => {
         setShouldStartTutorial(true);
       }, 500);
