@@ -122,6 +122,18 @@
     "step3Title": "Still confused? Ask AI",
     "step3Description": "Nuance, usage, grammar.\nAsk AI anything you want to know."
   },
+  "tutorial": {
+    "skip": "Skip",
+    "step1Title": "Long press to select a word",
+    "step1Description": "Try long pressing a word in the translation",
+    "step2Title": "Check the word card",
+    "step2Description": "View the dictionary or ask AI a question",
+    "step3Title": "Ask AI with question tags",
+    "step3Description": "Just tap a tag\nand AI answers right away",
+    "completeTitle": "You're all set!",
+    "completeDescription": "Translate any text you like\nand tap on words to explore",
+    "replayTutorial": "Replay Tutorial"
+  },
   "wordDetail": {
     "bookmarked": "Added to bookmarks",
     "examples": "Examples",

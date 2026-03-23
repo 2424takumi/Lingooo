@@ -122,6 +122,18 @@
     "step3Title": "Ainda com dúvida? Pergunte à IA",
     "step3Description": "Nuances, uso, gramática.\nPergunte qualquer coisa à IA."
   },
+  "tutorial": {
+    "skip": "Pular",
+    "step1Title": "Pressione para selecionar uma palavra",
+    "step1Description": "Tente pressionar uma palavra na tradução",
+    "step2Title": "Confira o cartão da palavra",
+    "step2Description": "Veja o dicionário ou faça uma pergunta à IA",
+    "step3Title": "Pergunte à IA com tags",
+    "step3Description": "Basta tocar em uma tag\ne a IA responde na hora",
+    "completeTitle": "Tudo pronto!",
+    "completeDescription": "Traduza qualquer texto\ne toque nas palavras para explorar",
+    "replayTutorial": "Refazer Tutorial"
+  },
   "wordDetail": {
     "bookmarked": "Adicionado aos favoritos",
     "examples": "Exemplos",

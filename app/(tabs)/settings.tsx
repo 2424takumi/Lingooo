@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { clearPromptCache } from '@/services/ai/langfuse-client';
 import { useSubscription } from '@/contexts/subscription-context';
 import { useAuth } from '@/contexts/auth-context';
+import { useTutorialContext } from '@/contexts/tutorial-context';
 import Constants from 'expo-constants';
 
 // Icons
@@ -33,6 +34,7 @@ export default function SettingsScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
   const { isPremium } = useSubscription();
   const { user } = useAuth();
+  const { resetAndRestart } = useTutorialContext();
 
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 
@@ -86,6 +88,11 @@ export default function SettingsScreen() {
 
   const handleContact = () => {
     Linking.openURL('mailto:support@lingooo.app');
+  };
+
+  const handleReplayTutorial = async () => {
+    await resetAndRestart();
+    router.push('/(tabs)/translate');
   };
 
   const executeDeleteAccount = async () => {
@@ -207,6 +214,16 @@ export default function SettingsScreen() {
               </View>
               <Text style={styles.versionText}>{appVersion}</Text>
             </View>
+
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={handleReplayTutorial}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>{t('tutorial.replayTutorial')}</Text>
+              </View>
+              <ChevronRightIcon />
+            </TouchableOpacity>
           </View>
 
           {/* Account */}

@@ -18,6 +18,8 @@ import { SubscriptionProvider, useSubscription } from '@/contexts/subscription-c
 import { LearningLanguagesProvider, useLearningLanguages } from '@/contexts/learning-languages-context';
 import { ChatProvider } from '@/contexts/chat-context';
 import { AISettingsProvider } from '@/contexts/ai-settings-context';
+import { TutorialProvider, useTutorialContext } from '@/contexts/tutorial-context';
+import { isTutorialCompleted } from '@/services/storage/tutorial-storage';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { InitialLanguageSetupModal } from '@/components/modals/InitialLanguageSetupModal';
 import { OnboardingModal } from '@/components/modals/OnboardingModal';
@@ -93,6 +95,7 @@ const WHATS_NEW_VERSION_KEY = '@lingooo:whats_new_version';
 function AppContent() {
   const colorScheme = useColorScheme();
   const { needsInitialSetup, completeInitialSetup } = useAuth();
+  const { setShouldStartTutorial } = useTutorialContext();
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const currentVersion = Constants.expoConfig?.version ?? '';
@@ -125,6 +128,17 @@ function AppContent() {
   const handleOnboardingComplete = async () => {
     await AsyncStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
     setNeedsOnboarding(false);
+
+    // オンボーディング完了後、インタラクティブチュートリアルを開始
+    const tutorialDone = await isTutorialCompleted();
+    if (!tutorialDone) {
+      // 翻訳ページに遷移してからチュートリアルを開始
+      router.push('/(tabs)/translate');
+      // 少し遅延して遷移完了後に開始
+      setTimeout(() => {
+        setShouldStartTutorial(true);
+      }, 500);
+    }
   };
 
   const handleWhatsNewClose = async () => {
@@ -193,7 +207,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
         <AuthProvider>
-          <AppContent />
+          <TutorialProvider>
+            <AppContent />
+          </TutorialProvider>
         </AuthProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>

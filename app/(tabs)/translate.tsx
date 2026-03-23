@@ -40,6 +40,9 @@ import { parseQuotaError } from '@/utils/quota-error';
 import type { QAPair } from '@/types/chat';
 import { useTranslation } from 'react-i18next';
 import { TRANSLATION_CONFIG } from '@/constants/translation';
+import { useTutorial } from '@/hooks/use-tutorial';
+import InteractiveTutorialOverlay from '@/components/tutorial/InteractiveTutorialOverlay';
+import { TUTORIAL_STEPS } from '@/constants/tutorial';
 
 /**
  * 選択位置の周辺文脈を抽出し、選択箇所をマーカーで囲む（前後150文字程度）
@@ -78,6 +81,24 @@ export default function TranslateScreen() {
   const safeAreaInsets = useSafeAreaInsets();
   const { currentLanguage, nativeLanguage, setCurrentLanguage } = useLearningLanguages();
   const { isPremium } = useSubscription();
+
+  // チュートリアル
+  const {
+    isTutorialActive,
+    currentStep: tutorialStep,
+    demoContent: tutorialDemoContent,
+    demoParagraphs: tutorialDemoParagraphs,
+    demoTranslationData: tutorialDemoTranslationData,
+    reportTextSelected,
+    reportCardActionTapped,
+    reportQuestionTagTapped,
+    reportNavigatedAway,
+    translatedTextRef,
+    chatSectionRef,
+    questionTagsRef,
+    measureTarget: measureTutorialTarget,
+    highlightWordPosition,
+  } = useTutorial();
 
   // パラメータからフラグを先に解析（state初期化で使用するため）
   const fromImageTranslation = (params.fromImageTranslation as string) === 'true';
@@ -1086,6 +1107,17 @@ export default function TranslateScreen() {
       return;
     }
 
+    // チュートリアルモード: デモコンテンツを直接セット（API呼び出しなし）
+    if (isTutorialActive && tutorialDemoParagraphs && tutorialDemoTranslationData && !text) {
+      logger.info('[Translate] Tutorial mode: injecting demo content');
+      setParagraphs(tutorialDemoParagraphs);
+      setTranslationData(tutorialDemoTranslationData);
+      setSourceLang(tutorialDemoTranslationData.sourceLang);
+      setSelectedTranslateTargetLang(tutorialDemoTranslationData.targetLang);
+      setIsTranslating(false);
+      return;
+    }
+
     if (text && !isDetectingLanguage) {
       performProgressiveTranslation();
     } else if (isDetectingLanguage) {
@@ -1097,7 +1129,7 @@ export default function TranslateScreen() {
       logger.info('[Translate] Translation cancelled due to dependency change');
       isActive = false;
     };
-  }, [text, sourceLang, selectedTranslateTargetLang, isDetectingLanguage, initialTranslation, fromImageTranslation, isLoadingImageData, fromUrlTranslation, isLoadingUrlData]);
+  }, [text, sourceLang, selectedTranslateTargetLang, isDetectingLanguage, initialTranslation, fromImageTranslation, isLoadingImageData, fromUrlTranslation, isLoadingUrlData, isTutorialActive, tutorialDemoParagraphs, tutorialDemoTranslationData]);
 
   // 言語検出完了時に翻訳を開始するuseEffectは削除
   // 代わりに、メインuseEffect内で isDetectingLanguage を直接チェック
@@ -1636,6 +1668,8 @@ export default function TranslateScreen() {
         }
       }
 
+      // チュートリアルイベント: 質問タグタップ
+      if (isTutorialActive) reportQuestionTagTapped();
       return;
     }
 
@@ -1684,6 +1718,9 @@ export default function TranslateScreen() {
     }
 
     await sendQuickQuestion(finalQuestion, displayQuestion);
+
+    // チュートリアルイベント: 質問タグタップ
+    if (isTutorialActive) reportQuestionTagTapped();
   };
 
   const handleQACardRetry = (question: string) => {
@@ -1867,6 +1904,11 @@ export default function TranslateScreen() {
         logger.warn('[Translate] No context available for word context fetch');
       }
     }
+
+    // チュートリアルイベント報告
+    if (isTutorialActive && selectionInfo.isSingleWord) {
+      reportTextSelected();
+    }
   };
 
   const handleDictionaryLookup = () => {
@@ -1914,6 +1956,9 @@ export default function TranslateScreen() {
 
     // 検索実行後に選択を解除
     setSelectedText(null);
+
+    // チュートリアルイベント: 辞書遷移
+    if (isTutorialActive) reportNavigatedAway();
   };
 
   const handleWordAskQuestion = () => {
@@ -1921,6 +1966,9 @@ export default function TranslateScreen() {
       // isSingleWordはtrueのまま維持して単語モードの質問タグを表示
       // ChatSectionにフォーカスを当てて入力を促す
       logger.info('[Translate] Opening chat for word questions (keeping word mode)');
+
+      // チュートリアルイベント: 質問するボタンタップ
+      if (isTutorialActive) reportCardActionTapped();
     }
   };
 
@@ -1967,7 +2015,7 @@ export default function TranslateScreen() {
               <Text style={styles.urlLoadingText}>{t('translate.urlTranslation.extracting')}</Text>
             </View>
           ) : null}
-          <View style={styles.translateCardContainer}>
+          <View ref={translatedTextRef} collapsable={false} style={styles.translateCardContainer} onLayout={isTutorialActive ? measureTutorialTarget : undefined}>
             <Pressable
               onPress={() => {
                 logger.debug('[Translate] Pressable onPress', {
@@ -2042,6 +2090,7 @@ export default function TranslateScreen() {
         keyboardVerticalOffset={0}
       >
         <View
+          ref={chatSectionRef}
           pointerEvents="box-none"
           style={styles.chatContainerFixed}
           collapsable={false}
@@ -2131,6 +2180,13 @@ export default function TranslateScreen() {
           setIsSubscriptionModalOpen(true);
         }}
       />
+
+      {/* Interactive Tutorial Overlay */}
+      {isTutorialActive && (
+        <InteractiveTutorialOverlay
+          highlightWordPosition={highlightWordPosition}
+        />
+      )}
     </ThemedView>
   );
 }

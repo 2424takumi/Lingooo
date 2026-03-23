@@ -122,6 +122,18 @@
     "step3Title": "わからなければ、AIに聞ける",
     "step3Description": "ニュアンス、使い方、文法。\n何でもAIに質問できます。"
   },
+  "tutorial": {
+    "skip": "スキップ",
+    "step1Title": "単語を長押しで選択",
+    "step1Description": "翻訳文の単語を長押ししてみましょう",
+    "step2Title": "単語カードを確認",
+    "step2Description": "辞書を見たり、AIに質問できます",
+    "step3Title": "質問タグでAIに聞く",
+    "step3Description": "タグをタップするだけで、\nAIがすぐに答えてくれます",
+    "completeTitle": "準備完了！",
+    "completeDescription": "好きな文章を翻訳して、\n単語をタップしてみましょう",
+    "replayTutorial": "チュートリアルをやり直す"
+  },
   "wordDetail": {
     "bookmarked": "ブックマークに追加しました",
     "examples": "例文",
