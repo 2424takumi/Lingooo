@@ -68,13 +68,9 @@ export default function SpotlightOverlay({
 
   return (
     <View style={styles.container} pointerEvents="box-none">
-      {/* 見た目: SVGで角丸の穴あきオーバーレイ */}
-      <Svg
-        width={SCREEN_WIDTH}
-        height={SCREEN_HEIGHT}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      >
+      {/* 見た目: SVGで角丸の穴あきオーバーレイ（タッチ透過） */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT}>
         <Path
           d={`${fullScreen} ${roundedHole}`}
           fill={`rgba(0, 0, 0, ${opacity})`}
@@ -87,6 +83,7 @@ export default function SpotlightOverlay({
           strokeWidth={2}
         />
       </Svg>
+      </View>
 
       {/* タッチブロック: 4分割の透明View（スポットライト外のタップを吸収） */}
       <View style={[styles.touchBlock, { top: 0, left: 0, right: 0, height: y }]} pointerEvents="auto" />
