@@ -66,13 +66,13 @@ export default function LearningLanguagesScreen() {
 
   const handleRemoveLanguage = (languageId: string) => {
     if (learningLanguages.length <= 1) {
-      Alert.alert('エラー', '最低1つの言語を学習中にする必要があります');
+      Alert.alert('エラー', '最低1つの言語を選択する必要があります');
       return;
     }
 
     Alert.alert(
       '言語を削除',
-      'この言語を学習中リストから削除しますか？',
+      'この言語をリストから削除しますか？',
       [
         { text: 'キャンセル', style: 'cancel' },
         {
@@ -95,7 +95,7 @@ export default function LearningLanguagesScreen() {
         <View style={styles.headerContainer}>
           <UnifiedHeaderBar
             pageType="other"
-            title="学習中の言語"
+            title="学習したい言語"
             onBackPress={() => router.back()}
           />
         </View>
@@ -103,12 +103,12 @@ export default function LearningLanguagesScreen() {
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* 説明 */}
           <Text style={styles.description}>
-            学習中の言語を選択してください。ここで選択した言語が検索画面やホーム画面で切り替えられるようになります。
+            学習したい言語を選択してください（複数選択可）。ここで選択した言語が検索画面やホーム画面で切り替えられるようになります。
           </Text>
 
           {/* 学習中の言語 */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>学習中の言語</Text>
+            <Text style={styles.sectionTitle}>学習したい言語</Text>
             <View style={styles.languageList}>
               {learningLanguages.map((language) => (
                 <View key={language.id} style={styles.learningLanguageItem}>

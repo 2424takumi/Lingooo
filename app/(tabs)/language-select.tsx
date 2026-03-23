@@ -44,14 +44,14 @@ export default function LanguageSelectScreen() {
         <View style={styles.headerContainer}>
           <UnifiedHeaderBar
             pageType="other"
-            title="デフォルト言語"
+            title="よく勉強する言語"
             onBackPress={() => router.back()}
           />
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <Text style={styles.description}>
-            アプリの設定や通知で使用する言語を選択してください
+            アプリ起動時に表示される言語を選択してください
           </Text>
 
           <View style={styles.languageList}>

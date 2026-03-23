@@ -37,14 +37,14 @@
       "description": "あなたの母語（ネイティブ言語）を選択してください。\nこの言語で入力した場合、他の学習言語への翻訳を行います。"
     },
     "learningLanguages": {
-      "title": "学習中の言語",
-      "description": "学習中の言語を選択してください。ここで選択した言語が検索画面やホーム画面で切り替えられるようになります。",
+      "title": "学習したい言語",
+      "description": "学習したい言語を選択してください（複数選択可）。ここで選択した言語が検索画面やホーム画面で切り替えられるようになります。",
       "add": "言語を追加",
-      "minOneRequired": "最低1つの言語を学習中にする必要があります",
-      "confirmDelete": "この言語を学習中リストから削除しますか？"
+      "minOneRequired": "最低1つの言語を選択する必要があります",
+      "confirmDelete": "この言語をリストから削除しますか？"
     },
     "defaultLanguage": {
-      "title": "デフォルト言語",
+      "title": "よく勉強する言語",
       "description": "アプリ起動時に表示される言語を選択してください。"
     },
     "account": {
@@ -108,9 +108,9 @@
     "step1Title": "あなたの母国語を選択してください",
     "step2Title": "学習したい言語を選択してください",
     "step1Description": "アプリの表示言語として使用されます",
-    "step2Description": "複数選択できます。後から追加・削除も可能です",
+    "step2Description": "複数選択できます。後から追加・変更も可能です。",
     "nativeLanguageLabel": "母国語",
-    "learningLanguageLabel": "学習言語"
+    "learningLanguageLabel": "学習したい言語（複数選択可）"
   },
   "onboarding": {
     "skip": "スキップ",
@@ -246,8 +246,8 @@
     "premiumSubtext": "その後、月500円で月間1,000回質問・最大50,000文字翻訳可能",
     "languageSettings": "言語設定",
     "nativeLanguage": "母国語",
-    "defaultLanguage": "デフォルト言語",
-    "learningLanguages": "学習中の言語",
+    "defaultLanguage": "よく勉強する言語",
+    "learningLanguages": "学習したい言語",
     "aiSettings": "AI設定",
     "aiDetailLevel": "AI返答の詳細度",
     "concise": "簡潔（デフォルト）",

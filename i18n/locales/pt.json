@@ -37,14 +37,14 @@
       "description": "Selecione seu idioma nativo.\nQuando você inserir texto neste idioma, ele será traduzido para seus idiomas de aprendizado."
     },
     "learningLanguages": {
-      "title": "Idiomas de Aprendizado",
-      "description": "Selecione os idiomas que você deseja aprender. Esses idiomas estarão disponíveis nas telas de pesquisa e inicial.",
+      "title": "Idiomas que Quero Aprender",
+      "description": "Selecione os idiomas que você deseja aprender (seleção múltipla permitida). Esses idiomas estarão disponíveis nas telas de pesquisa e inicial.",
       "add": "Adicionar Idioma",
       "minOneRequired": "Pelo menos um idioma deve ser selecionado",
-      "confirmDelete": "Remover este idioma da sua lista de aprendizado?"
+      "confirmDelete": "Remover este idioma da lista?"
     },
     "defaultLanguage": {
-      "title": "Idioma Padrão",
+      "title": "Idioma Mais Estudado",
       "description": "Selecione o idioma a ser exibido quando o aplicativo for iniciado."
     },
     "account": {
@@ -108,9 +108,9 @@
     "step1Title": "Selecione Seu Idioma Nativo",
     "step2Title": "Selecione Idiomas para Aprender",
     "step1Description": "Será usado como idioma de exibição do app",
-    "step2Description": "Seleções múltiplas permitidas. Você pode adicionar ou remover depois",
+    "step2Description": "Seleção múltipla permitida. Você pode adicionar ou alterar depois.",
     "nativeLanguageLabel": "Idioma Nativo",
-    "learningLanguageLabel": "Idiomas de Aprendizado"
+    "learningLanguageLabel": "Idiomas que Quero Aprender (múltiplos)"
   },
   "onboarding": {
     "skip": "Pular",
@@ -246,8 +246,8 @@
     "premiumSubtext": "Depois ¥500/mês para 1.000 perguntas e 50.000 caracteres de tradução",
     "languageSettings": "Configurações de Idioma",
     "nativeLanguage": "Idioma Nativo",
-    "defaultLanguage": "Idioma Padrão",
-    "learningLanguages": "Idiomas de Aprendizado",
+    "defaultLanguage": "Idioma Mais Estudado",
+    "learningLanguages": "Idiomas que Quero Aprender",
     "aiSettings": "Configurações de IA",
     "aiDetailLevel": "Nível de Detalhe da Resposta da IA",
     "concise": "Conciso (Padrão)",

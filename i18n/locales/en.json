@@ -37,14 +37,14 @@
       "description": "Select your native language.\nWhen you input text in this language, it will be translated to your learning languages."
     },
     "learningLanguages": {
-      "title": "Learning Languages",
-      "description": "Select the languages you want to learn. These languages will be available in the search and home screens.",
+      "title": "Languages to Learn",
+      "description": "Select the languages you want to learn (multiple selections allowed). These languages will be available in the search and home screens.",
       "add": "Add Language",
       "minOneRequired": "At least one language must be selected",
-      "confirmDelete": "Remove this language from your learning list?"
+      "confirmDelete": "Remove this language from the list?"
     },
     "defaultLanguage": {
-      "title": "Default Language",
+      "title": "Most Studied Language",
       "description": "Select the language to display when the app launches."
     },
     "account": {
@@ -108,9 +108,9 @@
     "step1Title": "Select Your Native Language",
     "step2Title": "Select Languages to Learn",
     "step1Description": "This will be used as the app's display language",
-    "step2Description": "Multiple selections allowed. You can add or remove later",
+    "step2Description": "Multiple selections allowed. You can add or change later.",
     "nativeLanguageLabel": "Native Language",
-    "learningLanguageLabel": "Learning Languages"
+    "learningLanguageLabel": "Languages to Learn (multiple)"
   },
   "onboarding": {
     "skip": "Skip",
@@ -246,8 +246,8 @@
     "premiumSubtext": "Then ¥500/month for 1,000 questions & 50,000 characters translation",
     "languageSettings": "Language Settings",
     "nativeLanguage": "Native Language",
-    "defaultLanguage": "Default Language",
-    "learningLanguages": "Learning Languages",
+    "defaultLanguage": "Most Studied Language",
+    "learningLanguages": "Languages to Learn",
     "aiSettings": "AI Settings",
     "aiDetailLevel": "AI Response Detail Level",
     "concise": "Concise (Default)",
