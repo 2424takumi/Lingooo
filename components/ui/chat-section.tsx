@@ -77,13 +77,13 @@ interface ChatSectionProps {
   onBookmarkAdded?: (bookmarkId: string) => void;
 }
 
-function ExpandIcon({ size = 18 }: { size?: number }) {
+function ChevronUpIcon({ size = 18 }: { size?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 18 18" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M7.5 14.25H3.75V10.5M10.5 3.75H14.25V7.5"
+        d="M18 15L12 9L6 15"
         stroke="white"
-        strokeWidth={2}
+        strokeWidth={2.5}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -91,13 +91,13 @@ function ExpandIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function ShrinkIcon({ size = 22 }: { size?: number }) {
+function ChevronDownIcon({ size = 22 }: { size?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 22 22" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M4.58333 12.8334H9.16666V17.4167M17.4167 9.16671H12.8333V4.58337"
+        d="M6 9L12 15L18 9"
         stroke="white"
-        strokeWidth={2}
+        strokeWidth={2.5}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -830,9 +830,9 @@ export function ChatSection({
               {isInputFocused && inputText.trim().length > 0 ? (
                 <SendIcon size={20} />
               ) : isOpen ? (
-                <ShrinkIcon size={22} />
+                <ChevronDownIcon size={22} />
               ) : (
-                <ExpandIcon size={18} />
+                <ChevronUpIcon size={18} />
               )}
             </TouchableOpacity>
           </View>
