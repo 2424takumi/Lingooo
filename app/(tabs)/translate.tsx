@@ -2130,7 +2130,7 @@ export default function TranslateScreen() {
               // TODO: ブックマーク機能を実装
               logger.info('[Translate] Word bookmark toggled');
             }}
-            onWordViewDetails={handleDictionaryLookup}
+            onWordViewDetails={isTutorialActive ? undefined : handleDictionaryLookup}
             onWordAskQuestion={handleWordAskQuestion}
             onSwitchToWordCard={handleSwitchToWordCard}
             tutorialWordCardRef={chatSectionRef}
