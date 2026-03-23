@@ -21,67 +21,42 @@ export interface TutorialDemoContent {
   highlightWord: string;
 }
 
-// 学習言語ごとのデモコンテンツ（学習言語→日本語の翻訳例文）
-export const TUTORIAL_DEMO_CONTENT: Record<string, TutorialDemoContent> = {
-  en: {
-    sourceLang: 'en',
-    targetLang: 'ja',
-    original: 'The weather was absolutely gorgeous, so we decided to take a stroll through the park.',
-    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
-    highlightWord: 'gorgeous',
-  },
-  pt: {
-    sourceLang: 'pt',
-    targetLang: 'ja',
-    original: 'O tempo estava absolutamente lindo, então decidimos dar um passeio pelo parque.',
-    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
-    highlightWord: 'lindo',
-  },
-  fr: {
-    sourceLang: 'fr',
-    targetLang: 'ja',
-    original: 'Le temps était absolument magnifique, alors nous avons décidé de faire une promenade dans le parc.',
-    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
-    highlightWord: 'magnifique',
-  },
-  es: {
-    sourceLang: 'es',
-    targetLang: 'ja',
-    original: 'El tiempo estaba absolutamente precioso, así que decidimos dar un paseo por el parque.',
-    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
-    highlightWord: 'precioso',
-  },
-  zh: {
-    sourceLang: 'zh',
-    targetLang: 'ja',
-    original: '天气非常好，所以我们决定在公园里散步。',
-    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
-    highlightWord: '散步',
-  },
-  ko: {
-    sourceLang: 'ko',
-    targetLang: 'ja',
-    original: '날씨가 정말 아름다워서 공원을 산책하기로 했습니다.',
-    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
-    highlightWord: '아름다워서',
-  },
-  vi: {
-    sourceLang: 'vi',
-    targetLang: 'ja',
-    original: 'Thời tiết thật tuyệt vời nên chúng tôi quyết định đi dạo trong công viên.',
-    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
-    highlightWord: 'tuyệt vời',
-  },
-  id: {
-    sourceLang: 'id',
-    targetLang: 'ja',
-    original: 'Cuacanya sangat indah, jadi kami memutuskan untuk berjalan-jalan di taman.',
-    translated: '天気がとても素晴らしかったので、公園を散歩することにしました。',
-    highlightWord: 'indah',
-  },
+// 学習言語ごとの原文とハイライト単語
+const DEMO_ORIGINALS: Record<string, { text: string; highlightWord: string }> = {
+  en: { text: 'The weather was absolutely gorgeous, so we decided to take a stroll through the park.', highlightWord: 'gorgeous' },
+  pt: { text: 'O tempo estava absolutamente lindo, então decidimos dar um passeio pelo parque.', highlightWord: 'lindo' },
+  fr: { text: 'Le temps était absolument magnifique, alors nous avons décidé de faire une promenade dans le parc.', highlightWord: 'magnifique' },
+  es: { text: 'El tiempo estaba absolutamente precioso, así que decidimos dar un paseo por el parque.', highlightWord: 'precioso' },
+  zh: { text: '天气非常好，所以我们决定在公园里散步。', highlightWord: '散步' },
+  ko: { text: '날씨가 정말 아름다워서 공원을 산책하기로 했습니다.', highlightWord: '아름다워서' },
+  vi: { text: 'Thời tiết thật tuyệt vời nên chúng tôi quyết định đi dạo trong công viên.', highlightWord: 'tuyệt vời' },
+  id: { text: 'Cuacanya sangat indah, jadi kami memutuskan untuk berjalan-jalan di taman.', highlightWord: 'indah' },
+  ja: { text: '天気がとても素晴らしかったので、公園を散歩することにしました。', highlightWord: '素晴らしかった' },
 };
 
-// デフォルト学習言語のbaseCodeからデモコンテンツを取得（フォールバック: 英語）
-export function getDemoContent(learningLanguageBaseCode: string): TutorialDemoContent {
-  return TUTORIAL_DEMO_CONTENT[learningLanguageBaseCode] || TUTORIAL_DEMO_CONTENT['en'];
+// 母語ごとの翻訳文（同じ意味の文章）
+const DEMO_TRANSLATIONS: Record<string, string> = {
+  ja: '天気がとても素晴らしかったので、公園を散歩することにしました。',
+  en: 'The weather was absolutely gorgeous, so we decided to take a stroll through the park.',
+  pt: 'O tempo estava absolutamente lindo, então decidimos dar um passeio pelo parque.',
+  fr: 'Le temps était absolument magnifique, alors nous avons décidé de faire une promenade dans le parc.',
+  es: 'El tiempo estaba absolutamente precioso, así que decidimos dar un paseo por el parque.',
+  zh: '天气非常好，所以我们决定在公园里散步。',
+  ko: '날씨가 정말 아름다워서 공원을 산책하기로 했습니다.',
+  vi: 'Thời tiết thật tuyệt vời nên chúng tôi quyết định đi dạo trong công viên.',
+  id: 'Cuacanya sangat indah, jadi kami memutuskan untuk berjalan-jalan di taman.',
+};
+
+// 学習言語と母語からデモコンテンツを生成
+export function getDemoContent(learningLangBaseCode: string, nativeLangBaseCode: string): TutorialDemoContent {
+  const original = DEMO_ORIGINALS[learningLangBaseCode] || DEMO_ORIGINALS['en'];
+  const translated = DEMO_TRANSLATIONS[nativeLangBaseCode] || DEMO_TRANSLATIONS['ja'];
+
+  return {
+    sourceLang: learningLangBaseCode,
+    targetLang: nativeLangBaseCode,
+    original: original.text,
+    translated,
+    highlightWord: original.highlightWord,
+  };
 }

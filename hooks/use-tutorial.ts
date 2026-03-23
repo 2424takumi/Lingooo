@@ -43,7 +43,7 @@ export function useTutorial(): UseTutorialResult {
     startTutorial,
     shouldStartTutorial,
   } = useTutorialContext();
-  const { defaultLanguage } = useLearningLanguages();
+  const { defaultLanguage, nativeLanguage } = useLearningLanguages();
 
   const translatedTextRef = useRef<View | null>(null);
   const chatSectionRef = useRef<View | null>(null);
@@ -52,13 +52,14 @@ export function useTutorial(): UseTutorialResult {
   const [highlightWordPosition, setHighlightWordPosition] = useState<{ x: number; y: number } | null>(null);
   const [questionButtonPosition, setQuestionButtonPosition] = useState<{ x: number; y: number } | null>(null);
 
-  // デモコンテンツを取得（デフォルト学習言語に合わせた例文）
+  // デモコンテンツを取得（学習言語の原文 + 母語の翻訳文）
   const needsDemo = isActive || shouldStartTutorial;
-  const langCode = defaultLanguage?.baseCode || 'en';
+  const learningCode = defaultLanguage?.baseCode || 'en';
+  const nativeCode = nativeLanguage?.baseCode || 'ja';
 
   const demoContent = useMemo(
-    () => needsDemo ? getDemoContent(langCode) : null,
-    [needsDemo, langCode],
+    () => needsDemo ? getDemoContent(learningCode, nativeCode) : null,
+    [needsDemo, learningCode, nativeCode],
   );
 
   const demoParagraphs = useMemo(
