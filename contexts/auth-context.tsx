@@ -17,7 +17,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   needsInitialSetup: boolean;
-  completeInitialSetup: (nativeLanguage: string, learningLanguages: string[]) => Promise<void>;
+  completeInitialSetup: (nativeLanguage: string, learningLanguages: string[], defaultLanguage?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -87,9 +87,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // 初期設定完了処理
-  const completeInitialSetup = async (nativeLanguage: string, learningLanguages: string[]) => {
+  const completeInitialSetup = async (nativeLanguage: string, learningLanguages: string[], defaultLanguage?: string) => {
     try {
-      console.log('[Auth] Completing initial setup with:', { nativeLanguage, learningLanguages });
+      console.log('[Auth] Completing initial setup with:', { nativeLanguage, learningLanguages, defaultLanguage });
 
       // 初期設定完了フラグを保存
       await AsyncStorage.setItem(INITIAL_SETUP_KEY, 'true');
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (data.user) {
         console.log('[Auth] User created:', data.user.id);
         // 選択された言語設定でusersテーブルにレコードを作成（完了を待つ）
-        const success = await ensureUserRecord(data.user.id, nativeLanguage, learningLanguages);
+        const success = await ensureUserRecord(data.user.id, nativeLanguage, learningLanguages, defaultLanguage);
         console.log('[Auth] User record created:', success);
 
         // レコード作成が確実に完了するまで少し待機
@@ -149,7 +149,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const ensureUserRecord = async (
     userId: string,
     nativeLanguage?: string,
-    learningLanguages?: string[]
+    learningLanguages?: string[],
+    defaultLanguage?: string
   ): Promise<boolean> => {
     try {
       // 既存レコードを確認
@@ -184,7 +185,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           monthly_question_count: 0,
           monthly_token_usage: 0,
           native_language: nativeLanguageCode,
-          default_language: learningLanguageCodes[0],
+          default_language: defaultLanguage ? languageIdToCode(defaultLanguage) : learningLanguageCodes[0],
           learning_languages: learningLanguageCodes,
           ai_detail_level: 'concise',
         });
