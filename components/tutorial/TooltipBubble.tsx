@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface TooltipBubbleProps {
   title: string;
@@ -23,18 +25,15 @@ export default function TooltipBubble({
 }: TooltipBubbleProps) {
   const { t } = useTranslation();
 
-  const tooltipTop = position === 'above'
-    ? targetRect.y - padding - 16 // 16px gap above spotlight
-    : targetRect.y + targetRect.height + padding + 16; // 16px gap below spotlight
+  // 'above': バブルの下端がスポットライト上端の16px上に来るようにbottomで配置
+  // 'below': バブルの上端がスポットライト下端の16px下に来るようにtopで配置
+  const tooltipStyle = position === 'above'
+    ? { bottom: SCREEN_HEIGHT - targetRect.y + padding + 16, top: undefined }
+    : { top: targetRect.y + targetRect.height + padding + 16, bottom: undefined };
 
   return (
     <View
-      style={[
-        styles.container,
-        position === 'above'
-          ? { bottom: undefined, top: tooltipTop }
-          : { top: tooltipTop },
-      ]}
+      style={[styles.container, tooltipStyle]}
       pointerEvents="box-none"
     >
       <View style={styles.bubble}>
@@ -53,7 +52,7 @@ export default function TooltipBubble({
           position === 'above'
             ? styles.arrowDown
             : styles.arrowUp,
-          { left: Math.min(Math.max(targetRect.x + targetRect.width / 2 - 8, 32), 320) },
+          { left: Math.min(Math.max(targetRect.x + targetRect.width / 2 - 8 - 20, 12), 300) },
         ]}
       />
     </View>

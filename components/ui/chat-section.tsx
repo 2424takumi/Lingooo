@@ -75,6 +75,10 @@ interface ChatSectionProps {
 
   // Callback Props - Other
   onBookmarkAdded?: (bookmarkId: string) => void;
+
+  // Tutorial Refs
+  tutorialWordCardRef?: React.RefObject<View | null>;
+  tutorialQuestionTagsRef?: React.RefObject<View | null>;
 }
 
 function ChevronUpIcon({ size = 18 }: { size?: number }) {
@@ -257,6 +261,10 @@ export function ChatSection({
 
   // Callback Props - Other
   onBookmarkAdded,
+
+  // Tutorial Refs
+  tutorialWordCardRef,
+  tutorialQuestionTagsRef,
 }: ChatSectionProps) {
   const { customQuestions, addCustomQuestion } = useAISettings();
   const { isPremium } = useSubscription();
@@ -650,17 +658,19 @@ export function ChatSection({
       {/* 選択テキスト表示 or ヒント文（translateモード） */}
       {/* WordDetailCard表示 - wordモードで単語データがあり、質問モードでない場合 */}
       {mode === 'word' && wordDetail && !showInputInWordMode && (
-        <WordDetailCard
-          word={wordDetail}
-          isLoading={isLoadingWordDetail}
-          onBookmarkToggle={() => onWordBookmarkToggle?.(wordDetail.headword)}
-          onViewDetails={onWordViewDetails}
-          onAskQuestion={() => {
-            setShowInputInWordMode(true);
-            onWordAskQuestion?.();
-          }}
-          onClose={onSelectionCleared}
-        />
+        <View ref={tutorialWordCardRef} collapsable={false}>
+          <WordDetailCard
+            word={wordDetail}
+            isLoading={isLoadingWordDetail}
+            onBookmarkToggle={() => onWordBookmarkToggle?.(wordDetail.headword)}
+            onViewDetails={onWordViewDetails}
+            onAskQuestion={() => {
+              setShowInputInWordMode(true);
+              onWordAskQuestion?.();
+            }}
+            onClose={onSelectionCleared}
+          />
+        </View>
       )}
 
       {/* 選択テキスト表示 - textモードスタイル（展開時に表示） */}
@@ -732,6 +742,7 @@ export function ChatSection({
         ]}
       >
         {/* Question Tags - ChatSuggestionTagsコンポーネントに統合 */}
+        <View ref={tutorialQuestionTagsRef} collapsable={false}>
         <ChatSuggestionTags
           mode={mode}
           scope={scope}
@@ -755,6 +766,7 @@ export function ChatSection({
           onOpenCustomQuestionModal={() => setIsCustomQuestionModalOpen(true)}
           onOpenChat={() => setIsOpen(true)}
         />
+        </View>
 
         {/* Follow-up Context View - フォローアップモード時のみ表示 */}
         {activeFollowUpPair && (

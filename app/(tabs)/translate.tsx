@@ -2093,10 +2093,8 @@ export default function TranslateScreen() {
         keyboardVerticalOffset={0}
       >
         <View
-          ref={chatSectionRef}
           pointerEvents="box-none"
           style={styles.chatContainerFixed}
-          collapsable={false}
         >
           <ChatSection
             key={`${translationData?.originalText}-${selectedText?.text || 'default'}`}
@@ -2135,6 +2133,8 @@ export default function TranslateScreen() {
             onWordViewDetails={handleDictionaryLookup}
             onWordAskQuestion={handleWordAskQuestion}
             onSwitchToWordCard={handleSwitchToWordCard}
+            tutorialWordCardRef={chatSectionRef}
+            tutorialQuestionTagsRef={questionTagsRef}
           />
         </View>
       </KeyboardAvoidingView>
