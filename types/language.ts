@@ -15,6 +15,7 @@ export interface Language {
   groupId?: string;     // バリアントグループ: 'english', 'portuguese'
   promptName: string;   // AI用: 'American English', 'Brazilian Portuguese'
   promptHint?: string;  // バリアント固有のAI指示
+  tabLabel: string;     // タブ表示用: '🇺🇸 英語', '🇧🇷 ポルトガル語'
 }
 
 export const AVAILABLE_LANGUAGES: Language[] = [
@@ -26,6 +27,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     code: 'ja',
     baseCode: 'ja',
     promptName: 'Japanese',
+    tabLabel: '🇯🇵 日本語',
   },
   {
     id: 'english-us',
@@ -37,6 +39,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     groupId: 'english',
     promptName: 'American English',
     promptHint: 'Use American English spelling and vocabulary (e.g., "color" not "colour", "elevator" not "lift", "apartment" not "flat").',
+    tabLabel: '🇺🇸 英語',
   },
   {
     id: 'english-gb',
@@ -48,6 +51,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     groupId: 'english',
     promptName: 'British English',
     promptHint: 'Use British English spelling and vocabulary (e.g., "colour" not "color", "lift" not "elevator", "flat" not "apartment").',
+    tabLabel: '🇬🇧 英語',
   },
   {
     id: 'portuguese-br',
@@ -59,6 +63,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     groupId: 'portuguese',
     promptName: 'Brazilian Portuguese',
     promptHint: 'Use Brazilian vocabulary and grammar (e.g., "trem" not "comboio", "ônibus" not "autocarro"). Use gerund constructions typical in Brazil. Examples should reflect Brazilian culture and daily life.',
+    tabLabel: '🇧🇷 ポルトガル語',
   },
   {
     id: 'portuguese-pt',
@@ -70,6 +75,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     groupId: 'portuguese',
     promptName: 'European Portuguese',
     promptHint: 'Use European Portuguese vocabulary and grammar (e.g., "comboio" not "trem", "autocarro" not "ônibus"). Avoid Brazilian colloquialisms. Examples should reflect Portuguese/European culture.',
+    tabLabel: '🇵🇹 ポルトガル語',
   },
   {
     id: 'french',
@@ -79,6 +85,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     code: 'fr',
     baseCode: 'fr',
     promptName: 'French',
+    tabLabel: '🇫🇷 フランス語',
   },
   {
     id: 'chinese',
@@ -88,6 +95,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     code: 'zh',
     baseCode: 'zh',
     promptName: 'Chinese',
+    tabLabel: '🇨🇳 中国語',
   },
   {
     id: 'korean',
@@ -97,6 +105,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     code: 'ko',
     baseCode: 'ko',
     promptName: 'Korean',
+    tabLabel: '🇰🇷 韓国語',
   },
   {
     id: 'vietnamese',
@@ -106,6 +115,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     code: 'vi',
     baseCode: 'vi',
     promptName: 'Vietnamese',
+    tabLabel: '🇻🇳 ベトナム語',
   },
   {
     id: 'indonesian',
@@ -115,6 +125,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     code: 'id',
     baseCode: 'id',
     promptName: 'Indonesian',
+    tabLabel: '🇮🇩 インドネシア語',
   },
   {
     id: 'spanish',
@@ -124,6 +135,7 @@ export const AVAILABLE_LANGUAGES: Language[] = [
     code: 'es',
     baseCode: 'es',
     promptName: 'Spanish',
+    tabLabel: '🇪🇸 スペイン語',
   },
 ];
 

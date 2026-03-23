@@ -154,7 +154,7 @@ export function SearchBar({
           {learningLanguages.map((language) => (
             <LanguageTag
               key={language.id}
-              label={language.name}
+              label={language.tabLabel}
               selected={currentLanguage.id === language.id}
               onPress={() => handleLanguageSelect(language.id)}
             />
