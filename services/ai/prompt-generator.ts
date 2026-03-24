@@ -124,7 +124,7 @@ export function createBasicInfoPrompt(word: string, targetLanguage: string = 'en
 
 Requirements:
 - 2-3 senses only, main meanings (each within 10 chars)
-- CRITICAL: ALL glossShort values MUST be written in {{nativeLanguageName}}. NEVER write them in {{targetLanguageName}}.
+- CRITICAL: ALL glossShort values MUST be written ONLY in {{nativeLanguageName}}. NEVER write them in {{targetLanguageName}} or any other language (e.g., Korean, Chinese, English).
 - Minimal information only for ultra-fast response`;
 
   return fetchPromptWithFallback(
@@ -189,7 +189,7 @@ Requirements:
 - Provide EXACTLY 4 practical and natural {{targetLanguageName}} example sentences
 - Each example must have BOTH textSrc ({{targetLanguageName}} sentence) and textDst ({{nativeLanguageName}} translation)
 - CRITICAL: ALL textSrc sentences MUST be written ENTIRELY in {{targetLanguageName}}. NEVER mix languages.
-- CRITICAL: ALL textDst translations MUST be written ENTIRELY in {{nativeLanguageName}}. NEVER write textDst in {{targetLanguageName}}.
+- CRITICAL: ALL textDst translations MUST be written ONLY in {{nativeLanguageName}}. NEVER write textDst in {{targetLanguageName}} or any other language.
 - The word "{{word}}" should appear naturally within full {{targetLanguageName}} sentences
 - IMPORTANT: Keep sentences concise - textSrc should be 8-12 words, textDst should be 15-25 characters
 - Examples should demonstrate different usage contexts and sentence patterns
@@ -261,8 +261,8 @@ export function createDictionaryPrompt(
 
 Requirements:
 - Generate in this order (headword → senses → hint → metrics → examples)
-- CRITICAL: ALL glossShort values and hint text MUST be written in ${nativeLanguageName}. NEVER write them in ${targetLanguageName}.
-- CRITICAL: ALL textDst translations MUST be written in ${nativeLanguageName}. NEVER write textDst in ${targetLanguageName}.
+- CRITICAL: ALL glossShort values and hint text MUST be written ONLY in ${nativeLanguageName}. NEVER write them in ${targetLanguageName} or any other language (e.g., Korean, Chinese, English).
+- CRITICAL: ALL textDst translations MUST be written ONLY in ${nativeLanguageName}. NEVER write textDst in ${targetLanguageName} or any other language.
 - Hint should be 2-3 sentences in ${nativeLanguageName}, covering 2 most important features (usage context, nuance, grammar, differences from similar words, etc.)
 - 2-3 senses only, main meanings (each within 10 chars)
 - 3-5 practical and natural ${targetLanguageName} example sentences

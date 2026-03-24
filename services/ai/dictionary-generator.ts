@@ -144,7 +144,7 @@ export async function generateSuggestionsFast(
 
 Requirements:
 - Must return at least 3 candidates
-- CRITICAL: ALL shortSense values MUST be written in {{nativeLanguageName}}. NEVER write them in {{targetLanguageName}}.
+- CRITICAL: ALL shortSense values MUST be written ONLY in {{nativeLanguageName}}. NEVER write them in {{targetLanguageName}} or any other language (e.g., Korean, Chinese, English). If the user's native language is Japanese, write in Japanese only.
 - shortSense should return 3 meanings in {{nativeLanguageName}} as an array for each word (within 10 characters each)
 - Meanings should be ordered by frequency of use
 - Sort by relevance
@@ -227,7 +227,7 @@ export async function generateSuggestionsStreamFast(
 
 Requirements:
 - Must return at least 3 candidates
-- CRITICAL: ALL shortSense values MUST be written in {{nativeLanguageName}}. NEVER write them in {{targetLanguageName}}.
+- CRITICAL: ALL shortSense values MUST be written ONLY in {{nativeLanguageName}}. NEVER write them in {{targetLanguageName}} or any other language (e.g., Korean, Chinese, English). If the user's native language is Japanese, write in Japanese only.
 - shortSense should return 3 meanings in {{nativeLanguageName}} as an array for each word (within 10 characters each)
 - Meanings should be ordered by frequency of use
 - Sort by relevance
