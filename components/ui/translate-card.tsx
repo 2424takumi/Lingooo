@@ -175,16 +175,17 @@ export function TranslateCard({
   // 現在の段落を取得
   const currentParagraph = paragraphs[currentIndex] || paragraphs[0];
 
-  // 全文表示モード: 全段落を結合
+  // 全文表示モード: 全段落を結合（sparse array対策でfilter(Boolean)を先に適用）
+  const validParagraphs = useMemo(() => paragraphs.filter(Boolean), [paragraphs]);
   const fullOriginalText = useMemo(() =>
-    paragraphs.map(p => p.originalText).filter(Boolean).join('\n\n'),
-    [paragraphs]
+    validParagraphs.map(p => p.originalText).filter(Boolean).join('\n\n'),
+    [validParagraphs]
   );
   const fullTranslatedText = useMemo(() =>
-    paragraphs.map(p => p.translatedText).filter(Boolean).join('\n\n'),
-    [paragraphs]
+    validParagraphs.map(p => p.translatedText).filter(Boolean).join('\n\n'),
+    [validParagraphs]
   );
-  const isAnyTranslating = paragraphs.some(p => p.isTranslating);
+  const isAnyTranslating = validParagraphs.some(p => p.isTranslating);
 
   const originalText = showFullText ? fullOriginalText : (currentParagraph?.originalText || '');
 

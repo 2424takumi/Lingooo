@@ -836,7 +836,7 @@ export default function TranslateScreen() {
               logger.info('[Translate] All translations complete');
               logger.info('[Translate] Final state:', {
                 paragraphCount: translatedParagraphs.length,
-                paragraphs: translatedParagraphs.map(p => ({
+                paragraphs: translatedParagraphs.filter(Boolean).map(p => ({
                   index: p.index,
                   hasOriginal: !!p.originalText,
                   hasTranslation: !!p.translatedText,
@@ -847,7 +847,7 @@ export default function TranslateScreen() {
               setIsTranslating(false);
 
               // 翻訳データを更新（チャット文脈用）
-              const fullTranslatedText = translatedParagraphs.map(p => p.translatedText).join('\n\n');
+              const fullTranslatedText = translatedParagraphs.filter(Boolean).map(p => p.translatedText).join('\n\n');
               const newTranslationData = {
                 originalText: text,
                 translatedText: fullTranslatedText,
@@ -927,8 +927,21 @@ export default function TranslateScreen() {
 
             translatedParagraphs[paragraph.index] = newParagraph;
             // 配列全体のコピーを避けるため、setStateのコールバック形式を使用
+            // sparse array防止: ギャップがある場合はプレースホルダーで埋める
             setParagraphs(prev => {
               const updated = [...prev];
+              // インデックスが配列長を超える場合、ギャップをプレースホルダーで埋める
+              for (let i = prev.length; i < paragraph.index; i++) {
+                if (!updated[i]) {
+                  updated[i] = {
+                    id: generateId('paragraph'),
+                    originalText: '',
+                    translatedText: '',
+                    index: i,
+                    isTranslating: true,
+                  };
+                }
+              }
               updated[paragraph.index] = newParagraph;
               return updated;
             });
@@ -1164,8 +1177,8 @@ export default function TranslateScreen() {
     setIsTranslating(true);
     setError(null);
 
-    // 各段落の翻訳をリセット
-    const updatedParagraphs = paragraphs.map(p => ({
+    // 各段落の翻訳をリセット（sparse array対策でfilter(Boolean)を適用）
+    const updatedParagraphs = paragraphs.filter(Boolean).map(p => ({
       ...p,
       translatedText: '',
       isTranslating: true,
@@ -1803,9 +1816,9 @@ export default function TranslateScreen() {
             wordTargetLang = type === 'original' ? selectedTranslateTargetLang : sourceLang;
 
             if (type === 'original') {
-              fullText = paragraphs.map(p => p.originalText).filter(t => t).join('\n\n');
+              fullText = paragraphs.filter(Boolean).map(p => p.originalText).filter(t => t).join('\n\n');
             } else {
-              fullText = paragraphs.map(p => p.translatedText).filter(t => t).join('\n\n');
+              fullText = paragraphs.filter(Boolean).map(p => p.translatedText).filter(t => t).join('\n\n');
             }
           }
 
@@ -1816,8 +1829,8 @@ export default function TranslateScreen() {
           // paragraphsが複数ある場合、現在の段落より前の段落の文字数を加算
           if (paragraphs.length > 1) {
             const relevantParagraphs = type === 'original'
-              ? paragraphs.map(p => p.originalText).filter(t => t)
-              : paragraphs.map(p => p.translatedText).filter(t => t);
+              ? paragraphs.filter(Boolean).map(p => p.originalText).filter(t => t)
+              : paragraphs.filter(Boolean).map(p => p.translatedText).filter(t => t);
 
             // 現在の段落より前の段落の文字数を計算（区切り文字 '\n\n' も含める）
             let offsetBeforeCurrentParagraph = 0;
