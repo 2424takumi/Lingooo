@@ -301,15 +301,20 @@ export default function TranslateScreen() {
       logger.info('[Translate] Extracting text from URL:', urlToExtract);
 
       extractTextFromUrl(urlToExtract).then((result) => {
-        if (result.text && result.text.length >= 10) {
-          logger.info('[Translate] URL text extracted', {
-            textLength: result.text.length,
-            title: result.title,
-            truncated: result.truncated,
-          });
-          setUrlTranslationText(result.text);
-        } else {
-          logger.warn('[Translate] No readable text found from URL');
+        try {
+          if (result?.text && result.text.length >= 10) {
+            logger.info('[Translate] URL text extracted', {
+              textLength: result.text.length,
+              title: result.title,
+              truncated: result.truncated,
+            });
+            setUrlTranslationText(result.text);
+          } else {
+            logger.warn('[Translate] No readable text found from URL');
+            setError(t('translate.urlTranslation.extractionFailed'));
+          }
+        } catch (err) {
+          logger.error('[Translate] URL extraction result processing failed', err);
           setError(t('translate.urlTranslation.extractionFailed'));
         }
         isLoadingUrlDataRef.current = false;

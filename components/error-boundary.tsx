@@ -126,16 +126,15 @@ export class ErrorBoundary extends Component<Props, State> {
             申し訳ございませんが、もう一度お試しください。
           </Text>
 
-          {/* 開発環境のみ: エラー詳細 */}
-          {__DEV__ && error && (
+          {/* エラー詳細 */}
+          {error && (
             <ScrollView style={styles.errorDetails}>
-              <Text style={styles.errorDetailsTitle}>エラー詳細（開発環境のみ表示）:</Text>
+              <Text style={styles.errorDetailsTitle}>エラー詳細:</Text>
               <Text style={styles.errorText}>
                 {error.toString()}
-                {'\n\n'}
-                {error.stack}
+                {__DEV__ && error.stack ? `\n\n${error.stack}` : ''}
               </Text>
-              {errorInfo && (
+              {__DEV__ && errorInfo && (
                 <>
                   <Text style={styles.errorDetailsTitle}>コンポーネントスタック:</Text>
                   <Text style={styles.errorText}>{errorInfo.componentStack}</Text>
