@@ -119,12 +119,12 @@ export function createBasicInfoPrompt(word: string, targetLanguage: string = 'en
 
 {
   "headword": {"lemma": "{{word}}", "lang": "{{targetLanguage}}", "pos": ["part of speech (English, e.g., verb, noun)"]{{genderField}}},
-  "senses": [{"id": "1", "glossShort": "concise {{nativeLanguageName}} meaning (within 10 chars)"}, {"id": "2", "glossShort": "meaning 2"}]
+  "senses": [{"id": "1", "glossShort": "concise meaning in {{nativeLanguageName}} (within 10 chars)"}, {"id": "2", "glossShort": "meaning 2 in {{nativeLanguageName}}"}]
 }
 
 Requirements:
 - 2-3 senses only, main meanings (each within 10 chars)
-- {{nativeLanguageName}} explanations should be concise and clear
+- CRITICAL: ALL glossShort values MUST be written in {{nativeLanguageName}}. NEVER write them in {{targetLanguageName}}.
 - Minimal information only for ultra-fast response`;
 
   return fetchPromptWithFallback(
@@ -188,11 +188,12 @@ Requirements:
 - Generate ONLY the "examples" array (do NOT include hint or metrics)
 - Provide EXACTLY 4 practical and natural {{targetLanguageName}} example sentences
 - Each example must have BOTH textSrc ({{targetLanguageName}} sentence) and textDst ({{nativeLanguageName}} translation)
-- CRITICAL: ALL textSrc sentences MUST be written ENTIRELY in {{targetLanguageName}}. NEVER mix languages. Do NOT write English sentences with a {{targetLanguageName}} word inserted.
+- CRITICAL: ALL textSrc sentences MUST be written ENTIRELY in {{targetLanguageName}}. NEVER mix languages.
+- CRITICAL: ALL textDst translations MUST be written ENTIRELY in {{nativeLanguageName}}. NEVER write textDst in {{targetLanguageName}}.
 - The word "{{word}}" should appear naturally within full {{targetLanguageName}} sentences
 - IMPORTANT: Keep sentences concise - textSrc should be 8-12 words, textDst should be 15-25 characters
 - Examples should demonstrate different usage contexts and sentence patterns
-- Translations should be natural and appropriate for the context (use appropriate formality level for each sentence)
+- Translations should be natural and appropriate for the context
 - Keep translations clear and contextually accurate`;
 
   const prompt = fetchPromptWithFallback(
@@ -248,7 +249,7 @@ export function createDictionaryPrompt(
 
 {
   "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["part of speech (English, e.g., verb, noun)"]${genderField}},
-  "senses": [{"id": "1", "glossShort": "concise ${nativeLanguageName} meaning (within 10 chars)"}, {"id": "2", "glossShort": "meaning 2"}],
+  "senses": [{"id": "1", "glossShort": "concise meaning in ${nativeLanguageName} (within 10 chars)"}, {"id": "2", "glossShort": "meaning 2 in ${nativeLanguageName}"}],
   "hint": {"text": "2-3 concise sentences in ${nativeLanguageName} (usage context, nuance, differences from similar words, etc. - 2 most important learning points)"},
   "metrics": {"frequency": frequency 0-100, "difficulty": difficulty 0-100, "nuance": nuance strength 0-100},
   "examples": [
@@ -260,12 +261,13 @@ export function createDictionaryPrompt(
 
 Requirements:
 - Generate in this order (headword → senses → hint → metrics → examples)
+- CRITICAL: ALL glossShort values and hint text MUST be written in ${nativeLanguageName}. NEVER write them in ${targetLanguageName}.
+- CRITICAL: ALL textDst translations MUST be written in ${nativeLanguageName}. NEVER write textDst in ${targetLanguageName}.
 - Hint should be 2-3 sentences in ${nativeLanguageName}, covering 2 most important features (usage context, nuance, grammar, differences from similar words, etc.)
 - 2-3 senses only, main meanings (each within 10 chars)
 - 3-5 practical and natural ${targetLanguageName} example sentences
-- CRITICAL: ALL example textSrc sentences MUST be written ENTIRELY in ${targetLanguageName}. NEVER mix languages. Do NOT write English sentences with a ${targetLanguageName} word inserted.
-- Metrics should reflect actual usage frequency
-- ${nativeLanguageName} explanations should be natural and clear`;
+- CRITICAL: ALL example textSrc sentences MUST be written ENTIRELY in ${targetLanguageName}. NEVER mix languages.
+- Metrics should reflect actual usage frequency`;
 }
 
 /**

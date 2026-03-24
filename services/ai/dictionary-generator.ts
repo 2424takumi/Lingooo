@@ -144,7 +144,8 @@ export async function generateSuggestionsFast(
 
 Requirements:
 - Must return at least 3 candidates
-- shortSense should return 3 meanings in the user's native language ({{nativeLanguageName}}) as an array for each word (within 10 characters each)
+- CRITICAL: ALL shortSense values MUST be written in {{nativeLanguageName}}. NEVER write them in {{targetLanguageName}}.
+- shortSense should return 3 meanings in {{nativeLanguageName}} as an array for each word (within 10 characters each)
 - Meanings should be ordered by frequency of use
 - Sort by relevance
 - confidence should be 1.0 for the most relevant
@@ -226,7 +227,8 @@ export async function generateSuggestionsStreamFast(
 
 Requirements:
 - Must return at least 3 candidates
-- shortSense should return 3 meanings in the user's native language ({{nativeLanguageName}}) as an array for each word (within 10 characters each)
+- CRITICAL: ALL shortSense values MUST be written in {{nativeLanguageName}}. NEVER write them in {{targetLanguageName}}.
+- shortSense should return 3 meanings in {{nativeLanguageName}} as an array for each word (within 10 characters each)
 - Meanings should be ordered by frequency of use
 - Sort by relevance
 - confidence should be 1.0 for the most relevant
