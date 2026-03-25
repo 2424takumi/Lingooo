@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export interface ImageUploadButtonProps {
   onImageSelected: (result: {
@@ -16,6 +17,7 @@ export interface ImageUploadButtonProps {
 
 export function ImageUploadButton({ onImageSelected, onError }: ImageUploadButtonProps) {
   const { t } = useTranslation();
+  const iconColor = useThemeColor({}, 'icon');
   const [isSelecting, setIsSelecting] = useState(false);
 
   const requestPermissions = async (): Promise<boolean> => {
@@ -160,7 +162,7 @@ export function ImageUploadButton({ onImageSelected, onError }: ImageUploadButto
   if (isSelecting) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="small" color="#000000" />
+        <ActivityIndicator size="small" color={iconColor} />
       </View>
     );
   }
@@ -171,7 +173,7 @@ export function ImageUploadButton({ onImageSelected, onError }: ImageUploadButto
       onPress={showOptions}
       activeOpacity={0.7}
     >
-      <Ionicons name="attach" size={28} color="#000000" />
+      <Ionicons name="attach" size={28} color={iconColor} />
     </TouchableOpacity>
   );
 }

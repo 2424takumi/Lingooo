@@ -14,7 +14,7 @@ import { getMaxTextLength } from '@/constants/validation';
 import { isSentence } from '@/utils/text-detector';
 import { logger } from '@/utils/logger';
 
-function ClearIcon({ size = 16, color = '#999' }: { size?: number; color?: string }) {
+function ClearIcon({ size = 16, color = '#999999' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -69,6 +69,11 @@ export function SearchBar({
   const textColor = useThemeColor({}, 'text');
   const buttonBackground = useThemeColor({}, 'buttonGray');
   const buttonIconColor = useThemeColor({}, 'buttonText');
+  const searchBackgroundColor = useThemeColor({}, 'searchBackground');
+  const systemBlueColor = useThemeColor({}, 'systemBlue');
+  const buttonDisabledColor = useThemeColor({}, 'buttonDisabled');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const errorTextColor = useThemeColor({}, 'errorText');
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
 
   // プランに応じた文字数制限
@@ -207,8 +212,8 @@ export function SearchBar({
               }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <View style={styles.clearButtonCircle}>
-                <ClearIcon size={10} color="#FFFFFF" />
+              <View style={[styles.clearButtonCircle, { backgroundColor: buttonDisabledColor }]}>
+                <ClearIcon size={10} color={buttonIconColor} />
               </View>
             </Pressable>
           )}
@@ -216,9 +221,9 @@ export function SearchBar({
         <View style={styles.actionArea}>
           {/* 翻訳モード表示 */}
           {isTranslationMode && (
-            <View style={styles.translationModeChip}>
-              <ReloadIcon size={16} color="#007AFF" />
-              <Text style={styles.translationModeText}>翻訳モード</Text>
+            <View style={[styles.translationModeChip, { backgroundColor: searchBackgroundColor }]}>
+              <ReloadIcon size={16} color={systemBlueColor} />
+              <Text style={[styles.translationModeText, { color: systemBlueColor }]}>翻訳モード</Text>
             </View>
           )}
 
@@ -227,7 +232,8 @@ export function SearchBar({
             <Text
               style={[
                 styles.charCounter,
-                searchText.length >= maxLength && styles.charCounterLimit,
+                { color: textSecondaryColor },
+                searchText.length >= maxLength && [styles.charCounterLimit, { color: errorTextColor }],
               ]}
             >
               {searchText.length.toLocaleString()} / {maxLength.toLocaleString()}
@@ -313,7 +319,6 @@ const styles = StyleSheet.create({
   translationModeChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
     paddingLeft: 13,
     paddingRight: 12,
     paddingVertical: 7,
@@ -323,7 +328,6 @@ const styles = StyleSheet.create({
   },
   translationModeText: {
     fontSize: 13,
-    color: '#007AFF',
     fontWeight: '500',
   },
   clearButton: {
@@ -336,16 +340,13 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#C0C0C0',
     justifyContent: 'center',
     alignItems: 'center',
   },
   charCounter: {
     fontSize: 12,
-    color: '#686868',
   },
   charCounterLimit: {
-    color: '#E74C3C',
     fontWeight: '600',
   },
   searchButton: {

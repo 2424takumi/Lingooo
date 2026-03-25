@@ -16,9 +16,9 @@ interface TranslationHistoryListProps {
 export function TranslationHistoryList({ onItemPress, maxItems = 20, showTitle = true }: TranslationHistoryListProps) {
   const { currentLanguage } = useLearningLanguages();
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
-  const titleColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'text');
-  const itemTextColor = useThemeColor({ light: '#000000', dark: '#F2F2F2' }, 'text');
-  const secondaryTextColor = useThemeColor({ light: '#8E8E93', dark: '#8E8E93' }, 'text');
+  const titleColor = useThemeColor({}, 'textSecondary');
+  const itemTextColor = useThemeColor({}, 'text');
+  const secondaryTextColor = useThemeColor({}, 'textTertiary');
 
   const loadHistory = useCallback(async () => {
     try {

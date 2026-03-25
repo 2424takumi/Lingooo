@@ -43,6 +43,15 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
   const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   const pageBackground = useThemeColor({}, 'pageBackground');
   const text = useThemeColor({}, 'text');
+  const overlayColor = useThemeColor({}, 'modalOverlay');
+  const borderLightColor = useThemeColor({}, 'borderLight');
+  const cardBg = useThemeColor({}, 'cardBackground');
+  const textSecondary = useThemeColor({}, 'textSecondary');
+  const textTertiary = useThemeColor({}, 'textTertiary');
+  const textMuted = useThemeColor({}, 'textMuted');
+  const primaryColor = useThemeColor({}, 'primary');
+  const separatorColor = useThemeColor({}, 'separator');
+  const errorTextColor = useThemeColor({}, 'errorText');
 
   // バックエンドAPIから全ての使用量を一括取得（単一のソース）
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
@@ -207,7 +216,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
       onRequestClose={onClose}
     >
       <TouchableOpacity
-        style={styles.overlay}
+        style={[styles.overlay, { backgroundColor: overlayColor }]}
         activeOpacity={1}
         onPress={onClose}
       >
@@ -222,7 +231,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
           onStartShouldSetResponder={() => true}
         >
           {/* Handle Bar */}
-          <View style={styles.handleBar} />
+          <View style={[styles.handleBar, { backgroundColor: borderLightColor }]} />
 
           {/* Header */}
           <View style={styles.header}>
@@ -248,11 +257,11 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
             <View style={styles.userDetails}>
               <View style={[
                 styles.planBadge,
-                { backgroundColor: plan === 'free' ? '#F8F8F8' : '#4CAF50' }
+                { backgroundColor: plan === 'free' ? cardBg : '#4CAF50' }
               ]}>
                 <Text style={[
                   styles.planBadgeText,
-                  { color: plan === 'free' ? '#666666' : '#FFFFFF' }
+                  { color: plan === 'free' ? textSecondary : '#FFFFFF' }
                 ]}>
                   {plan === 'free' ? t('settingsBottomSheet.freePlan') : t('settingsBottomSheet.premiumPlan')}
                 </Text>
@@ -261,7 +270,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
           </View>
 
           {/* Usage Stats - Horizontal Layout */}
-          <View style={styles.usageStatsContainer}>
+          <View style={[styles.usageStatsContainer, { backgroundColor: cardBg }]}>
             {/* First Row: Token and Question Count */}
             <View style={styles.statsRow}>
               {/* Token Usage */}
@@ -270,11 +279,11 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                   size={28}
                   strokeWidth={3}
                   percentage={tokenPercentage}
-                  color="#111111"
+                  color={text}
                 />
                 <View style={styles.statTextContainer}>
-                  <Text style={styles.statLabel}>{t('settingsBottomSheet.tokens')}</Text>
-                  <Text style={styles.statNumbers}>
+                  <Text style={[styles.statLabel, { color: textSecondary }]}>{t('settingsBottomSheet.tokens')}</Text>
+                  <Text style={[styles.statNumbers, { color: text }]}>
                     {tokenUsage.used.toLocaleString()} / {tokenUsage.limit.toLocaleString()}
                   </Text>
                 </View>
@@ -286,11 +295,11 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                   size={28}
                   strokeWidth={3}
                   percentage={questionPercentage}
-                  color="#111111"
+                  color={text}
                 />
                 <View style={styles.statTextContainer}>
-                  <Text style={styles.statLabel}>{t('settingsBottomSheet.questions')}</Text>
-                  <Text style={styles.statNumbers}>
+                  <Text style={[styles.statLabel, { color: textSecondary }]}>{t('settingsBottomSheet.questions')}</Text>
+                  <Text style={[styles.statNumbers, { color: text }]}>
                     {questionCount.used} / {questionCount.limit}
                   </Text>
                 </View>
@@ -305,11 +314,11 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                   size={28}
                   strokeWidth={3}
                   percentage={imagePercentage}
-                  color="#111111"
+                  color={text}
                 />
                 <View style={styles.statTextContainer}>
-                  <Text style={styles.statLabel}>{t('settingsBottomSheet.imageTranslation')}</Text>
-                  <Text style={styles.statNumbers}>
+                  <Text style={[styles.statLabel, { color: textSecondary }]}>{t('settingsBottomSheet.imageTranslation')}</Text>
+                  <Text style={[styles.statNumbers, { color: text }]}>
                     {imageTranslationCount.used} / {imageTranslationCount.limit}
                   </Text>
                 </View>
@@ -321,11 +330,11 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                   size={28}
                   strokeWidth={3}
                   percentage={urlPercentage}
-                  color="#111111"
+                  color={text}
                 />
                 <View style={styles.statTextContainer}>
-                  <Text style={styles.statLabel}>{t('settingsBottomSheet.urlTranslation')}</Text>
-                  <Text style={styles.statNumbers}>
+                  <Text style={[styles.statLabel, { color: textSecondary }]}>{t('settingsBottomSheet.urlTranslation')}</Text>
+                  <Text style={[styles.statNumbers, { color: text }]}>
                     {urlExtractionCount.used} / {urlExtractionCount.limit}
                   </Text>
                 </View>
@@ -334,7 +343,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
 
             {/* Third Row: Reset Days */}
             <View style={styles.resetRow}>
-              <Text style={styles.resetText}>{t('settingsBottomSheet.resetIn', { days: daysUntilReset })}</Text>
+              <Text style={[styles.resetText, { color: textSecondary }]}>{t('settingsBottomSheet.resetIn', { days: daysUntilReset })}</Text>
             </View>
           </View>
 
@@ -356,7 +365,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
           <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
             {/* Language Settings */}
             <View style={styles.languageSettingsContainer}>
-              <Text style={styles.sectionTitle}>{t('settingsBottomSheet.languageSettings')}</Text>
+              <Text style={[styles.sectionTitle, { color: text }]}>{t('settingsBottomSheet.languageSettings')}</Text>
               {/* Native Language removed: Japanese-only optimization */}
               <LanguageDropdown
                 label={t('settingsBottomSheet.defaultLanguage')}
@@ -375,42 +384,42 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
 
             {/* Account Section */}
             <View style={styles.accountSectionContainer}>
-              <Text style={styles.sectionTitle}>{t('settings.deleteAccount.title')}</Text>
+              <Text style={[styles.sectionTitle, { color: text }]}>{t('settings.deleteAccount.title')}</Text>
               <TouchableOpacity
-                style={styles.menuItem}
+                style={[styles.menuItem, { borderBottomColor: separatorColor }]}
                 onPress={() => Linking.openURL('mailto:support@lingooo.app')}
               >
-                <Text style={styles.menuItemText}>{t('settings.info.contact')}</Text>
-                <ChevronRightIcon size={18} color="#CCCCCC" />
+                <Text style={[styles.menuItemText, { color: text }]}>{t('settings.info.contact')}</Text>
+                <ChevronRightIcon size={18} color={textMuted} />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.menuItem}
+                style={[styles.menuItem, { borderBottomColor: separatorColor }]}
                 onPress={() => Linking.openURL('https://apps.apple.com/account/subscriptions')}
               >
-                <Text style={styles.menuItemText}>{t('settings.subscription.manage')}</Text>
-                <ChevronRightIcon size={18} color="#CCCCCC" />
+                <Text style={[styles.menuItemText, { color: text }]}>{t('settings.subscription.manage')}</Text>
+                <ChevronRightIcon size={18} color={textMuted} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.menuItem}
                 onPress={handleDeleteAccount}
               >
-                <Text style={[styles.menuItemText, styles.menuItemDanger]}>{t('settings.deleteAccount.button')}</Text>
+                <Text style={[styles.menuItemText, { color: errorTextColor }]}>{t('settings.deleteAccount.button')}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Footer Links */}
             <View style={styles.footerContainer}>
               <TouchableOpacity onPress={() => { onClose(); router.push('/privacy-policy'); }}>
-                <Text style={styles.footerLink}>{t('settingsBottomSheet.privacyPolicy')}</Text>
+                <Text style={[styles.footerLink, { color: textTertiary }]}>{t('settingsBottomSheet.privacyPolicy')}</Text>
               </TouchableOpacity>
-              <Text style={styles.footerSeparator}>・</Text>
+              <Text style={[styles.footerSeparator, { color: textTertiary }]}>・</Text>
               <TouchableOpacity onPress={() => { onClose(); router.push('/terms-of-service'); }}>
-                <Text style={styles.footerLink}>{t('settingsBottomSheet.termsOfService')}</Text>
+                <Text style={[styles.footerLink, { color: textTertiary }]}>{t('settingsBottomSheet.termsOfService')}</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.versionContainer}>
-              <Text style={styles.versionText}>{t('settingsBottomSheet.version')} {appVersion}</Text>
+              <Text style={[styles.versionText, { color: textMuted }]}>{t('settingsBottomSheet.version')} {appVersion}</Text>
             </View>
           </ScrollView>
         </Animated.View>
@@ -422,7 +431,6 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   container: {
@@ -434,7 +442,6 @@ const styles = StyleSheet.create({
   handleBar: {
     width: 40,
     height: 4,
-    backgroundColor: '#D9D9D9',
     borderRadius: 2,
     alignSelf: 'center',
     marginTop: 12,
@@ -483,7 +490,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   usageStatsContainer: {
-    backgroundColor: '#F8F8F8',
     marginHorizontal: 20,
     marginBottom: 16,
     paddingVertical: 14,
@@ -508,14 +514,12 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#666666',
     marginBottom: 2,
     lineHeight: 14,
   },
   statNumbers: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#111111',
     lineHeight: 16,
   },
   resetRow: {
@@ -523,7 +527,6 @@ const styles = StyleSheet.create({
   },
   resetText: {
     fontSize: 12,
-    color: '#666666',
     lineHeight: 14,
   },
   planBadge: {
@@ -546,7 +549,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111111',
     marginBottom: 12,
   },
   upgradeButtonContainer: {
@@ -554,7 +556,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   upgradeButton: {
-    backgroundColor: '#111111',
+    backgroundColor: '#111111',  // Keep dark for CTA contrast
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 12,
@@ -579,7 +581,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -602,11 +603,9 @@ const styles = StyleSheet.create({
   aiSettingLabel: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#111111',
   },
   aiSettingDescription: {
     fontSize: 13,
-    color: '#666666',
   },
   accountSectionContainer: {
     marginHorizontal: 20,
@@ -618,15 +617,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   menuItemText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#111111',
-  },
-  menuItemDanger: {
-    color: '#FF4444',
   },
   footerContainer: {
     flexDirection: 'row',
@@ -638,12 +632,10 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 12,
-    color: '#999999',
     textDecorationLine: 'underline',
   },
   footerSeparator: {
     fontSize: 12,
-    color: '#999999',
     marginHorizontal: 8,
   },
   versionContainer: {
@@ -652,6 +644,5 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 11,
-    color: '#CCCCCC',
   },
 });

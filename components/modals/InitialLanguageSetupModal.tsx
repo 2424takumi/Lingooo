@@ -6,6 +6,7 @@ import { LanguageDropdown } from '@/components/ui/language-dropdown';
 import * as Localization from 'expo-localization';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // デバイスのロケールを取得するヘルパー関数
 function getDeviceLocale(): string {
@@ -44,6 +45,17 @@ function CheckIcon({ size = 24, color = '#111111' }: { size?: number; color?: st
 
 export function InitialLanguageSetupModal({ visible, onComplete }: InitialLanguageSetupModalProps) {
   const { t } = useTranslation();
+  const overlayColor = useThemeColor({}, 'modalOverlay');
+  const modalBg = useThemeColor({}, 'modalBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const primaryColor = useThemeColor({}, 'primary');
+  const accentColor = useThemeColor({}, 'accent');
+  const buttonGrayColor = useThemeColor({}, 'buttonGray');
+  const buttonDisabledColor = useThemeColor({}, 'buttonDisabled');
+  const textTertiaryColor = useThemeColor({}, 'textTertiary');
+  const cardBg = useThemeColor({}, 'cardBackground');
+  const borderLightColor = useThemeColor({}, 'borderLight');
   const [step, setStep] = useState<1 | 2>(1);
 
   // 日本語に固定（Japanese-only optimization for initial release）
@@ -100,24 +112,24 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
       animationType="fade"
       onRequestClose={() => {}}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer} onStartShouldSetResponder={() => true}>
+      <View style={[styles.modalOverlay, { backgroundColor: overlayColor }]}>
+        <View style={[styles.modalContainer, { backgroundColor: modalBg }]} onStartShouldSetResponder={() => true}>
           {/* ステップインジケーター（2言語以上選択時のみ） */}
           {step === 2 && (
             <View style={styles.stepIndicator}>
-              <View style={[styles.stepDot, styles.stepDotCompleted]} />
-              <View style={styles.stepLine} />
-              <View style={[styles.stepDot, styles.stepDotActive]} />
+              <View style={[styles.stepDot, styles.stepDotCompleted, { backgroundColor: accentColor }]} />
+              <View style={[styles.stepLine, { backgroundColor: borderLightColor }]} />
+              <View style={[styles.stepDot, styles.stepDotActive, { backgroundColor: primaryColor }]} />
             </View>
           )}
 
           {step === 1 ? (
             <>
               {/* Step 1: 学習言語選択 */}
-              <Text style={styles.modalTitle}>
+              <Text style={[styles.modalTitle, { color: textColor }]}>
                 {t('initialSetup.step2Title')}
               </Text>
-              <Text style={styles.description}>
+              <Text style={[styles.description, { color: textSecondaryColor }]}>
                 {t('initialSetup.step2Description')}
               </Text>
               <View style={styles.dropdownContainer}>
@@ -133,13 +145,14 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
                 <TouchableOpacity
                   style={[
                     styles.primaryButton,
-                    !canProceedStep1 && styles.primaryButtonDisabled,
+                    { backgroundColor: primaryColor },
+                    !canProceedStep1 && [styles.primaryButtonDisabled, { backgroundColor: buttonDisabledColor }],
                     styles.primaryButtonFull,
                   ]}
                   onPress={handleNextStep}
                   disabled={!canProceedStep1}
                 >
-                  <Text style={[styles.primaryButtonText, !canProceedStep1 && styles.primaryButtonTextDisabled]}>
+                  <Text style={[styles.primaryButtonText, !canProceedStep1 && [styles.primaryButtonTextDisabled, { color: textTertiaryColor }]]}>
                     {selectedLearningLanguages.length <= 1 ? t('common.complete') : t('common.next')}
                   </Text>
                 </TouchableOpacity>
@@ -148,10 +161,10 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
           ) : (
             <>
               {/* Step 2: よく勉強する言語選択 */}
-              <Text style={styles.modalTitle}>
+              <Text style={[styles.modalTitle, { color: textColor }]}>
                 {t('settings.defaultLanguage.title')}
               </Text>
-              <Text style={styles.description}>
+              <Text style={[styles.description, { color: textSecondaryColor }]}>
                 {t('settings.defaultLanguage.description')}
               </Text>
               <View style={styles.defaultLanguageList}>
@@ -160,6 +173,7 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
                     key={lang.id}
                     style={[
                       styles.defaultLanguageItem,
+                      { backgroundColor: cardBg },
                       selectedDefaultLanguage?.id === lang.id && styles.defaultLanguageItemSelected,
                     ]}
                     onPress={() => setSelectedDefaultLanguage(lang)}
@@ -167,32 +181,34 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
                     <Text style={styles.defaultLanguageFlag}>{lang.flag}</Text>
                     <Text style={[
                       styles.defaultLanguageText,
-                      selectedDefaultLanguage?.id === lang.id && styles.defaultLanguageTextSelected,
+                      { color: textColor },
+                      selectedDefaultLanguage?.id === lang.id && [styles.defaultLanguageTextSelected, { color: textColor }],
                     ]}>
                       {lang.name}
                     </Text>
                     {selectedDefaultLanguage?.id === lang.id && (
-                      <CheckIcon size={20} color="#111111" />
+                      <CheckIcon size={20} color={textColor} />
                     )}
                   </TouchableOpacity>
                 ))}
               </View>
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
-                  style={styles.backButton}
+                  style={[styles.backButton, { backgroundColor: buttonGrayColor }]}
                   onPress={() => setStep(1)}
                 >
-                  <Text style={styles.backButtonText}>{t('common.back')}</Text>
+                  <Text style={[styles.backButtonText, { color: textSecondaryColor }]}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.primaryButton,
-                    !canProceedStep2 && styles.primaryButtonDisabled,
+                    { backgroundColor: primaryColor },
+                    !canProceedStep2 && [styles.primaryButtonDisabled, { backgroundColor: buttonDisabledColor }],
                   ]}
                   onPress={handleComplete}
                   disabled={!canProceedStep2}
                 >
-                  <Text style={[styles.primaryButtonText, !canProceedStep2 && styles.primaryButtonTextDisabled]}>
+                  <Text style={[styles.primaryButtonText, !canProceedStep2 && [styles.primaryButtonTextDisabled, { color: textTertiaryColor }]]}>
                     {t('common.complete')}
                   </Text>
                 </TouchableOpacity>
@@ -208,7 +224,6 @@ export function InitialLanguageSetupModal({ visible, onComplete }: InitialLangua
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -216,7 +231,6 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '100%',
     maxWidth: 500,
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     shadowColor: '#000',
@@ -235,30 +249,24 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#E0E0E0',
   },
   stepDotActive: {
-    backgroundColor: '#111111',
   },
   stepDotCompleted: {
-    backgroundColor: '#00AA69',
   },
   stepLine: {
     width: 40,
     height: 2,
-    backgroundColor: '#E0E0E0',
     marginHorizontal: 8,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#000000',
     textAlign: 'center',
     marginBottom: 8,
   },
   description: {
     fontSize: 14,
-    color: '#686868',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
@@ -277,7 +285,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
   },
   defaultLanguageItemSelected: {
     backgroundColor: '#F0FFF8',
@@ -291,12 +298,10 @@ const styles = StyleSheet.create({
   defaultLanguageText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333333',
     flex: 1,
   },
   defaultLanguageTextSelected: {
     fontWeight: '600',
-    color: '#111111',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -306,20 +311,17 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   backButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#686868',
   },
   primaryButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#111111',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -327,7 +329,6 @@ const styles = StyleSheet.create({
     flex: 2,
   },
   primaryButtonDisabled: {
-    backgroundColor: '#E0E0E0',
   },
   primaryButtonText: {
     fontSize: 16,
@@ -335,6 +336,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   primaryButtonTextDisabled: {
-    color: '#999999',
   },
 });

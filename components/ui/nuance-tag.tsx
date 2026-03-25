@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export type NuanceType = 'casual' | 'formal' | 'neutral' | 'academic' | 'slang';
 
@@ -7,42 +8,31 @@ interface NuanceTagProps {
   type: NuanceType;
 }
 
-const NUANCE_CONFIG = {
-  casual: {
-    emoji: '😊',
-    backgroundColor: '#E5F8D7',
-    textColor: '#1A1A1A',
-  },
-  formal: {
-    emoji: '💼',
-    backgroundColor: '#F8DED7',
-    textColor: '#1A1A1A',
-  },
-  neutral: {
-    emoji: '⚖️',
-    backgroundColor: '#D7E8F8',
-    textColor: '#1A1A1A',
-  },
-  academic: {
-    emoji: '📚',
-    backgroundColor: '#D7E5F8',
-    textColor: '#1A1A1A',
-  },
-  slang: {
-    emoji: '🔥',
-    backgroundColor: '#F8D7E5',
-    textColor: '#1A1A1A',
-  },
+const NUANCE_THEME_KEYS = {
+  casual: 'nuanceCasual',
+  formal: 'nuanceFormal',
+  neutral: 'nuanceNeutral',
+  academic: 'nuanceAcademic',
+  slang: 'nuanceSlang',
+} as const;
+
+const NUANCE_EMOJIS = {
+  casual: '😊',
+  formal: '💼',
+  neutral: '⚖️',
+  academic: '📚',
+  slang: '🔥',
 };
 
 export function NuanceTag({ type }: NuanceTagProps) {
   const { t } = useTranslation();
-  const config = NUANCE_CONFIG[type];
+  const backgroundColor = useThemeColor({}, NUANCE_THEME_KEYS[type]);
+  const textColor = useThemeColor({}, 'nuanceText');
 
   return (
-    <View style={[styles.container, { backgroundColor: config.backgroundColor }]}>
-      <Text style={[styles.label, { color: config.textColor }]}>{t(`nuanceTag.${type}`)}</Text>
-      <Text style={styles.emoji}>{config.emoji}</Text>
+    <View style={[styles.container, { backgroundColor }]}>
+      <Text style={[styles.label, { color: textColor }]}>{t(`nuanceTag.${type}`)}</Text>
+      <Text style={styles.emoji}>{NUANCE_EMOJIS[type]}</Text>
     </View>
   );
 }

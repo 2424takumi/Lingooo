@@ -20,6 +20,7 @@ import Svg, { Path } from 'react-native-svg';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MENU_WIDTH = SCREEN_WIDTH * 0.75; // 75% of screen width
@@ -81,6 +82,7 @@ interface MenuItemProps {
 }
 
 function MenuItem({ icon, label, onPress }: MenuItemProps) {
+  const menuTextColor = useThemeColor({}, 'text');
   return (
     <TouchableOpacity
       style={styles.menuItem}
@@ -91,7 +93,7 @@ function MenuItem({ icon, label, onPress }: MenuItemProps) {
     >
       <View style={styles.menuItemContent}>
         <View style={styles.iconContainer}>{icon}</View>
-        <Text style={styles.menuItemText}>{label}</Text>
+        <Text style={[styles.menuItemText, { color: menuTextColor }]}>{label}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -100,6 +102,10 @@ function MenuItem({ icon, label, onPress }: MenuItemProps) {
 export function SideMenu({ visible, onClose }: SideMenuProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const modalBg = useThemeColor({}, 'modalBackground');
+  const textColor = useThemeColor({}, 'text');
+  const borderColor = useThemeColor({}, 'separator');
+  const overlayBgColor = useThemeColor({}, 'modalOverlay');
   const translateX = useSharedValue(-MENU_WIDTH);
   const overlayOpacity = useSharedValue(0);
 
@@ -151,13 +157,14 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       {/* Overlay */}
       <Pressable style={styles.modalContainer} onPress={onClose}>
-        <Animated.View style={[styles.overlay, overlayAnimatedStyle]} />
+        <Animated.View style={[styles.overlay, { backgroundColor: overlayBgColor }, overlayAnimatedStyle]} />
       </Pressable>
 
       {/* Side Menu Panel */}
       <Animated.View
         style={[
           styles.menuPanel,
+          { backgroundColor: modalBg },
           menuAnimatedStyle,
           {
             paddingTop: insets.top > 0 ? insets.top : 20,
@@ -165,8 +172,8 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
         ]}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('menu.title')}</Text>
+        <View style={[styles.header, { borderBottomColor: borderColor }]}>
+          <Text style={[styles.headerTitle, { color: textColor }]}>{t('menu.title')}</Text>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
@@ -174,7 +181,7 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
             accessibilityRole="button"
             accessibilityLabel="Close menu"
           >
-            <CloseIcon size={24} color="#1A1A1A" />
+            <CloseIcon size={24} color={textColor} />
           </TouchableOpacity>
         </View>
 
@@ -185,12 +192,12 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
           showsVerticalScrollIndicator={false}
         >
           <MenuItem
-            icon={<BookmarkIcon size={24} color="#1A1A1A" />}
+            icon={<BookmarkIcon size={24} color={textColor} />}
             label={t('menu.bookmarks')}
             onPress={() => handleNavigation('/bookmarks')}
           />
           <MenuItem
-            icon={<MessagePlusIcon size={24} color="#1A1A1A" />}
+            icon={<MessagePlusIcon size={24} color={textColor} />}
             label={t('menu.customQuestions')}
             onPress={() => handleNavigation('/custom-questions')}
           />
@@ -206,7 +213,6 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   menuPanel: {
     position: 'absolute',
@@ -214,7 +220,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: MENU_WIDTH,
-    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 2, height: 0 },
     shadowOpacity: 0.25,
@@ -229,12 +234,10 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#111111',
   },
   closeButton: {
     padding: 4,
@@ -263,6 +266,5 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#111111',
   },
 });

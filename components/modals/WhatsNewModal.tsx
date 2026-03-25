@@ -2,6 +2,7 @@ import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { getWhatsNewForVersion } from '@/constants/whats-new';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface WhatsNewModalProps {
   visible: boolean;
@@ -12,6 +13,12 @@ interface WhatsNewModalProps {
 export function WhatsNewModal({ visible, version, onClose }: WhatsNewModalProps) {
   const { t } = useTranslation();
   const whatsNew = getWhatsNewForVersion(version);
+  const overlayColor = useThemeColor({}, 'modalOverlay');
+  const modalBg = useThemeColor({}, 'modalBackground');
+  const textColor = useThemeColor({}, 'text');
+  const accentColor = useThemeColor({}, 'accent');
+  const itemTextColor = useThemeColor({}, 'text');
+  const primaryColor = useThemeColor({}, 'primary');
 
   if (!whatsNew) return null;
 
@@ -26,22 +33,22 @@ export function WhatsNewModal({ visible, version, onClose }: WhatsNewModalProps)
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.card}>
-          <Text style={styles.title}>
+      <View style={[styles.overlay, { backgroundColor: overlayColor }]}>
+        <View style={[styles.card, { backgroundColor: modalBg }]}>
+          <Text style={[styles.title, { color: textColor }]}>
             {t('whatsNew.title', { version })}
           </Text>
 
           <View style={styles.itemList}>
             {items.map((item, index) => (
               <View key={index} style={styles.itemRow}>
-                <Text style={styles.bullet}>●</Text>
-                <Text style={styles.itemText}>{item}</Text>
+                <Text style={[styles.bullet, { color: accentColor }]}>●</Text>
+                <Text style={[styles.itemText, { color: itemTextColor }]}>{item}</Text>
               </View>
             ))}
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={onClose}>
+          <TouchableOpacity style={[styles.button, { backgroundColor: primaryColor }]} onPress={onClose}>
             <Text style={styles.buttonText}>{t('whatsNew.dismiss')}</Text>
           </TouchableOpacity>
         </View>
@@ -53,14 +60,12 @@ export function WhatsNewModal({ visible, version, onClose }: WhatsNewModalProps)
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
   },
   card: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     paddingTop: 32,
     paddingBottom: 24,
@@ -69,7 +74,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111111',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -84,12 +88,10 @@ const styles = StyleSheet.create({
   },
   bullet: {
     fontSize: 8,
-    color: '#00AA69',
     marginTop: 6,
   },
   itemText: {
     fontSize: 15,
-    color: '#333333',
     lineHeight: 22,
     flex: 1,
   },

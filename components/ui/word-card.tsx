@@ -31,7 +31,7 @@ export function WordCard({ word, posTags, gender, definitions, description, nuan
         <View style={styles.wordAndPosContainer}>
           <Text
             selectable
-            selectionColor="#111111"
+            selectionColor={accent}
             style={[styles.word, { color: primaryText }]}
           >
             {word}
@@ -48,7 +48,7 @@ export function WordCard({ word, posTags, gender, definitions, description, nuan
       <View style={styles.contentSection}>
         <Text
           selectable
-          selectionColor="#111111"
+          selectionColor={accent}
           style={[styles.definition, { color: primaryText }]}
         >
           {definitionsArray.join('、')}
@@ -57,7 +57,7 @@ export function WordCard({ word, posTags, gender, definitions, description, nuan
         {description ? (
           <Text
             selectable
-            selectionColor="#111111"
+            selectionColor={accent}
             style={[styles.description, { color: secondaryText }]}
           >
             {description}

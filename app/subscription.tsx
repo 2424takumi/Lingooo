@@ -16,10 +16,14 @@ import { useTranslation } from 'react-i18next';
 
 export default function SubscriptionScreen() {
   const { t } = useTranslation();
-  const pageBackground = useThemeColor({ light: '#F5F7FA', dark: '#000000' }, 'pageBackground');
-  const cardBackground = useThemeColor({ light: '#FFFFFF', dark: '#1C1C1E' }, 'cardBackground');
+  const pageBackground = useThemeColor({}, 'pageBackground');
+  const cardBackground = useThemeColor({}, 'cardBackgroundElevated');
   const textColor = useThemeColor({}, 'text');
-  const subTextColor = useThemeColor({ light: '#8E8E93', dark: '#999999' }, 'icon');
+  const subTextColor = useThemeColor({}, 'textTertiary');
+  const borderColor = useThemeColor({}, 'borderLight');
+  const systemBlueColor = useThemeColor({}, 'systemBlue');
+  const successColor = useThemeColor({}, 'successColor');
+  const buttonDisabledColor = useThemeColor({}, 'buttonDisabled');
 
   const { isPremium, isLoading, packages, purchasePackage, restorePurchases, customerInfo } = useSubscription();
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -119,7 +123,7 @@ export default function SubscriptionScreen() {
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
-      <StatusBar style="auto" />
+      <StatusBar style={pageBackground === '#FFFFFF' || pageBackground === '#0B0B0B' ? 'auto' : 'auto'} />
 
       <View style={styles.content}>
         {/* Header */}
@@ -151,7 +155,7 @@ export default function SubscriptionScreen() {
                 </Text>
               )}
               <TouchableOpacity
-                style={[styles.manageButton, { backgroundColor: cardBackground }]}
+                style={[styles.manageButton, { backgroundColor: cardBackground, borderColor }]}
                 onPress={() => {
                   Linking.openURL('https://apps.apple.com/account/subscriptions');
                 }}
@@ -216,8 +220,8 @@ export default function SubscriptionScreen() {
                     <TouchableOpacity
                       style={[
                         styles.planOption,
-                        { backgroundColor: cardBackground },
-                        selectedPackageIndex === 1 && styles.planOptionSelected,
+                        { backgroundColor: cardBackground, borderColor },
+                        selectedPackageIndex === 1 && { borderColor: systemBlueColor },
                       ]}
                       onPress={() => setSelectedPackageIndex(1)}
                     >
@@ -233,7 +237,7 @@ export default function SubscriptionScreen() {
                         </View>
                       </View>
                       {selectedPackageIndex === 1 && (
-                        <View style={styles.recommendedBadge}>
+                        <View style={[styles.recommendedBadge, { backgroundColor: successColor }]}>
                           <Text style={styles.recommendedBadgeText}>{t('subscription.recommended')}</Text>
                         </View>
                       )}
@@ -244,8 +248,8 @@ export default function SubscriptionScreen() {
                     <TouchableOpacity
                       style={[
                         styles.planOption,
-                        { backgroundColor: cardBackground },
-                        selectedPackageIndex === 0 && styles.planOptionSelected,
+                        { backgroundColor: cardBackground, borderColor },
+                        selectedPackageIndex === 0 && { borderColor: systemBlueColor },
                       ]}
                       onPress={() => setSelectedPackageIndex(0)}
                     >
@@ -264,7 +268,7 @@ export default function SubscriptionScreen() {
               )}
 
               {/* Pricing Info */}
-              <Text style={[styles.pricingInfo, { color: '#007AFF' }]}>
+              <Text style={[styles.pricingInfo, { color: systemBlueColor }]}>
                 {t('subscription.trialInfo', { price: selectedPrice })}
               </Text>
 
@@ -272,7 +276,8 @@ export default function SubscriptionScreen() {
               <TouchableOpacity
                 style={[
                   styles.purchaseButton,
-                  (isPurchasing || isLoading || packages.length === 0) && styles.purchaseButtonDisabled,
+                  { backgroundColor: systemBlueColor, shadowColor: systemBlueColor },
+                  (isPurchasing || isLoading || packages.length === 0) && { backgroundColor: buttonDisabledColor, shadowOpacity: 0 },
                 ]}
                 onPress={handlePurchase}
                 disabled={isPurchasing || isLoading || packages.length === 0}
@@ -366,7 +371,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
   },
   manageButtonText: {
     fontSize: 16,
@@ -430,10 +434,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#E5E5EA',
   },
   planOptionSelected: {
-    borderColor: '#007AFF',
     borderWidth: 2,
   },
   planOptionLeft: {
@@ -446,7 +448,6 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -465,13 +466,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   recommendedBadge: {
-    backgroundColor: '#4CAF50',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
   recommendedBadgeText: {
-    color: '#FFFFFF',
+    color: '#FFFFFF', // Always white on green badge
     fontSize: 11,
     fontWeight: '700',
   },
@@ -486,7 +486,6 @@ const styles = StyleSheet.create({
 
   // Purchase Button
   purchaseButton: {
-    backgroundColor: '#007AFF',
     paddingVertical: 18,
     borderRadius: 28,
     alignItems: 'center',
@@ -497,12 +496,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  purchaseButtonDisabled: {
-    backgroundColor: '#CCCCCC',
-    shadowOpacity: 0,
-  },
+  purchaseButtonDisabled: {},
   purchaseButtonText: {
-    color: '#FFFFFF',
+    color: '#FFFFFF', // Always white on blue button
     fontSize: 18,
     fontWeight: '700',
   },

@@ -13,6 +13,7 @@ LogBox.ignoreLogs([
 import { useTranslation } from 'react-i18next';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemeProvider as AppThemeProvider } from '@/contexts/theme-context';
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
 import { SubscriptionProvider, useSubscription } from '@/contexts/subscription-context';
 import { LearningLanguagesProvider, useLearningLanguages } from '@/contexts/learning-languages-context';
@@ -144,7 +145,7 @@ function AppContent() {
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
                 </Stack>
-                <StatusBar style="auto" />
+                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
                 <OfflineBanner />
               </ThemeProvider>
             </ChatProvider>
@@ -186,11 +187,13 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
-        <AuthProvider>
-          <TutorialProvider>
-            <AppContent />
-          </TutorialProvider>
-        </AuthProvider>
+        <AppThemeProvider>
+          <AuthProvider>
+            <TutorialProvider>
+              <AppContent />
+            </TutorialProvider>
+          </AuthProvider>
+        </AppThemeProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>
   );

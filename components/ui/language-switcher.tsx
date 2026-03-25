@@ -50,6 +50,7 @@ export function LanguageSwitcher({ isDetectingLanguage = false }: LanguageSwitch
   const textColor = useThemeColor({}, 'text');
   const dropdownBackground = useThemeColor({}, 'cardBackground');
   const accentColor = useThemeColor({}, 'primary');
+  const segmentedBg = useThemeColor({}, 'segmentedBackground');
 
   // シマーエフェクトのアニメーション
   const shimmerAnimation = useRef(new Animated.Value(0)).current;
@@ -152,7 +153,7 @@ export function LanguageSwitcher({ isDetectingLanguage = false }: LanguageSwitch
                     key={language.id}
                     style={[
                       styles.languageItem,
-                      currentLanguage.id === language.id && { backgroundColor: '#E8E8E8' },
+                      currentLanguage.id === language.id && { backgroundColor: segmentedBg },
                     ]}
                     onPress={() => handleLanguageSelect(language.id)}
                   >

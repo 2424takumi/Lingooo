@@ -1,5 +1,6 @@
 import { View, StyleSheet, Text } from 'react-native';
 import { SelectableText } from './selectable-text';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface WordHintProps {
   hint: string;
@@ -16,6 +17,10 @@ export function WordHint({
   isStreaming = false,
   streamingText = '',
 }: WordHintProps) {
+  const bgColor = useThemeColor({}, 'cardBackground');
+  const borderColor = useThemeColor({}, 'borderLight');
+  const textColor = useThemeColor({}, 'text');
+
   // ストリーミング中はstreamingTextを表示
   const displayText = isStreaming ? streamingText : hint;
 
@@ -24,15 +29,15 @@ export function WordHint({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: bgColor, borderColor }]}>
       {isStreaming ? (
         // ストリーミング中はテキストのみ表示
-        <Text style={styles.hintText}>{streamingText}</Text>
+        <Text style={[styles.hintText, { color: textColor }]}>{streamingText}</Text>
       ) : (
         // 完成後は選択可能テキストとして表示
         <SelectableText
           text={hint}
-          style={styles.hintText}
+          style={{ ...styles.hintText, color: textColor }}
           onSelectionChange={onTextSelected}
           onSelectionCleared={onSelectionCleared}
         />
@@ -43,9 +48,7 @@ export function WordHint({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F8F8F8',
     borderWidth: 1,
-    borderColor: '#FFFFFF',
     borderRadius: 8,
     paddingVertical: 16,
     paddingHorizontal: 18,
@@ -53,7 +56,6 @@ const styles = StyleSheet.create({
   hintText: {
     fontSize: 17,
     lineHeight: 25,
-    color: '#000000',
     letterSpacing: 0.5,
     flex: 1,
   },

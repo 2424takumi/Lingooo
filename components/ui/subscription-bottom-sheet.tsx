@@ -10,6 +10,7 @@ import { router } from 'expo-router';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSubscription } from '@/contexts/subscription-context';
 import Svg, { Path } from 'react-native-svg';
+import { logger } from '@/utils/logger';
 
 // Icons
 function ChatIcon({ size = 20, color = '#FFFFFF' }: { size?: number; color?: string }) {
@@ -121,6 +122,15 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
   const slideAnim = useRef(new Animated.Value(windowHeight)).current;
   const textColor = useThemeColor({}, 'text');
   const subTextColor = useThemeColor({ light: '#686868', dark: '#999999' }, 'icon');
+  const modalBackground = useThemeColor({}, 'modalBackground');
+  const cardBackground = useThemeColor({}, 'cardBackground');
+  const overlayColor = useThemeColor({}, 'modalOverlay');
+  const primaryColor = useThemeColor({}, 'primary');
+  const buttonDisabledColor = useThemeColor({}, 'buttonDisabled');
+  const borderColor = useThemeColor({}, 'borderLight');
+  const featureTextColor = useThemeColor({}, 'text');
+  const segmentTextColor = useThemeColor({}, 'text');
+  const segmentSelectedBg = useThemeColor({}, 'modalBackground');
 
   const { isPremium, isLoading, packages, purchasePackage, restorePurchases, customerInfo } = useSubscription();
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -251,7 +261,7 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
         onRequestClose={onClose}
       >
         <TouchableOpacity
-          style={styles.overlay}
+          style={[styles.overlay, { backgroundColor: overlayColor }]}
           activeOpacity={1}
           onPress={onClose}
         >
@@ -260,13 +270,14 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
               style={[
                 styles.container,
                 {
+                  backgroundColor: modalBackground,
                   transform: [{ translateY: slideAnim }],
                 },
               ]}
             >
-              <View style={styles.handleBar} />
+              <View style={[styles.handleBar, { backgroundColor: borderColor }]} />
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>✕</Text>
+                <Text style={[styles.closeButtonText, { color: textColor }]}>✕</Text>
               </TouchableOpacity>
 
               <ScrollView
@@ -303,7 +314,7 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
       onRequestClose={onClose}
     >
       <TouchableOpacity
-        style={styles.overlay}
+        style={[styles.overlay, { backgroundColor: overlayColor }]}
         activeOpacity={1}
         onPress={onClose}
       >
@@ -312,16 +323,17 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
             style={[
               styles.container,
               {
+                backgroundColor: modalBackground,
                 transform: [{ translateY: slideAnim }],
               },
             ]}
           >
             {/* Handle Bar */}
-            <View style={styles.handleBar} />
+            <View style={[styles.handleBar, { backgroundColor: borderColor }]} />
 
             {/* Close Button */}
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
+              <Text style={[styles.closeButtonText, { color: textColor }]}>✕</Text>
             </TouchableOpacity>
 
             <ScrollView
@@ -364,13 +376,14 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
                   <TouchableOpacity
                     style={[
                       styles.segmentButton,
-                      selectedPlan === 'yearly' && styles.segmentButtonSelected,
+                      selectedPlan === 'yearly' && [styles.segmentButtonSelected, { backgroundColor: segmentSelectedBg }],
                     ]}
                     onPress={() => setSelectedPlan('yearly')}
                   >
                     <Text
                       style={[
                         styles.segmentButtonText,
+                        { color: segmentTextColor },
                         selectedPlan === 'yearly' && styles.segmentButtonTextSelected,
                       ]}
                     >
@@ -380,13 +393,14 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
                   <TouchableOpacity
                     style={[
                       styles.segmentButton,
-                      selectedPlan === 'monthly' && styles.segmentButtonSelected,
+                      selectedPlan === 'monthly' && [styles.segmentButtonSelected, { backgroundColor: segmentSelectedBg }],
                     ]}
                     onPress={() => setSelectedPlan('monthly')}
                   >
                     <Text
                       style={[
                         styles.segmentButtonText,
+                        { color: segmentTextColor },
                         selectedPlan === 'monthly' && styles.segmentButtonTextSelected,
                       ]}
                     >
@@ -401,7 +415,7 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
               </View>
 
               {/* Plan Card */}
-              <View style={styles.planCard}>
+              <View style={[styles.planCard, { backgroundColor: cardBackground }]}>
                 <Text style={[styles.planTitle, { color: textColor }]}>Premiumプラン</Text>
 
                 {/* Price */}
@@ -418,7 +432,8 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
                 <TouchableOpacity
                   style={[
                     styles.purchaseButton,
-                    (isPurchasing || isLoading) && styles.purchaseButtonDisabled,
+                    { backgroundColor: primaryColor },
+                    (isPurchasing || isLoading) && [styles.purchaseButtonDisabled, { backgroundColor: buttonDisabledColor }],
                   ]}
                   onPress={handlePurchase}
                   disabled={isPurchasing || isLoading}
@@ -460,7 +475,7 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
                     <View style={styles.featureIconContainer}>
                       <ChatIcon size={16} color="#FFFFFF" />
                     </View>
-                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                    <Text style={[styles.featureText, { color: featureTextColor }]}>
                       月間1000回の質問
                     </Text>
                   </View>
@@ -469,7 +484,7 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
                     <View style={styles.featureIconContainer}>
                       <GlobeIcon size={16} color="#FFFFFF" />
                     </View>
-                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                    <Text style={[styles.featureText, { color: featureTextColor }]}>
                       最大50,000文字の翻訳
                     </Text>
                   </View>
@@ -478,7 +493,7 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
                     <View style={styles.featureIconContainer}>
                       <FolderIcon size={16} color="#FFFFFF" />
                     </View>
-                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                    <Text style={[styles.featureText, { color: featureTextColor }]}>
                       ブックマークをフォルダで整理
                     </Text>
                   </View>
@@ -487,7 +502,7 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
                     <View style={styles.featureIconContainer}>
                       <CustomQuestionIcon size={16} color="#FFFFFF" />
                     </View>
-                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                    <Text style={[styles.featureText, { color: featureTextColor }]}>
                       無制限のカスタム質問
                     </Text>
                   </View>
@@ -496,7 +511,7 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
                     <View style={styles.featureIconContainer}>
                       <BellIcon size={16} color="#FFFFFF" />
                     </View>
-                    <Text style={[styles.featureText, { color: '#414141' }]}>
+                    <Text style={[styles.featureText, { color: featureTextColor }]}>
                       最新機能の優先使用
                     </Text>
                   </View>
@@ -547,11 +562,9 @@ export function SubscriptionBottomSheet({ visible, onClose, tutorialMode = false
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   container: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     height: '90%',
@@ -559,7 +572,6 @@ const styles = StyleSheet.create({
   handleBar: {
     width: 40,
     height: 4,
-    backgroundColor: '#D9D9D9',
     borderRadius: 2,
     alignSelf: 'center',
     marginTop: 12,
@@ -578,7 +590,6 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 24,
     fontWeight: '300',
-    color: '#000000',
   },
   scrollView: {
     flex: 1,
@@ -643,7 +654,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   segmentButtonSelected: {
-    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -653,7 +663,6 @@ const styles = StyleSheet.create({
   segmentButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000000',
   },
   segmentButtonTextSelected: {
     fontWeight: '600',
@@ -668,7 +677,6 @@ const styles = StyleSheet.create({
 
   // Plan Card
   planCard: {
-    backgroundColor: '#F8F8F8',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
@@ -695,7 +703,6 @@ const styles = StyleSheet.create({
 
   // Purchase Button
   purchaseButton: {
-    backgroundColor: '#1A1A1A',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -703,7 +710,6 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   purchaseButtonDisabled: {
-    backgroundColor: '#CCCCCC',
   },
   purchaseButtonText: {
     color: '#FFFFFF',

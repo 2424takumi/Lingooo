@@ -34,6 +34,12 @@ const fontSizes = [
 
 export default function FontSizeScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const primaryColor = useThemeColor({}, 'primary');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const cardBgSelectedColor = useThemeColor({}, 'cardBackground');
+  const inputBorderColor = useThemeColor({}, 'inputBorder');
   const [selectedSize, setSelectedSize] = useState('中');
 
   useEffect(() => {
@@ -79,7 +85,7 @@ export default function FontSizeScreen() {
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <Text style={styles.description}>
+          <Text style={[styles.description, { color: textSecondaryColor }]}>
             読みやすいフォントサイズを選択してください
           </Text>
 
@@ -89,19 +95,20 @@ export default function FontSizeScreen() {
                 key={size.id}
                 style={[
                   styles.sizeItem,
-                  selectedSize === size.name && styles.selectedSizeItem,
+                  { backgroundColor: cardBgColor },
+                  selectedSize === size.name && [styles.selectedSizeItem, { borderColor: primaryColor, backgroundColor: cardBgSelectedColor }],
                 ]}
                 onPress={() => handleSizeSelect(size.name)}
               >
                 <View style={styles.sizeInfo}>
-                  <Text style={styles.sizeName}>{size.name}</Text>
-                  <Text style={[styles.previewText, { fontSize: size.size }]}>
+                  <Text style={[styles.sizeName, { color: textColor }]}>{size.name}</Text>
+                  <Text style={[styles.previewText, { fontSize: size.size, color: textColor }]}>
                     The quick brown fox jumps over the lazy dog
                   </Text>
-                  <Text style={styles.sizeValue}>{size.preview}</Text>
+                  <Text style={[styles.sizeValue, { color: textSecondaryColor }]}>{size.preview}</Text>
                 </View>
                 {selectedSize === size.name && (
-                  <CheckIcon size={24} color="#111111" />
+                  <CheckIcon size={24} color={primaryColor} />
                 )}
               </TouchableOpacity>
             ))}
@@ -109,12 +116,12 @@ export default function FontSizeScreen() {
 
           {/* Preview Section */}
           <View style={styles.previewSection}>
-            <Text style={styles.previewTitle}>プレビュー</Text>
-            <View style={styles.previewCard}>
+            <Text style={[styles.previewTitle, { color: textColor }]}>プレビュー</Text>
+            <View style={[styles.previewCard, { backgroundColor: cardBgColor, borderColor: inputBorderColor }]}>
               <Text
                 style={[
                   styles.previewContent,
-                  { fontSize: fontSizes.find((s) => s.name === selectedSize)?.size || 16 },
+                  { fontSize: fontSizes.find((s) => s.name === selectedSize)?.size || 16, color: textColor },
                 ]}
               >
                 これはプレビューテキストです。選択したフォントサイズで表示されます。
@@ -145,7 +152,6 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: '#686868',
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -157,7 +163,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -165,8 +170,6 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   selectedSizeItem: {
-    borderColor: '#111111',
-    backgroundColor: '#F8F8F8',
   },
   sizeInfo: {
     flex: 1,
@@ -175,16 +178,13 @@ const styles = StyleSheet.create({
   sizeName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 4,
   },
   previewText: {
-    color: '#000000',
     marginBottom: 4,
   },
   sizeValue: {
     fontSize: 12,
-    color: '#686868',
   },
   previewSection: {
     marginBottom: 40,
@@ -192,18 +192,14 @@ const styles = StyleSheet.create({
   previewTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 12,
   },
   previewCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
   previewContent: {
-    color: '#000000',
     lineHeight: 24,
   },
 });

@@ -26,7 +26,7 @@ interface QACardProps {
   onScrollToFollowUpInput?: () => void;
 }
 
-function SendIcon({ size = 20, color = '#FFFFFF' }: { size?: number; color?: string }) {
+function SendIcon({ size = 20, color }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -40,7 +40,7 @@ function SendIcon({ size = 20, color = '#FFFFFF' }: { size?: number; color?: str
   );
 }
 
-function MessagePlusIcon({ size = 19, color = '#ACACAC' }: { size?: number; color?: string }) {
+function MessagePlusIcon({ size = 19, color }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 19 19" fill="none">
       <Path
@@ -54,7 +54,7 @@ function MessagePlusIcon({ size = 19, color = '#ACACAC' }: { size?: number; colo
   );
 }
 
-function ChevronIcon({ size = 16, color = '#ACACAC', expanded = false }: { size?: number; color?: string; expanded?: boolean }) {
+function ChevronIcon({ size = 16, color, expanded = false }: { size?: number; color?: string; expanded?: boolean }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 16 16" fill="none" style={{ transform: [{ rotate: expanded ? '-90deg' : '90deg' }] }}>
       <Path
@@ -68,7 +68,7 @@ function ChevronIcon({ size = 16, color = '#ACACAC', expanded = false }: { size?
   );
 }
 
-function CloseIcon({ size = 16, color = '#1A1A1A' }: { size?: number; color?: string }) {
+function CloseIcon({ size = 16, color }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
       <Path
@@ -84,22 +84,16 @@ function CloseIcon({ size = 16, color = '#1A1A1A' }: { size?: number; color?: st
 
 export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion, onEnterFollowUpMode, isFollowUpActive = false, onScrollToFollowUpInput }: QACardProps) {
   // ブックマークページ用の配色（hideActions=trueの時）
-  const cardBackground = useThemeColor(
-    { light: hideActions ? '#F8F8F8' : '#FAFCFB', dark: '#1C1C1E' },
-    'background'
-  );
-  const borderColor = useThemeColor({ light: '#FFFFFF', dark: '#3A3A3C' }, 'background');
-  const questionColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'icon');
-  const answerBackground = useThemeColor(
-    { light: hideActions ? '#FFFFFF' : '#F1F1F1', dark: '#2C2C2E' },
-    'searchBackground'
-  );
-  const answerTextColor = useThemeColor({ light: '#000000', dark: '#F2F2F2' }, 'text');
-  const errorColor = useThemeColor({ light: '#D33', dark: '#FF6B6B' }, 'primary');
-  const primaryColor = useThemeColor({ light: '#111111', dark: '#FFFFFF' }, 'text');
-  const iconColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'icon');
-  const placeholderColor = useThemeColor({ light: '#ACACAC', dark: '#8E8E93' }, 'icon');
-  const inputBackground = useThemeColor({ light: '#FFFFFF', dark: '#2C2C2E' }, 'background');
+  const cardBackground = useThemeColor({}, 'qaCardBackground');
+  const borderColor = useThemeColor({}, 'border');
+  const questionColor = useThemeColor({}, 'textSecondary');
+  const answerBackground = useThemeColor({}, 'qaAnswerBackground');
+  const answerTextColor = useThemeColor({}, 'text');
+  const errorColor = useThemeColor({}, 'errorText');
+  const primaryColor = useThemeColor({}, 'text');
+  const iconColor = useThemeColor({}, 'icon');
+  const placeholderColor = useThemeColor({}, 'textMuted');
+  const inputBackground = useThemeColor({}, 'background');
 
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isCheckingBookmark, setIsCheckingBookmark] = useState(true);
@@ -341,7 +335,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                 </Markdown>
               </Animated.View>
             ) : null}
-            <TypingIndicator color="#2C2C2C" dotSize={6} />
+            <TypingIndicator color={answerTextColor} dotSize={6} />
           </View>
         ) : (
           <Markdown
@@ -394,7 +388,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
             <View
               style={[
                 styles.askQuestionButton,
-                isFollowUpActive && styles.askQuestionButtonActive,
+                isFollowUpActive && [styles.askQuestionButtonActive, { backgroundColor: inputBackground }],
               ]}
             >
               <TouchableOpacity
@@ -404,8 +398,8 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                 accessibilityLabel="追加で質問"
               >
                 <View style={styles.askQuestionButtonContent}>
-                  <MessagePlusIcon size={16} color="#000000" />
-                  <Text style={styles.askQuestionButtonText}>追加で質問</Text>
+                  <MessagePlusIcon size={16} color={answerTextColor} />
+                  <Text style={[styles.askQuestionButtonText, { color: answerTextColor }]}>追加で質問</Text>
                 </View>
               </TouchableOpacity>
 
@@ -418,7 +412,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                   accessibilityRole="button"
                   accessibilityLabel="閉じる"
                 >
-                  <CloseIcon size={14} color="#1A1A1A" />
+                  <CloseIcon size={14} color={answerTextColor} />
                 </TouchableOpacity>
               )}
             </View>
@@ -446,7 +440,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                         <Svg width={2} height={20} style={styles.followUpLineSvg}>
                           <Path
                             d="M1 0 L1 20"
-                            stroke="#E0E0E0"
+                            stroke={borderColor}
                             strokeWidth={2}
                             strokeDasharray="4,4"
                           />
@@ -493,7 +487,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
                                 {followUp.a}
                               </Markdown>
                             ) : null}
-                            <TypingIndicator color="#2C2C2C" dotSize={6} />
+                            <TypingIndicator color={answerTextColor} dotSize={6} />
                           </View>
                         ) : (
                           <Markdown
@@ -654,7 +648,6 @@ const styles = StyleSheet.create({
       alignSelf: 'flex-start',
   },
       askQuestionButtonActive: {
-        backgroundColor: '#FFFFFF',
   },
       closeButton: {
         padding: 2,
@@ -669,6 +662,5 @@ const styles = StyleSheet.create({
         fontSize: 12,
       lineHeight: 22,
       letterSpacing: 1,
-      color: '#000000',
   },
 });

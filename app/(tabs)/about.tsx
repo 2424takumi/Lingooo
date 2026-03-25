@@ -51,6 +51,12 @@ function HeartIcon({ size = 24, color = '#FF6B6B' }: { size?: number; color?: st
 
 export default function AboutScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const textMutedColor = useThemeColor({}, 'textMuted');
+  const primaryColor = useThemeColor({}, 'primary');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const textOnPrimaryColor = useThemeColor({}, 'textOnPrimary');
 
   const handleLinkPress = (url: string) => {
     Linking.openURL(url);
@@ -73,17 +79,17 @@ export default function AboutScreen() {
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* App Info */}
           <View style={styles.appInfoSection}>
-            <View style={styles.appIconContainer}>
-              <Text style={styles.appIconText}>L</Text>
+            <View style={[styles.appIconContainer, { backgroundColor: primaryColor }]}>
+              <Text style={[styles.appIconText, { color: textOnPrimaryColor }]}>L</Text>
             </View>
-            <Text style={styles.appName}>Lingooo</Text>
-            <Text style={styles.appTagline}>英語学習をもっと楽しく</Text>
-            <Text style={styles.appVersion}>Version 1.0.0</Text>
+            <Text style={[styles.appName, { color: primaryColor }]}>Lingooo</Text>
+            <Text style={[styles.appTagline, { color: textSecondaryColor }]}>英語学習をもっと楽しく</Text>
+            <Text style={[styles.appVersion, { color: textMutedColor }]}>Version 1.0.0</Text>
           </View>
 
           {/* Description */}
           <View style={styles.section}>
-            <Text style={styles.descriptionText}>
+            <Text style={[styles.descriptionText, { color: textSecondaryColor, backgroundColor: cardBgColor }]}>
               Lingoooは、英語学習をより楽しく効果的にするためのアプリです。
               単語検索、発音練習、例文学習など、様々な機能で英語力向上をサポートします。
             </Text>
@@ -91,48 +97,48 @@ export default function AboutScreen() {
 
           {/* Features */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>主な機能</Text>
-            <View style={styles.featureList}>
+            <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>主な機能</Text>
+            <View style={[styles.featureList, { backgroundColor: cardBgColor }]}>
               <View style={styles.featureItem}>
-                <Text style={styles.featureBullet}>•</Text>
-                <Text style={styles.featureText}>単語の詳細な意味と発音</Text>
+                <Text style={[styles.featureBullet, { color: primaryColor }]}>•</Text>
+                <Text style={[styles.featureText, { color: textSecondaryColor }]}>単語の詳細な意味と発音</Text>
               </View>
               <View style={styles.featureItem}>
-                <Text style={styles.featureBullet}>•</Text>
-                <Text style={styles.featureText}>豊富な例文とその日本語訳</Text>
+                <Text style={[styles.featureBullet, { color: primaryColor }]}>•</Text>
+                <Text style={[styles.featureText, { color: textSecondaryColor }]}>豊富な例文とその日本語訳</Text>
               </View>
               <View style={styles.featureItem}>
-                <Text style={styles.featureBullet}>•</Text>
-                <Text style={styles.featureText}>ブックマーク機能で復習</Text>
+                <Text style={[styles.featureBullet, { color: primaryColor }]}>•</Text>
+                <Text style={[styles.featureText, { color: textSecondaryColor }]}>ブックマーク機能で復習</Text>
               </View>
               <View style={styles.featureItem}>
-                <Text style={styles.featureBullet}>•</Text>
-                <Text style={styles.featureText}>学習履歴の記録</Text>
+                <Text style={[styles.featureBullet, { color: primaryColor }]}>•</Text>
+                <Text style={[styles.featureText, { color: textSecondaryColor }]}>学習履歴の記録</Text>
               </View>
               <View style={styles.featureItem}>
-                <Text style={styles.featureBullet}>•</Text>
-                <Text style={styles.featureText}>オフライン対応</Text>
+                <Text style={[styles.featureBullet, { color: primaryColor }]}>•</Text>
+                <Text style={[styles.featureText, { color: textSecondaryColor }]}>オフライン対応</Text>
               </View>
             </View>
           </View>
 
           {/* Social Links */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>ソーシャルメディア</Text>
+            <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>ソーシャルメディア</Text>
             <View style={styles.socialLinks}>
               <TouchableOpacity
-                style={styles.socialButton}
+                style={[styles.socialButton, { backgroundColor: cardBgColor }]}
                 onPress={() => handleLinkPress('https://twitter.com/lingooo_app')}
               >
                 <TwitterIcon size={24} />
-                <Text style={styles.socialText}>Twitter</Text>
+                <Text style={[styles.socialText, { color: textColor }]}>Twitter</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.socialButton}
+                style={[styles.socialButton, { backgroundColor: cardBgColor }]}
                 onPress={() => handleLinkPress('https://github.com/lingooo-app')}
               >
                 <GithubIcon size={24} />
-                <Text style={styles.socialText}>GitHub</Text>
+                <Text style={[styles.socialText, { color: textColor }]}>GitHub</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -141,8 +147,8 @@ export default function AboutScreen() {
           <View style={[styles.section, styles.lastSection]}>
             <View style={styles.creditsCard}>
               <HeartIcon size={32} />
-              <Text style={styles.creditsTitle}>Made with love</Text>
-              <Text style={styles.creditsText}>
+              <Text style={[styles.creditsTitle, { color: textColor }]}>Made with love</Text>
+              <Text style={[styles.creditsText, { color: textSecondaryColor }]}>
                 このアプリは英語学習を愛する開発者によって作られました。
                 {'\n\n'}
                 ご利用いただきありがとうございます。
@@ -150,7 +156,7 @@ export default function AboutScreen() {
             </View>
 
             <View style={styles.copyrightContainer}>
-              <Text style={styles.copyrightText}>© 2024 Lingooo. All rights reserved.</Text>
+              <Text style={[styles.copyrightText, { color: textMutedColor }]}>© 2024 Lingooo. All rights reserved.</Text>
             </View>
           </View>
         </ScrollView>
@@ -184,11 +190,9 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 20,
-    backgroundColor: '#111111',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#111111',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -197,22 +201,18 @@ const styles = StyleSheet.create({
   appIconText: {
     fontSize: 40,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
   appName: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#111111',
     marginBottom: 8,
   },
   appTagline: {
     fontSize: 16,
-    color: '#686868',
     marginBottom: 8,
   },
   appVersion: {
     fontSize: 14,
-    color: '#ACACAC',
     fontWeight: '500',
   },
   section: {
@@ -224,7 +224,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#686868',
     marginBottom: 16,
     paddingHorizontal: 4,
     textTransform: 'uppercase',
@@ -233,8 +232,6 @@ const styles = StyleSheet.create({
   descriptionText: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#333333',
-    backgroundColor: '#FFFFFF',
     padding: 20,
     borderRadius: 12,
     shadowColor: '#000',
@@ -244,7 +241,6 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   featureList: {
-    backgroundColor: '#FFFFFF',
     padding: 20,
     borderRadius: 12,
     shadowColor: '#000',
@@ -260,14 +256,12 @@ const styles = StyleSheet.create({
   },
   featureBullet: {
     fontSize: 16,
-    color: '#111111',
     marginRight: 12,
     fontWeight: '700',
   },
   featureText: {
     flex: 1,
     fontSize: 15,
-    color: '#333333',
     lineHeight: 22,
   },
   socialLinks: {
@@ -279,7 +273,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 12,
@@ -293,7 +286,6 @@ const styles = StyleSheet.create({
   socialText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#000000',
   },
   creditsCard: {
     backgroundColor: '#FFF5F5',
@@ -305,13 +297,11 @@ const styles = StyleSheet.create({
   creditsTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
     marginTop: 12,
     marginBottom: 12,
   },
   creditsText: {
     fontSize: 14,
-    color: '#686868',
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -320,6 +310,5 @@ const styles = StyleSheet.create({
   },
   copyrightText: {
     fontSize: 12,
-    color: '#ACACAC',
   },
 });

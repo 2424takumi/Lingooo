@@ -1,20 +1,24 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface PosTagProps {
   label: string;
   gender?: 'm' | 'f' | 'n' | 'mf';
 }
 
-const GENDER_COLORS = {
-  'm': '#E4E4E4', // 少し濃い青
-  'f': '#FFD6E8', // 薄い赤
-  'n': '#E8E8E8', // 薄いグレー
-  'mf': '#E8E8E8', // 薄いグレー
-};
+const GENDER_THEME_KEYS = {
+  'm': 'genderMasculine',
+  'f': 'genderFeminine',
+  'n': 'genderNeuter',
+  'mf': 'genderNeuter',
+} as const;
 
 export function PosTag({ label, gender }: PosTagProps) {
   const { t } = useTranslation();
+  const bgColor = useThemeColor({}, 'posTagBackground');
+  const textColor = useThemeColor({}, 'posTagText');
+  const genderBg = gender ? useThemeColor({}, GENDER_THEME_KEYS[gender]) : undefined;
 
   // 品詞を小文字に変換してi18nキーとして使用
   const posKey = label.toLowerCase().trim();
@@ -23,11 +27,11 @@ export function PosTag({ label, gender }: PosTagProps) {
   const isNoun = label.toLowerCase().includes('noun') || translatedLabel.toLowerCase().includes('noun');
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>{translatedLabel}</Text>
+    <View style={[styles.container, { backgroundColor: bgColor }]}>
+      <Text style={[styles.text, { color: textColor }]}>{translatedLabel}</Text>
       {isNoun && gender && (
-        <View style={[styles.genderBox, { backgroundColor: GENDER_COLORS[gender] }]}>
-          <Text style={styles.genderText}>{t(`gender.${gender}`)}</Text>
+        <View style={[styles.genderBox, { backgroundColor: genderBg }]}>
+          <Text style={[styles.genderText, { color: textColor }]}>{t(`gender.${gender}`)}</Text>
         </View>
       )}
     </View>
@@ -37,7 +41,6 @@ export function PosTag({ label, gender }: PosTagProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#EDEDED',
     borderRadius: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -49,7 +52,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 14,
     lineHeight: 14,
-    color: '#000000',
     fontWeight: '400',
     textAlign: 'center',
     includeFontPadding: false,
@@ -64,7 +66,6 @@ const styles = StyleSheet.create({
   genderText: {
     fontSize: 11,
     lineHeight: 13,
-    color: '#000000',
     fontWeight: '500',
     textAlign: 'center',
     includeFontPadding: false,

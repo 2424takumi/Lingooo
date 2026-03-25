@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface ExampleGroupProps {
   english: string;
@@ -6,12 +7,15 @@ interface ExampleGroupProps {
 }
 
 export function ExampleGroup({ english, japanese }: ExampleGroupProps) {
+  const textColor = useThemeColor({}, 'text');
+  const secondaryColor = useThemeColor({}, 'textSecondary');
+
   return (
     <View style={styles.container}>
-      <View style={styles.bullet} />
+      <View style={[styles.bullet, { backgroundColor: textColor }]} />
       <View style={styles.textContainer}>
-        <Text style={styles.english}>{english}</Text>
-        <Text style={styles.japanese}>{japanese}</Text>
+        <Text style={[styles.english, { color: textColor }]}>{english}</Text>
+        <Text style={[styles.japanese, { color: secondaryColor }]}>{japanese}</Text>
       </View>
     </View>
   );
@@ -27,7 +31,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#111111',
     marginTop: 10,
   },
   textContainer: {
@@ -37,14 +40,12 @@ const styles = StyleSheet.create({
   english: {
     fontSize: 20,
     fontWeight: '500',
-    color: '#000000',
     lineHeight: 26,
     letterSpacing: 0.5,
   },
   japanese: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#686868',
     lineHeight: 20,
     letterSpacing: 0.5,
   },

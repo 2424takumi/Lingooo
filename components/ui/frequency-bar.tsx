@@ -3,10 +3,10 @@ import { useEffect } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface FrequencyBarProps {
   title: string;
@@ -27,6 +27,11 @@ export function FrequencyBar({
   type = 'frequency',
   delay = 0,
 }: FrequencyBarProps) {
+  const barFillColor = useThemeColor({}, 'barFill');
+  const barEmptyColor = useThemeColor({}, 'barEmpty');
+  const titleColor = useThemeColor({}, 'text');
+  const labelColor = useThemeColor({}, 'textSecondary');
+
   const animatedWidth = useSharedValue(0);
 
   useEffect(() => {
@@ -34,7 +39,7 @@ export function FrequencyBar({
     setTimeout(() => {
       animatedWidth.value = withTiming(value, {
         duration: 900,
-        easing: Easing.out(Easing.quad), // Ease-out quad for smooth deceleration
+        easing: Easing.out(Easing.quad),
       });
     }, delay);
   }, [value, delay]);
@@ -56,30 +61,30 @@ export function FrequencyBar({
   return (
     <View style={styles.container}>
       <View style={styles.titleRow}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
       </View>
 
       <View style={styles.barContainer}>
-        <View style={styles.barBackground}>
+        <View style={[styles.barBackground, { backgroundColor: barEmptyColor }]}>
           {!isNuance && (
             <Animated.View
               style={[
                 styles.barFill,
                 animatedStyle,
-                { backgroundColor: type === 'difficulty' ? '#111111' : '#111111' },
+                { backgroundColor: barFillColor },
               ]}
             />
           )}
           {isNuance && (
-            <Animated.View style={[styles.nuanceIndicator, animatedDotStyle]} />
+            <Animated.View style={[styles.nuanceIndicator, animatedDotStyle, { backgroundColor: barFillColor }]} />
           )}
         </View>
       </View>
 
       <View style={styles.labelRow}>
-        <Text style={styles.label}>{leftLabel}</Text>
-        {centerLabel && <Text style={styles.label}>{centerLabel}</Text>}
-        {rightLabel && <Text style={[styles.label, styles.labelRight]}>{rightLabel}</Text>}
+        <Text style={[styles.label, { color: labelColor }]}>{leftLabel}</Text>
+        {centerLabel && <Text style={[styles.label, { color: labelColor }]}>{centerLabel}</Text>}
+        {rightLabel && <Text style={[styles.label, styles.labelRight, { color: labelColor }]}>{rightLabel}</Text>}
       </View>
     </View>
   );
@@ -96,7 +101,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#000000',
     letterSpacing: 2,
   },
   barContainer: {
@@ -104,7 +108,6 @@ const styles = StyleSheet.create({
   },
   barBackground: {
     height: 10,
-    backgroundColor: '#E0E0E0',
     borderRadius: 5,
     position: 'relative',
   },
@@ -119,7 +122,6 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#111111',
     transform: [{ translateX: -6 }],
     zIndex: 10,
   },
@@ -131,7 +133,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     fontWeight: '500',
-    color: '#686868',
     letterSpacing: 1,
   },
   labelRight: {

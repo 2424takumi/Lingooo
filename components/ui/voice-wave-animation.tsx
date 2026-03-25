@@ -6,6 +6,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface VoiceWaveAnimationProps {
   audioLevel?: number; // 0-1の範囲
@@ -22,8 +23,10 @@ const MAX_HEIGHT = 24;
 export function VoiceWaveAnimation({
   audioLevel = 0,
   isActive,
-  color = '#666666',
+  color,
 }: VoiceWaveAnimationProps) {
+  const defaultColor = useThemeColor({}, 'textSecondary');
+  const resolvedColor = color ?? defaultColor;
   // 音声レベルの履歴を保持（最新BAR_COUNT個）
   const [audioHistory, setAudioHistory] = useState<number[]>(
     Array(BAR_COUNT).fill(0)
@@ -42,7 +45,7 @@ export function VoiceWaveAnimation({
   return (
     <View style={styles.container}>
       {audioHistory.map((level, index) => (
-        <AnimatedBar key={index} level={level} color={color} isActive={isActive} />
+        <AnimatedBar key={index} level={level} color={resolvedColor} isActive={isActive} />
       ))}
     </View>
   );

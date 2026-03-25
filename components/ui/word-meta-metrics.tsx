@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { FrequencyBar } from './frequency-bar';
 import { useTranslation } from 'react-i18next';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface WordMetaMetricsProps {
   frequency: number; // 0-100
@@ -10,9 +11,11 @@ interface WordMetaMetricsProps {
 
 export function WordMetaMetrics({ frequency, difficulty, nuance }: WordMetaMetricsProps) {
   const { t } = useTranslation();
+  const cardBg = useThemeColor({}, 'cardBackground');
+  const borderColor = useThemeColor({}, 'border');
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: cardBg, borderColor }]}>
       <FrequencyBar
         title={t('metrics.frequency')}
         value={frequency}
@@ -44,9 +47,7 @@ export function WordMetaMetrics({ frequency, difficulty, nuance }: WordMetaMetri
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FAFCFB',
     borderWidth: 1,
-    borderColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     gap: 8,

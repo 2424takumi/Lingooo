@@ -8,9 +8,9 @@ interface SegmentedControlProps {
 }
 
 export function SegmentedControl({ segments, selectedIndex, onIndexChange }: SegmentedControlProps) {
-  const backgroundColor = useThemeColor({ light: 'rgba(118, 118, 128, 0.12)', dark: 'rgba(118, 118, 128, 0.24)' }, 'background');
-  const selectedBackground = useThemeColor({ light: '#FFFFFF', dark: '#3A3A3C' }, 'background');
-  const textColor = useThemeColor({ light: '#000000', dark: '#F2F2F2' }, 'text');
+  const backgroundColor = useThemeColor({}, 'segmentedBackground');
+  const selectedBackground = useThemeColor({}, 'segmentedActiveBackground');
+  const textColor = useThemeColor({}, 'text');
 
   return (
     <View style={styles.container}>

@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface GenderTagProps {
   gender: 'm' | 'f' | 'n' | 'mf';
@@ -11,20 +12,21 @@ const GENDER_LABELS = {
   'mf': '男/女',
 };
 
-const GENDER_COLORS = {
-  'm': '#E6E6E6', // 薄い青
-  'f': '#FFD6E0', // 薄い赤
-  'n': '#E8E8E8', // 薄いグレー（中性）
-  'mf': '#E8E8E8', // 薄いグレー（両性）
-};
+const GENDER_THEME_KEYS = {
+  'm': 'genderMasculine',
+  'f': 'genderFeminine',
+  'n': 'genderNeuter',
+  'mf': 'genderNeuter',
+} as const;
 
 export function GenderTag({ gender }: GenderTagProps) {
   const label = GENDER_LABELS[gender];
-  const backgroundColor = GENDER_COLORS[gender];
+  const backgroundColor = useThemeColor({}, GENDER_THEME_KEYS[gender]);
+  const textColor = useThemeColor({}, 'posTagText');
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <Text style={styles.text}>{label}</Text>
+      <Text style={[styles.text, { color: textColor }]}>{label}</Text>
     </View>
   );
 }
@@ -41,7 +43,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 12,
     lineHeight: 14,
-    color: '#000000',
     fontWeight: '400',
     textAlign: 'center',
     includeFontPadding: false,

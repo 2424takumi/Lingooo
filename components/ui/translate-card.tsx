@@ -13,6 +13,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 import { useRouter } from 'expo-router';
 import { logger } from '@/utils/logger';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { SPEECH_LANGUAGE_MAP, LANGUAGE_NAME_MAP } from '@/constants/languages';
 import { formatMarkdownText } from '@/utils/text-formatter';
@@ -96,13 +97,13 @@ function CopyIcon({ size = 20, color = '#686868' }: { size?: number; color?: str
   );
 }
 
-function CaretIcon({ rotation = 0, size = 24 }: { rotation?: number; size?: number }) {
+function CaretIcon({ rotation = 0, size = 24, color = '#686868' }: { rotation?: number; size?: number; color?: string }) {
   return (
     <View style={{ transform: [{ rotate: `${rotation}deg` }] }}>
       <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
         <Path
           d="M6 9l6 6 6-6"
-          stroke="#686868"
+          stroke={color}
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -113,15 +114,15 @@ function CaretIcon({ rotation = 0, size = 24 }: { rotation?: number; size?: numb
 }
 
 // ミニトグルスイッチ
-function MiniToggle({ active = false, onPress }: { active?: boolean; onPress?: () => void }) {
+function MiniToggle({ active = false, onPress, trackColor, activeTrackColor, thumbColor }: { active?: boolean; onPress?: () => void; trackColor?: string; activeTrackColor?: string; thumbColor?: string }) {
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
-      <View style={[miniToggleStyles.track, active && miniToggleStyles.trackActive]}>
-        <View style={[miniToggleStyles.thumb, active && miniToggleStyles.thumbActive]} />
+      <View style={[miniToggleStyles.track as any, trackColor ? { backgroundColor: trackColor } : undefined, active && miniToggleStyles.trackActive, active && activeTrackColor ? { backgroundColor: activeTrackColor } : undefined]}>
+        <View style={[miniToggleStyles.thumb as any, thumbColor ? { backgroundColor: thumbColor } : undefined, active && miniToggleStyles.thumbActive]} />
       </View>
     </TouchableOpacity>
   );
@@ -168,6 +169,19 @@ export function TranslateCard({
   const { t } = useTranslation();
   const router = useRouter();
   const { nativeLanguage, currentLanguage } = useLearningLanguages();
+
+  // Theme colors
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const textTertiaryColor = useThemeColor({}, 'textTertiary');
+  const textOnDarkColor = useThemeColor({}, 'textOnDark');
+  const cardBackgroundElevatedColor = useThemeColor({}, 'cardBackgroundElevated');
+  const separatorColor = useThemeColor({}, 'separator');
+  const primaryColor = useThemeColor({}, 'primary');
+  const accentColor = useThemeColor({}, 'accent');
+  const shimmerBgColor = useThemeColor({}, 'shimmerBackground');
+  const errorTextColor = useThemeColor({}, 'errorText');
+  const segmentedBgColor = useThemeColor({}, 'segmentedBackground');
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
   const [isPlayingTranslated, setIsPlayingTranslated] = useState(false);
   const [isSourceExpanded, setIsSourceExpanded] = useState(false);
@@ -408,7 +422,7 @@ export function TranslateCard({
     <View style={styles.wrapper}>
       {/* Label - Outside of card */}
       <View style={styles.labelRow}>
-        <Text style={styles.label}>
+        <Text style={[styles.label as any, { color: textSecondaryColor }]}>
           {(showFullText && translatedText)
             ? `${targetLanguageName}に翻訳しました`
             : (isParagraphTranslating || isTranslating)
@@ -417,15 +431,15 @@ export function TranslateCard({
         </Text>
         {hasMultipleParagraphs && onToggleFullText && (
           <View style={styles.fullTextToggleRow}>
-            <Text style={styles.fullTextToggleLabel}>全文</Text>
-            <MiniToggle active={showFullText} onPress={onToggleFullText} />
+            <Text style={[styles.fullTextToggleLabel as any, { color: textSecondaryColor }]}>全文</Text>
+            <MiniToggle active={showFullText} onPress={onToggleFullText} trackColor={segmentedBgColor} activeTrackColor={accentColor} thumbColor={cardBackgroundElevatedColor} />
           </View>
         )}
       </View>
 
       {/* Card Container */}
       <TouchableWithoutFeedback onPress={handleCardPress}>
-        <View style={styles.container} {...panResponder.panHandlers}>
+        <View style={[styles.container as any, { backgroundColor: separatorColor }]} {...panResponder.panHandlers}>
         {/* Section Navigation - 段落が複数あり全文表示でない場合のみ表示 */}
         {hasMultipleParagraphs && !showFullText && (
           <View style={styles.sectionNav}>
@@ -434,9 +448,9 @@ export function TranslateCard({
               onPress={handlePrevParagraph}
               disabled={currentIndex === 0}
             >
-              <CaretIcon rotation={90} size={24} />
+              <CaretIcon rotation={90} size={24} color={textSecondaryColor} />
             </TouchableOpacity>
-            <Text style={styles.sectionLabel}>
+            <Text style={[styles.sectionLabel as any, { color: textSecondaryColor }]}>
               セクション{currentIndex + 1}/{paragraphs.length}
             </Text>
             <TouchableOpacity
@@ -444,25 +458,25 @@ export function TranslateCard({
               onPress={handleNextParagraph}
               disabled={currentIndex === paragraphs.length - 1}
             >
-              <CaretIcon rotation={270} size={24} />
+              <CaretIcon rotation={270} size={24} color={textSecondaryColor} />
             </TouchableOpacity>
           </View>
         )}
 
         {/* Content Container */}
-        <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
+        <Animated.View style={[styles.contentContainer as any, { opacity: fadeAnim }]}>
           {/* Original Text Section (White Background) */}
-          <View style={styles.originalTextCard}>
+          <View style={[styles.originalTextCard as any, { backgroundColor: cardBackgroundElevatedColor }]}>
             {paragraphs.length === 0 || !originalText ? (
               // ローディング状態: 段落読み込み中
               <View style={styles.loadingContainer}>
-                <Text style={[styles.originalText, { color: '#999', fontSize: 12, marginBottom: 8 }]}>
+                <Text style={[styles.originalText as any, { color: textTertiaryColor, fontSize: 12, marginBottom: 8 }]}>
                   文章を解析中...
                 </Text>
                 <View style={styles.shimmerContainer}>
-                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
-                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
-                  <Shimmer width="70%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
+                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: shimmerBgColor } as any} />
+                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: shimmerBgColor } as any} />
+                  <Shimmer width="70%" height={16} borderRadius={4} style={{ backgroundColor: shimmerBgColor } as any} />
                 </View>
               </View>
             ) : (
@@ -473,7 +487,7 @@ export function TranslateCard({
                   <View style={styles.fullTextOriginalPreview}>
                     <SelectableText
                       text={originalText}
-                      style={styles.originalText}
+                      style={{ ...(styles.originalText as any), color: textColor }}
                       onSelectionChange={handleOriginalSelection}
                       onSelectionChangeWithInfo={handleOriginalSelectionWithInfo}
                       onSelectionCleared={onSelectionCleared}
@@ -484,7 +498,7 @@ export function TranslateCard({
                   <View style={styles.sourcePreviewContainer}>
                     <SelectableText
                       text={originalText}
-                      style={styles.originalText}
+                      style={{ ...(styles.originalText as any), color: textColor }}
                       onSelectionChange={handleOriginalSelection}
                       onSelectionChangeWithInfo={handleOriginalSelectionWithInfo}
                       onSelectionCleared={onSelectionCleared}
@@ -494,7 +508,7 @@ export function TranslateCard({
                 ) : (
                   <SelectableText
                     text={originalText}
-                    style={styles.originalText}
+                    style={{ ...(styles.originalText as any), color: textColor }}
                     onSelectionChange={handleOriginalSelection}
                     onSelectionChangeWithInfo={handleOriginalSelectionWithInfo}
                     onSelectionCleared={onSelectionCleared}
@@ -507,11 +521,11 @@ export function TranslateCard({
                   <View style={styles.originalActionsLeft}>
                     {!isOriginalNative && (
                       <TouchableOpacity onPress={handlePlayOriginal} style={styles.actionButton}>
-                        <SpeakerIcon size={20} color={isPlayingOriginal ? '#1A1A1A' : '#686868'} />
+                        <SpeakerIcon size={20} color={isPlayingOriginal ? textColor : textSecondaryColor} />
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity onPress={handleCopy} style={styles.actionButton}>
-                      <CopyIcon size={20} color="#686868" />
+                      <CopyIcon size={20} color={textSecondaryColor} />
                     </TouchableOpacity>
                   </View>
                   {/* 全文表示モードの展開/折りたたみ */}
@@ -524,7 +538,7 @@ export function TranslateCard({
                       activeOpacity={0.7}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                      <Text style={styles.showMoreText}>
+                      <Text style={[styles.showMoreText as any, { color: textSecondaryColor }]}>
                         {isFullTextOriginalExpanded ? '閉じる' : '全て表示'}
                       </Text>
                     </TouchableOpacity>
@@ -539,7 +553,7 @@ export function TranslateCard({
                       activeOpacity={0.7}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                      <Text style={styles.showMoreText}>
+                      <Text style={[styles.showMoreText as any, { color: textSecondaryColor }]}>
                         {isSourceExpanded ? '閉じる' : 'もっと見る'}
                       </Text>
                     </TouchableOpacity>
@@ -557,7 +571,7 @@ export function TranslateCard({
                 <Reanimated.View style={[{ gap: 8 }, translatedTextAnimatedStyle]}>
                   <SelectableText
                     text={formatMarkdownText(translatedText)}
-                    style={styles.translatedText}
+                    style={{ ...(styles.translatedText as any), color: textColor }}
                     onSelectionChange={handleTranslatedSelection}
                     onSelectionChangeWithInfo={handleTranslatedSelectionWithInfo}
                     onSelectionCleared={onSelectionCleared}
@@ -568,7 +582,7 @@ export function TranslateCard({
                   <View style={styles.translatedActions}>
                     {!isTranslatedNative && (
                       <TouchableOpacity onPress={handlePlayTranslated} style={styles.actionButton}>
-                        <SpeakerIcon size={20} color={isPlayingTranslated ? '#1A1A1A' : '#686868'} />
+                        <SpeakerIcon size={20} color={isPlayingTranslated ? textColor : textSecondaryColor} />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -578,21 +592,21 @@ export function TranslateCard({
               <View style={styles.loadingContainer}>
                 {/* Shimmer skeleton bars */}
                 <View style={styles.shimmerContainer}>
-                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
-                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
-                  <Shimmer width="60%" height={16} borderRadius={4} style={{ backgroundColor: '#E0E0E0' }} />
+                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: shimmerBgColor } as any} />
+                  <Shimmer width="100%" height={16} borderRadius={4} style={{ backgroundColor: shimmerBgColor } as any} />
+                  <Shimmer width="60%" height={16} borderRadius={4} style={{ backgroundColor: shimmerBgColor } as any} />
                 </View>
               </View>
             ) : isParagraphError ? (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{translatedText.replace('❌ ', '')}</Text>
+                <Text style={[styles.errorText as any, { color: errorTextColor }]}>{translatedText.replace('❌ ', '')}</Text>
                 {onRetryParagraph && (
                   <TouchableOpacity
-                    style={styles.retryButton}
+                    style={[styles.retryButton as any, { backgroundColor: primaryColor }]}
                     onPress={() => onRetryParagraph(currentIndex)}
                   >
-                    <RetryIcon size={14} color="#FFFFFF" />
-                    <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+                    <RetryIcon size={14} color={textOnDarkColor} />
+                    <Text style={[styles.retryButtonText as any, { color: textOnDarkColor }]}>{t('common.retry')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -601,7 +615,7 @@ export function TranslateCard({
                 <Reanimated.View style={[{ gap: 8 }, translatedTextAnimatedStyle]}>
                   <SelectableText
                     text={formatMarkdownText(translatedText)}
-                    style={styles.translatedText}
+                    style={{ ...(styles.translatedText as any), color: textColor }}
                     onSelectionChange={handleTranslatedSelection}
                     onSelectionChangeWithInfo={handleTranslatedSelectionWithInfo}
                     onSelectionCleared={onSelectionCleared}
@@ -612,7 +626,7 @@ export function TranslateCard({
                   <View style={styles.translatedActions}>
                     {!isTranslatedNative && (
                       <TouchableOpacity onPress={handlePlayTranslated} style={styles.actionButton}>
-                        <SpeakerIcon size={20} color={isPlayingTranslated ? '#1A1A1A' : '#686868'} />
+                        <SpeakerIcon size={20} color={isPlayingTranslated ? textColor : textSecondaryColor} />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -628,7 +642,8 @@ export function TranslateCard({
   );
 }
 
-const styles = StyleSheet.create({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const styles: any = StyleSheet.create({
   wrapper: {
     gap: 2,
   },

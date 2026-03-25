@@ -7,6 +7,7 @@
 import { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface ShimmerProps {
   width?: number | string;
@@ -21,6 +22,8 @@ export function Shimmer({
   borderRadius = 8,
   style
 }: ShimmerProps) {
+  const shimmerBg = useThemeColor({}, 'shimmerBackground');
+  const shimmerHighlight = useThemeColor({}, 'shimmerHighlight');
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -46,7 +49,7 @@ export function Shimmer({
     <View
       style={[
         styles.container,
-        { width, height, borderRadius },
+        { width, height, borderRadius, backgroundColor: shimmerBg },
         style
       ]}
     >
@@ -126,8 +129,10 @@ export function ShimmerDefinitions() {
  * メトリクス用のシマー
  */
 export function ShimmerMetrics() {
+  const cardBg = useThemeColor({}, 'cardBackground');
+  const borderColor = useThemeColor({}, 'border');
   return (
-    <View style={styles.metricsShimmer}>
+    <View style={[styles.metricsShimmer, { backgroundColor: cardBg, borderColor }]}>
       <View style={styles.metricItem}>
         <Shimmer width={60} height={12} style={styles.metricLabel} />
         <Shimmer width="100%" height={8} borderRadius={4} />
@@ -161,24 +166,27 @@ export function ShimmerMetrics() {
  * 例文用のシマー
  */
 export function ShimmerExamples() {
+  const cardBg = useThemeColor({}, 'cardBackground');
+  const borderColor = useThemeColor({}, 'border');
+  const cardStyle = { backgroundColor: cardBg, borderColor };
   return (
     <View style={styles.examplesShimmer}>
-      <View style={styles.exampleCard}>
+      <View style={[styles.exampleCard, cardStyle]}>
         <Shimmer width="90%" height={18} style={styles.exampleLine} />
         <Shimmer width="85%" height={18} style={styles.exampleLine} />
         <Shimmer width="80%" height={14} />
       </View>
-      <View style={styles.exampleCard}>
+      <View style={[styles.exampleCard, cardStyle]}>
         <Shimmer width="85%" height={18} style={styles.exampleLine} />
         <Shimmer width="88%" height={18} style={styles.exampleLine} />
         <Shimmer width="75%" height={14} />
       </View>
-      <View style={styles.exampleCard}>
+      <View style={[styles.exampleCard, cardStyle]}>
         <Shimmer width="92%" height={18} style={styles.exampleLine} />
         <Shimmer width="82%" height={18} style={styles.exampleLine} />
         <Shimmer width="78%" height={14} />
       </View>
-      <View style={styles.exampleCard}>
+      <View style={[styles.exampleCard, cardStyle]}>
         <Shimmer width="88%" height={18} style={styles.exampleLine} />
         <Shimmer width="86%" height={18} style={styles.exampleLine} />
         <Shimmer width="72%" height={14} />
@@ -191,8 +199,10 @@ export function ShimmerExamples() {
  * WordHint用のシマー
  */
 export function ShimmerHint() {
+  const cardBg = useThemeColor({}, 'cardBackground');
+  const borderColor = useThemeColor({}, 'border');
   return (
-    <View style={styles.hintShimmer}>
+    <View style={[styles.hintShimmer, { backgroundColor: cardBg, borderColor }]}>
       <Shimmer width="95%" height={22} style={styles.hintLine} />
       <Shimmer width="92%" height={22} style={styles.hintLine} />
       <Shimmer width="70%" height={22} />
@@ -205,10 +215,12 @@ export function ShimmerHint() {
  * WordCardの構造に完全に一致
  */
 export function ShimmerSuggestions() {
+  const cardBg = useThemeColor({}, 'cardBackground');
+  const borderColor = useThemeColor({}, 'border');
   return (
     <View style={styles.suggestionsShimmer}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <View key={i} style={styles.wordCardShimmer}>
+        <View key={i} style={[styles.wordCardShimmer, { backgroundColor: cardBg, borderColor }]}>
           {/* 単語名 */}
           <Shimmer width={100} height={28} borderRadius={4} />
 
@@ -234,7 +246,6 @@ export function ShimmerSuggestions() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#EFEFEF',
     overflow: 'hidden',
   },
   shimmer: {
@@ -266,9 +277,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   metricsShimmer: {
-    backgroundColor: '#FAFCFB',
     borderWidth: 1,
-    borderColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     gap: 16,
@@ -287,9 +296,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   exampleCard: {
-    backgroundColor: '#FAFCFB',
     borderWidth: 1,
-    borderColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     gap: 8,
@@ -301,9 +308,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   hintShimmer: {
-    backgroundColor: '#F8F8F8',
     borderWidth: 1,
-    borderColor: '#FFFFFF',
     borderRadius: 8,
     paddingVertical: 16,
     paddingHorizontal: 18,
@@ -317,9 +322,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   wordCardShimmer: {
-    backgroundColor: '#FAFCFB',
     borderWidth: 1,
-    borderColor: '#FFFFFF',
     borderRadius: 8,
     width: '100%',
     minHeight: 120,

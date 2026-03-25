@@ -2,6 +2,7 @@ import { StyleSheet, Text, ActivityIndicator, View } from 'react-native';
 import { useEffect, useRef, memo } from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface TranslationNotesProps {
   notes: string;
@@ -14,10 +15,12 @@ const NoteItem = memo(function NoteItem({
   text,
   index,
   shouldAnimate,
+  textColor,
 }: {
   text: string;
   index: number;
   shouldAnimate: boolean;
+  textColor: string;
 }) {
   const opacity = useSharedValue(shouldAnimate ? 0 : 1);
   const translateY = useSharedValue(shouldAnimate ? 8 : 0);
@@ -42,7 +45,7 @@ const NoteItem = memo(function NoteItem({
 
   return (
     <Animated.View style={animatedStyle}>
-      <Text style={styles.notesText}>{text}</Text>
+      <Text style={[styles.notesText, { color: textColor }]}>{text}</Text>
     </Animated.View>
   );
 });
@@ -58,6 +61,9 @@ export function TranslationNotes({
   streamingText = '',
 }: TranslationNotesProps) {
   const { t } = useTranslation();
+  const labelColor = useThemeColor({}, 'textTertiary');
+  const notesTextColor = useThemeColor({}, 'textSecondary');
+  const spinnerColor = useThemeColor({}, 'textMuted');
   const displayText = isStreaming ? streamingText : notes;
 
   // アニメーション済みの行数を追跡
@@ -107,9 +113,9 @@ export function TranslationNotes({
   return (
     <View style={styles.container}>
       <View style={styles.labelRow}>
-        <Text style={styles.label}>{t('translate.notesLabel')}</Text>
+        <Text style={[styles.label, { color: labelColor }]}>{t('translate.notesLabel')}</Text>
         {isWaiting && (
-          <ActivityIndicator size="small" color="#AAAAAA" style={styles.spinner} />
+          <ActivityIndicator size="small" color={spinnerColor} style={styles.spinner} />
         )}
       </View>
       {(completedLines.length > 0 || partialLine) ? (
@@ -120,10 +126,11 @@ export function TranslationNotes({
               text={line}
               index={i - prevAnimatedCount}
               shouldAnimate={i >= prevAnimatedCount}
+              textColor={notesTextColor}
             />
           ))}
           {partialLine && (
-            <Text style={styles.notesText}>{partialLine}</Text>
+            <Text style={[styles.notesText, { color: notesTextColor }]}>{partialLine}</Text>
           )}
         </View>
       ) : null}
@@ -145,7 +152,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#999999',
     letterSpacing: 0.5,
   },
   spinner: {
@@ -157,7 +163,6 @@ const styles = StyleSheet.create({
   notesText: {
     fontSize: 15,
     lineHeight: 23,
-    color: '#444444',
     letterSpacing: 0.3,
   },
 });

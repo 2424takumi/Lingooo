@@ -72,6 +72,11 @@ function BookOpenIcon({ size = 24, color = '#686868' }: { size?: number; color?:
 
 export default function HelpScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const primaryColor = useThemeColor({}, 'primary');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const surfaceBgColor = useThemeColor({}, 'surfaceBackground');
 
   const handleEmailPress = () => {
     Linking.openURL('mailto:support@lingooo.app');
@@ -94,42 +99,42 @@ export default function HelpScreen() {
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* Help Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>よくある質問</Text>
+            <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>よくある質問</Text>
 
-            <TouchableOpacity style={styles.helpItem}>
-              <BookOpenIcon size={24} color="#111111" />
+            <TouchableOpacity style={[styles.helpItem, { backgroundColor: cardBgColor }]}>
+              <BookOpenIcon size={24} color={primaryColor} />
               <View style={styles.helpInfo}>
-                <Text style={styles.helpTitle}>使い方ガイド</Text>
-                <Text style={styles.helpDescription}>アプリの基本的な使い方を学ぶ</Text>
+                <Text style={[styles.helpTitle, { color: textColor }]}>使い方ガイド</Text>
+                <Text style={[styles.helpDescription, { color: textSecondaryColor }]}>アプリの基本的な使い方を学ぶ</Text>
               </View>
               <ChevronRightIcon />
             </TouchableOpacity>
 
             <View style={styles.faqContainer}>
-              <View style={styles.faqItem}>
-                <Text style={styles.faqQuestion}>Q. 単語の発音はどうやって聞けますか？</Text>
-                <Text style={styles.faqAnswer}>
+              <View style={[styles.faqItem, { backgroundColor: cardBgColor }]}>
+                <Text style={[styles.faqQuestion, { color: textColor }]}>Q. 単語の発音はどうやって聞けますか？</Text>
+                <Text style={[styles.faqAnswer, { color: textSecondaryColor }]}>
                   A. 単語詳細画面でスピーカーアイコンをタップすると発音が再生されます。
                 </Text>
               </View>
 
-              <View style={styles.faqItem}>
-                <Text style={styles.faqQuestion}>Q. ブックマークした単語はどこで見られますか？</Text>
-                <Text style={styles.faqAnswer}>
+              <View style={[styles.faqItem, { backgroundColor: cardBgColor }]}>
+                <Text style={[styles.faqQuestion, { color: textColor }]}>Q. ブックマークした単語はどこで見られますか？</Text>
+                <Text style={[styles.faqAnswer, { color: textSecondaryColor }]}>
                   A. サイドメニューの「ブックマーク」から確認できます。
                 </Text>
               </View>
 
-              <View style={styles.faqItem}>
-                <Text style={styles.faqQuestion}>Q. オフラインでも使えますか？</Text>
-                <Text style={styles.faqAnswer}>
+              <View style={[styles.faqItem, { backgroundColor: cardBgColor }]}>
+                <Text style={[styles.faqQuestion, { color: textColor }]}>Q. オフラインでも使えますか？</Text>
+                <Text style={[styles.faqAnswer, { color: textSecondaryColor }]}>
                   A. 一度検索した単語はキャッシュされ、オフラインでも閲覧可能です。
                 </Text>
               </View>
 
-              <View style={styles.faqItem}>
-                <Text style={styles.faqQuestion}>Q. データのバックアップは可能ですか？</Text>
-                <Text style={styles.faqAnswer}>
+              <View style={[styles.faqItem, { backgroundColor: cardBgColor }]}>
+                <Text style={[styles.faqQuestion, { color: textColor }]}>Q. データのバックアップは可能ですか？</Text>
+                <Text style={[styles.faqAnswer, { color: textSecondaryColor }]}>
                   A. Pro版では学習データのクラウドバックアップが利用できます。
                 </Text>
               </View>
@@ -138,22 +143,22 @@ export default function HelpScreen() {
 
           {/* Contact Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>お問い合わせ</Text>
+            <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>お問い合わせ</Text>
 
-            <TouchableOpacity style={styles.helpItem} onPress={handleEmailPress}>
-              <MailIcon size={24} color="#111111" />
+            <TouchableOpacity style={[styles.helpItem, { backgroundColor: cardBgColor }]} onPress={handleEmailPress}>
+              <MailIcon size={24} color={primaryColor} />
               <View style={styles.helpInfo}>
-                <Text style={styles.helpTitle}>メールで問い合わせ</Text>
-                <Text style={styles.helpDescription}>support@lingooo.app</Text>
+                <Text style={[styles.helpTitle, { color: textColor }]}>メールで問い合わせ</Text>
+                <Text style={[styles.helpDescription, { color: textSecondaryColor }]}>support@lingooo.app</Text>
               </View>
               <ChevronRightIcon />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.helpItem}>
-              <MessageCircleIcon size={24} color="#111111" />
+            <TouchableOpacity style={[styles.helpItem, { backgroundColor: cardBgColor }]}>
+              <MessageCircleIcon size={24} color={primaryColor} />
               <View style={styles.helpInfo}>
-                <Text style={styles.helpTitle}>フィードバックを送る</Text>
-                <Text style={styles.helpDescription}>ご意見・ご要望をお聞かせください</Text>
+                <Text style={[styles.helpTitle, { color: textColor }]}>フィードバックを送る</Text>
+                <Text style={[styles.helpDescription, { color: textSecondaryColor }]}>ご意見・ご要望をお聞かせください</Text>
               </View>
               <ChevronRightIcon />
             </TouchableOpacity>
@@ -161,11 +166,11 @@ export default function HelpScreen() {
 
           {/* Tips Section */}
           <View style={[styles.section, styles.lastSection]}>
-            <Text style={styles.sectionTitle}>学習のヒント</Text>
+            <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>学習のヒント</Text>
 
-            <View style={styles.tipCard}>
-              <Text style={styles.tipTitle}>💡 効果的な学習方法</Text>
-              <Text style={styles.tipText}>
+            <View style={[styles.tipCard, { backgroundColor: surfaceBgColor, borderLeftColor: primaryColor }]}>
+              <Text style={[styles.tipTitle, { color: textColor }]}>効果的な学習方法</Text>
+              <Text style={[styles.tipText, { color: textSecondaryColor }]}>
                 • 毎日少しずつ学習することが大切です{'\n'}
                 • 音声を聞いて発音を練習しましょう{'\n'}
                 • 例文を読んで使い方を理解しましょう{'\n'}
@@ -204,7 +209,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#686868',
     marginBottom: 12,
     paddingHorizontal: 4,
     textTransform: 'uppercase',
@@ -213,7 +217,6 @@ const styles = StyleSheet.create({
   helpItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -231,18 +234,15 @@ const styles = StyleSheet.create({
   helpTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
     marginBottom: 4,
   },
   helpDescription: {
     fontSize: 14,
-    color: '#686868',
   },
   faqContainer: {
     gap: 12,
   },
   faqItem: {
-    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 12,
     shadowColor: '#000',
@@ -254,30 +254,24 @@ const styles = StyleSheet.create({
   faqQuestion: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 8,
   },
   faqAnswer: {
     fontSize: 14,
-    color: '#686868',
     lineHeight: 20,
   },
   tipCard: {
-    backgroundColor: '#F7F7F7',
     padding: 20,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#111111',
   },
   tipTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 12,
   },
   tipText: {
     fontSize: 14,
-    color: '#333333',
     lineHeight: 22,
   },
 });

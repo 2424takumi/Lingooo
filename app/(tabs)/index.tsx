@@ -23,6 +23,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function HomeScreen() {
   const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const primaryColor = useThemeColor({}, 'primary');
+  const errorTextColor = useThemeColor({}, 'errorText');
   const { handleSearch, isLoading, error, showTextLengthModal, setShowTextLengthModal } = useSearch();
   const { needsInitialSetup } = useAuth();
   const { isPremium } = useSubscription();
@@ -122,15 +125,15 @@ export default function HomeScreen() {
             {/* Loading Indicator */}
             {isLoading && (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#111111" />
-                <Text style={styles.loadingText}>{t('home.searching')}</Text>
+                <ActivityIndicator size="small" color={primaryColor} />
+                <Text style={[styles.loadingText, { color: textSecondaryColor }]}>{t('home.searching')}</Text>
               </View>
             )}
 
             {/* Error Message */}
             {error && !isLoading && (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
+                <Text style={[styles.errorText, { color: errorTextColor }]}>{error}</Text>
               </View>
             )}
           </View>
@@ -232,7 +235,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: '#686868',
   },
   errorContainer: {
     marginTop: 12,
@@ -244,6 +246,5 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#CC0000',
   },
 });

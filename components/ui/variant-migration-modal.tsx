@@ -8,6 +8,7 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { AVAILABLE_LANGUAGES, Language } from '@/types/language';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface VariantGroup {
   groupId: string;
@@ -62,6 +63,16 @@ export function VariantMigrationModal({
 }: VariantMigrationModalProps) {
   const variantGroups = getVariantGroups(languagesToMigrate);
 
+  const modalOverlayColor = useThemeColor({}, 'modalOverlay');
+  const modalBackgroundColor = useThemeColor({}, 'modalBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const textTertiaryColor = useThemeColor({}, 'textTertiary');
+  const cardBackgroundColor = useThemeColor({}, 'cardBackground');
+  const successBackgroundColor = useThemeColor({}, 'successBackground');
+  const accentColor = useThemeColor({}, 'accent');
+  const textOnPrimaryColor = useThemeColor({}, 'textOnPrimary');
+
   // 各グループのデフォルト選択を初期化（デフォルトは1つ選択済み）
   const initialSelections: Record<string, string[]> = {};
   for (const group of variantGroups) {
@@ -97,11 +108,11 @@ export function VariantMigrationModal({
       animationType="fade"
       onRequestClose={() => {}}
     >
-      <View style={styles.overlay}>
-        <View style={styles.container}>
+      <View style={[styles.overlay, { backgroundColor: modalOverlayColor }]}>
+        <View style={[styles.container, { backgroundColor: modalBackgroundColor }]}>
           <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={styles.title}>言語のバリアントを選択</Text>
-            <Text style={styles.description}>
+            <Text style={[styles.title, { color: textColor }]}>言語のバリアントを選択</Text>
+            <Text style={[styles.description, { color: textSecondaryColor }]}>
               学習中の言語にバリアントが追加されました。{'\n'}
               学びたいバリアントを選択してください。{'\n'}
               両方選択することもできます。
@@ -109,7 +120,7 @@ export function VariantMigrationModal({
 
             {variantGroups.map((group) => (
               <View key={group.groupId} style={styles.groupContainer}>
-                <Text style={styles.groupTitle}>{group.groupName}</Text>
+                <Text style={[styles.groupTitle, { color: textTertiaryColor }]}>{group.groupName}</Text>
                 {group.variants.map((variant) => {
                   const isSelected = (selections[group.groupId] || []).includes(variant.id);
                   return (
@@ -117,18 +128,21 @@ export function VariantMigrationModal({
                       key={variant.id}
                       style={[
                         styles.variantItem,
+                        { backgroundColor: cardBackgroundColor },
                         isSelected && styles.variantItemSelected,
+                        isSelected && { backgroundColor: successBackgroundColor, borderColor: accentColor },
                       ]}
                       onPress={() => handleToggle(group.groupId, variant.id)}
                     >
                       <Text style={styles.variantFlag}>{variant.flag}</Text>
                       <Text style={[
                         styles.variantName,
-                        isSelected && styles.variantNameSelected,
+                        { color: textColor },
+                        isSelected && { fontWeight: '600', color: accentColor },
                       ]}>
                         {variant.name}
                       </Text>
-                      {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                      {isSelected && <Text style={[styles.checkmark, { color: accentColor }]}>✓</Text>}
                     </TouchableOpacity>
                   );
                 })}
@@ -136,8 +150,8 @@ export function VariantMigrationModal({
             ))}
           </ScrollView>
 
-          <TouchableOpacity style={styles.button} onPress={handleComplete}>
-            <Text style={styles.buttonText}>決定</Text>
+          <TouchableOpacity style={[styles.button, { backgroundColor: accentColor }]} onPress={handleComplete}>
+            <Text style={[styles.buttonText, { color: textOnPrimaryColor }]}>決定</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -148,13 +162,11 @@ export function VariantMigrationModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 28,
   },
   container: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     paddingHorizontal: 24,
     paddingTop: 28,
@@ -165,13 +177,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111111',
     textAlign: 'center',
     marginBottom: 12,
   },
   description: {
     fontSize: 14,
-    color: '#666666',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
@@ -182,7 +192,6 @@ const styles = StyleSheet.create({
   groupTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#999999',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 8,
@@ -194,14 +203,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F8F8F8',
     marginBottom: 6,
     gap: 12,
   },
   variantItemSelected: {
-    backgroundColor: '#E8F5E9',
     borderWidth: 1.5,
-    borderColor: '#00AA69',
   },
   variantFlag: {
     fontSize: 24,
@@ -209,20 +215,13 @@ const styles = StyleSheet.create({
   variantName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333333',
     flex: 1,
-  },
-  variantNameSelected: {
-    fontWeight: '600',
-    color: '#00AA69',
   },
   checkmark: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#00AA69',
   },
   button: {
-    backgroundColor: '#00AA69',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -231,6 +230,5 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
 });

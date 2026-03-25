@@ -19,6 +19,7 @@ import { ScanningOverlay } from './scanning-overlay';
 import { parseQuotaError } from '../../utils/quota-error';
 import { QuotaExceededModal } from './quota-exceeded-modal';
 import { useSubscription } from '../../contexts/subscription-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -46,6 +47,17 @@ export function ImagePreviewModal({
   const { t } = useTranslation();
   const router = useRouter();
   const { isPremium } = useSubscription();
+  const modalBg = useThemeColor({}, 'modalBackground');
+  const textColor = useThemeColor({}, 'text');
+  const secondaryText = useThemeColor({}, 'textSecondary');
+  const tertiaryText = useThemeColor({}, 'textTertiary');
+  const borderColor = useThemeColor({}, 'borderLight');
+  const surfaceBg = useThemeColor({}, 'surfaceBackground');
+  const cardBg = useThemeColor({}, 'cardBackground');
+  const iconColor = useThemeColor({}, 'icon');
+  const systemBlue = useThemeColor({}, 'systemBlue');
+  const errorColor = useThemeColor({}, 'errorText');
+  const buttonDisabledBg = useThemeColor({}, 'buttonDisabled');
   const [translateStatus, setTranslateStatus] = useState<TranslateStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isQuotaModalVisible, setIsQuotaModalVisible] = useState(false);
@@ -172,13 +184,13 @@ export function ImagePreviewModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: modalBg }]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: borderColor }]}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={28} color="#000" />
+            <Ionicons name="close" size={28} color={iconColor} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { color: textColor }]}>
             {t('imageTranslate.preview', '画像プレビュー')}
           </Text>
           <View style={styles.closeButton} />
@@ -189,7 +201,7 @@ export function ImagePreviewModal({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.imageContainer}>
+          <View style={[styles.imageContainer, { backgroundColor: surfaceBg }]}>
             <Image
               source={{ uri: imageUri }}
               style={styles.image}
@@ -201,18 +213,18 @@ export function ImagePreviewModal({
           {/* Status Messages */}
           {translateStatus === 'noText' && (
             <View style={styles.statusContainer}>
-              <Ionicons name="document-text-outline" size={32} color="#999" />
-              <Text style={styles.noTextMessage}>
+              <Ionicons name="document-text-outline" size={32} color={tertiaryText} />
+              <Text style={[styles.noTextMessage, { color: textColor }]}>
                 {t('imageTranslate.noTextFound', '画像にテキストが見つかりませんでした')}
               </Text>
-              <Text style={styles.noTextHint}>
+              <Text style={[styles.noTextHint, { color: tertiaryText }]}>
                 {t('imageTranslate.noTextHint', 'テキストが含まれている画像を選択してください')}
               </Text>
               <TouchableOpacity
-                style={styles.retryButton}
+                style={[styles.retryButton, { backgroundColor: cardBg }]}
                 onPress={() => setTranslateStatus('idle')}
               >
-                <Text style={styles.retryButtonText}>
+                <Text style={[styles.retryButtonText, { color: systemBlue }]}>
                   {t('common.ok', 'OK')}
                 </Text>
               </TouchableOpacity>
@@ -221,16 +233,16 @@ export function ImagePreviewModal({
 
           {translateStatus === 'error' && (
             <View style={styles.statusContainer}>
-              <Ionicons name="alert-circle-outline" size={32} color="#FF3B30" />
-              <Text style={styles.errorMessage}>
+              <Ionicons name="alert-circle-outline" size={32} color={errorColor} />
+              <Text style={[styles.errorMessage, { color: textColor }]}>
                 {errorMessage}
               </Text>
               <TouchableOpacity
-                style={styles.retryButton}
+                style={[styles.retryButton, { backgroundColor: cardBg }]}
                 onPress={handleTranslate}
               >
-                <Ionicons name="refresh" size={18} color="#007AFF" />
-                <Text style={styles.retryButtonText}>
+                <Ionicons name="refresh" size={18} color={systemBlue} />
+                <Text style={[styles.retryButtonText, { color: systemBlue }]}>
                   {t('imageTranslate.retry', 'もう一度試す')}
                 </Text>
               </TouchableOpacity>
@@ -239,7 +251,7 @@ export function ImagePreviewModal({
 
           {translateStatus === 'idle' && (
             <View style={styles.instructionsContainer}>
-              <Text style={styles.instructionsText}>
+              <Text style={[styles.instructionsText, { color: secondaryText }]}>
                 {t(
                   'imageTranslate.instructions',
                   '画像からテキストを抽出して翻訳します。\n「翻訳」ボタンをタップしてください。'
@@ -250,11 +262,12 @@ export function ImagePreviewModal({
         </ScrollView>
 
         {/* Footer with Translate Button */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { borderTopColor: borderColor, backgroundColor: modalBg }]}>
           <TouchableOpacity
             style={[
               styles.translateButton,
-              (isTranslating || translateStatus === 'noText') && styles.translateButtonDisabled,
+              { backgroundColor: systemBlue },
+              (isTranslating || translateStatus === 'noText') && { backgroundColor: buttonDisabledBg },
             ]}
             onPress={handleTranslate}
             disabled={isTranslating || translateStatus === 'noText'}
@@ -292,7 +305,6 @@ export function ImagePreviewModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -302,7 +314,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
   closeButton: {
     width: 44,
@@ -313,7 +324,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#000',
   },
   scrollContent: {
     flexGrow: 1,
@@ -323,7 +333,6 @@ const styles = StyleSheet.create({
     height: SCREEN_HEIGHT * 0.6,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
     overflow: 'hidden',
   },
   image: {
@@ -336,7 +345,6 @@ const styles = StyleSheet.create({
   instructionsText: {
     fontSize: 15,
     lineHeight: 22,
-    color: '#666',
     textAlign: 'center',
   },
   statusContainer: {
@@ -347,17 +355,14 @@ const styles = StyleSheet.create({
   noTextMessage: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     textAlign: 'center',
   },
   noTextHint: {
     fontSize: 14,
-    color: '#999',
     textAlign: 'center',
   },
   errorMessage: {
     fontSize: 15,
-    color: '#333',
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -368,32 +373,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#F0F0F0',
     marginTop: 4,
   },
   retryButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#007AFF',
   },
   footer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
     paddingBottom: 34,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
   },
   translateButton: {
-    backgroundColor: '#007AFF',
     borderRadius: 12,
     height: 52,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  translateButtonDisabled: {
-    backgroundColor: '#CCCCCC',
-  },
+  translateButtonDisabled: {},
   translateButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',

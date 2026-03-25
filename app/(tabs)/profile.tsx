@@ -53,6 +53,15 @@ function UserIcon({ size = 60, color = '#686868' }: { size?: number; color?: str
 
 export default function ProfileScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const textMutedColor = useThemeColor({}, 'textMuted');
+  const textPlaceholderColor = useThemeColor({}, 'textPlaceholder');
+  const primaryColor = useThemeColor({}, 'primary');
+  const textOnPrimaryColor = useThemeColor({}, 'textOnPrimary');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const inputBorderColor = useThemeColor({}, 'inputBorder');
+  const errorTextColor = useThemeColor({}, 'errorText');
   const { defaultLanguage } = useLearningLanguages();
   const [name, setName] = useState('ユーザー名');
   const [email, setEmail] = useState('user@example.com');
@@ -81,49 +90,49 @@ export default function ProfileScreen() {
           {/* Profile Picture */}
           <View style={styles.avatarContainer}>
             <View style={styles.avatarWrapper}>
-              <View style={styles.avatar}>
-                <UserIcon size={60} color="#FFFFFF" />
+              <View style={[styles.avatar, { backgroundColor: primaryColor }]}>
+                <UserIcon size={60} color={textOnPrimaryColor} />
               </View>
-              <TouchableOpacity style={styles.cameraButton}>
-                <CameraIcon size={20} color="#FFFFFF" />
+              <TouchableOpacity style={[styles.cameraButton, { backgroundColor: primaryColor, borderColor: pageBackground }]}>
+                <CameraIcon size={20} color={textOnPrimaryColor} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.avatarHint}>タップして写真を変更</Text>
+            <Text style={[styles.avatarHint, { color: textSecondaryColor }]}>タップして写真を変更</Text>
           </View>
 
           {/* Form Fields */}
           <View style={styles.section}>
-            <Text style={styles.label}>名前</Text>
+            <Text style={[styles.label, { color: textColor }]}>名前</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: cardBgColor, color: textColor, borderColor: inputBorderColor }]}
               value={name}
               onChangeText={setName}
               placeholder="名前を入力"
-              placeholderTextColor="#ACACAC"
+              placeholderTextColor={textPlaceholderColor}
             />
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.label}>メールアドレス</Text>
+            <Text style={[styles.label, { color: textColor }]}>メールアドレス</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: cardBgColor, color: textColor, borderColor: inputBorderColor }]}
               value={email}
               onChangeText={setEmail}
               placeholder="メールアドレスを入力"
-              placeholderTextColor="#ACACAC"
+              placeholderTextColor={textPlaceholderColor}
               keyboardType="email-address"
               autoCapitalize="none"
             />
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.label}>自己紹介</Text>
+            <Text style={[styles.label, { color: textColor }]}>自己紹介</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, { backgroundColor: cardBgColor, color: textColor, borderColor: inputBorderColor }]}
               value={bio}
               onChangeText={setBio}
               placeholder="自己紹介を入力（任意）"
-              placeholderTextColor="#ACACAC"
+              placeholderTextColor={textPlaceholderColor}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
@@ -132,33 +141,33 @@ export default function ProfileScreen() {
 
           {/* Default Language */}
           <View style={styles.section}>
-            <Text style={styles.label}>デフォルト言語</Text>
+            <Text style={[styles.label, { color: textColor }]}>デフォルト言語</Text>
             <TouchableOpacity
-              style={styles.languageButton}
+              style={[styles.languageButton, { backgroundColor: cardBgColor, borderColor: inputBorderColor }]}
               onPress={() => router.push('/language-select')}
             >
               <View style={styles.languageButtonContent}>
                 <Text style={styles.flag}>{defaultLanguage.flag}</Text>
-                <Text style={styles.languageName}>{defaultLanguage.name}</Text>
+                <Text style={[styles.languageName, { color: textColor }]}>{defaultLanguage.name}</Text>
               </View>
-              <ChevronRightIcon />
+              <ChevronRightIcon color={textSecondaryColor} />
             </TouchableOpacity>
-            <Text style={styles.hint}>アプリの設定や通知で使用される言語です</Text>
+            <Text style={[styles.hint, { color: textMutedColor }]}>アプリの設定や通知で使用される言語です</Text>
           </View>
 
           {/* Save Button */}
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Text style={styles.saveButtonText}>保存</Text>
+          <TouchableOpacity style={[styles.saveButton, { backgroundColor: primaryColor }]} onPress={handleSave}>
+            <Text style={[styles.saveButtonText, { color: textOnPrimaryColor }]}>保存</Text>
           </TouchableOpacity>
 
           {/* Account Actions */}
           <View style={styles.actionsSection}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>パスワードを変更</Text>
+            <TouchableOpacity style={[styles.actionButton, { backgroundColor: cardBgColor, borderColor: inputBorderColor }]}>
+              <Text style={[styles.actionButtonText, { color: textColor }]}>パスワードを変更</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.actionButton, styles.dangerButton]}>
-              <Text style={[styles.actionButtonText, styles.dangerText]}>アカウントを削除</Text>
+              <Text style={[styles.actionButtonText, { color: errorTextColor }]}>アカウントを削除</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -195,7 +204,6 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#111111',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -206,15 +214,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#111111',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#FAFCFB',
   },
   avatarHint: {
     fontSize: 14,
-    color: '#686868',
     textAlign: 'center',
   },
   section: {
@@ -223,18 +228,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#000000',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
   textArea: {
     minHeight: 100,
@@ -244,12 +245,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
   languageButtonContent: {
     flex: 1,
@@ -263,15 +262,12 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
   },
   hint: {
     fontSize: 12,
-    color: '#ACACAC',
     marginTop: 6,
   },
   saveButton: {
-    backgroundColor: '#111111',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -280,29 +276,22 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
   actionsSection: {
     marginBottom: 40,
     gap: 12,
   },
   actionButton: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
   actionButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
   },
   dangerButton: {
     borderColor: '#FF4444',
-  },
-  dangerText: {
-    color: '#FF4444',
   },
 });

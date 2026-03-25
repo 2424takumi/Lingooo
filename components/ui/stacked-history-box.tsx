@@ -18,6 +18,7 @@ import Animated, {
 import { HistoryTag } from './history-tag';
 import { getSearchHistory } from '@/services/storage/search-history-storage';
 import type { SearchHistoryItem } from '@/types/search';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { logger } from '@/utils/logger';
 
 interface StackedHistoryBoxProps {
@@ -27,6 +28,7 @@ interface StackedHistoryBoxProps {
 
 export function StackedHistoryBox({ onItemPress, refreshTrigger }: StackedHistoryBoxProps) {
   const insets = useSafeAreaInsets();
+  const emptyTextColor = useThemeColor({}, 'textMuted');
   const [historyItems, setHistoryItems] = useState<SearchHistoryItem[]>([]);
   const [newItemId, setNewItemId] = useState<string | null>(null);
 
@@ -82,7 +84,7 @@ export function StackedHistoryBox({ onItemPress, refreshTrigger }: StackedHistor
   if (historyItems.length === 0) {
     return (
       <View style={[styles.emptyContainer, { paddingBottom: insets.bottom }]}>
-        <Text style={styles.emptyText}>検索した内容がここに表示されます</Text>
+        <Text style={[styles.emptyText, { color: emptyTextColor }]}>検索した内容がここに表示されます</Text>
       </View>
     );
   }
@@ -176,7 +178,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#A1A1A6',
     textAlign: 'center',
   },
 });

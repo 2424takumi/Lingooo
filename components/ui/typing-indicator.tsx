@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface TypingIndicatorProps {
   color?: string;
@@ -10,7 +11,9 @@ interface TypingIndicatorProps {
  * ChatGPT/Claude風のタイピングインジケーター
  * 3つのドットが順番にアニメーション
  */
-export function TypingIndicator({ color = '#2C2C2C', dotSize = 6 }: TypingIndicatorProps) {
+export function TypingIndicator({ color, dotSize = 6 }: TypingIndicatorProps) {
+  const defaultColor = useThemeColor({}, 'text');
+  const resolvedColor = color ?? defaultColor;
   const dot1Anim = useRef(new Animated.Value(0)).current;
   const dot2Anim = useRef(new Animated.Value(0)).current;
   const dot3Anim = useRef(new Animated.Value(0)).current;
@@ -70,21 +73,21 @@ export function TypingIndicator({ color = '#2C2C2C', dotSize = 6 }: TypingIndica
       <Animated.View
         style={[
           styles.dot,
-          { backgroundColor: color, width: dotSize, height: dotSize, borderRadius: dotSize / 2 },
+          { backgroundColor: resolvedColor, width: dotSize, height: dotSize, borderRadius: dotSize / 2 },
           getDotStyle(dot1Anim),
         ]}
       />
       <Animated.View
         style={[
           styles.dot,
-          { backgroundColor: color, width: dotSize, height: dotSize, borderRadius: dotSize / 2 },
+          { backgroundColor: resolvedColor, width: dotSize, height: dotSize, borderRadius: dotSize / 2 },
           getDotStyle(dot2Anim),
         ]}
       />
       <Animated.View
         style={[
           styles.dot,
-          { backgroundColor: color, width: dotSize, height: dotSize, borderRadius: dotSize / 2 },
+          { backgroundColor: resolvedColor, width: dotSize, height: dotSize, borderRadius: dotSize / 2 },
           getDotStyle(dot3Anim),
         ]}
       />

@@ -7,6 +7,7 @@
 import React from 'react';
 import { Text, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import type { SearchHistoryItem } from '@/types/search';
 
 interface HistoryTagProps {
@@ -15,6 +16,9 @@ interface HistoryTagProps {
 }
 
 export function HistoryTag({ item, onPress }: HistoryTagProps) {
+  const bgColor = useThemeColor({}, 'historyTagBackground');
+  const textColor = useThemeColor({}, 'historyTagText');
+
   // テキストを短縮（最大20文字）
   const displayText = item.query.length > 20
     ? item.query.substring(0, 20) + '...'
@@ -22,14 +26,14 @@ export function HistoryTag({ item, onPress }: HistoryTagProps) {
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, { backgroundColor: bgColor }]}
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress?.(item.query);
       }}
       activeOpacity={0.7}
     >
-      <Text style={styles.text} numberOfLines={1}>
+      <Text style={[styles.text, { color: textColor }]} numberOfLines={1}>
         {displayText}
       </Text>
     </TouchableOpacity>
@@ -38,7 +42,6 @@ export function HistoryTag({ item, onPress }: HistoryTagProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1A1A1A',
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -46,7 +49,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
 });

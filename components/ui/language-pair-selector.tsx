@@ -51,6 +51,9 @@ export function LanguagePairSelector({
   const { learningLanguages } = useLearningLanguages();
   const dropdownBackground = useThemeColor({}, 'cardBackground');
   const accentColor = useThemeColor({}, 'primary');
+  const textColor = useThemeColor({}, 'text');
+  const secondaryColor = useThemeColor({}, 'textSecondary');
+  const selectedItemBg = useThemeColor({}, 'segmentedBackground');
 
   const sourceInfo = getLanguageInfo(sourceLang);
   const targetInfo = getLanguageInfo(targetLang);
@@ -70,11 +73,11 @@ export function LanguagePairSelector({
       ) : (
         <View style={styles.langButton}>
           <Text style={styles.flag}>{sourceInfo?.flag}</Text>
-          <Text style={styles.langName} numberOfLines={1}>{sourceInfo?.name}</Text>
+          <Text style={[styles.langName, { color: textColor }]} numberOfLines={1}>{sourceInfo?.name}</Text>
         </View>
       )}
 
-      <Text style={styles.arrow}>{'→'}</Text>
+      <Text style={[styles.arrow, { color: secondaryColor }]}>{'→'}</Text>
 
       {/* Target language button */}
       <TouchableOpacity
@@ -82,8 +85,8 @@ export function LanguagePairSelector({
         onPress={() => setActiveDropdown('target')}
       >
         <Text style={styles.flag}>{targetInfo?.flag}</Text>
-        <Text style={styles.langName} numberOfLines={1}>{targetInfo?.name}</Text>
-        <ChevronDownIcon size={20} color="#686868" />
+        <Text style={[styles.langName, { color: textColor }]} numberOfLines={1}>{targetInfo?.name}</Text>
+        <ChevronDownIcon size={20} color={secondaryColor} />
       </TouchableOpacity>
 
       {/* Dropdown modal */}
@@ -109,13 +112,13 @@ export function LanguagePairSelector({
                       key={lang.id}
                       style={[
                         styles.languageItem,
-                        isSelected && { backgroundColor: '#E8E8E8' },
+                        isSelected && { backgroundColor: selectedItemBg },
                       ]}
                       onPress={() => handleSelect(lang.code)}
                     >
                       <View style={styles.languageInfo}>
                         <Text style={styles.languageFlag}>{lang.flag}</Text>
-                        <Text style={styles.languageName}>{lang.name}</Text>
+                        <Text style={[styles.languageName, { color: textColor }]}>{lang.name}</Text>
                       </View>
                       {isSelected && <Text style={[styles.checkMark, { color: accentColor }]}>{'✓'}</Text>}
                     </TouchableOpacity>
@@ -151,7 +154,6 @@ const styles = StyleSheet.create({
   langName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000000',
     maxWidth: 120,
   },
   backdrop: {
@@ -194,17 +196,14 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
   },
   caret: {
     fontSize: 16,
-    color: '#686868',
     marginTop: 1,
   },
   arrow: {
     fontSize: 20,
     fontWeight: '300',
-    color: '#686868',
   },
   checkMark: {
     fontSize: 18,

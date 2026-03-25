@@ -34,6 +34,11 @@ function ClockIcon({ size = 24, color = '#686868' }: { size?: number; color?: st
 
 export default function HistoryScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const textMutedColor = useThemeColor({}, 'textMuted');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const primaryColor = useThemeColor({}, 'primary');
   const [historyItems, setHistoryItems] = useState<SearchHistoryItem[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -99,17 +104,17 @@ export default function HistoryScreen() {
               <RefreshControl
                 refreshing={isRefreshing}
                 onRefresh={handleRefresh}
-                tintColor="#111111"
+                tintColor={primaryColor}
               />
             }
           >
             <View style={styles.historyList}>
               {historyItems.map((item) => (
-                <TouchableOpacity key={item.id} style={styles.historyItem}>
-                  <ClockIcon size={20} color="#111111" />
+                <TouchableOpacity key={item.id} style={[styles.historyItem, { backgroundColor: cardBgColor }]}>
+                  <ClockIcon size={20} color={primaryColor} />
                   <View style={styles.historyContent}>
-                    <Text style={styles.wordText}>{item.query}</Text>
-                    <Text style={styles.timeText}>
+                    <Text style={[styles.wordText, { color: textColor }]}>{item.query}</Text>
+                    <Text style={[styles.timeText, { color: textSecondaryColor }]}>
                       {getRelativeTime(item.timestamp)} • {item.language.toUpperCase()}
                     </Text>
                   </View>
@@ -118,14 +123,14 @@ export default function HistoryScreen() {
             </View>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>最大{historyItems.length}件の履歴を表示</Text>
+              <Text style={[styles.footerText, { color: textMutedColor }]}>最大{historyItems.length}件の履歴を表示</Text>
             </View>
           </ScrollView>
         ) : (
           <View style={styles.emptyContainer}>
             <ClockIcon size={64} color="#D1D1D1" />
-            <Text style={styles.emptyTitle}>学習履歴がありません</Text>
-            <Text style={styles.emptyDescription}>
+            <Text style={[styles.emptyTitle, { color: textColor }]}>学習履歴がありません</Text>
+            <Text style={[styles.emptyDescription, { color: textSecondaryColor }]}>
               単語を検索すると、ここに履歴が表示されます
             </Text>
           </View>
@@ -157,7 +162,6 @@ const styles = StyleSheet.create({
   historyItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -174,12 +178,10 @@ const styles = StyleSheet.create({
   wordText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 4,
   },
   timeText: {
     fontSize: 13,
-    color: '#686868',
   },
   footer: {
     paddingVertical: 24,
@@ -187,7 +189,6 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#ACACAC',
   },
   emptyContainer: {
     flex: 1,
@@ -198,13 +199,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000000',
     marginTop: 20,
     marginBottom: 8,
   },
   emptyDescription: {
     fontSize: 14,
-    color: '#686868',
     textAlign: 'center',
     lineHeight: 20,
   },

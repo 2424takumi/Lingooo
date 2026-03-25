@@ -7,14 +7,15 @@ import { LanguagePairSelector } from './language-pair-selector';
 import { useTranslation } from 'react-i18next';
 import { AVAILABLE_LANGUAGES } from '@/types/language';
 import { Shimmer } from './shimmer';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Icons
-function ChevronLeftIcon({ size = 28 }: { size?: number }) {
+function ChevronLeftIcon({ size = 28, color = '#000000' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M15 18l-6-6 6-6"
-        stroke="#000000"
+        stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -23,12 +24,12 @@ function ChevronLeftIcon({ size = 28 }: { size?: number }) {
   );
 }
 
-function CaretDownIcon({ size = 18 }: { size?: number }) {
+function CaretDownIcon({ size = 18, color = '#000000' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M6 9l6 6 6-6"
-        stroke="#000000"
+        stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -37,12 +38,12 @@ function CaretDownIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function VolumeIcon({ size = 18 }: { size?: number }) {
+function VolumeIcon({ size = 18, color = '#FFFFFF' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14"
-        stroke="#FFFFFF"
+        stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -51,12 +52,12 @@ function VolumeIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function UserIcon({ size = 24 }: { size?: number }) {
+function UserIcon({ size = 24, color = '#000000' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"
-        stroke="#000000"
+        stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -93,12 +94,12 @@ function MessagePlusIcon({ size = 22, color = '#000000' }: { size?: number; colo
   );
 }
 
-function ArrowRightIcon({ size = 14 }: { size?: number }) {
+function ArrowRightIcon({ size = 14, color = '#686868' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M5 12h14M12 5l7 7-7 7"
-        stroke="#686868"
+        stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -161,6 +162,11 @@ export function UnifiedHeaderBar({
   onTargetLangChange,
 }: UnifiedHeaderBarProps) {
   const { t } = useTranslation();
+  const textColor = useThemeColor({}, 'text');
+  const iconColor = useThemeColor({}, 'text');
+  const primaryColor = useThemeColor({}, 'primary');
+  const textOnDarkColor = useThemeColor({}, 'textOnDark');
+  const secondaryColor = useThemeColor({}, 'textSecondary');
 
   // titleのデフォルト値を翻訳から取得
   const defaultTitle = title || t('header.learn');
@@ -178,18 +184,18 @@ export function UnifiedHeaderBar({
             style={styles.headerIconButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <BookmarkIcon size={22} color="#000000" />
+            <BookmarkIcon size={22} color={iconColor} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push('/custom-questions')}
             style={styles.headerIconButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <MessagePlusIcon size={22} color="#000000" />
+            <MessagePlusIcon size={22} color={iconColor} />
           </TouchableOpacity>
         </View>
         <TouchableOpacity onPress={onSettingsPress} style={styles.settingsButton}>
-          <UserIcon size={24} />
+          <UserIcon size={24} color={iconColor} />
         </TouchableOpacity>
       </View>
     );
@@ -200,10 +206,10 @@ export function UnifiedHeaderBar({
     return (
       <View style={styles.container}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <ChevronLeftIcon size={28} />
+          <ChevronLeftIcon size={28} color={iconColor} />
         </TouchableOpacity>
 
-        <Text selectable selectionColor="#111111" style={styles.title}>
+        <Text selectable selectionColor={primaryColor} style={[styles.title, { color: textColor }]}>
           {defaultTitle}
         </Text>
 
@@ -218,15 +224,15 @@ export function UnifiedHeaderBar({
       <View style={styles.wordDetailContainer}>
         <View style={styles.topRow}>
           <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-            <ChevronLeftIcon size={28} />
+            <ChevronLeftIcon size={28} color={iconColor} />
           </TouchableOpacity>
 
-          <Text selectable selectionColor="#111111" style={styles.word}>
+          <Text selectable selectionColor={primaryColor} style={[styles.word, { color: textColor }]}>
             {word}
           </Text>
 
-          <TouchableOpacity onPress={onPronouncePress} style={styles.pronounceButton}>
-            <VolumeIcon size={18} />
+          <TouchableOpacity onPress={onPronouncePress} style={[styles.pronounceButton, { backgroundColor: primaryColor }]}>
+            <VolumeIcon size={18} color={textOnDarkColor} />
           </TouchableOpacity>
         </View>
 
@@ -246,7 +252,7 @@ export function UnifiedHeaderBar({
     return (
       <View style={styles.container}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <ChevronLeftIcon size={28} />
+          <ChevronLeftIcon size={28} color={iconColor} />
         </TouchableOpacity>
 
         <LanguagePairSelector
@@ -265,10 +271,10 @@ export function UnifiedHeaderBar({
     return (
       <View style={styles.container}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <ChevronLeftIcon size={28} />
+          <ChevronLeftIcon size={28} color={iconColor} />
         </TouchableOpacity>
 
-        <Text style={styles.title}>{defaultTitle}</Text>
+        <Text style={[styles.title, { color: textColor }]}>{defaultTitle}</Text>
 
         <View style={styles.placeholder} />
       </View>
@@ -327,13 +333,11 @@ const styles = StyleSheet.create({
   appIcon: {
     width: 36,
     height: 36,
-    backgroundColor: '#D3D3D3',
     borderRadius: 18,
   },
   title: {
     fontSize: 20,
     fontWeight: '500',
-    color: '#000000',
     textAlign: 'center',
     letterSpacing: 1,
     width: 144,
@@ -360,7 +364,6 @@ const styles = StyleSheet.create({
   word: {
     fontSize: 24,
     fontWeight: '500',
-    color: '#000000',
     textAlign: 'center',
     letterSpacing: 1,
     flex: 1,
@@ -370,7 +373,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 11,
-    backgroundColor: '#111111',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -380,7 +382,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   posTagContainer: {
-    backgroundColor: '#EBEBEB',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -391,7 +392,6 @@ const styles = StyleSheet.create({
   posTagText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000000',
     textAlign: 'center',
   },
   placeholder: {

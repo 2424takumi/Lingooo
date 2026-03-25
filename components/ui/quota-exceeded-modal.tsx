@@ -51,6 +51,10 @@ export function QuotaExceededModal({
   const cardBackground = useThemeColor({ light: '#FFFFFF', dark: '#1C1C1E' }, 'cardBackground');
   const textColor = useThemeColor({}, 'text');
   const subTextColor = useThemeColor({ light: '#666666', dark: '#999999' }, 'icon');
+  const overlayColor = useThemeColor({}, 'modalOverlay');
+  const primaryColor = useThemeColor({}, 'primary');
+  const warningBg = useThemeColor({}, 'warningBackground');
+  const buttonGrayColor = useThemeColor({}, 'buttonGray');
   const router = useRouter();
 
   const handleUpgrade = () => {
@@ -129,7 +133,7 @@ export function QuotaExceededModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: overlayColor }]}>
         <View style={[styles.container, { backgroundColor: cardBackground }]}>
           {/* Icon */}
           <View style={styles.iconContainer}>
@@ -148,7 +152,7 @@ export function QuotaExceededModal({
 
           {/* Reset Info */}
           {!isPremium && quotaType !== 'text_length' && (
-            <View style={styles.resetInfo}>
+            <View style={[styles.resetInfo, { backgroundColor: warningBg }]}>
               <Text style={[styles.resetText, { color: subTextColor }]}>
                 無料プランは{daysUntilReset}日後にリセットされます
               </Text>
@@ -158,14 +162,15 @@ export function QuotaExceededModal({
           {/* Buttons */}
           <View style={styles.buttonContainer}>
             {!isPremium && (
-              <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade}>
+              <TouchableOpacity style={[styles.upgradeButton, { backgroundColor: primaryColor }]} onPress={handleUpgrade}>
                 <Text style={styles.upgradeButtonText}>{getUpgradeButtonText()}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
               style={[
                 styles.closeButton,
-                isPremium && styles.closeButtonPrimary,
+                { backgroundColor: buttonGrayColor },
+                isPremium && [styles.closeButtonPrimary, { backgroundColor: primaryColor }],
               ]}
               onPress={handleClose}
             >
@@ -188,7 +193,6 @@ export function QuotaExceededModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -224,7 +228,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   resetInfo: {
-    backgroundColor: '#FFF3E0',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -239,7 +242,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   upgradeButton: {
-    backgroundColor: '#111111',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -253,10 +255,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
   },
   closeButtonPrimary: {
-    backgroundColor: '#111111',
   },
   closeButtonText: {
     fontSize: 15,

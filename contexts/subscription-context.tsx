@@ -202,7 +202,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       const { error: rpcError } = await supabase.rpc('update_subscription_status', {
         user_id: user?.id,
         status,
-        expires_at: expiresAt?.toISOString(),
+        expires_at: expiresAt ? expiresAt.toISOString() : null,
         customer_id: customerId,
         platform,
       });

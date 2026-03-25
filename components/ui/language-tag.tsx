@@ -10,7 +10,7 @@ interface LanguageTagProps {
 export function LanguageTag({ label, selected = true, onPress }: LanguageTagProps) {
   const selectedBackground = useThemeColor({}, 'tagUnselectedBackground');
   const selectedTextColor = useThemeColor({}, 'tagUnselectedText');
-  const unselectedBackground = '#323232';
+  const unselectedBackground = useThemeColor({}, 'questionTagBackground');
   const unselectedTextColor = useThemeColor({}, 'tagSelectedText');
 
   return (

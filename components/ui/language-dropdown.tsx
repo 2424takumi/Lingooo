@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useState } from 'react';
 import { Language } from '@/types/language';
 import Svg, { Path } from 'react-native-svg';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // 下矢印アイコン
 function ChevronDownIcon({ size = 18, color = '#999999' }: { size?: number; color?: string }) {
@@ -36,7 +37,6 @@ function groupLanguages(languages: Language[]): Array<{ type: 'language'; langua
   const result: Array<{ type: 'language'; language: Language } | { type: 'separator' }> = [];
   let lastGroupId: string | undefined | null = null;
 
-  // グループ化のためにソート: groupIdあり → groupIdでソート、groupIdなし → 元の順序
   const grouped: Language[] = [];
   const withGroup: Language[] = [];
   const withoutGroup: Language[] = [];
@@ -49,7 +49,6 @@ function groupLanguages(languages: Language[]): Array<{ type: 'language'; langua
     }
   }
 
-  // groupIdでグループ化して並べる
   const groupOrder: string[] = [];
   for (const lang of withGroup) {
     if (!groupOrder.includes(lang.groupId!)) {
@@ -66,7 +65,6 @@ function groupLanguages(languages: Language[]): Array<{ type: 'language'; langua
     const currentGroupId = lang.groupId || lang.id;
 
     if (lastGroupId !== null && currentGroupId !== lastGroupId) {
-      // グループが変わった場合、セパレータを挿入
       result.push({ type: 'separator' });
     }
 
@@ -88,6 +86,17 @@ export function LanguageDropdown({
 }: LanguageDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [tempSelected, setTempSelected] = useState<Language[]>(selectedLanguages);
+
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const placeholderColor = useThemeColor({}, 'textMuted');
+  const iconMutedColor = useThemeColor({}, 'textTertiary');
+  const borderColor = useThemeColor({}, 'separator');
+  const modalBgColor = useThemeColor({}, 'modalBackground');
+  const modalOverlayColor = useThemeColor({}, 'modalOverlay');
+  const separatorColor = useThemeColor({}, 'separator');
+  const selectedBgColor = useThemeColor({}, 'searchBackground');
+  const accentColor = useThemeColor({}, 'successColor');
 
   const handleSelect = (language: Language) => {
     if (multiSelect) {
@@ -123,10 +132,9 @@ export function LanguageDropdown({
   return (
     <>
       <View>
-        <TouchableOpacity style={styles.container} onPress={handleOpen}>
-        <Text style={styles.label}>{label}</Text>
+        <TouchableOpacity style={[styles.container, { borderBottomColor: borderColor }]} onPress={handleOpen}>
+        <Text style={[styles.label, { color: textColor }]}>{label}</Text>
         {multiSelect ? (
-          // 複数選択: 国旗のみを横並び
           <View style={styles.flagsContainer}>
             {selectedLanguages.length > 0 ? (
               selectedLanguages.map((lang) => (
@@ -135,22 +143,21 @@ export function LanguageDropdown({
                 </Text>
               ))
             ) : (
-              <Text style={styles.placeholder}>選択してください</Text>
+              <Text style={[styles.placeholder, { color: placeholderColor }]}>選択してください</Text>
             )}
-            <ChevronDownIcon size={18} color="#999999" />
+            <ChevronDownIcon size={18} color={iconMutedColor} />
           </View>
         ) : (
-          // 単一選択: 名前と国旗
           <View style={styles.valueContainer}>
             {selectedLanguage ? (
               <>
-                <Text style={styles.value}>{selectedLanguage.name}</Text>
+                <Text style={[styles.value, { color: textSecondaryColor }]}>{selectedLanguage.name}</Text>
                 <Text style={styles.flag}>{selectedLanguage.flag}</Text>
               </>
             ) : (
-              <Text style={styles.placeholder}>選択してください</Text>
+              <Text style={[styles.placeholder, { color: placeholderColor }]}>選択してください</Text>
             )}
-            <ChevronDownIcon size={18} color="#999999" />
+            <ChevronDownIcon size={18} color={iconMutedColor} />
           </View>
         )}
         </TouchableOpacity>
@@ -163,26 +170,26 @@ export function LanguageDropdown({
         onRequestClose={() => setIsOpen(false)}
       >
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: modalOverlayColor }]}
           activeOpacity={1}
           onPress={() => setIsOpen(false)}
         >
           <View
-            style={styles.menuContainer}
+            style={[styles.menuContainer, { backgroundColor: modalBgColor }]}
             onStartShouldSetResponder={() => true}
           >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{label}</Text>
+            <View style={[styles.modalHeader, { borderBottomColor: borderColor }]}>
+              <Text style={[styles.modalTitle, { color: textColor }]}>{label}</Text>
               {multiSelect && (
                 <TouchableOpacity onPress={handleDone}>
-                  <Text style={styles.doneButton}>完了</Text>
+                  <Text style={[styles.doneButton, { color: accentColor }]}>完了</Text>
                 </TouchableOpacity>
               )}
             </View>
             <View>
               {groupedItems.map((item, index) => {
                 if (item.type === 'separator') {
-                  return <View key={`sep-${index}`} style={styles.separator} />;
+                  return <View key={`sep-${index}`} style={[styles.separator, { backgroundColor: separatorColor }]} />;
                 }
 
                 const language = item.language;
@@ -193,19 +200,20 @@ export function LanguageDropdown({
                 return (
                   <TouchableOpacity
                     key={language.id}
-                    style={[styles.option, isSelected && styles.optionSelected]}
+                    style={[styles.option, isSelected && { backgroundColor: selectedBgColor }]}
                     onPress={() => handleSelect(language)}
                   >
                     <Text style={styles.optionFlag}>{language.flag}</Text>
                     <Text
                       style={[
                         styles.optionText,
-                        isSelected && styles.optionTextSelected,
+                        { color: textColor },
+                        isSelected && { fontWeight: '600', color: accentColor },
                       ]}
                     >
                       {language.name}
                     </Text>
-                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                    {isSelected && <Text style={[styles.checkmark, { color: accentColor }]}>✓</Text>}
                   </TouchableOpacity>
                 );
               })}
@@ -224,12 +232,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   label: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#111111',
   },
   valueContainer: {
     flexDirection: 'row',
@@ -249,21 +255,17 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: 15,
-    color: '#666666',
   },
   placeholder: {
     fontSize: 15,
-    color: '#AAAAAA',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
   },
   menuContainer: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     width: '100%',
     shadowColor: '#000',
@@ -280,17 +282,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111111',
   },
   doneButton: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#4CAF50',
   },
   option: {
     flexDirection: 'row',
@@ -299,29 +298,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 12,
   },
-  optionSelected: {
-    backgroundColor: '#F5F5F5',
-  },
   optionFlag: {
     fontSize: 24,
   },
   optionText: {
     fontSize: 16,
-    color: '#111111',
     flex: 1,
-  },
-  optionTextSelected: {
-    fontWeight: '600',
-    color: '#4CAF50',
   },
   checkmark: {
     fontSize: 18,
-    color: '#4CAF50',
     fontWeight: '600',
   },
   separator: {
     height: 1,
-    backgroundColor: '#F0F0F0',
     marginHorizontal: 20,
     marginVertical: 4,
   },

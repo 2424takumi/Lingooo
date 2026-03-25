@@ -9,6 +9,7 @@ import * as Haptics from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
 import Animated from 'react-native-reanimated';
 import { Shimmer } from './shimmer';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export interface WordDetail {
   headword: string;
@@ -99,22 +100,30 @@ export function WordDetailCard({
   animatedStyle,
   questionButtonRef,
 }: WordDetailCardProps) {
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const textOnDarkColor = useThemeColor({}, 'textOnDark');
+  const primaryColor = useThemeColor({}, 'primary');
+  const cardBackgroundElevatedColor = useThemeColor({}, 'cardBackgroundElevated');
+  const cardBackgroundColor = useThemeColor({}, 'cardBackground');
+  const borderLightColor = useThemeColor({}, 'borderLight');
+
   return (
     <Animated.View
       style={[styles.container, animatedStyle]}
       pointerEvents="auto"
     >
       {/* 白い内側カード */}
-      <View style={styles.innerCard}>
+      <View style={[styles.innerCard, { backgroundColor: cardBackgroundElevatedColor }]}>
         {/* ヘッダー: 見出し語/キーワード + 品詞タグ + 閉じるボタン */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             {isLoading ? (
               <Shimmer width="60%" height={22} borderRadius={4} />
             ) : word.reading ? (
-              <Text style={styles.keyword}>{word.reading}</Text>
+              <Text style={[styles.keyword, { color: textColor }]}>{word.reading}</Text>
             ) : (
-              <Text style={styles.headword}>
+              <Text style={[styles.headword, { color: textColor }]}>
                 {word.headword}
               </Text>
             )}
@@ -127,8 +136,8 @@ export function WordDetailCard({
             ) : word.partOfSpeech.length > 0 ? (
               <View style={styles.posTagsContainer}>
                 {word.partOfSpeech.map((pos, index) => (
-                  <View key={index} style={styles.posTag}>
-                    <Text style={styles.posTagText}>{pos}</Text>
+                  <View key={index} style={[styles.posTag, { backgroundColor: cardBackgroundColor }]}>
+                    <Text style={[styles.posTagText, { color: textColor }]}>{pos}</Text>
                   </View>
                 ))}
               </View>
@@ -139,8 +148,8 @@ export function WordDetailCard({
             onPress={onClose}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <View style={styles.closeButtonInner}>
-              <CloseIcon size={18} color="#FFFFFF" />
+            <View style={[styles.closeButtonInner, { backgroundColor: primaryColor }]}>
+              <CloseIcon size={18} color={textOnDarkColor} />
             </View>
           </TouchableOpacity>
         </View>
@@ -153,11 +162,11 @@ export function WordDetailCard({
           </View>
         ) : word.contextMeaning ? (
           <View style={styles.nuanceContainer}>
-            <Text style={styles.contextMeaningText}>{word.contextMeaning}</Text>
+            <Text style={[styles.contextMeaningText, { color: textSecondaryColor }]}>{word.contextMeaning}</Text>
           </View>
         ) : word.nuance ? (
           <View style={styles.nuanceContainer}>
-            <Text style={styles.nuanceText}>{word.nuance}</Text>
+            <Text style={[styles.nuanceText, { color: primaryColor }]}>{word.nuance}</Text>
           </View>
         ) : null}
 
@@ -170,12 +179,13 @@ export function WordDetailCard({
                   key={level}
                   style={[
                     styles.formalityDotSmall,
-                    level <= word.formality! && styles.formalityDotSmallActive,
+                    { backgroundColor: borderLightColor },
+                    level <= word.formality! && { backgroundColor: textSecondaryColor },
                   ]}
                 />
               ))}
             </View>
-            <Text style={styles.formalityLabel}>
+            <Text style={[styles.formalityLabel, { color: textSecondaryColor }]}>
               {word.formality <= 2 ? 'カジュアル' : word.formality === 3 ? '標準' : 'フォーマル'}
             </Text>
           </View>
@@ -193,21 +203,21 @@ export function WordDetailCard({
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <MessageCircleIcon size={24} color="#FFFFFF" />
+              <MessageCircleIcon size={24} color={textOnDarkColor} />
             </TouchableOpacity>
           </View>
         )}
 
         {onViewDetails && (
           <TouchableOpacity
-            style={styles.detailsButton}
+            style={[styles.detailsButton, { backgroundColor: cardBackgroundElevatedColor }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onViewDetails();
             }}
           >
-            <Text style={styles.detailsButtonText}>もっと詳しく</Text>
-            <ArrowRightIcon size={20} color="#1A1A1A" />
+            <Text style={[styles.detailsButtonText, { color: primaryColor }]}>もっと詳しく</Text>
+            <ArrowRightIcon size={20} color={primaryColor} />
           </TouchableOpacity>
         )}
       </View>
@@ -215,13 +225,12 @@ export function WordDetailCard({
   );
 }
 
-const styles = StyleSheet.create({
+const styles: any = StyleSheet.create({
   container: {
     flexDirection: 'column',
     gap: 8,
   },
   innerCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingTop: 16,
@@ -241,7 +250,6 @@ const styles = StyleSheet.create({
   headword: {
     fontSize: 20,
     fontWeight: '400',
-    color: '#000000',
     lineHeight: 20,
     marginTop: 2,
     marginLeft: 4,
@@ -249,7 +257,6 @@ const styles = StyleSheet.create({
   keyword: {
     fontSize: 20,
     fontWeight: '400',
-    color: '#000000',
     lineHeight: 20,
     marginTop: 2,
     marginLeft: 4,
@@ -258,7 +265,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   closeButtonInner: {
-    backgroundColor: '#1A1A1A',
     borderRadius: 11,
     width: 34,
     height: 34,
@@ -274,7 +280,6 @@ const styles = StyleSheet.create({
     marginLeft: 0,
   },
   posTag: {
-    backgroundColor: '#F8F8F8',
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 4,
@@ -284,7 +289,6 @@ const styles = StyleSheet.create({
   posTagText: {
     fontSize: 12,
     fontWeight: '400',
-    color: '#000000',
     lineHeight: 18,
   },
   nuanceContainer: {
@@ -294,14 +298,12 @@ const styles = StyleSheet.create({
   nuanceText: {
     fontSize: 16,
     fontWeight: '510',
-    color: '#1A1A1A',
     lineHeight: 24,
     letterSpacing: 0.3,
   },
   contextMeaningText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#333333',
     lineHeight: 22,
     letterSpacing: 0.3,
   },
@@ -321,14 +323,9 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#E0E0E0',
-  },
-  formalityDotSmallActive: {
-    backgroundColor: '#888888',
   },
   formalityLabel: {
     fontSize: 11,
-    color: '#888888',
     fontWeight: '500',
   },
   footer: {
@@ -342,7 +339,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
-    backgroundColor: '#FFFFFF',
     borderRadius: 19,
     paddingLeft: 12,
     paddingRight: 8,
@@ -351,7 +347,6 @@ const styles = StyleSheet.create({
   detailsButtonText: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#1A1A1A',
     lineHeight: 22,
     letterSpacing: 0.5,
     marginRight: -2,

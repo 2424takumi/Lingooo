@@ -15,8 +15,8 @@ interface SearchHistoryListProps {
 
 export function SearchHistoryList({ onItemPress, maxItems = 20, showTitle = true, refreshTrigger }: SearchHistoryListProps) {
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
-  const titleColor = useThemeColor({ light: '#686868', dark: '#A1A1A6' }, 'text');
-  const itemTextColor = useThemeColor({ light: '#000000', dark: '#F2F2F2' }, 'text');
+  const titleColor = useThemeColor({}, 'textSecondary');
+  const itemTextColor = useThemeColor({}, 'text');
 
   const loadHistory = useCallback(async () => {
     try {

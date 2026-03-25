@@ -32,6 +32,10 @@ function ChevronRightIcon({ size = 24, color = '#686868' }: { size?: number; col
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const errorTextColor = useThemeColor({}, 'errorText');
   const { isPremium } = useSubscription();
   const { user } = useAuth();
   const { resetAndRestart } = useTutorialContext();
@@ -159,83 +163,83 @@ export default function SettingsScreen() {
           {/* Subscription - Only shown for premium users */}
           {isPremium && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('settings.subscription.title')}</Text>
+              <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>{t('settings.subscription.title')}</Text>
 
               <TouchableOpacity
-                style={styles.settingItem}
+                style={[styles.settingItem, { backgroundColor: cardBgColor }]}
                 onPress={handleManageSubscription}
               >
                 <View style={styles.settingInfo}>
-                  <Text style={styles.settingLabel}>{t('settings.subscription.manage')}</Text>
-                  <Text style={styles.settingDescription}>{t('settings.subscription.manageDescription')}</Text>
+                  <Text style={[styles.settingLabel, { color: textColor }]}>{t('settings.subscription.manage')}</Text>
+                  <Text style={[styles.settingDescription, { color: textSecondaryColor }]}>{t('settings.subscription.manageDescription')}</Text>
                 </View>
-                <ChevronRightIcon />
+                <ChevronRightIcon color={textSecondaryColor} />
               </TouchableOpacity>
             </View>
           )}
 
           {/* About */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('settings.info.title')}</Text>
+            <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>{t('settings.info.title')}</Text>
 
             <TouchableOpacity
-              style={styles.settingItem}
+              style={[styles.settingItem, { backgroundColor: cardBgColor }]}
               onPress={() => router.push('/privacy-policy')}
             >
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>{t('settings.info.privacyPolicy')}</Text>
+                <Text style={[styles.settingLabel, { color: textColor }]}>{t('settings.info.privacyPolicy')}</Text>
               </View>
-              <ChevronRightIcon />
+              <ChevronRightIcon color={textSecondaryColor} />
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.settingItem}
+              style={[styles.settingItem, { backgroundColor: cardBgColor }]}
               onPress={() => router.push('/terms-of-service')}
             >
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>{t('settings.info.termsOfService')}</Text>
+                <Text style={[styles.settingLabel, { color: textColor }]}>{t('settings.info.termsOfService')}</Text>
               </View>
-              <ChevronRightIcon />
+              <ChevronRightIcon color={textSecondaryColor} />
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.settingItem}
+              style={[styles.settingItem, { backgroundColor: cardBgColor }]}
               onPress={handleContact}
             >
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>{t('settings.info.contact')}</Text>
+                <Text style={[styles.settingLabel, { color: textColor }]}>{t('settings.info.contact')}</Text>
               </View>
-              <ChevronRightIcon />
+              <ChevronRightIcon color={textSecondaryColor} />
             </TouchableOpacity>
 
-            <View style={styles.settingItem}>
+            <View style={[styles.settingItem, { backgroundColor: cardBgColor }]}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>{t('settings.info.version')}</Text>
+                <Text style={[styles.settingLabel, { color: textColor }]}>{t('settings.info.version')}</Text>
               </View>
-              <Text style={styles.versionText}>{appVersion}</Text>
+              <Text style={[styles.versionText, { color: textSecondaryColor }]}>{appVersion}</Text>
             </View>
 
             <TouchableOpacity
-              style={styles.settingItem}
+              style={[styles.settingItem, { backgroundColor: cardBgColor }]}
               onPress={handleReplayTutorial}
             >
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>{t('tutorial.replayTutorial')}</Text>
+                <Text style={[styles.settingLabel, { color: textColor }]}>{t('tutorial.replayTutorial')}</Text>
               </View>
-              <ChevronRightIcon />
+              <ChevronRightIcon color={textSecondaryColor} />
             </TouchableOpacity>
           </View>
 
           {/* Account */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('settings.deleteAccount.title')}</Text>
+            <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>{t('settings.deleteAccount.title')}</Text>
 
             <TouchableOpacity
               style={[styles.settingItem, styles.dangerItem]}
               onPress={handleDeleteAccount}
             >
               <View style={styles.settingInfo}>
-                <Text style={styles.dangerLabel}>{t('settings.deleteAccount.button')}</Text>
+                <Text style={[styles.dangerLabel, { color: errorTextColor }]}>{t('settings.deleteAccount.button')}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -243,15 +247,15 @@ export default function SettingsScreen() {
           {/* Developer Tools - Only shown in development mode */}
           {__DEV__ && (
             <View style={[styles.section, styles.lastSection]}>
-              <Text style={styles.sectionTitle}>{t('settings.developer.title')}</Text>
+              <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>{t('settings.developer.title')}</Text>
 
               <TouchableOpacity
-                style={styles.settingItem}
+                style={[styles.settingItem, { backgroundColor: cardBgColor }]}
                 onPress={handleClearPromptCache}
               >
                 <View style={styles.settingInfo}>
-                  <Text style={styles.settingLabel}>Clear Prompt Cache</Text>
-                  <Text style={styles.settingDescription}>
+                  <Text style={[styles.settingLabel, { color: textColor }]}>Clear Prompt Cache</Text>
+                  <Text style={[styles.settingDescription, { color: textSecondaryColor }]}>
                     Clear cached AI prompts (for testing language changes)
                   </Text>
                 </View>
@@ -262,8 +266,8 @@ export default function SettingsScreen() {
                 onPress={handleResetApp}
               >
                 <View style={styles.settingInfo}>
-                  <Text style={styles.dangerLabel}>{t('settings.developer.resetApp')}</Text>
-                  <Text style={styles.settingDescription}>
+                  <Text style={[styles.dangerLabel, { color: errorTextColor }]}>{t('settings.developer.resetApp')}</Text>
+                  <Text style={[styles.settingDescription, { color: textSecondaryColor }]}>
                     {t('settings.developer.resetAppDescription')}
                   </Text>
                 </View>
@@ -301,7 +305,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#686868',
     marginBottom: 12,
     paddingHorizontal: 4,
     textTransform: 'uppercase',
@@ -311,7 +314,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -328,16 +330,13 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
     marginBottom: 4,
   },
   settingDescription: {
     fontSize: 14,
-    color: '#686868',
   },
   versionText: {
     fontSize: 14,
-    color: '#686868',
     fontWeight: '500',
   },
   dangerItem: {
@@ -348,7 +347,6 @@ const styles = StyleSheet.create({
   dangerLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#FF4444',
     marginBottom: 4,
   },
 });
