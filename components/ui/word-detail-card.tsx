@@ -103,8 +103,9 @@ export function WordDetailCard({
   const textColor = useThemeColor({}, 'text');
   const textSecondaryColor = useThemeColor({}, 'textSecondary');
   const textOnDarkColor = useThemeColor({}, 'textOnDark');
+  const textOnPrimaryColor = useThemeColor({}, 'textOnPrimary');
   const primaryColor = useThemeColor({}, 'primary');
-  const cardBackgroundElevatedColor = useThemeColor({}, 'cardBackgroundElevated');
+  const cardInnerColor = useThemeColor({}, 'translateCardInner');
   const cardBackgroundColor = useThemeColor({}, 'cardBackground');
   const borderLightColor = useThemeColor({}, 'borderLight');
 
@@ -114,7 +115,7 @@ export function WordDetailCard({
       pointerEvents="auto"
     >
       {/* 白い内側カード */}
-      <View style={[styles.innerCard, { backgroundColor: cardBackgroundElevatedColor }]}>
+      <View style={[styles.innerCard, { backgroundColor: cardInnerColor }]}>
         {/* ヘッダー: 見出し語/キーワード + 品詞タグ + 閉じるボタン */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -149,7 +150,7 @@ export function WordDetailCard({
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <View style={[styles.closeButtonInner, { backgroundColor: primaryColor }]}>
-              <CloseIcon size={18} color={textOnDarkColor} />
+              <CloseIcon size={18} color={textOnPrimaryColor} />
             </View>
           </TouchableOpacity>
         </View>
@@ -203,14 +204,14 @@ export function WordDetailCard({
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <MessageCircleIcon size={24} color={textOnDarkColor} />
+              <MessageCircleIcon size={24} color={textOnPrimaryColor} />
             </TouchableOpacity>
           </View>
         )}
 
         {onViewDetails && (
           <TouchableOpacity
-            style={[styles.detailsButton, { backgroundColor: cardBackgroundElevatedColor }]}
+            style={[styles.detailsButton, { backgroundColor: cardInnerColor }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onViewDetails();
