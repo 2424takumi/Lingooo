@@ -8,10 +8,12 @@ interface LanguageTagProps {
 }
 
 export function LanguageTag({ label, selected = true, onPress }: LanguageTagProps) {
-  const selectedBackground = useThemeColor({}, 'tagUnselectedBackground');
-  const selectedTextColor = useThemeColor({}, 'tagUnselectedText');
-  const unselectedBackground = useThemeColor({}, 'questionTagBackground');
-  const unselectedTextColor = useThemeColor({}, 'tagSelectedText');
+  // selected = 現在アクティブなタブ（黒背景・白テキスト / ダークモードでも黒）
+  const activeBackground = useThemeColor({}, 'inputBackground');
+  const activeTextColor = useThemeColor({}, 'text');
+  // unselected = 非アクティブタブ（グレー背景・薄いテキスト）
+  const inactiveBackground = useThemeColor({}, 'questionTagBackground');
+  const inactiveTextColor = useThemeColor({}, 'questionTagText');
 
   return (
     <TouchableOpacity onPress={onPress}>
@@ -19,14 +21,14 @@ export function LanguageTag({ label, selected = true, onPress }: LanguageTagProp
         style={[
           styles.container,
           {
-            backgroundColor: selected ? selectedBackground : unselectedBackground,
+            backgroundColor: selected ? activeBackground : inactiveBackground,
           },
         ]}
       >
         <Text
           style={[
             styles.text,
-            { color: selected ? selectedTextColor : unselectedTextColor },
+            { color: selected ? activeTextColor : inactiveTextColor },
           ]}
         >
           {label}

@@ -146,7 +146,7 @@ export const Colors = {
     pageBackground: '#000000',
     searchBackground: '#2C2C2E',
     headerBackground: '#0A0A0A',
-    inputBackground: '#2C2C2E',
+    inputBackground: '#000000',
     inputBorder: '#48484A',
     textPlaceholder: '#6E6E6E',
     buttonGray: '#F0F0F0',
