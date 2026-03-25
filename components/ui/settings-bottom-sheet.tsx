@@ -19,6 +19,34 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import Constants from 'expo-constants';
 
+// Theme icons
+function SunIcon({ size = 20, color = '#000000' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 7a5 5 0 100 10 5 5 0 000-10z" stroke={color} strokeWidth={1.5} />
+      <Path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke={color} strokeWidth={1.5} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function MoonIcon({ size = 20, color = '#000000' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function AutoThemeIcon({ size = 20, color = '#000000' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke={color} strokeWidth={1.5} />
+      <Path d="M12 2v20" stroke={color} strokeWidth={1.5} />
+      <Path d="M12 2a10 10 0 0110 10 10 10 0 01-10 10" fill={color} fillOpacity={0.15} />
+    </Svg>
+  );
+}
+
 // Star Icon for premium features
 function StarIcon({ size = 16 }: { size?: number }) {
   return (
@@ -389,9 +417,9 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
               <Text style={[styles.sectionTitle, { color: text }]}>{t('settingsBottomSheet.theme', 'テーマ')}</Text>
               <View style={styles.themeOptions}>
                 {([
-                  { id: 'light' as ThemePreference, label: t('settingsBottomSheet.themeLight', 'ライト'), icon: '☀️' },
-                  { id: 'dark' as ThemePreference, label: t('settingsBottomSheet.themeDark', 'ダーク'), icon: '🌙' },
-                  { id: 'auto' as ThemePreference, label: t('settingsBottomSheet.themeAuto', '自動'), icon: '⚙️' },
+                  { id: 'light' as ThemePreference, label: t('settingsBottomSheet.themeLight', 'ライト'), Icon: SunIcon },
+                  { id: 'dark' as ThemePreference, label: t('settingsBottomSheet.themeDark', 'ダーク'), Icon: MoonIcon },
+                  { id: 'auto' as ThemePreference, label: t('settingsBottomSheet.themeAuto', '自動'), Icon: AutoThemeIcon },
                 ]).map((option) => (
                   <TouchableOpacity
                     key={option.id}
@@ -402,7 +430,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                     ]}
                     onPress={() => setThemePreference(option.id)}
                   >
-                    <Text style={styles.themeOptionIcon}>{option.icon}</Text>
+                    <option.Icon size={20} color={text} />
                     <Text style={[styles.themeOptionLabel, { color: text }]}>{option.label}</Text>
                   </TouchableOpacity>
                 ))}
@@ -650,11 +678,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  themeOptionIcon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
   themeOptionLabel: {
+    marginTop: 4,
     fontSize: 13,
     fontWeight: '500',
   },
