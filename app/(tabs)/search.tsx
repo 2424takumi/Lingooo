@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, TouchableOpacity, Dimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, Keyboard, TouchableWithoutFeedback, TouchableOpacity, Dimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { WordCard } from '@/components/ui/word-card';
 import { ChatSection } from '@/components/ui/chat-section';
+import { KeyboardAnimatedView } from '@/components/ui/keyboard-animated-view';
 import { ShimmerSuggestions } from '@/components/ui/shimmer';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
@@ -724,10 +725,8 @@ export default function SearchScreen() {
       </View>
 
       {/* Chat Section - Fixed at bottom */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <KeyboardAnimatedView
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={0}
       >
         <View pointerEvents="box-none" style={styles.chatContainerFixed}>
           <ChatSection
@@ -751,7 +750,7 @@ export default function SearchScreen() {
             onSelectionCleared={handleSelectionCleared}
           />
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAnimatedView>
 
       {/* Bookmark Toast */}
       <BookmarkToast

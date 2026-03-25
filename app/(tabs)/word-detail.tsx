@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, useRef } from 'react';
@@ -12,6 +12,7 @@ import { DefinitionList } from '@/components/ui/definition-list';
 import { WordHint } from '@/components/ui/word-hint';
 import { ExampleCard } from '@/components/ui/example-card';
 import { ChatSection, type ChatSectionMode } from '@/components/ui/chat-section';
+import { KeyboardAnimatedView } from '@/components/ui/keyboard-animated-view';
 import type { WordDetail } from '@/components/ui/word-detail-card';
 import { ShimmerHeader, ShimmerDefinitions, ShimmerMetrics, ShimmerExamples, ShimmerHint } from '@/components/ui/shimmer';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
@@ -1237,10 +1238,8 @@ export default function WordDetailScreen() {
       </View>
 
       {/* Chat Section - Fixed at bottom */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <KeyboardAnimatedView
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={0}
       >
         <View pointerEvents="box-none" style={styles.chatContainerFixed}>
           <ChatSection
@@ -1277,7 +1276,7 @@ export default function WordDetailScreen() {
             onSwitchToWordCard={handleSwitchToWordCard}
           />
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAnimatedView>
 
       {/* Bookmark Toast */}
       <BookmarkToast

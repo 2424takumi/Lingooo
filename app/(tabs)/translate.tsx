@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Dimensions, Platform, Pressable, KeyboardAvoidingView, ActivityIndicator, Text, Keyboard } from 'react-native';
+import { StyleSheet, View, ScrollView, Dimensions, Pressable, ActivityIndicator, Text, Keyboard } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/themed-view';
 import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { ChatSection, ChatSectionMode } from '@/components/ui/chat-section';
+import { KeyboardAnimatedView } from '@/components/ui/keyboard-animated-view';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
 import { TranslateCard } from '@/components/ui/translate-card';
 import { TranslationNotes } from '@/components/ui/translation-notes';
@@ -2113,10 +2114,8 @@ export default function TranslateScreen() {
       </View>
 
       {/* Chat Section - Fixed at bottom */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <KeyboardAnimatedView
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={0}
       >
         <View
           pointerEvents="box-none"
@@ -2164,7 +2163,7 @@ export default function TranslateScreen() {
             tutorialQuestionButtonRef={questionButtonRef}
           />
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAnimatedView>
 
       {/* Bookmark Toast */}
       <BookmarkToast
