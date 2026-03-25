@@ -14,6 +14,7 @@ import { getUsageStats, UsageStats } from '@/services/api/usage';
 import { logger } from '@/utils/logger';
 import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
+import { useThemeContext, ThemePreference } from '@/contexts/theme-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import Constants from 'expo-constants';
@@ -68,6 +69,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
   } = useLearningLanguages();
   const { isPremium } = useSubscription();
   const { user } = useAuth();
+  const { themePreference, setThemePreference } = useThemeContext();
 
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 
@@ -382,6 +384,31 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
               />
             </View>
 
+            {/* Theme Settings */}
+            <View style={styles.themeSettingsContainer}>
+              <Text style={[styles.sectionTitle, { color: text }]}>{t('settingsBottomSheet.theme', 'テーマ')}</Text>
+              <View style={styles.themeOptions}>
+                {([
+                  { id: 'light' as ThemePreference, label: t('settingsBottomSheet.themeLight', 'ライト'), icon: '☀️' },
+                  { id: 'dark' as ThemePreference, label: t('settingsBottomSheet.themeDark', 'ダーク'), icon: '🌙' },
+                  { id: 'auto' as ThemePreference, label: t('settingsBottomSheet.themeAuto', '自動'), icon: '⚙️' },
+                ]).map((option) => (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={[
+                      styles.themeOption,
+                      { backgroundColor: cardBg },
+                      themePreference === option.id && { borderColor: primaryColor, borderWidth: 2 },
+                    ]}
+                    onPress={() => setThemePreference(option.id)}
+                  >
+                    <Text style={styles.themeOptionIcon}>{option.icon}</Text>
+                    <Text style={[styles.themeOptionLabel, { color: text }]}>{option.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
             {/* Account Section */}
             <View style={styles.accountSectionContainer}>
               <Text style={[styles.sectionTitle, { color: text }]}>{t('settings.deleteAccount.title')}</Text>
@@ -606,6 +633,30 @@ const styles = StyleSheet.create({
   },
   aiSettingDescription: {
     fontSize: 13,
+  },
+  themeSettingsContainer: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+  },
+  themeOptions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  themeOption: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  themeOptionIcon: {
+    fontSize: 20,
+    marginBottom: 4,
+  },
+  themeOptionLabel: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   accountSectionContainer: {
     marginHorizontal: 20,
