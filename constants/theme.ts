@@ -170,8 +170,8 @@ export const Colors = {
     chatSectionBackground: '#1C1C1E',
     chatInputBackground: '#000000',
     chatInputTextBackground: '#2C2C2E',
-    questionTagBackground: '#48484A',
-    questionTagText: '#F0F0F0',
+    questionTagBackground: '#F0F0F0',
+    questionTagText: '#000000',
 
     // QA
     qaCardBackground: '#1C1C1E',
@@ -232,7 +232,7 @@ export const Colors = {
     translateOriginalText: '#B0B0B0',
     translateTranslatedText: '#F0F0F0',
     translateCardOuter: '#1C1C1E',
-    translateCardInner: '#2C2C2E',
+    translateCardInner: '#000000',
 
     // Subscription
     successBackground: '#1A2E1A',
