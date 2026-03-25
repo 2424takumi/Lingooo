@@ -83,12 +83,12 @@ interface ChatSectionProps {
   tutorialQuestionButtonRef?: React.RefObject<View | null>;
 }
 
-function ChevronUpIcon({ size = 18 }: { size?: number }) {
+function ChevronUpIcon({ size = 18, color = 'white' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M18 15L12 9L6 15"
-        stroke="white"
+        stroke={color}
         strokeWidth={2.5}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -97,12 +97,12 @@ function ChevronUpIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function ChevronDownIcon({ size = 22 }: { size?: number }) {
+function ChevronDownIcon({ size = 22, color = 'white' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M6 9L12 15L18 9"
-        stroke="white"
+        stroke={color}
         strokeWidth={2.5}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -111,12 +111,12 @@ function ChevronDownIcon({ size = 22 }: { size?: number }) {
   );
 }
 
-function SendIcon({ size = 20 }: { size?: number }) {
+function SendIcon({ size = 20, color = '#FFFFFF' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"
-        stroke="#FFFFFF"
+        stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -125,14 +125,14 @@ function SendIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-function SliderIcon({ size = 24 }: { size?: number }) {
+function SliderIcon({ size = 24, color = '#1A1A1A' }: { size?: number; color?: string }) {
   const width = size;
   const height = (size * 18) / 20;
   return (
     <Svg width={width} height={height} viewBox="0 0 20 18" fill="none">
       <Path
         d="M7.75 14.75H18.75M0.75 14.75H3.75M3.75 14.75V16.75M3.75 14.75V12.75M17.75 8.75H18.75M0.75 8.75H13.75M13.75 8.75V10.75M13.75 8.75V6.75M11.75 2.75H18.75M0.75 2.75H7.75M7.75 2.75V4.75M7.75 2.75V0.75"
-        stroke="#1A1A1A"
+        stroke={color}
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -141,12 +141,12 @@ function SliderIcon({ size = 24 }: { size?: number }) {
   );
 }
 
-function PlusIcon({ size = 24 }: { size?: number }) {
+function PlusIcon({ size = 24, color = '#FFFFFF' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M12 5v14M5 12h14"
-        stroke="#FFFFFF"
+        stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -274,6 +274,20 @@ export function ChatSection({
   const containerBackground = useThemeColor({}, 'chatSectionBackground');
   const inputBackground = useThemeColor({}, 'chatInputBackground');
   const placeholderColor = useThemeColor({}, 'textPlaceholder');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const textMutedColor = useThemeColor({}, 'textMuted');
+  const iconMutedColor = useThemeColor({}, 'iconMuted');
+  const textOnDarkColor = useThemeColor({}, 'textOnDark');
+  const primaryColor = useThemeColor({}, 'primary');
+  const errorBgColor = useThemeColor({}, 'errorBackground');
+  const errorTextColor = useThemeColor({}, 'errorText');
+  const overlayLightColor = useThemeColor({}, 'overlayLight');
+  const cardBgElevatedColor = useThemeColor({}, 'cardBackgroundElevated');
+  const searchBgColor = useThemeColor({}, 'searchBackground');
+  const inputBgColor = useThemeColor({}, 'inputBackground');
+  const buttonDisabledColor = useThemeColor({}, 'buttonDisabled');
+  const selectionColor = useThemeColor({}, 'text');
 
   // questionPresetsをローカル変数として保持（依存配列で使用するため）
   const questions = questionPresets;
@@ -649,11 +663,11 @@ export function ChatSection({
             </View>
           )}
           {qaPairs.length === 0 && error && !isStreaming && (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorBannerText}>{error}</Text>
+            <View style={[styles.errorBanner, { backgroundColor: errorBgColor }]}>
+              <Text style={[styles.errorBannerText, { color: errorTextColor }]}>{error}</Text>
               {onRetry && (
-                <TouchableOpacity style={styles.retryInlineButton} onPress={onRetry}>
-                  <Text style={styles.retryInlineButtonText}>再試行</Text>
+                <TouchableOpacity style={[styles.retryInlineButton, { backgroundColor: errorTextColor }]} onPress={onRetry}>
+                  <Text style={[styles.retryInlineButtonText, { color: textOnDarkColor }]}>再試行</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -684,19 +698,19 @@ export function ChatSection({
       {((mode === 'text' && selectedText) || (mode === 'word' && showInputInWordMode && selectedText)) && (
         <View style={styles.selectedTextContainerTextMode}>
           <View style={styles.selectedTextHeader}>
-            <Text style={styles.selectedTextLabelTextMode}>{selectedText.text}</Text>
+            <Text style={[styles.selectedTextLabelTextMode, { color: textOnDarkColor }]}>{selectedText.text}</Text>
             {/* wordモードの質問モードから単語カードモードへ戻るボタン */}
             {mode === 'word' && showInputInWordMode && (
               <TouchableOpacity
-                style={styles.backToCardButton}
+                style={[styles.backToCardButton, { backgroundColor: cardBgElevatedColor }]}
                 onPress={() => {
                   setShowInputInWordMode(false);
                   setIsOpen(false);
                   onSwitchToWordCard?.();
                 }}
               >
-                <Text style={styles.backToCardButtonText}>カードに戻る</Text>
-                <ArrowUpRightIcon size={20} color="#1A1A1A" />
+                <Text style={[styles.backToCardButtonText, { color: textColor }]}>カードに戻る</Text>
+                <ArrowUpRightIcon size={20} color={textColor} />
               </TouchableOpacity>
             )}
             {/* textモードで選択解除ボタン */}
@@ -705,7 +719,7 @@ export function ChatSection({
                 style={styles.clearSelectionButton}
                 onPress={onSelectionCleared}
               >
-                <CloseIcon size={18} color="#FFFFFF" />
+                <CloseIcon size={18} color={textOnDarkColor} />
               </TouchableOpacity>
             )}
           </View>
@@ -717,22 +731,22 @@ export function ChatSection({
       {mode === 'default' && (scope === 'translate' || scope === 'word' || scope === 'search') && !isOpen && (
         selectedText ? (
           <View style={styles.selectedTextContainer}>
-            <Text style={styles.selectedTextLabel} numberOfLines={1} ellipsizeMode="tail">
+            <Text style={[styles.selectedTextLabel, { color: iconMutedColor }]} numberOfLines={1} ellipsizeMode="tail">
               {selectedText.text}
             </Text>
             {selectedText.isSingleWord && onDictionaryLookup && (
               <TouchableOpacity
-                style={styles.dictionaryButton}
+                style={[styles.dictionaryButton, { backgroundColor: cardBgElevatedColor }]}
                 onPress={onDictionaryLookup}
               >
-                <Text style={styles.dictionaryButtonText} numberOfLines={1}>単語を調べる</Text>
-                <ArrowRightIcon size={16} color="#1A1A1A" />
+                <Text style={[styles.dictionaryButtonText, { color: textColor }]} numberOfLines={1}>単語を調べる</Text>
+                <ArrowRightIcon size={16} color={textColor} />
               </TouchableOpacity>
             )}
           </View>
         ) : scope === 'translate' ? (
           <View style={styles.selectedTextContainer}>
-            <Text style={styles.hintText}>テキストを選択して質問をしてみましょう</Text>
+            <Text style={[styles.hintText, { color: textMutedColor }]}>テキストを選択して質問をしてみましょう</Text>
           </View>
         ) : null
       )}
@@ -779,8 +793,8 @@ export function ChatSection({
         {activeFollowUpPair && (
           <View style={styles.followUpContextContainer}>
             <View style={styles.followUpContextContent}>
-              <CornerDownRightIcon size={18} color="#CECECE" />
-              <Text style={styles.followUpContextLabel} numberOfLines={1}>
+              <CornerDownRightIcon size={18} color={iconMutedColor} />
+              <Text style={[styles.followUpContextLabel, { color: textOnDarkColor }]} numberOfLines={1}>
                 {activeFollowUpPair.q}
               </Text>
               <TouchableOpacity
@@ -788,7 +802,7 @@ export function ChatSection({
                 onPress={() => onEnterFollowUpMode?.(activeFollowUpPair.id, activeFollowUpPair.q)}
                 hitSlop={8}
               >
-                <CloseIcon size={18} color="#CECECE" />
+                <CloseIcon size={18} color={iconMutedColor} />
               </TouchableOpacity>
             </View>
           </View>
@@ -807,6 +821,7 @@ export function ChatSection({
                     lineHeight: INPUT_LINE_HEIGHT,
                     paddingTop: INPUT_TOP_PADDING,
                     paddingBottom: INPUT_BOTTOM_PADDING,
+                    color: textColor,
                   },
                 ]}
                 placeholder={activeFollowUpPair ? 'この回答に追加で質問をする...' : placeholder}
@@ -831,7 +846,7 @@ export function ChatSection({
                 multiline
                 textAlignVertical="top"
                 scrollEnabled={false}
-                selectionColor="#1A1A1A"
+                selectionColor={selectionColor}
                 selectTextOnFocus={false}
                 contextMenuHidden={false}
               />
@@ -841,17 +856,18 @@ export function ChatSection({
             <TouchableOpacity
               style={[
                 styles.button,
+                { backgroundColor: primaryColor },
                 (isStreaming || isSubmitting) && styles.buttonDisabled,
               ]}
               onPress={handleActionButtonPress}
               disabled={isStreaming || isSubmitting}
             >
               {isInputFocused && inputText.trim().length > 0 ? (
-                <SendIcon size={20} />
+                <SendIcon size={20} color={textOnDarkColor} />
               ) : isOpen ? (
-                <ChevronDownIcon size={22} />
+                <ChevronDownIcon size={22} color={textOnDarkColor} />
               ) : (
-                <ChevronUpIcon size={18} />
+                <ChevronUpIcon size={18} color={textOnDarkColor} />
               )}
             </TouchableOpacity>
           </View>
@@ -867,9 +883,9 @@ export function ChatSection({
         onRequestClose={() => setIsCustomQuestionModalOpen(false)}
       >
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: overlayLightColor }]}
           activeOpacity={1}
-          pointerEvents={isCustomQuestionModalOpen ? 'auto' : 'none'}
+          // @ts-ignore - pointerEvents on TouchableOpacity
           onPress={() => {
             setIsCustomQuestionModalOpen(false);
             setCustomQuestionTitle('');
@@ -881,15 +897,15 @@ export function ChatSection({
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.customQuestionModalContainer} onStartShouldSetResponder={() => true}>
-                <Text style={styles.modalTitle}>カスタム質問を追加</Text>
+              <View style={[styles.customQuestionModalContainer, { backgroundColor: cardBgElevatedColor }]} onStartShouldSetResponder={() => true}>
+                <Text style={[styles.modalTitle, { color: textColor }]}>カスタム質問を追加</Text>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>タイトル（タグに表示）</Text>
+                  <Text style={[styles.inputLabel, { color: textSecondaryColor }]}>タイトル（タグに表示）</Text>
                   <TextInput
-                    style={styles.customQuestionTitleInput}
+                    style={[styles.customQuestionTitleInput, { backgroundColor: searchBgColor, color: textColor }]}
                     placeholder="例: 例文"
-                    placeholderTextColor="#ACACAC"
+                    placeholderTextColor={textMutedColor}
                     value={customQuestionTitle}
                     onChangeText={setCustomQuestionTitle}
                     autoFocus
@@ -897,11 +913,11 @@ export function ChatSection({
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>質問文</Text>
+                  <Text style={[styles.inputLabel, { color: textSecondaryColor }]}>質問文</Text>
                   <TextInput
-                    style={styles.customQuestionInput}
+                    style={[styles.customQuestionInput, { backgroundColor: searchBgColor, color: textColor }]}
                     placeholder="例: この単語の例文を3つ教えて"
-                    placeholderTextColor="#ACACAC"
+                    placeholderTextColor={textMutedColor}
                     value={customQuestionText}
                     onChangeText={setCustomQuestionText}
                     multiline
@@ -910,24 +926,25 @@ export function ChatSection({
 
                 <View style={styles.modalButtonsRow}>
                   <TouchableOpacity
-                    style={styles.modalCancelButton}
+                    style={[styles.modalCancelButton, { backgroundColor: inputBgColor }]}
                     onPress={() => {
                       setIsCustomQuestionModalOpen(false);
                       setCustomQuestionTitle('');
                       setCustomQuestionText('');
                     }}
                   >
-                    <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+                    <Text style={[styles.modalCancelButtonText, { color: textSecondaryColor }]}>キャンセル</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.modalAddButton,
-                      (!customQuestionTitle.trim() || !customQuestionText.trim()) && styles.modalAddButtonDisabled,
+                      { backgroundColor: primaryColor },
+                      (!customQuestionTitle.trim() || !customQuestionText.trim()) && [styles.modalAddButtonDisabled, { backgroundColor: buttonDisabledColor }],
                     ]}
                     onPress={handleAddCustomQuestion}
                     disabled={!customQuestionTitle.trim() || !customQuestionText.trim()}
                   >
-                    <Text style={styles.modalAddButtonText}>追加</Text>
+                    <Text style={[styles.modalAddButtonText, { color: textOnDarkColor }]}>追加</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1010,7 +1027,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   whiteContainer: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingLeft: 8,
     paddingRight: 8,
@@ -1044,7 +1060,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
     letterSpacing: 1,
     backgroundColor: 'transparent',
     minHeight: 34, // MIN_INPUT_HEIGHT - 固定値
@@ -1054,7 +1069,6 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 11,
-    backgroundColor: '#1A1A1A',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'flex-end',
@@ -1065,7 +1079,6 @@ const styles = StyleSheet.create({
   },
   errorBanner: {
     marginTop: 12,
-    backgroundColor: '#FFEAEA',
     borderRadius: 8,
     padding: 12,
     flexDirection: 'row',
@@ -1075,31 +1088,26 @@ const styles = StyleSheet.create({
   },
   errorBannerText: {
     flex: 1,
-    color: '#CC0000',
     fontSize: 14,
   },
   retryInlineButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#CC0000',
     borderRadius: 8,
   },
   retryInlineButtonText: {
-    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   menuContainer: {
     position: 'absolute',
     bottom: 90,
     left: 20,
     width: '60%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 14,
     paddingTop: 12,
@@ -1117,12 +1125,10 @@ const styles = StyleSheet.create({
   menuItemLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A4A4A',
     marginBottom: 2,
   },
   toggleContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F0F0F0',
     borderRadius: 16,
     padding: 3,
     gap: 3,
@@ -1136,7 +1142,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   toggleOptionActive: {
-    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -1149,10 +1154,8 @@ const styles = StyleSheet.create({
   toggleOptionText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#999999',
   },
   toggleOptionTextActive: {
-    color: '#000000',
   },
   plusButton: {
     width: 32,
@@ -1169,7 +1172,6 @@ const styles = StyleSheet.create({
   },
   customQuestionModalContainer: {
     width: '85%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 20,
     gap: 16,
@@ -1185,7 +1187,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#000000',
     textAlign: 'center',
   },
   inputGroup: {
@@ -1194,21 +1195,16 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A4A4A',
   },
   customQuestionTitleInput: {
-    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 12,
     fontSize: 14,
-    color: '#000000',
   },
   customQuestionInput: {
-    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 12,
     fontSize: 14,
-    color: '#000000',
     minHeight: 80,
     textAlignVertical: 'top',
   },
@@ -1221,30 +1217,25 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalCancelButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#686868',
   },
   modalAddButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#1A1A1A',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalAddButtonDisabled: {
-    backgroundColor: '#CCCCCC',
   },
   modalAddButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
   // Selected Text styles (Figma design)
   selectedTextContainer: {
@@ -1261,7 +1252,6 @@ const styles = StyleSheet.create({
   selectedTextLabel: {
     flex: 1,
     fontSize: 15,
-    color: '#CECECE',
     fontWeight: '500',
     letterSpacing: 1,
     marginRight: 8,
@@ -1279,7 +1269,6 @@ const styles = StyleSheet.create({
   },
   hintText: {
     fontSize: 15,
-    color: '#ACACAC',
     fontWeight: '500',
     letterSpacing: 1,
   },
@@ -1287,7 +1276,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingLeft: 10,
     paddingRight: 6,
@@ -1298,7 +1286,6 @@ const styles = StyleSheet.create({
   dictionaryButtonText: {
     fontSize: 11,
     lineHeight: 22,
-    color: '#1A1A1A',
     fontWeight: '400',
     letterSpacing: 1,
     marginRight: -2,
@@ -1323,7 +1310,6 @@ const styles = StyleSheet.create({
   followUpContextLabel: {
     flex: 1,
     fontSize: 14,
-    color: '#FFFFFF', // 文字色を白に
     fontWeight: '500',
   },
   followUpContextCloseButton: {
@@ -1352,7 +1338,6 @@ const styles = StyleSheet.create({
   selectedTextLabelTextMode: {
     flex: 1,
     fontSize: 15,
-    color: '#FFFFFF', // 白文字
     fontWeight: '500',
     letterSpacing: 1,
   },
@@ -1361,7 +1346,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
-    backgroundColor: '#FFFFFF',
     borderRadius: 19,
     paddingLeft: 12,
     paddingRight: 8,
@@ -1370,7 +1354,6 @@ const styles = StyleSheet.create({
   backToCardButtonText: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#1A1A1A',
     lineHeight: 22,
     letterSpacing: 0.5,
   },
