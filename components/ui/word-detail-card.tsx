@@ -204,7 +204,7 @@ export function WordDetailCard({
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <MessageCircleIcon size={24} color={textOnPrimaryColor} />
+              <MessageCircleIcon size={24} color={textOnDarkColor} />
             </TouchableOpacity>
           </View>
         )}
