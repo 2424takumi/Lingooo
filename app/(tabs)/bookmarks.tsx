@@ -1068,7 +1068,6 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
     marginHorizontal: 16,
     marginBottom: 16,
   },
@@ -1141,7 +1140,6 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#ACACAC',
   },
   centerContainer: {
     flex: 1,
@@ -1160,7 +1158,6 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000000',
     marginTop: 20,
     marginBottom: 8,
   },
@@ -1214,7 +1211,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#111111',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -1239,7 +1235,6 @@ const styles = StyleSheet.create({
   createFolderModalContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     gap: 20,
@@ -1255,7 +1250,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#000000',
     textAlign: 'center',
   },
   inputGroup: {
@@ -1264,14 +1258,11 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A4A4A',
   },
   folderNameInput: {
-    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    color: '#000000',
   },
   modalButtonsRow: {
     flexDirection: 'row',
@@ -1282,36 +1273,30 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalCancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#686868',
   },
   modalAddButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#111111',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalAddButtonDisabled: {
-    backgroundColor: '#CCCCCC',
   },
   modalAddButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
   folderSelectModalContainer: {
     width: '100%',
     maxWidth: 400,
     maxHeight: '70%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     gap: 16,
@@ -1334,32 +1319,25 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
     marginBottom: 8,
   },
   folderSelectItemActive: {
-    backgroundColor: '#F1F1F1',
     borderWidth: 1,
-    borderColor: '#111111',
   },
   folderSelectItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
     flex: 1,
   },
   createFolderItem: {
-    backgroundColor: '#F1F1F1',
     marginTop: 8,
   },
   createFolderText: {
-    color: '#111111',
     fontWeight: '600',
   },
   folderMenuContainer: {
     width: '80%',
     maxWidth: 300,
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 8,
     shadowColor: '#000',
@@ -1374,7 +1352,6 @@ const styles = StyleSheet.create({
   folderMenuTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
     padding: 16,
     paddingBottom: 8,
     textAlign: 'center',
@@ -1387,14 +1364,12 @@ const styles = StyleSheet.create({
   folderMenuItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
     textAlign: 'center',
   },
   folderMenuItemDanger: {
     backgroundColor: '#FFEAEA',
   },
   folderMenuItemTextDanger: {
-    color: '#CC0000',
     fontWeight: '600',
   },
   noFoldersMessage: {
@@ -1406,13 +1381,11 @@ const styles = StyleSheet.create({
   noFoldersMessageText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#686868',
     textAlign: 'center',
   },
   noFoldersMessageSubtext: {
     fontSize: 12,
     fontWeight: '400',
-    color: '#ACACAC',
     textAlign: 'center',
   },
   createFolderInline: {

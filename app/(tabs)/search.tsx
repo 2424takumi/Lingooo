@@ -52,6 +52,9 @@ const SuggestionListSchema = z.array(SuggestionItemSchema);
 
 export default function SearchScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const textOnPrimaryColor = useThemeColor({}, 'textOnPrimary');
+  const accentColor = useThemeColor({}, 'accent');
   const router = useRouter();
   const params = useLocalSearchParams();
   const { currentLanguage, nativeLanguage } = useLearningLanguages();
@@ -699,9 +702,9 @@ export default function SearchScreen() {
                 </View>
               ) : searchError ? (
                 <View style={styles.noResultsContainer}>
-                  <Text style={styles.noResultsText}>{searchError}</Text>
+                  <Text style={[styles.noResultsText, { color: textSecondaryColor }]}>{searchError}</Text>
                   <TouchableOpacity
-                    style={styles.retryButton}
+                    style={[styles.retryButton, { backgroundColor: accentColor }]}
                     onPress={() => {
                       setSearchError(null);
                       setIsLoading(true);
@@ -709,12 +712,12 @@ export default function SearchScreen() {
                       setSuggestions([]);
                     }}
                   >
-                    <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+                    <Text style={[styles.retryButtonText, { color: textOnPrimaryColor }]}>{t('common.retry')}</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
                 <View style={styles.noResultsContainer}>
-                  <Text style={styles.noResultsText}>
+                  <Text style={[styles.noResultsText, { color: textSecondaryColor }]}>
                     {t('search.noResults', { query })}
                   </Text>
                 </View>
@@ -848,17 +851,14 @@ const styles = StyleSheet.create({
   },
   noResultsText: {
     fontSize: 16,
-    color: '#686868',
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#00AA69',
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -874,7 +874,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     maxHeight: '70%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     gap: 16,
@@ -890,7 +889,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#000000',
     textAlign: 'center',
   },
   folderSelectList: {
@@ -903,26 +901,22 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
     marginBottom: 8,
   },
   folderSelectItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
     flex: 1,
   },
   modalCancelButton: {
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalCancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#686868',
   },
   createFolderButton: {
     flexDirection: 'row',
@@ -931,22 +925,18 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#111111',
     borderStyle: 'dashed',
   },
   createFolderButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111111',
     flex: 1,
   },
   createFolderModalContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     gap: 20,
@@ -961,13 +951,10 @@ const styles = StyleSheet.create({
   },
   folderNameInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#000000',
-    backgroundColor: '#F5F5F5',
   },
   createFolderButtonContainer: {
     flexDirection: 'row',
@@ -977,26 +964,22 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalSecondaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#686868',
   },
   modalPrimaryButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#111111',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalPrimaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
 });

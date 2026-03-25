@@ -237,7 +237,7 @@ export default function FolderDetailScreen() {
             </View>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>
+              <Text style={[styles.footerText, { color: tabTextColor }]}>
                 全{bookmarks.length}件のブックマーク
               </Text>
             </View>
@@ -245,7 +245,7 @@ export default function FolderDetailScreen() {
         ) : (
           <View style={styles.emptyContainer}>
             <FolderIcon size={64} />
-            <Text style={styles.emptyTitle}>ブックマークがありません</Text>
+            <Text style={[styles.emptyTitle, { color: tabTextColor }]}>ブックマークがありません</Text>
             <Text style={[styles.emptyDescription, { color: tabTextColor }]}>
               このフォルダにブックマークを{'\n'}
               追加しましょう
@@ -313,7 +313,6 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#ACACAC',
   },
   centerContainer: {
     flex: 1,
@@ -332,7 +331,6 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000000',
     marginTop: 20,
     marginBottom: 8,
   },

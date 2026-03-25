@@ -69,6 +69,17 @@ function StarIcon({ size = 16 }: { size?: number }) {
 
 export default function CustomQuestionsScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const textTertiaryColor = useThemeColor({}, 'textTertiary');
+  const textPlaceholderColor = useThemeColor({}, 'textPlaceholder');
+  const primaryColor = useThemeColor({}, 'primary');
+  const textOnPrimaryColor = useThemeColor({}, 'textOnPrimary');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const surfaceBgColor = useThemeColor({}, 'surfaceBackground');
+  const separatorColor = useThemeColor({}, 'separator');
+  const modalBgColor = useThemeColor({}, 'modalBackground');
+  const buttonDisabledColor = useThemeColor({}, 'buttonDisabled');
   const { customQuestions, addCustomQuestion, removeCustomQuestion } = useAISettings();
   const { isPremium } = useSubscription();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -159,8 +170,8 @@ export default function CustomQuestionsScreen() {
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* Description */}
-          <View style={styles.descriptionContainer}>
-            <Text style={styles.descriptionText}>
+          <View style={[styles.descriptionContainer, { backgroundColor: surfaceBgColor }]}>
+            <Text style={[styles.descriptionText, { color: textSecondaryColor }]}>
               よく使う質問を登録しておくと、質問タグに表示されワンタップで質問できます。
             </Text>
           </View>
@@ -168,9 +179,9 @@ export default function CustomQuestionsScreen() {
           {/* Custom Questions List */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>登録済みの質問</Text>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>登録済みの質問</Text>
               <View style={styles.countContainer}>
-                <Text style={styles.questionCount}>
+                <Text style={[styles.questionCount, { color: textSecondaryColor }]}>
                   {isPremium
                     ? `${customQuestions.length}個使用中`
                     : `${customQuestions.length}/${FREE_LIMIT}個使用中`}
@@ -180,17 +191,17 @@ export default function CustomQuestionsScreen() {
             </View>
 
             {customQuestions.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>まだカスタム質問が登録されていません</Text>
-                <Text style={styles.emptySubText}>下の「新しい質問を追加」ボタンから追加できます</Text>
+              <View style={[styles.emptyContainer, { backgroundColor: surfaceBgColor }]}>
+                <Text style={[styles.emptyText, { color: textSecondaryColor }]}>まだカスタム質問が登録されていません</Text>
+                <Text style={[styles.emptySubText, { color: textTertiaryColor }]}>下の「新しい質問を追加」ボタンから追加できます</Text>
               </View>
             ) : (
               <View style={styles.questionsList}>
                 {customQuestions.map((question, index) => (
-                  <View key={`${question.title}-${index}`} style={styles.questionItem}>
+                  <View key={`${question.title}-${index}`} style={[styles.questionItem, { backgroundColor: cardBgColor }]}>
                     <View style={styles.questionInfo}>
-                      <Text style={styles.questionTitle}>{question.title}</Text>
-                      <Text style={styles.questionText} numberOfLines={2}>
+                      <Text style={[styles.questionTitle, { color: textColor }]}>{question.title}</Text>
+                      <Text style={[styles.questionText, { color: textSecondaryColor }]} numberOfLines={2}>
                         {question.question}
                       </Text>
                     </View>
@@ -215,9 +226,9 @@ export default function CustomQuestionsScreen() {
           </View>
 
           {/* Add Button */}
-          <TouchableOpacity style={styles.addButton} onPress={handleAddNew}>
-            <PlusIcon size={24} color="#FFFFFF" />
-            <Text style={styles.addButtonText}>新しい質問を追加</Text>
+          <TouchableOpacity style={[styles.addButton, { backgroundColor: primaryColor }]} onPress={handleAddNew}>
+            <PlusIcon size={24} color={textOnPrimaryColor} />
+            <Text style={[styles.addButtonText, { color: textOnPrimaryColor }]}>新しい質問を追加</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -248,17 +259,17 @@ export default function CustomQuestionsScreen() {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.modalContainer} onStartShouldSetResponder={() => true}>
-                <Text style={styles.modalTitle}>
+              <View style={[styles.modalContainer, { backgroundColor: modalBgColor }]} onStartShouldSetResponder={() => true}>
+                <Text style={[styles.modalTitle, { color: textColor }]}>
                   {editingQuestion ? 'カスタム質問を編集' : 'カスタム質問を追加'}
                 </Text>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>タイトル（タグに表示）</Text>
+                  <Text style={[styles.inputLabel, { color: textSecondaryColor }]}>タイトル（タグに表示）</Text>
                   <TextInput
-                    style={styles.titleInput}
+                    style={[styles.titleInput, { backgroundColor: surfaceBgColor, color: textColor }]}
                     placeholder="例: 例文"
-                    placeholderTextColor="#ACACAC"
+                    placeholderTextColor={textPlaceholderColor}
                     value={titleInput}
                     onChangeText={setTitleInput}
                     autoFocus
@@ -266,11 +277,11 @@ export default function CustomQuestionsScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>質問文</Text>
+                  <Text style={[styles.inputLabel, { color: textSecondaryColor }]}>質問文</Text>
                   <TextInput
-                    style={styles.questionTextInput}
+                    style={[styles.questionTextInput, { backgroundColor: surfaceBgColor, color: textColor }]}
                     placeholder="例: この単語の例文を3つ教えて"
-                    placeholderTextColor="#ACACAC"
+                    placeholderTextColor={textPlaceholderColor}
                     value={questionInput}
                     onChangeText={setQuestionInput}
                     multiline
@@ -279,7 +290,7 @@ export default function CustomQuestionsScreen() {
 
                 <View style={styles.modalButtonsRow}>
                   <TouchableOpacity
-                    style={styles.modalCancelButton}
+                    style={[styles.modalCancelButton, { backgroundColor: separatorColor }]}
                     onPress={() => {
                       setIsModalOpen(false);
                       setTitleInput('');
@@ -287,17 +298,18 @@ export default function CustomQuestionsScreen() {
                       setEditingQuestion(null);
                     }}
                   >
-                    <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+                    <Text style={[styles.modalCancelButtonText, { color: textSecondaryColor }]}>キャンセル</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.modalSaveButton,
-                      (!titleInput.trim() || !questionInput.trim()) && styles.modalSaveButtonDisabled,
+                      { backgroundColor: primaryColor },
+                      (!titleInput.trim() || !questionInput.trim()) && [styles.modalSaveButtonDisabled, { backgroundColor: buttonDisabledColor }],
                     ]}
                     onPress={handleSave}
                     disabled={!titleInput.trim() || !questionInput.trim()}
                   >
-                    <Text style={styles.modalSaveButtonText}>
+                    <Text style={[styles.modalSaveButtonText, { color: textOnPrimaryColor }]}>
                       {editingQuestion ? '保存' : '追加'}
                     </Text>
                   </TouchableOpacity>
@@ -334,14 +346,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   descriptionContainer: {
-    backgroundColor: '#F5F5F5',
     padding: 16,
     borderRadius: 12,
     marginBottom: 24,
   },
   descriptionText: {
     fontSize: 14,
-    color: '#2C2C2C',
     lineHeight: 20,
   },
   section: {
@@ -357,7 +367,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
   },
   countContainer: {
     flexDirection: 'row',
@@ -367,7 +376,6 @@ const styles = StyleSheet.create({
   questionCount: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#686868',
   },
   questionsList: {
     gap: 12,
@@ -376,7 +384,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 12,
     shadowColor: '#000',
@@ -392,12 +399,10 @@ const styles = StyleSheet.create({
   questionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 6,
   },
   questionText: {
     fontSize: 14,
-    color: '#686868',
     lineHeight: 20,
   },
   questionActions: {
@@ -411,25 +416,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
-    backgroundColor: '#F5F5F5',
     borderRadius: 12,
   },
   emptyText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#686868',
     marginBottom: 8,
   },
   emptySubText: {
     fontSize: 14,
-    color: '#999999',
     textAlign: 'center',
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#111111',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -444,7 +445,6 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -461,7 +461,6 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: '85%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 20,
     gap: 16,
@@ -474,7 +473,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#000000',
     textAlign: 'center',
   },
   inputGroup: {
@@ -483,21 +481,16 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A4A4A',
   },
   titleInput: {
-    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 12,
     fontSize: 16,
-    color: '#000000',
   },
   questionTextInput: {
-    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 12,
     fontSize: 16,
-    color: '#000000',
     minHeight: 100,
     textAlignVertical: 'top',
   },
@@ -510,29 +503,24 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalCancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#686868',
   },
   modalSaveButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#111111',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalSaveButtonDisabled: {
-    backgroundColor: '#CCCCCC',
   },
   modalSaveButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
 });

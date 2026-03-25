@@ -140,14 +140,14 @@ export default function LearningLanguagesScreen() {
               {AVAILABLE_LANGUAGES.filter((lang) => !isLearning(lang.id)).map((language) => (
                 <TouchableOpacity
                   key={language.id}
-                  style={styles.languageItem}
+                  style={[styles.languageItem, { backgroundColor: cardBgColor, borderColor: inputBorderColor }]}
                   onPress={() => handleAddLanguage(language.id)}
                 >
                   <View style={styles.languageInfo}>
                     <Text style={styles.flag}>{language.flag}</Text>
-                    <Text style={styles.languageName}>{language.name}</Text>
+                    <Text style={[styles.languageName, { color: textColor }]}>{language.name}</Text>
                   </View>
-                  <PlusIcon size={24} color="#111111" />
+                  <PlusIcon size={24} color={primaryColor} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -176,7 +176,6 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: '#686868',
     marginBottom: 24,
     lineHeight: 24,
   },
@@ -186,7 +185,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 12,
   },
   languageList: {
@@ -196,23 +194,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
   learningLanguageItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F8F8F8',
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#111111',
   },
   languageInfo: {
     flexDirection: 'row',
@@ -225,7 +219,6 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
   },
   removeButton: {
     padding: 8,

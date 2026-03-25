@@ -43,6 +43,18 @@ import { getCachedLanguage } from '@/services/cache/language-detection-cache';
 export default function WordDetailScreen() {
   const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const textColor = useThemeColor({}, 'text');
+  const primaryColor = useThemeColor({}, 'primary');
+  const textOnPrimaryColor = useThemeColor({}, 'textOnPrimary');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const surfaceBgColor = useThemeColor({}, 'surfaceBackground');
+  const separatorColor = useThemeColor({}, 'separator');
+  const modalBgColor = useThemeColor({}, 'modalBackground');
+  const errorTextColor = useThemeColor({}, 'errorText');
+  const accentColor = useThemeColor({}, 'accent');
+  const inputBorderColor = useThemeColor({}, 'inputBorder');
+  const textPlaceholderColor = useThemeColor({}, 'textPlaceholder');
   const router = useRouter();
   const params = useLocalSearchParams();
   const { currentLanguage, nativeLanguage, learningLanguages } = useLearningLanguages();
@@ -1110,23 +1122,23 @@ export default function WordDetailScreen() {
       <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
         <StatusBar style="auto" />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error || t('wordDetail.notFound')}</Text>
+          <Text style={[styles.errorText, { color: errorTextColor }]}>{error || t('wordDetail.notFound')}</Text>
           <View style={styles.errorButtonRow}>
             <TouchableOpacity
-              style={styles.retryButton}
+              style={[styles.retryButton, { backgroundColor: accentColor }]}
               onPress={() => {
                 setError(null);
                 setIsLoading(true);
                 setRetryKey(prev => prev + 1);
               }}
             >
-              <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+              <Text style={[styles.retryButtonText, { color: textOnPrimaryColor }]}>{t('common.retry')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.backButton}
+              style={[styles.backButton, { backgroundColor: primaryColor }]}
               onPress={handleBackPress}
             >
-              <Text style={styles.backButtonText}>{t('wordDetail.backButton')}</Text>
+              <Text style={[styles.backButtonText, { color: textOnPrimaryColor }]}>{t('wordDetail.backButton')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1172,8 +1184,8 @@ export default function WordDetailScreen() {
         {/* 言語検出通知 - Fixed */}
         {detectedLanguageInfo && showLanguageNotification && (
           <View style={styles.languageNotificationContainer}>
-            <View style={styles.languageNotificationContent}>
-              <Text style={styles.languageNotificationText}>
+            <View style={[styles.languageNotificationContent, { backgroundColor: surfaceBgColor }]}>
+              <Text style={[styles.languageNotificationText, { color: textSecondaryColor }]}>
                 {t('wordDetail.foundInLanguage', { language: detectedLanguageInfo.name })}
               </Text>
             </View>
@@ -1217,7 +1229,7 @@ export default function WordDetailScreen() {
           {/* Examples Section - 最後に表示 */}
           {wordData?.examples && wordData.examples.length > 0 ? (
             <View style={styles.examplesSection}>
-              <Text style={styles.sectionTitle}>{t('wordDetail.examples')}</Text>
+              <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>{t('wordDetail.examples')}</Text>
               <View style={styles.examplesList}>
                 {wordData.examples.map((example, index) => (
                   <ExampleCard
@@ -1232,7 +1244,7 @@ export default function WordDetailScreen() {
             </View>
           ) : (isLoading || isLoadingAdditional) ? (
             <View style={styles.examplesSection}>
-              <Text style={styles.sectionTitle}>{t('wordDetail.examples')}</Text>
+              <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>{t('wordDetail.examples')}</Text>
               <ShimmerExamples />
             </View>
           ) : null}
@@ -1353,14 +1365,12 @@ const styles = StyleSheet.create({
   languageNotificationContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FFF4',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
   languageNotificationText: {
     fontSize: 14,
-    color: '#686868',
     fontWeight: '500',
   },
   definitionsContainer: {
@@ -1375,7 +1385,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#686868',
     letterSpacing: 4,
     marginBottom: 12,
     marginLeft: 2,
@@ -1388,7 +1397,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#686868',
     textAlign: 'center',
     paddingVertical: 40,
   },
@@ -1419,7 +1427,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#CC0000',
     textAlign: 'center',
   },
   errorButtonRow: {
@@ -1427,24 +1434,20 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   retryButton: {
-    backgroundColor: '#00AA69',
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 11,
   },
   retryButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
   backButton: {
-    backgroundColor: '#111111',
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 11,
   },
   backButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -1460,7 +1463,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     maxHeight: '70%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     gap: 16,
@@ -1476,7 +1478,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#000000',
     textAlign: 'center',
   },
   folderSelectList: {
@@ -1489,26 +1490,22 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
     marginBottom: 8,
   },
   folderSelectItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
     flex: 1,
   },
   modalCancelButton: {
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalCancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#686868',
   },
   createFolderButton: {
     flexDirection: 'row',
@@ -1517,22 +1514,18 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#111111',
     borderStyle: 'dashed',
   },
   createFolderButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111111',
     flex: 1,
   },
   createFolderModalContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     gap: 20,
@@ -1547,13 +1540,10 @@ const styles = StyleSheet.create({
   },
   folderNameInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#000000',
-    backgroundColor: '#F5F5F5',
   },
   createFolderButtonContainer: {
     flexDirection: 'row',
@@ -1563,26 +1553,22 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalSecondaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#686868',
   },
   modalPrimaryButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#111111',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalPrimaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
 });

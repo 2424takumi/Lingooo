@@ -85,6 +85,12 @@ function DatabaseIcon({ size = 24, color = '#686868' }: { size?: number; color?:
 
 export default function DataManagementScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const primaryColor = useThemeColor({}, 'primary');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const inputBorderColor = useThemeColor({}, 'inputBorder');
+  const errorTextColor = useThemeColor({}, 'errorText');
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
 
@@ -195,31 +201,31 @@ export default function DataManagementScreen() {
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* Storage Info */}
-          <View style={styles.storageCard}>
-            <DatabaseIcon size={32} color="#111111" />
-            <Text style={styles.storageTitle}>データ使用量</Text>
-            <Text style={styles.storageSize}>42.5 MB</Text>
-            <Text style={styles.storageDetails}>
+          <View style={[styles.storageCard, { backgroundColor: cardBgColor, borderColor: inputBorderColor }]}>
+            <DatabaseIcon size={32} color={primaryColor} />
+            <Text style={[styles.storageTitle, { color: textColor }]}>データ使用量</Text>
+            <Text style={[styles.storageSize, { color: primaryColor }]}>42.5 MB</Text>
+            <Text style={[styles.storageDetails, { color: textSecondaryColor }]}>
               単語: 234個 | ブックマーク: 45個 | 履歴: 189個
             </Text>
           </View>
 
           {/* Backup & Restore */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>バックアップと復元</Text>
+            <Text style={[styles.sectionTitle, { color: textSecondaryColor }]}>バックアップと復元</Text>
 
             <TouchableOpacity
-              style={styles.actionItem}
+              style={[styles.actionItem, { backgroundColor: cardBgColor, borderColor: inputBorderColor }]}
               onPress={handleBackup}
               disabled={isBackingUp}
             >
               <View style={styles.actionInfo}>
-                <UploadCloudIcon size={24} color="#111111" />
+                <UploadCloudIcon size={24} color={primaryColor} />
                 <View style={styles.actionText}>
-                  <Text style={styles.actionLabel}>
+                  <Text style={[styles.actionLabel, { color: textColor }]}>
                     {isBackingUp ? 'バックアップ中...' : 'バックアップ'}
                   </Text>
-                  <Text style={styles.actionDescription}>
+                  <Text style={[styles.actionDescription, { color: textSecondaryColor }]}>
                     学習データをクラウドに保存
                   </Text>
                 </View>
@@ -227,17 +233,17 @@ export default function DataManagementScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.actionItem}
+              style={[styles.actionItem, { backgroundColor: cardBgColor, borderColor: inputBorderColor }]}
               onPress={handleRestore}
               disabled={isRestoring}
             >
               <View style={styles.actionInfo}>
-                <DownloadCloudIcon size={24} color="#111111" />
+                <DownloadCloudIcon size={24} color={primaryColor} />
                 <View style={styles.actionText}>
-                  <Text style={styles.actionLabel}>
+                  <Text style={[styles.actionLabel, { color: textColor }]}>
                     {isRestoring ? '復元中...' : 'データの復元'}
                   </Text>
-                  <Text style={styles.actionDescription}>
+                  <Text style={[styles.actionDescription, { color: textSecondaryColor }]}>
                     バックアップからデータを復元
                   </Text>
                 </View>
@@ -247,14 +253,14 @@ export default function DataManagementScreen() {
 
           {/* Danger Zone */}
           <View style={[styles.section, styles.dangerSection]}>
-            <Text style={[styles.sectionTitle, styles.dangerTitle]}>危険な操作</Text>
+            <Text style={[styles.sectionTitle, styles.dangerTitle, { color: errorTextColor }]}>危険な操作</Text>
 
-            <TouchableOpacity style={styles.actionItem} onPress={handleClearCache}>
+            <TouchableOpacity style={[styles.actionItem, { backgroundColor: cardBgColor, borderColor: inputBorderColor }]} onPress={handleClearCache}>
               <View style={styles.actionInfo}>
                 <TrashIcon size={24} color="#FF4444" />
                 <View style={styles.actionText}>
-                  <Text style={styles.actionLabel}>キャッシュを削除</Text>
-                  <Text style={styles.actionDescription}>
+                  <Text style={[styles.actionLabel, { color: textColor }]}>キャッシュを削除</Text>
+                  <Text style={[styles.actionDescription, { color: textSecondaryColor }]}>
                     一時ファイルとキャッシュを削除
                   </Text>
                 </View>
@@ -268,10 +274,10 @@ export default function DataManagementScreen() {
               <View style={styles.actionInfo}>
                 <TrashIcon size={24} color="#FF4444" />
                 <View style={styles.actionText}>
-                  <Text style={[styles.actionLabel, styles.dangerText]}>
+                  <Text style={[styles.actionLabel, { color: errorTextColor }]}>
                     全データを削除
                   </Text>
-                  <Text style={styles.actionDescription}>
+                  <Text style={[styles.actionDescription, { color: textSecondaryColor }]}>
                     すべての学習データを削除（復元不可）
                   </Text>
                 </View>
@@ -301,30 +307,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   storageCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 24,
     alignItems: 'center',
     marginBottom: 32,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
   storageTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
     marginTop: 12,
     marginBottom: 8,
   },
   storageSize: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#111111',
     marginBottom: 8,
   },
   storageDetails: {
     fontSize: 14,
-    color: '#686868',
     textAlign: 'center',
   },
   section: {
@@ -333,19 +334,16 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#686868',
     marginBottom: 12,
     paddingHorizontal: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   actionItem: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
   actionInfo: {
     flexDirection: 'row',
@@ -358,24 +356,20 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
     marginBottom: 4,
   },
   actionDescription: {
     fontSize: 14,
-    color: '#686868',
   },
   dangerSection: {
     marginBottom: 40,
   },
   dangerTitle: {
-    color: '#FF4444',
   },
   dangerItem: {
     borderColor: '#FFE5E5',
     backgroundColor: '#FFF8F8',
   },
   dangerText: {
-    color: '#FF4444',
   },
 });

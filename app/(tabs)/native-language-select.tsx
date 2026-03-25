@@ -27,6 +27,11 @@ function CheckIcon({ size = 24, color = '#111111' }: { size?: number; color?: st
 export default function NativeLanguageSelectScreen() {
   const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const primaryColor = useThemeColor({}, 'primary');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const cardBgSelectedColor = useThemeColor({}, 'cardBackground');
   const { nativeLanguage, setNativeLanguage } = useLearningLanguages();
 
   // 母国語として選択可能な言語（日本語、英語、ポルトガル語のみ）
@@ -58,7 +63,7 @@ export default function NativeLanguageSelectScreen() {
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <Text style={styles.description}>
+          <Text style={[styles.description, { color: textSecondaryColor }]}>
             {t('settings.nativeLanguage.description')}
           </Text>
 
@@ -68,16 +73,17 @@ export default function NativeLanguageSelectScreen() {
                 key={language.id}
                 style={[
                   styles.languageItem,
-                  nativeLanguage.id === language.id && styles.selectedLanguageItem,
+                  { backgroundColor: cardBgColor },
+                  nativeLanguage.id === language.id && [styles.selectedLanguageItem, { borderColor: primaryColor, backgroundColor: cardBgSelectedColor }],
                 ]}
                 onPress={() => handleLanguageSelect(language.id)}
               >
                 <View style={styles.languageInfo}>
                   <Text style={styles.flag}>{language.flag}</Text>
-                  <Text style={styles.languageName}>{language.name}</Text>
+                  <Text style={[styles.languageName, { color: textColor }]}>{language.name}</Text>
                 </View>
                 {nativeLanguage.id === language.id && (
-                  <CheckIcon size={24} color="#111111" />
+                  <CheckIcon size={24} color={primaryColor} />
                 )}
               </TouchableOpacity>
             ))}
@@ -106,7 +112,6 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: '#686868',
     marginBottom: 20,
     textAlign: 'center',
     lineHeight: 24,
@@ -119,7 +124,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -127,8 +131,6 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   selectedLanguageItem: {
-    borderColor: '#111111',
-    backgroundColor: '#F8F8F8',
   },
   languageInfo: {
     flexDirection: 'row',
@@ -141,6 +143,5 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
   },
 });

@@ -77,6 +77,8 @@ interface TranslatedParagraph {
 export default function TranslateScreen() {
   const { t } = useTranslation();
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const accentColor = useThemeColor({}, 'accent');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
   const router = useRouter();
   const params = useLocalSearchParams();
   const safeAreaInsets = useSafeAreaInsets();
@@ -2039,8 +2041,8 @@ export default function TranslateScreen() {
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
           {isLoadingUrlData ? (
             <View style={styles.urlLoadingContainer}>
-              <ActivityIndicator size="small" color="#00AA69" />
-              <Text style={styles.urlLoadingText}>{t('translate.urlTranslation.extracting')}</Text>
+              <ActivityIndicator size="small" color={accentColor} />
+              <Text style={[styles.urlLoadingText, { color: textSecondaryColor }]}>{t('translate.urlTranslation.extracting')}</Text>
             </View>
           ) : null}
           <View style={styles.translateCardContainer}>
@@ -2248,7 +2250,6 @@ const styles = StyleSheet.create({
   },
   urlLoadingText: {
     fontSize: 15,
-    color: '#686868',
   },
   scrollViewContent: {
     paddingHorizontal: 16,
