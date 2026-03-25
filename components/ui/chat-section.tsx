@@ -279,6 +279,7 @@ export function ChatSection({
   const textMutedColor = useThemeColor({}, 'textMuted');
   const iconMutedColor = useThemeColor({}, 'iconMuted');
   const textOnDarkColor = useThemeColor({}, 'textOnDark');
+  const textOnPrimaryColor = useThemeColor({}, 'textOnPrimary');
   const primaryColor = useThemeColor({}, 'primary');
   const errorBgColor = useThemeColor({}, 'errorBackground');
   const errorTextColor = useThemeColor({}, 'errorText');
@@ -863,11 +864,11 @@ export function ChatSection({
               disabled={isStreaming || isSubmitting}
             >
               {isInputFocused && inputText.trim().length > 0 ? (
-                <SendIcon size={20} color={textOnDarkColor} />
+                <SendIcon size={20} color={textOnPrimaryColor} />
               ) : isOpen ? (
-                <ChevronDownIcon size={22} color={textOnDarkColor} />
+                <ChevronDownIcon size={22} color={textOnPrimaryColor} />
               ) : (
-                <ChevronUpIcon size={18} color={textOnDarkColor} />
+                <ChevronUpIcon size={18} color={textOnPrimaryColor} />
               )}
             </TouchableOpacity>
           </View>

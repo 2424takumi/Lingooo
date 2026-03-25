@@ -170,8 +170,8 @@ export const Colors = {
     chatSectionBackground: '#1C1C1E',
     chatInputBackground: '#000000',
     chatInputTextBackground: '#2C2C2E',
-    questionTagBackground: '#F0F0F0',
-    questionTagText: '#000000',
+    questionTagBackground: '#48484A',
+    questionTagText: '#F0F0F0',
 
     // QA
     qaCardBackground: '#1C1C1E',
