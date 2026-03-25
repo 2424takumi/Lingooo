@@ -166,6 +166,7 @@ export function UnifiedHeaderBar({
   const iconColor = useThemeColor({}, 'text');
   const primaryColor = useThemeColor({}, 'primary');
   const textOnDarkColor = useThemeColor({}, 'textOnDark');
+  const textOnPrimaryColor = useThemeColor({}, 'textOnPrimary');
   const secondaryColor = useThemeColor({}, 'textSecondary');
 
   // titleのデフォルト値を翻訳から取得
@@ -232,7 +233,7 @@ export function UnifiedHeaderBar({
           </Text>
 
           <TouchableOpacity onPress={onPronouncePress} style={[styles.pronounceButton, { backgroundColor: primaryColor }]}>
-            <VolumeIcon size={18} color={textOnDarkColor} />
+            <VolumeIcon size={18} color={textOnPrimaryColor} />
           </TouchableOpacity>
         </View>
 
