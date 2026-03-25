@@ -211,14 +211,14 @@ export function WordDetailCard({
 
         {onViewDetails && (
           <TouchableOpacity
-            style={[styles.detailsButton, { backgroundColor: cardInnerColor }]}
+            style={[styles.detailsButton, { backgroundColor: primaryColor }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onViewDetails();
             }}
           >
-            <Text style={[styles.detailsButtonText, { color: primaryColor }]}>もっと詳しく</Text>
-            <ArrowRightIcon size={20} color={primaryColor} />
+            <Text style={[styles.detailsButtonText, { color: textOnPrimaryColor }]}>もっと詳しく</Text>
+            <ArrowRightIcon size={20} color={textOnPrimaryColor} />
           </TouchableOpacity>
         )}
       </View>
