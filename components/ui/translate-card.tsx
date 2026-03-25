@@ -175,8 +175,10 @@ export function TranslateCard({
   const textSecondaryColor = useThemeColor({}, 'textSecondary');
   const textTertiaryColor = useThemeColor({}, 'textTertiary');
   const textOnDarkColor = useThemeColor({}, 'textOnDark');
-  const cardBackgroundElevatedColor = useThemeColor({}, 'cardBackgroundElevated');
-  const separatorColor = useThemeColor({}, 'separator');
+  const originalTextColor = useThemeColor({}, 'translateOriginalText');
+  const translatedTextColor = useThemeColor({}, 'translateTranslatedText');
+  const cardOuterColor = useThemeColor({}, 'translateCardOuter');
+  const cardInnerColor = useThemeColor({}, 'translateCardInner');
   const primaryColor = useThemeColor({}, 'primary');
   const accentColor = useThemeColor({}, 'accent');
   const shimmerBgColor = useThemeColor({}, 'shimmerBackground');
@@ -432,14 +434,14 @@ export function TranslateCard({
         {hasMultipleParagraphs && onToggleFullText && (
           <View style={styles.fullTextToggleRow}>
             <Text style={[styles.fullTextToggleLabel as any, { color: textSecondaryColor }]}>全文</Text>
-            <MiniToggle active={showFullText} onPress={onToggleFullText} trackColor={segmentedBgColor} activeTrackColor={accentColor} thumbColor={cardBackgroundElevatedColor} />
+            <MiniToggle active={showFullText} onPress={onToggleFullText} trackColor={segmentedBgColor} activeTrackColor={accentColor} thumbColor={cardInnerColor} />
           </View>
         )}
       </View>
 
       {/* Card Container */}
       <TouchableWithoutFeedback onPress={handleCardPress}>
-        <View style={[styles.container as any, { backgroundColor: separatorColor }]} {...panResponder.panHandlers}>
+        <View style={[styles.container as any, { backgroundColor: cardOuterColor }]} {...panResponder.panHandlers}>
         {/* Section Navigation - 段落が複数あり全文表示でない場合のみ表示 */}
         {hasMultipleParagraphs && !showFullText && (
           <View style={styles.sectionNav}>
@@ -466,7 +468,7 @@ export function TranslateCard({
         {/* Content Container */}
         <Animated.View style={[styles.contentContainer as any, { opacity: fadeAnim }]}>
           {/* Original Text Section (White Background) */}
-          <View style={[styles.originalTextCard as any, { backgroundColor: cardBackgroundElevatedColor }]}>
+          <View style={[styles.originalTextCard as any, { backgroundColor: cardInnerColor }]}>
             {paragraphs.length === 0 || !originalText ? (
               // ローディング状態: 段落読み込み中
               <View style={styles.loadingContainer}>
@@ -487,7 +489,7 @@ export function TranslateCard({
                   <View style={styles.fullTextOriginalPreview}>
                     <SelectableText
                       text={originalText}
-                      style={{ ...(styles.originalText as any), color: textColor }}
+                      style={{ ...(styles.originalText as any), color: originalTextColor }}
                       onSelectionChange={handleOriginalSelection}
                       onSelectionChangeWithInfo={handleOriginalSelectionWithInfo}
                       onSelectionCleared={onSelectionCleared}
@@ -498,7 +500,7 @@ export function TranslateCard({
                   <View style={styles.sourcePreviewContainer}>
                     <SelectableText
                       text={originalText}
-                      style={{ ...(styles.originalText as any), color: textColor }}
+                      style={{ ...(styles.originalText as any), color: originalTextColor }}
                       onSelectionChange={handleOriginalSelection}
                       onSelectionChangeWithInfo={handleOriginalSelectionWithInfo}
                       onSelectionCleared={onSelectionCleared}
@@ -508,7 +510,7 @@ export function TranslateCard({
                 ) : (
                   <SelectableText
                     text={originalText}
-                    style={{ ...(styles.originalText as any), color: textColor }}
+                    style={{ ...(styles.originalText as any), color: originalTextColor }}
                     onSelectionChange={handleOriginalSelection}
                     onSelectionChangeWithInfo={handleOriginalSelectionWithInfo}
                     onSelectionCleared={onSelectionCleared}
@@ -571,7 +573,7 @@ export function TranslateCard({
                 <Reanimated.View style={[{ gap: 8 }, translatedTextAnimatedStyle]}>
                   <SelectableText
                     text={formatMarkdownText(translatedText)}
-                    style={{ ...(styles.translatedText as any), color: textColor }}
+                    style={{ ...(styles.translatedText as any), color: translatedTextColor }}
                     onSelectionChange={handleTranslatedSelection}
                     onSelectionChangeWithInfo={handleTranslatedSelectionWithInfo}
                     onSelectionCleared={onSelectionCleared}
@@ -615,7 +617,7 @@ export function TranslateCard({
                 <Reanimated.View style={[{ gap: 8 }, translatedTextAnimatedStyle]}>
                   <SelectableText
                     text={formatMarkdownText(translatedText)}
-                    style={{ ...(styles.translatedText as any), color: textColor }}
+                    style={{ ...(styles.translatedText as any), color: translatedTextColor }}
                     onSelectionChange={handleTranslatedSelection}
                     onSelectionChangeWithInfo={handleTranslatedSelectionWithInfo}
                     onSelectionCleared={onSelectionCleared}

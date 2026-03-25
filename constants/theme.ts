@@ -112,56 +112,66 @@ export const Colors = {
     segmentedBackground: '#D1D1D6',
     segmentedActiveBackground: '#FFFFFF',
 
+    // Translate card
+    translateOriginalText: '#111111',
+    translateTranslatedText: '#111111',
+    translateCardOuter: '#F5F5F5',
+    translateCardInner: '#FFFFFF',
+
     // Subscription
     successBackground: '#E8F5E9',
   },
   dark: {
-    // Base
-    text: '#F5F5F5',
-    textSecondary: '#A0A0A0',
-    textTertiary: '#777777',
-    textMuted: '#555555',
+    // Base - テキスト階層をはっきりと
+    text: '#F0F0F0',
+    textSecondary: '#9E9E9E',
+    textTertiary: '#6E6E6E',
+    textMuted: '#505050',
     textOnDark: '#FFFFFF',
-    textOnPrimary: '#050505',
-    background: '#050505',
+    textOnPrimary: '#000000',
+    background: '#000000',
     tint: tintColorDark,
-    icon: '#C8C8C8',
-    iconMuted: '#555555',
-    tabIconDefault: '#666666',
+    icon: '#B0B0B0',
+    iconMuted: '#505050',
+    tabIconDefault: '#606060',
     tabIconSelected: tintColorDark,
 
-    // Lingooo app colors
-    primary: '#F5F5F5',
-    accent: '#00CC7A',
-    pageBackground: '#0B0B0B',
-    searchBackground: '#1A1A1A',
-    headerBackground: '#0F0F0F',
-    inputBackground: '#1A1A1A',
-    inputBorder: '#333333',
-    textPlaceholder: '#7E7E7E',
-    buttonGray: '#F5F5F5',
-    buttonDisabled: '#444444',
-    cardBackground: '#1A1A1A',
-    cardBackgroundElevated: '#222222',
-    surfaceBackground: '#1C1C1C',
-    border: '#2A2A2A',
-    borderLight: '#333333',
-    separator: '#222222',
-    divider: '#333333',
-    buttonText: '#050505',
+    // Lingooo app colors - レイヤーごとに明確な差をつける
+    // Layer 0: pageBackground #000000 (最も暗い)
+    // Layer 1: cardBackground #1C1C1E (カード・セクション)
+    // Layer 2: cardBackgroundElevated #2C2C2E (カード内カード、入力欄)
+    // Layer 3: searchBackground #3A3A3C (選択状態、ハイライト)
+    primary: '#F0F0F0',
+    accent: '#00DD88',
+    pageBackground: '#000000',
+    searchBackground: '#2C2C2E',
+    headerBackground: '#0A0A0A',
+    inputBackground: '#2C2C2E',
+    inputBorder: '#48484A',
+    textPlaceholder: '#6E6E6E',
+    buttonGray: '#F0F0F0',
+    buttonDisabled: '#48484A',
+    cardBackground: '#1C1C1E',
+    cardBackgroundElevated: '#2C2C2E',
+    surfaceBackground: '#1C1C1E',
+    border: '#38383A',
+    borderLight: '#48484A',
+    separator: '#1C1C1E',
+    divider: '#38383A',
+    buttonText: '#000000',
 
-    // Tags
-    tagSelectedBackground: '#F5F5F5',
-    tagSelectedText: '#050505',
-    tagUnselectedBackground: '#3A3A3A',
-    tagUnselectedText: '#9A9A9A',
+    // Tags - 選択状態と非選択状態の差を明確に
+    tagSelectedBackground: '#F0F0F0',
+    tagSelectedText: '#000000',
+    tagUnselectedBackground: '#2C2C2E',
+    tagUnselectedText: '#9E9E9E',
 
-    // Chat
-    chatSectionBackground: '#1C1C1C',
-    chatInputBackground: '#0E0E0E',
-    chatInputTextBackground: '#2A2A2A',
-    questionTagBackground: '#3A3A3A',
-    questionTagText: '#F5F5F5',
+    // Chat - ボタンと背景のコントラストを確保
+    chatSectionBackground: '#1C1C1E',
+    chatInputBackground: '#000000',
+    chatInputTextBackground: '#2C2C2E',
+    questionTagBackground: '#48484A',
+    questionTagText: '#F0F0F0',
 
     // QA
     qaCardBackground: '#1C1C1E',
@@ -176,19 +186,19 @@ export const Colors = {
     systemBlue: '#0A84FF',
 
     // Shimmer
-    shimmerBackground: '#2A2A2A',
-    shimmerHighlight: '#3A3A3A',
+    shimmerBackground: '#2C2C2E',
+    shimmerHighlight: '#3A3A3C',
 
     // Overlay
     overlay: 'rgba(0, 0, 0, 0.7)',
-    overlayLight: 'rgba(255, 255, 255, 0.05)',
+    overlayLight: 'rgba(255, 255, 255, 0.08)',
 
     // Semantic - POS / Gender tags
-    posTagBackground: '#2A2A2A',
-    posTagText: '#E0E0E0',
-    genderMasculine: '#2A2A2A',
+    posTagBackground: '#2C2C2E',
+    posTagText: '#D0D0D0',
+    genderMasculine: '#2C2C2E',
     genderFeminine: '#3D2030',
-    genderNeuter: '#2A2A2A',
+    genderNeuter: '#2C2C2E',
 
     // Semantic - Nuance tags
     nuanceCasual: '#1A2E14',
@@ -196,27 +206,33 @@ export const Colors = {
     nuanceNeutral: '#142A2E',
     nuanceAcademic: '#141E2E',
     nuanceSlang: '#2E1424',
-    nuanceText: '#E0E0E0',
+    nuanceText: '#D0D0D0',
 
     // Language tag
-    languageTagBackground: '#F5F5F5',
-    languageTagText: '#050505',
+    languageTagBackground: '#F0F0F0',
+    languageTagText: '#000000',
 
     // History tag
-    historyTagBackground: '#2A2A2A',
-    historyTagText: '#E0E0E0',
+    historyTagBackground: '#2C2C2E',
+    historyTagText: '#D0D0D0',
 
     // Frequency bar
-    barFill: '#F5F5F5',
-    barEmpty: '#333333',
+    barFill: '#F0F0F0',
+    barEmpty: '#38383A',
 
     // Modal
     modalBackground: '#1C1C1E',
     modalOverlay: 'rgba(0, 0, 0, 0.7)',
 
     // Segmented control
-    segmentedBackground: '#333333',
-    segmentedActiveBackground: '#555555',
+    segmentedBackground: '#38383A',
+    segmentedActiveBackground: '#636366',
+
+    // Translate card - 原文と翻訳文を区別
+    translateOriginalText: '#B0B0B0',
+    translateTranslatedText: '#F0F0F0',
+    translateCardOuter: '#1C1C1E',
+    translateCardInner: '#2C2C2E',
 
     // Subscription
     successBackground: '#1A2E1A',
