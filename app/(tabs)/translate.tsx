@@ -2098,7 +2098,10 @@ export default function TranslateScreen() {
                 clearSelectionKey={clearSelectionKey}
                 onRetryParagraph={handleRetryParagraph}
                 showFullText={showFullText}
-                onToggleFullText={() => setShowFullText(prev => !prev)}
+                onToggleFullText={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowFullText(prev => !prev);
+                }}
               />
               </View>
               {!isTranslating && !isSplittingParagraphs && !isDetectingLanguage && (

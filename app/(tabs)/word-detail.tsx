@@ -1,4 +1,5 @@
 import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Dimensions } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, useRef } from 'react';
@@ -823,6 +824,7 @@ export default function WordDetailScreen() {
   };
 
   const handlePronouncePress = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (!wordData?.headword) {
       logger.warn('[Pronounce] No headword data');
       return;

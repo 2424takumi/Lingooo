@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
 import Animated from 'react-native-reanimated';
 import { Shimmer } from './shimmer';
@@ -186,7 +187,10 @@ export function WordDetailCard({
         {onAskQuestion && (
           <View ref={questionButtonRef} collapsable={false}>
             <TouchableOpacity
-              onPress={onAskQuestion}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onAskQuestion();
+              }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <MessageCircleIcon size={24} color="#FFFFFF" />
@@ -197,7 +201,10 @@ export function WordDetailCard({
         {onViewDetails && (
           <TouchableOpacity
             style={styles.detailsButton}
-            onPress={onViewDetails}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onViewDetails();
+            }}
           >
             <Text style={styles.detailsButtonText}>もっと詳しく</Text>
             <ArrowRightIcon size={20} color="#1A1A1A" />

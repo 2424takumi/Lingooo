@@ -14,6 +14,7 @@ import {
   Keyboard,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
 import Reanimated, { useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { QAPair } from '@/types/chat';
@@ -479,6 +480,7 @@ export function ChatSection({
     if (!text.trim()) {
       return;
     }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     logger.debug('[ChatSection] handleSubmit called:', {
       text: text.substring(0, 50),
@@ -540,6 +542,8 @@ export function ChatSection({
     if (isStreaming) {
       return; // 応答中は閉じない
     }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     // 縮小ボタンを押した場合は必ず閉じる
     if (isOpen) {

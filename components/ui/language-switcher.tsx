@@ -4,6 +4,7 @@
  */
 
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Animated } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useState, useRef, useEffect } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
@@ -104,6 +105,7 @@ export function LanguageSwitcher({ isDetectingLanguage = false }: LanguageSwitch
   });
 
   const handleLanguageSelect = async (languageId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await setCurrentLanguage(languageId);
     setDropdownVisible(false);
   };

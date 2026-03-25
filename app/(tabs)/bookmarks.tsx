@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -351,6 +352,7 @@ export default function BookmarksScreen() {
 
   // Handle delete
   const handleDelete = async (id: string) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     try {
       await removeBookmark(id);
       setBookmarks((prev) => prev.filter((b) => b.id !== id));
@@ -467,6 +469,7 @@ export default function BookmarksScreen() {
 
   // Handle folder long press
   const handleFolderLongPress = (folder: BookmarkFolder) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedFolder(folder);
     setIsFolderMenuOpen(true);
   };

@@ -2,6 +2,7 @@ import { StyleSheet, Text, TouchableOpacity, View, Animated, PanResponder, Touch
 import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import * as Speech from 'expo-speech';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Shimmer } from './shimmer';
@@ -263,6 +264,7 @@ export function TranslateCard({
   const targetLanguageName = LANGUAGE_NAME_MAP[targetLang] || targetLang;
 
   const handlePlayOriginal = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       const isSpeaking = await Speech.isSpeakingAsync();
       if (isSpeaking) {
@@ -294,6 +296,7 @@ export function TranslateCard({
   };
 
   const handlePlayTranslated = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       const isSpeaking = await Speech.isSpeakingAsync();
       if (isSpeaking) {
@@ -327,6 +330,7 @@ export function TranslateCard({
   const handleCopy = async () => {
     try {
       await Clipboard.setStringAsync(translatedText);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       logger.info('[TranslateCard] Translation copied to clipboard');
       // TODO: トースト通知を表示
     } catch (error) {
@@ -337,7 +341,7 @@ export function TranslateCard({
   // 段落ナビゲーション
   const handlePrevParagraph = () => {
     if (currentIndex > 0) {
-      // セクション移動時は部分選択を解除
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onSelectionCleared?.();
       onIndexChange(currentIndex - 1);
       logger.info('[TranslateCard] Navigate to previous paragraph:', currentIndex - 1);
@@ -346,7 +350,7 @@ export function TranslateCard({
 
   const handleNextParagraph = () => {
     if (currentIndex < paragraphs.length - 1) {
-      // セクション移動時は部分選択を解除
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onSelectionCleared?.();
       onIndexChange(currentIndex + 1);
       logger.info('[TranslateCard] Navigate to next paragraph:', currentIndex + 1);

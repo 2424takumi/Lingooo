@@ -1,4 +1,5 @@
 import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard, ScrollView, Text, Platform, Pressable } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { SearchIcon, ReloadIcon } from './icons';
@@ -122,6 +123,7 @@ export function SearchBar({
   }, [searchText, onSearch, maxLength, needsInitialSetup, onTextLengthError]);
 
   const handleLanguageSelect = useCallback(async (languageId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await setCurrentLanguage(languageId);
   }, [setCurrentLanguage]);
 

@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { Text, StyleSheet, TouchableOpacity } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import type { SearchHistoryItem } from '@/types/search';
 
 interface HistoryTagProps {
@@ -22,7 +23,10 @@ export function HistoryTag({ item, onPress }: HistoryTagProps) {
   return (
     <TouchableOpacity
       style={styles.container}
-      onPress={() => onPress?.(item.query)}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress?.(item.query);
+      }}
       activeOpacity={0.7}
     >
       <Text style={styles.text} numberOfLines={1}>

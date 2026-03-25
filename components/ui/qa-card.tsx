@@ -197,6 +197,7 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
     try {
       const textToCopy = `Q: ${pair.q}\n\nA: ${pair.a}`;
       await Clipboard.setStringAsync(textToCopy);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('コピーしました', '質問と回答をクリップボードにコピーしました');
     } catch (error) {
       logger.error('Failed to copy:', error);
