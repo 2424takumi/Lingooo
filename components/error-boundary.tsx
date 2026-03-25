@@ -8,6 +8,67 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { logger } from '@/utils/logger';
+import { useThemeColor } from '@/hooks/use-theme-color';
+
+/**
+ * Themed fallback UI (functional component to use hooks)
+ */
+function DefaultFallbackUI({
+  error,
+  errorInfo,
+  onRetry,
+}: {
+  error: Error | null;
+  errorInfo: React.ErrorInfo | null;
+  onRetry: () => void;
+}) {
+  const pageBg = useThemeColor({}, 'pageBackground');
+  const cardBg = useThemeColor({}, 'modalBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondary = useThemeColor({}, 'textSecondary');
+  const textTertiary = useThemeColor({}, 'textTertiary');
+  const surfaceBg = useThemeColor({}, 'surfaceBackground');
+  const borderColor = useThemeColor({}, 'borderLight');
+  const primaryColor = useThemeColor({}, 'primary');
+
+  return (
+    <View style={[styles.container, { backgroundColor: pageBg }]}>
+      <View style={[styles.content, { backgroundColor: cardBg }]}>
+        <View style={styles.iconContainer}>
+          <Text style={styles.icon}>⚠️</Text>
+        </View>
+        <Text style={[styles.title, { color: textColor }]}>問題が発生しました</Text>
+        <Text style={[styles.message, { color: textSecondary }]}>
+          アプリで予期しないエラーが発生しました。{'\n'}
+          申し訳ございませんが、もう一度お試しください。
+        </Text>
+        {error && (
+          <ScrollView style={[styles.errorDetails, { backgroundColor: surfaceBg, borderColor }]}>
+            <Text style={[styles.errorDetailsTitle, { color: textColor }]}>エラー詳細:</Text>
+            <Text style={[styles.errorText, { color: textSecondary }]}>
+              {error.toString()}
+              {__DEV__ && error.stack ? `\n\n${error.stack}` : ''}
+            </Text>
+            {__DEV__ && errorInfo && (
+              <>
+                <Text style={[styles.errorDetailsTitle, { color: textColor }]}>コンポーネントスタック:</Text>
+                <Text style={[styles.errorText, { color: textSecondary }]}>{errorInfo.componentStack}</Text>
+              </>
+            )}
+          </ScrollView>
+        )}
+        <TouchableOpacity style={[styles.button, { backgroundColor: primaryColor }]} onPress={onRetry}>
+          <Text style={styles.buttonText}>再試行</Text>
+        </TouchableOpacity>
+        {!__DEV__ && (
+          <Text style={[styles.supportText, { color: textTertiary }]}>
+            問題が解決しない場合は、サポートまでお問い合わせください。
+          </Text>
+        )}
+      </View>
+    </View>
+  );
+}
 
 interface Props {
   children: ReactNode;
@@ -112,50 +173,11 @@ export class ErrorBoundary extends Component<Props, State> {
     const { error, errorInfo } = this.state;
 
     return (
-      <View style={styles.container}>
-        <View style={styles.content}>
-          {/* エラーアイコン */}
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>⚠️</Text>
-          </View>
-
-          {/* エラーメッセージ */}
-          <Text style={styles.title}>問題が発生しました</Text>
-          <Text style={styles.message}>
-            アプリで予期しないエラーが発生しました。{'\n'}
-            申し訳ございませんが、もう一度お試しください。
-          </Text>
-
-          {/* エラー詳細 */}
-          {error && (
-            <ScrollView style={styles.errorDetails}>
-              <Text style={styles.errorDetailsTitle}>エラー詳細:</Text>
-              <Text style={styles.errorText}>
-                {error.toString()}
-                {__DEV__ && error.stack ? `\n\n${error.stack}` : ''}
-              </Text>
-              {__DEV__ && errorInfo && (
-                <>
-                  <Text style={styles.errorDetailsTitle}>コンポーネントスタック:</Text>
-                  <Text style={styles.errorText}>{errorInfo.componentStack}</Text>
-                </>
-              )}
-            </ScrollView>
-          )}
-
-          {/* 再試行ボタン */}
-          <TouchableOpacity style={styles.button} onPress={this.handleRetry}>
-            <Text style={styles.buttonText}>再試行</Text>
-          </TouchableOpacity>
-
-          {/* 本番環境のみ: サポート連絡先 */}
-          {!__DEV__ && (
-            <Text style={styles.supportText}>
-              問題が解決しない場合は、サポートまでお問い合わせください。
-            </Text>
-          )}
-        </View>
-      </View>
+      <DefaultFallbackUI
+        error={error}
+        errorInfo={errorInfo}
+        onRetry={this.handleRetry}
+      />
     );
   }
 
@@ -181,14 +203,12 @@ export class ErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
   },
   content: {
     width: '85%',
     maxWidth: 400,
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 24,
     shadowColor: '#000',
@@ -207,40 +227,33 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333333',
     textAlign: 'center',
     marginBottom: 12,
   },
   message: {
     fontSize: 16,
-    color: '#666666',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 24,
   },
   errorDetails: {
     maxHeight: 200,
-    backgroundColor: '#F9F9F9',
     borderRadius: 8,
     padding: 12,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   errorDetailsTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
     marginBottom: 8,
   },
   errorText: {
     fontSize: 12,
-    color: '#666666',
     fontFamily: 'monospace',
     marginBottom: 12,
   },
   button: {
-    backgroundColor: '#111111',
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 24,
@@ -254,7 +267,6 @@ const styles = StyleSheet.create({
   },
   supportText: {
     fontSize: 13,
-    color: '#999999',
     textAlign: 'center',
     marginTop: 8,
   },

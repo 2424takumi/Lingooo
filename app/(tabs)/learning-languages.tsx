@@ -53,6 +53,12 @@ function TrashIcon({ size = 20, color = '#FF4444' }: { size?: number; color?: st
 
 export default function LearningLanguagesScreen() {
   const pageBackground = useThemeColor({}, 'pageBackground');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondaryColor = useThemeColor({}, 'textSecondary');
+  const primaryColor = useThemeColor({}, 'primary');
+  const cardBgColor = useThemeColor({}, 'cardBackgroundElevated');
+  const cardBgSelectedColor = useThemeColor({}, 'cardBackground');
+  const inputBorderColor = useThemeColor({}, 'inputBorder');
   const {
     learningLanguages,
     addLearningLanguage,
@@ -102,19 +108,19 @@ export default function LearningLanguagesScreen() {
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* 説明 */}
-          <Text style={styles.description}>
+          <Text style={[styles.description, { color: textSecondaryColor }]}>
             学習したい言語を選択してください（複数選択可）。ここで選択した言語が検索画面やホーム画面で切り替えられるようになります。
           </Text>
 
           {/* 学習中の言語 */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>学習したい言語</Text>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>学習したい言語</Text>
             <View style={styles.languageList}>
               {learningLanguages.map((language) => (
-                <View key={language.id} style={styles.learningLanguageItem}>
+                <View key={language.id} style={[styles.learningLanguageItem, { backgroundColor: cardBgSelectedColor, borderColor: primaryColor }]}>
                   <View style={styles.languageInfo}>
                     <Text style={styles.flag}>{language.flag}</Text>
-                    <Text style={styles.languageName}>{language.name}</Text>
+                    <Text style={[styles.languageName, { color: textColor }]}>{language.name}</Text>
                   </View>
                   <TouchableOpacity
                     onPress={() => handleRemoveLanguage(language.id)}
@@ -129,7 +135,7 @@ export default function LearningLanguagesScreen() {
 
           {/* 言語を追加 */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>言語を追加</Text>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>言語を追加</Text>
             <View style={styles.languageList}>
               {AVAILABLE_LANGUAGES.filter((lang) => !isLearning(lang.id)).map((language) => (
                 <TouchableOpacity
