@@ -32,6 +32,7 @@ function CheckCircleIcon({ size = 20, color = '#FFFFFF' }: { size?: number; colo
 }
 
 export function BookmarkToast({ visible, onAddToFolder, onDismiss, showFolderButton = true }: BookmarkToastProps) {
+  const surfaceBg = useThemeColor({}, 'surfaceBackground');
   const translateY = useRef(new Animated.Value(100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<number | undefined>(undefined);
@@ -121,7 +122,7 @@ export function BookmarkToast({ visible, onAddToFolder, onDismiss, showFolderBut
         },
       ]}
     >
-      <View style={styles.content}>
+      <View style={[styles.content, { backgroundColor: surfaceBg }]}>
         <View style={styles.leftSection}>
           <CheckCircleIcon size={20} color="#FFFFFF" />
           <Text style={styles.message}>ブックマークしました</Text>
@@ -149,7 +150,6 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   content: {
-    backgroundColor: '#2C2C2C',
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
