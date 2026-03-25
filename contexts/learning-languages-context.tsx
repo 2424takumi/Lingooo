@@ -4,7 +4,7 @@
  * 学習中の言語（複数）とデフォルト言語（単一）を分けて管理
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { AVAILABLE_LANGUAGES, Language, LEGACY_CODE_MIGRATION, findLanguageByCode } from '@/types/language';
 import { logger } from '@/utils/logger';
 import { useAuth } from './auth-context';
@@ -68,10 +68,12 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
   const JAPANESE_LANGUAGE = AVAILABLE_LANGUAGES.find(lang => lang.code === 'ja')!;
   const [nativeLanguage] = useState<Language>(JAPANESE_LANGUAGE);
   const [needsVariantMigration, setNeedsVariantMigration] = useState(false);
+  const settingsLoadedRef = useRef(false);
+  const userChangedLanguageRef = useRef(false);
 
   // 初期化（userが取得されたら、かつ初期設定が完了していたら実行）
   useEffect(() => {
-    if (!authLoading && user && !needsInitialSetup) {
+    if (!authLoading && user && !needsInitialSetup && !settingsLoadedRef.current) {
       // 初期設定完了直後の場合、少し待ってからロード（DBへの書き込み完了を待つ）
       const timer = setTimeout(() => {
         loadSettings();
@@ -82,6 +84,7 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
 
   const loadSettings = async () => {
     if (!user) return;
+    if (settingsLoadedRef.current) return;
 
     try {
       logger.info('[LearningLanguages] Loading settings for user:', user.id);
@@ -105,6 +108,7 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
 
       if (data) {
         logger.info('[LearningLanguages] Loaded settings:', data);
+        settingsLoadedRef.current = true;
 
         // 母語は日本語に固定（Japanese-only optimization）
         // UIの言語も日本語に固定
@@ -117,7 +121,12 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
           if (language) {
             logger.info('[LearningLanguages] Setting default language:', language.name);
             setDefaultLanguageState(language);
-            setCurrentLanguageState(language);
+            // ユーザーが既に手動で言語を切り替えていた場合は上書きしない
+            if (!userChangedLanguageRef.current) {
+              setCurrentLanguageState(language);
+            } else {
+              logger.info('[LearningLanguages] Skipping currentLanguage override - user already changed it');
+            }
           }
         }
 
@@ -260,6 +269,7 @@ export function LearningLanguagesProvider({ children }: LearningLanguagesProvide
 
     // 現在の言語は一時的な選択なのでローカル状態のみ
     logger.info('[LearningLanguages] Setting current language:', languageIdOrCode, '->', language.name);
+    userChangedLanguageRef.current = true;
     setCurrentLanguageState(language);
   };
 
