@@ -455,7 +455,7 @@ export function SettingsBottomSheet({ visible, onClose, onUpgradePress }: Settin
                 <ChevronRightIcon size={18} color={textMuted} />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.menuItem}
+                style={[styles.menuItem, { borderBottomWidth: 0 }]}
                 onPress={handleDeleteAccount}
               >
                 <Text style={[styles.menuItemText, { color: errorTextColor }]}>{t('settings.deleteAccount.button')}</Text>
