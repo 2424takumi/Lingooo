@@ -19,7 +19,7 @@ export function WordHint({
   isStreaming = false,
   streamingText = '',
 }: WordHintProps) {
-  const bgColor = useThemeColor({}, 'hintBackground');
+  const bgColor = useThemeColor({}, 'cardBackground');
   const textColor = useThemeColor({}, 'text');
 
   const opacity = useSharedValue(0);
