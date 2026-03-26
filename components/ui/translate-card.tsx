@@ -60,6 +60,8 @@ interface TranslateCardProps {
   // 全文表示トグル
   showFullText?: boolean;
   onToggleFullText?: () => void;
+  // コピー完了コールバック
+  onCopied?: () => void;
 }
 
 function SpeakerIcon({ size = 20, color = '#686868' }: { size?: number; color?: string }) {
@@ -165,6 +167,7 @@ export function TranslateCard({
   onRetryParagraph,
   showFullText = false,
   onToggleFullText,
+  onCopied,
 }: TranslateCardProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -184,8 +187,6 @@ export function TranslateCard({
   const shimmerBgColor = useThemeColor({}, 'shimmerBackground');
   const errorTextColor = useThemeColor({}, 'errorText');
   const segmentedBgColor = useThemeColor({}, 'segmentedBackground');
-  const [copyToastVisible, setCopyToastVisible] = useState(false);
-  const copyToastTimer = useRef<ReturnType<typeof setTimeout>>();
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
   const [isPlayingTranslated, setIsPlayingTranslated] = useState(false);
   const [isSourceExpanded, setIsSourceExpanded] = useState(false);
@@ -345,17 +346,11 @@ export function TranslateCard({
     }
   };
 
-  const showCopyToast = () => {
-    if (copyToastTimer.current) clearTimeout(copyToastTimer.current);
-    setCopyToastVisible(true);
-    copyToastTimer.current = setTimeout(() => setCopyToastVisible(false), 1500);
-  };
-
   const handleCopyOriginal = async () => {
     try {
       await Clipboard.setStringAsync(originalText);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showCopyToast();
+      onCopied?.();
     } catch (error) {
       logger.error('[TranslateCard] Failed to copy original:', error);
     }
@@ -365,7 +360,7 @@ export function TranslateCard({
     try {
       await Clipboard.setStringAsync(translatedText);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showCopyToast();
+      onCopied?.();
     } catch (error) {
       logger.error('[TranslateCard] Failed to copy translated:', error);
     }
@@ -447,13 +442,6 @@ export function TranslateCard({
             <Text style={[styles.fullTextToggleLabel as any, { color: textSecondaryColor }]}>全文</Text>
             <MiniToggle active={showFullText} onPress={onToggleFullText} trackColor={segmentedBgColor} activeTrackColor={accentColor} thumbColor={cardInnerColor} />
           </View>
-        </View>
-      )}
-
-      {/* Copy Toast - outside card for visibility */}
-      {copyToastVisible && (
-        <View style={[styles.copyToast, { backgroundColor: primaryColor }]}>
-          <Text style={[styles.copyToastText, { color: textOnDarkColor }]}>コピーしました</Text>
         </View>
       )}
 
@@ -818,16 +806,5 @@ const styles: any = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#FFFFFF',
-  },
-  copyToast: {
-    alignSelf: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginBottom: 4,
-  },
-  copyToastText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
 });

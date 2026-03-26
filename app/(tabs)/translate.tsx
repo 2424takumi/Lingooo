@@ -9,6 +9,7 @@ import { UnifiedHeaderBar } from '@/components/ui/unified-header-bar';
 import { ChatSection, ChatSectionMode } from '@/components/ui/chat-section';
 import { KeyboardAnimatedView } from '@/components/ui/keyboard-animated-view';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
+import { CopyToast } from '@/components/ui/copy-toast';
 import { TranslateCard } from '@/components/ui/translate-card';
 import { TranslationNotes } from '@/components/ui/translation-notes';
 import { SelectionInfo } from '@/components/ui/selectable-text';
@@ -188,6 +189,12 @@ export default function TranslateScreen() {
     handleCloseFolderSelectModal,
     handleCloseCreateFolderModal,
   } = useBookmarkManagement({ logPrefix: 'Translate' });
+
+  // コピートースト
+  const [copyToastVisible, setCopyToastVisible] = useState(false);
+  const handleCopied = useCallback(() => {
+    setCopyToastVisible(true);
+  }, []);
 
   // 翻訳データと状態
   const [translationData, setTranslationData] = useState<{ originalText: string; translatedText: string; sourceLang: string; targetLang: string } | null>(null);
@@ -2104,6 +2111,7 @@ export default function TranslateScreen() {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setShowFullText(prev => !prev);
                 }}
+                onCopied={handleCopied}
               />
               </View>
               {!isTranslating && !isSplittingParagraphs && !isDetectingLanguage && (
@@ -2176,6 +2184,12 @@ export default function TranslateScreen() {
         onAddToFolder={handleOpenFolderSelect}
         onDismiss={handleToastDismiss}
         showFolderButton={isPremium}
+      />
+
+      {/* Copy Toast */}
+      <CopyToast
+        visible={copyToastVisible}
+        onDismiss={() => setCopyToastVisible(false)}
       />
 
       {/* Folder Select Modal */}
