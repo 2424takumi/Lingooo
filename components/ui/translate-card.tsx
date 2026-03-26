@@ -184,7 +184,8 @@ export function TranslateCard({
   const shimmerBgColor = useThemeColor({}, 'shimmerBackground');
   const errorTextColor = useThemeColor({}, 'errorText');
   const segmentedBgColor = useThemeColor({}, 'segmentedBackground');
-  const [copiedLabel, setCopiedLabel] = useState<'original' | 'translated' | null>(null);
+  const [copyToastVisible, setCopyToastVisible] = useState(false);
+  const copyToastTimer = useRef<ReturnType<typeof setTimeout>>();
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
   const [isPlayingTranslated, setIsPlayingTranslated] = useState(false);
   const [isSourceExpanded, setIsSourceExpanded] = useState(false);
@@ -344,12 +345,17 @@ export function TranslateCard({
     }
   };
 
+  const showCopyToast = () => {
+    if (copyToastTimer.current) clearTimeout(copyToastTimer.current);
+    setCopyToastVisible(true);
+    copyToastTimer.current = setTimeout(() => setCopyToastVisible(false), 1500);
+  };
+
   const handleCopyOriginal = async () => {
     try {
       await Clipboard.setStringAsync(originalText);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setCopiedLabel('original');
-      setTimeout(() => setCopiedLabel(null), 1500);
+      showCopyToast();
     } catch (error) {
       logger.error('[TranslateCard] Failed to copy original:', error);
     }
@@ -359,8 +365,7 @@ export function TranslateCard({
     try {
       await Clipboard.setStringAsync(translatedText);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setCopiedLabel('translated');
-      setTimeout(() => setCopiedLabel(null), 1500);
+      showCopyToast();
     } catch (error) {
       logger.error('[TranslateCard] Failed to copy translated:', error);
     }
@@ -434,6 +439,13 @@ export function TranslateCard({
 
   return (
     <View style={styles.wrapper}>
+      {/* Copy Toast */}
+      {copyToastVisible && (
+        <View style={[styles.copyToast, { backgroundColor: primaryColor }]}>
+          <Text style={[styles.copyToastText, { color: textOnDarkColor }]}>コピーしました</Text>
+        </View>
+      )}
+
       {/* Full text toggle - Only show when multiple paragraphs */}
       {hasMultipleParagraphs && onToggleFullText && (
         <View style={styles.labelRow}>
@@ -533,11 +545,7 @@ export function TranslateCard({
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity onPress={handleCopyOriginal} style={styles.actionButton}>
-                      {copiedLabel === 'original' ? (
-                        <Text style={[styles.copiedText, { color: accentColor }]}>Copied</Text>
-                      ) : (
-                        <CopyIcon size={20} color={textSecondaryColor} />
-                      )}
+                      <CopyIcon size={20} color={textSecondaryColor} />
                     </TouchableOpacity>
                   </View>
                   {/* 全文表示モードの展開/折りたたみ */}
@@ -598,11 +606,7 @@ export function TranslateCard({
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity onPress={handleCopyTranslated} style={styles.actionButton}>
-                      {copiedLabel === 'translated' ? (
-                        <Text style={[styles.copiedText, { color: accentColor }]}>Copied</Text>
-                      ) : (
-                        <CopyIcon size={20} color={textSecondaryColor} />
-                      )}
+                      <CopyIcon size={20} color={textSecondaryColor} />
                     </TouchableOpacity>
                   </View>
                 </Reanimated.View>
@@ -649,11 +653,7 @@ export function TranslateCard({
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity onPress={handleCopyTranslated} style={styles.actionButton}>
-                      {copiedLabel === 'translated' ? (
-                        <Text style={[styles.copiedText, { color: accentColor }]}>Copied</Text>
-                      ) : (
-                        <CopyIcon size={20} color={textSecondaryColor} />
-                      )}
+                      <CopyIcon size={20} color={textSecondaryColor} />
                     </TouchableOpacity>
                   </View>
                 </Reanimated.View>
@@ -819,8 +819,17 @@ const styles: any = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  copiedText: {
-    fontSize: 12,
+  copyToast: {
+    position: 'absolute',
+    top: -36,
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    zIndex: 100,
+  },
+  copyToastText: {
+    fontSize: 13,
     fontWeight: '600',
   },
 });

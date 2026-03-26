@@ -153,9 +153,8 @@ const styles = StyleSheet.create({
   dropdownContainer: {
     position: 'absolute',
     top: 110,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
+    right: 16,
+    alignItems: 'flex-end',
   },
   dropdown: {
     borderRadius: 12,
