@@ -78,9 +78,9 @@ const styles = StyleSheet.create({
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
   },
   tagIcon: {
