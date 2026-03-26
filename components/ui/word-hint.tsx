@@ -67,10 +67,10 @@ export function WordHint({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    gap: 10,
+    borderRadius: 14,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    gap: 12,
   },
   tagRow: {
     flexDirection: 'row',
