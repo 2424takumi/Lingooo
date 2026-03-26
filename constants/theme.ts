@@ -114,7 +114,7 @@ export const Colors = {
 
     // Hint card
     hintBackground: '#F0FAF5',
-    hintTagBackground: '#E0F5EC',
+    hintTagBackground: '#EBEBEB',
 
     // Translate card
     translateOriginalText: '#111111',
@@ -234,7 +234,7 @@ export const Colors = {
 
     // Hint card
     hintBackground: '#0D2618',
-    hintTagBackground: '#143D28',
+    hintTagBackground: '#38383A',
 
     // Translate card - 原文と翻訳文を区別
     translateOriginalText: '#B0B0B0',
