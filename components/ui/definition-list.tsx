@@ -69,16 +69,15 @@ const styles = StyleSheet.create({
   },
   definitionRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 6,
+    alignItems: 'baseline',
+    gap: 4,
   },
   number: {
-    fontSize: 13,
-    fontWeight: '500',
-    opacity: 0.35,
-    minWidth: 20,
+    fontSize: 17,
+    fontWeight: '400',
+    opacity: 0.3,
+    minWidth: 24,
     textAlign: 'right',
-    lineHeight: 28,
   },
   definition: {
     flex: 1,

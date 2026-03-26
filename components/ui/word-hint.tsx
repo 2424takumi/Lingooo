@@ -44,19 +44,21 @@ export function WordHint({
 
   return (
     <Animated.View style={[styles.container, { backgroundColor: bgColor }, animatedStyle]}>
-      <View style={styles.header}>
+      <View style={styles.row}>
         <Text style={styles.icon}>💡</Text>
+        <View style={styles.textContainer}>
+          {isStreaming ? (
+            <Text style={[styles.hintText, { color: textColor }]}>{streamingText}</Text>
+          ) : (
+            <SelectableText
+              text={hint}
+              style={{ ...styles.hintText, color: textColor }}
+              onSelectionChange={onTextSelected}
+              onSelectionCleared={onSelectionCleared}
+            />
+          )}
+        </View>
       </View>
-      {isStreaming ? (
-        <Text style={[styles.hintText, { color: textColor }]}>{streamingText}</Text>
-      ) : (
-        <SelectableText
-          text={hint}
-          style={{ ...styles.hintText, color: textColor }}
-          onSelectionChange={onTextSelected}
-          onSelectionCleared={onSelectionCleared}
-        />
-      )}
     </Animated.View>
   );
 }
@@ -67,16 +69,21 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
-  header: {
-    marginBottom: 4,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
   },
   icon: {
-    fontSize: 14,
+    fontSize: 16,
+    marginTop: 3,
+  },
+  textContainer: {
+    flex: 1,
   },
   hintText: {
     fontSize: 16,
     lineHeight: 24,
     letterSpacing: 0.3,
-    flex: 1,
   },
 });
