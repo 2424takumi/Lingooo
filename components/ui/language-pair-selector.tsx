@@ -53,7 +53,9 @@ export function LanguagePairSelector({
 
   // ターゲット言語のベースコード（en-US → en）
   const baseTargetCode = targetLang.split('-')[0];
-  const targetDisplayName = LANGUAGE_NAME_MAP[baseTargetCode] || findLanguageByCode(targetLang)?.name || targetLang;
+  const targetInfo = findLanguageByCode(targetLang);
+  const targetDisplayName = LANGUAGE_NAME_MAP[baseTargetCode] || targetInfo?.name || targetLang;
+  const targetFlag = targetInfo?.flag || '';
 
   const handleSelect = (langCode: string) => {
     onTargetLangChange(langCode);
@@ -72,6 +74,7 @@ export function LanguagePairSelector({
         onPress={() => setIsOpen(true)}
         activeOpacity={0.7}
       >
+        <Text style={styles.buttonFlag}>{targetFlag}</Text>
         <Text style={[styles.buttonText, { color: textColor }]}>
           {targetDisplayName}へ翻訳
         </Text>
@@ -125,7 +128,7 @@ export function LanguagePairSelector({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'center',
   },
   button: {
@@ -135,6 +138,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
+  },
+  buttonFlag: {
+    fontSize: 16,
   },
   buttonText: {
     fontSize: 15,

@@ -434,22 +434,16 @@ export function TranslateCard({
 
   return (
     <View style={styles.wrapper}>
-      {/* Label - Outside of card */}
-      <View style={styles.labelRow}>
-        <Text style={[styles.label as any, { color: textSecondaryColor }]}>
-          {(showFullText && translatedText)
-            ? `${targetLanguageName}に翻訳しました`
-            : (isParagraphTranslating || isTranslating)
-              ? `${targetLanguageName}に翻訳しています`
-              : `${targetLanguageName}に翻訳しました`}
-        </Text>
-        {hasMultipleParagraphs && onToggleFullText && (
+      {/* Full text toggle - Only show when multiple paragraphs */}
+      {hasMultipleParagraphs && onToggleFullText && (
+        <View style={styles.labelRow}>
+          <View />
           <View style={styles.fullTextToggleRow}>
             <Text style={[styles.fullTextToggleLabel as any, { color: textSecondaryColor }]}>全文</Text>
             <MiniToggle active={showFullText} onPress={onToggleFullText} trackColor={segmentedBgColor} activeTrackColor={accentColor} thumbColor={cardInnerColor} />
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* Card Container */}
       <TouchableWithoutFeedback onPress={handleCardPress}>
