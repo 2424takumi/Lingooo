@@ -48,7 +48,7 @@ export function WordHint({
       <View style={styles.tagRow}>
         <View style={[styles.tag, { backgroundColor: tagBg }]}>
           <Text style={styles.tagIcon}>💡</Text>
-          <Text style={[styles.tagText, { color: textColor }]}>学習のヒント</Text>
+          <Text style={[styles.tagText, { color: textColor }]}>メモ</Text>
         </View>
       </View>
       {isStreaming ? (
