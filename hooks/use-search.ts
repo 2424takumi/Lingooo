@@ -98,16 +98,9 @@ export function useSearch() {
       // 4.1. AI判定が必要なケース
       // - mixed（混在テキスト）
       // - alphabet かつ ネイティブ言語もアルファベット言語（例：ポルトガル語母語で英語を学習中）
-      // - alphabet かつ 学習言語に2つ以上のアルファベット言語がある（例：日本語母語で英語+ポルトガル語を学習中）
-      const alphabetLearningLangs = learningLanguageCodes.filter(code =>
-        alphabetLanguages.includes(code.split('-')[0])
-      );
-      const hasMultipleAlphabetLangs = alphabetLearningLangs.length >= 2;
-
       const needsAiDetection =
         detectedLang === 'mixed' ||
-        (detectedLang === 'alphabet' && alphabetLanguages.includes(nativeLanguage.code)) ||
-        (detectedLang === 'alphabet' && hasMultipleAlphabetLangs);
+        (detectedLang === 'alphabet' && alphabetLanguages.includes(nativeLanguage.code));
 
       if (needsAiDetection) {
         logger.info('[Search] AI detection needed:', {
