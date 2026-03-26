@@ -60,7 +60,8 @@ const styles = StyleSheet.create({
   genderBox: {
     borderRadius: 3,
     paddingHorizontal: 5,
-    paddingVertical: 2,
+    paddingTop: 1,
+    paddingBottom: 3,
     justifyContent: 'center',
     alignItems: 'center',
   },
