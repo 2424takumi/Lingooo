@@ -1,4 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
 import { SelectableText } from './selectable-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
@@ -8,21 +10,54 @@ interface DefinitionListProps {
   onSelectionCleared?: () => void;
 }
 
+function DefinitionItem({ definition, index, textColor, onTextSelected, onSelectionCleared }: {
+  definition: string;
+  index: number;
+  textColor: string;
+  onTextSelected?: (text: string) => void;
+  onSelectionCleared?: () => void;
+}) {
+  const opacity = useSharedValue(0);
+  const translateX = useSharedValue(-8);
+
+  useEffect(() => {
+    opacity.value = withDelay(index * 80, withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) }));
+    translateX.value = withDelay(index * 80, withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) }));
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  return (
+    <Animated.View style={[styles.definitionRow, animatedStyle]}>
+      <Text style={[styles.number, { color: textColor }]}>{index + 1}.</Text>
+      <SelectableText
+        text={definition}
+        style={{ ...styles.definition, color: textColor }}
+        onSelectionChange={onTextSelected}
+        onSelectionCleared={onSelectionCleared}
+      />
+    </Animated.View>
+  );
+}
+
 export function DefinitionList({ definitions, onTextSelected, onSelectionCleared }: DefinitionListProps) {
   const textColor = useThemeColor({}, 'text');
+  const textTertiaryColor = useThemeColor({}, 'textTertiary');
 
   return (
     <View style={styles.container}>
       {definitions.map((definition, index) => (
-        <View key={index} style={styles.definitionRow}>
-          <Text style={[styles.bullet, { color: textColor }]}>・</Text>
-          <SelectableText
-            text={definition}
-            style={{ ...styles.definition, color: textColor }}
-            onSelectionChange={onTextSelected}
-            onSelectionCleared={onSelectionCleared}
-          />
-        </View>
+        <DefinitionItem
+          key={index}
+          definition={definition}
+          index={index}
+          textColor={textColor}
+          onTextSelected={onTextSelected}
+          onSelectionCleared={onSelectionCleared}
+        />
       ))}
     </View>
   );
@@ -30,23 +65,26 @@ export function DefinitionList({ definitions, onTextSelected, onSelectionCleared
 
 const styles = StyleSheet.create({
   container: {
-    gap: 2,
+    gap: 6,
   },
   definitionRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  number: {
+    fontSize: 13,
+    fontWeight: '500',
+    opacity: 0.35,
+    minWidth: 20,
+    textAlign: 'right',
+    lineHeight: 28,
   },
   definition: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '500',
     lineHeight: 28,
-    letterSpacing: 0.5,
-  },
-  bullet: {
-    fontSize: 18,
-    lineHeight: 28,
-    marginRight: 4,
-    marginTop: 7,
+    letterSpacing: 0.3,
   },
 });

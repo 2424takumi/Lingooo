@@ -1240,6 +1240,7 @@ export default function WordDetailScreen() {
                     key={index}
                     english={example.textSrc}
                     japanese={example.textDst}
+                    index={index}
                     onTextSelected={handleTextSelected}
                     onSelectionCleared={handleSelectionCleared}
                   />
@@ -1394,14 +1395,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '400',
-    letterSpacing: 4,
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
     marginBottom: 12,
     marginLeft: 2,
   },
   examplesList: {
-    gap: 16,
+    gap: 10,
   },
   translateCardContainer: {
     marginBottom: 24,

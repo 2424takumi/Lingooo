@@ -1,4 +1,6 @@
 import { View, StyleSheet, Text } from 'react-native';
+import { useEffect } from 'react';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { SelectableText } from './selectable-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
@@ -18,8 +20,20 @@ export function WordHint({
   streamingText = '',
 }: WordHintProps) {
   const bgColor = useThemeColor({}, 'cardBackground');
-  const borderColor = useThemeColor({}, 'borderLight');
   const textColor = useThemeColor({}, 'text');
+
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(6);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) });
+    translateY.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.ease) });
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
 
   // ストリーミング中はstreamingTextを表示
   const displayText = isStreaming ? streamingText : hint;
@@ -29,12 +43,13 @@ export function WordHint({
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: bgColor, borderColor }]}>
+    <Animated.View style={[styles.container, { backgroundColor: bgColor }, animatedStyle]}>
+      <View style={styles.header}>
+        <Text style={styles.icon}>💡</Text>
+      </View>
       {isStreaming ? (
-        // ストリーミング中はテキストのみ表示
         <Text style={[styles.hintText, { color: textColor }]}>{streamingText}</Text>
       ) : (
-        // 完成後は選択可能テキストとして表示
         <SelectableText
           text={hint}
           style={{ ...styles.hintText, color: textColor }}
@@ -42,21 +57,26 @@ export function WordHint({
           onSelectionCleared={onSelectionCleared}
         />
       )}
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  header: {
+    marginBottom: 4,
+  },
+  icon: {
+    fontSize: 14,
   },
   hintText: {
-    fontSize: 17,
-    lineHeight: 25,
-    letterSpacing: 0.5,
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: 0.3,
     flex: 1,
   },
 });
