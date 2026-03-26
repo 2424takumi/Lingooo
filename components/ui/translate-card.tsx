@@ -184,6 +184,7 @@ export function TranslateCard({
   const shimmerBgColor = useThemeColor({}, 'shimmerBackground');
   const errorTextColor = useThemeColor({}, 'errorText');
   const segmentedBgColor = useThemeColor({}, 'segmentedBackground');
+  const [copiedLabel, setCopiedLabel] = useState<'original' | 'translated' | null>(null);
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
   const [isPlayingTranslated, setIsPlayingTranslated] = useState(false);
   const [isSourceExpanded, setIsSourceExpanded] = useState(false);
@@ -343,14 +344,25 @@ export function TranslateCard({
     }
   };
 
-  const handleCopy = async () => {
+  const handleCopyOriginal = async () => {
+    try {
+      await Clipboard.setStringAsync(originalText);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setCopiedLabel('original');
+      setTimeout(() => setCopiedLabel(null), 1500);
+    } catch (error) {
+      logger.error('[TranslateCard] Failed to copy original:', error);
+    }
+  };
+
+  const handleCopyTranslated = async () => {
     try {
       await Clipboard.setStringAsync(translatedText);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      logger.info('[TranslateCard] Translation copied to clipboard');
-      // TODO: トースト通知を表示
+      setCopiedLabel('translated');
+      setTimeout(() => setCopiedLabel(null), 1500);
     } catch (error) {
-      logger.error('[TranslateCard] Failed to copy:', error);
+      logger.error('[TranslateCard] Failed to copy translated:', error);
     }
   };
 
@@ -526,8 +538,12 @@ export function TranslateCard({
                         <SpeakerIcon size={20} color={isPlayingOriginal ? textColor : textSecondaryColor} />
                       </TouchableOpacity>
                     )}
-                    <TouchableOpacity onPress={handleCopy} style={styles.actionButton}>
-                      <CopyIcon size={20} color={textSecondaryColor} />
+                    <TouchableOpacity onPress={handleCopyOriginal} style={styles.actionButton}>
+                      {copiedLabel === 'original' ? (
+                        <Text style={[styles.copiedText, { color: accentColor }]}>Copied</Text>
+                      ) : (
+                        <CopyIcon size={20} color={textSecondaryColor} />
+                      )}
                     </TouchableOpacity>
                   </View>
                   {/* 全文表示モードの展開/折りたたみ */}
@@ -587,6 +603,13 @@ export function TranslateCard({
                         <SpeakerIcon size={20} color={isPlayingTranslated ? textColor : textSecondaryColor} />
                       </TouchableOpacity>
                     )}
+                    <TouchableOpacity onPress={handleCopyTranslated} style={styles.actionButton}>
+                      {copiedLabel === 'translated' ? (
+                        <Text style={[styles.copiedText, { color: accentColor }]}>Copied</Text>
+                      ) : (
+                        <CopyIcon size={20} color={textSecondaryColor} />
+                      )}
+                    </TouchableOpacity>
                   </View>
                 </Reanimated.View>
               </Animated.View>
@@ -631,6 +654,13 @@ export function TranslateCard({
                         <SpeakerIcon size={20} color={isPlayingTranslated ? textColor : textSecondaryColor} />
                       </TouchableOpacity>
                     )}
+                    <TouchableOpacity onPress={handleCopyTranslated} style={styles.actionButton}>
+                      {copiedLabel === 'translated' ? (
+                        <Text style={[styles.copiedText, { color: accentColor }]}>Copied</Text>
+                      ) : (
+                        <CopyIcon size={20} color={textSecondaryColor} />
+                      )}
+                    </TouchableOpacity>
                   </View>
                 </Reanimated.View>
               </Animated.View>
@@ -794,5 +824,9 @@ const styles: any = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  copiedText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
