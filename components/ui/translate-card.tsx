@@ -439,13 +439,6 @@ export function TranslateCard({
 
   return (
     <View style={styles.wrapper}>
-      {/* Copy Toast */}
-      {copyToastVisible && (
-        <View style={[styles.copyToast, { backgroundColor: primaryColor }]}>
-          <Text style={[styles.copyToastText, { color: textOnDarkColor }]}>コピーしました</Text>
-        </View>
-      )}
-
       {/* Full text toggle - Only show when multiple paragraphs */}
       {hasMultipleParagraphs && onToggleFullText && (
         <View style={styles.labelRow}>
@@ -454,6 +447,13 @@ export function TranslateCard({
             <Text style={[styles.fullTextToggleLabel as any, { color: textSecondaryColor }]}>全文</Text>
             <MiniToggle active={showFullText} onPress={onToggleFullText} trackColor={segmentedBgColor} activeTrackColor={accentColor} thumbColor={cardInnerColor} />
           </View>
+        </View>
+      )}
+
+      {/* Copy Toast - outside card for visibility */}
+      {copyToastVisible && (
+        <View style={[styles.copyToast, { backgroundColor: primaryColor }]}>
+          <Text style={[styles.copyToastText, { color: textOnDarkColor }]}>コピーしました</Text>
         </View>
       )}
 
@@ -820,13 +820,11 @@ const styles: any = StyleSheet.create({
     color: '#FFFFFF',
   },
   copyToast: {
-    position: 'absolute',
-    top: -36,
     alignSelf: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 20,
-    zIndex: 100,
+    marginBottom: 4,
   },
   copyToastText: {
     fontSize: 13,
