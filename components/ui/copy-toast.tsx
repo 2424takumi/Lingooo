@@ -27,7 +27,7 @@ export function CopyToast({ visible, onDismiss }: CopyToastProps) {
   const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(-100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const surfaceBg = useThemeColor({}, 'surfaceBackground');
 
   useEffect(() => {
