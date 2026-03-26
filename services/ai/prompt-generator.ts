@@ -118,7 +118,7 @@ export function createBasicInfoPrompt(word: string, targetLanguage: string = 'en
 {{targetLanguageHint}}
 
 {
-  "headword": {"lemma": "{{word}}", "lang": "{{targetLanguage}}", "pos": ["part of speech (English, e.g., verb, noun)"]{{genderField}}},
+  "headword": {"lemma": "{{word}}", "lang": "{{targetLanguage}}", "pos": ["part of speech in {{nativeLanguageName}} (e.g., 名詞, 動詞, 形容詞)"]{{genderField}}},
   "senses": [{"id": "1", "glossShort": "concise meaning in {{nativeLanguageName}} (within 10 chars)"}, {"id": "2", "glossShort": "meaning 2 in {{nativeLanguageName}}"}]
 }
 
@@ -248,7 +248,7 @@ export function createDictionaryPrompt(
   return `Generate dictionary information for the ${targetLanguageName} word "${word}" in the following JSON structure:${hintLine}
 
 {
-  "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["part of speech (English, e.g., verb, noun)"]${genderField}},
+  "headword": {"lemma": "${word}", "lang": "${targetLanguage}", "pos": ["part of speech in ${nativeLanguageName} (e.g., 名詞, 動詞, 形容詞)"]${genderField}},
   "senses": [{"id": "1", "glossShort": "concise meaning in ${nativeLanguageName} (within 10 chars)"}, {"id": "2", "glossShort": "meaning 2 in ${nativeLanguageName}"}],
   "hint": {"text": "2-3 concise sentences in ${nativeLanguageName} (usage context, nuance, differences from similar words, etc. - 2 most important learning points)"},
   "metrics": {"frequency": frequency 0-100, "difficulty": difficulty 0-100, "nuance": nuance strength 0-100},
@@ -288,7 +288,7 @@ export function createSuggestionsPrompt(query: string, targetLanguage: string = 
 [
   {
     "lemma": "${langName}単語1",
-    "pos": ["品詞（英語）"],
+    "pos": ["品詞（日本語、例: 名詞, 動詞, 形容詞）"],
     "shortSense": "簡潔な日本語の意味（10文字以内）",
     "confidence": 関連性スコア0-1,
     "usageHint": "この単語の使い方や特徴を1文で（20文字以内）",

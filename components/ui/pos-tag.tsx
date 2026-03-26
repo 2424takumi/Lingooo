@@ -20,11 +20,11 @@ export function PosTag({ label, gender }: PosTagProps) {
   const textColor = useThemeColor({}, 'posTagText');
   const genderBg = gender ? useThemeColor({}, GENDER_THEME_KEYS[gender]) : undefined;
 
-  // 品詞を小文字に変換してi18nキーとして使用
+  // 品詞はAPIから母国語で返されるのでそのまま表示。英語で来た場合はi18nでフォールバック
   const posKey = label.toLowerCase().trim();
-  const translatedLabel = t(`pos.${posKey}`, label); // フォールバック：元の値
+  const translatedLabel = t(`pos.${posKey}`, label);
 
-  const isNoun = label.toLowerCase().includes('noun') || translatedLabel.toLowerCase().includes('noun');
+  const isNoun = label.toLowerCase().includes('noun') || label.includes('名詞');
 
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
