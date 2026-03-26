@@ -99,7 +99,7 @@
     }
   },
   "search": {
-    "placeholder": "知りたい言葉や文章を入力...",
+    "placeholder": "好きな言語で入力...",
     "noResults": "「{{query}}」の検索結果が見つかりませんでした",
     "error": "検索に失敗しました",
     "chatPlaceholder": "この単語について質問をする..."

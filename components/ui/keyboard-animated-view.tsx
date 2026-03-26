@@ -1,16 +1,18 @@
 /**
  * キーボードと同期してスムーズに移動するビュー
  *
- * KeyboardAvoidingViewの代替。reanimatedのuseAnimatedKeyboardを使い、
- * iOSのキーボードアニメーションとフレーム単位で同期する。
- * Androidでは従来のKeyboardAvoidingViewにフォールバック。
+ * iOSではKeyboard.addListenerでキーボードの高さとアニメーション時間を取得し、
+ * Reanimatedのアニメーションをキーボードと同期させる。
+ * useAnimatedKeyboardより遅延が少ない。
  */
 
-import React from 'react';
-import { Platform, KeyboardAvoidingView, type ViewStyle, type StyleProp } from 'react-native';
+import React, { useEffect } from 'react';
+import { Platform, Keyboard, KeyboardAvoidingView, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, {
-  useAnimatedKeyboard,
+  useSharedValue,
   useAnimatedStyle,
+  withTiming,
+  Easing,
 } from 'react-native-reanimated';
 
 interface KeyboardAnimatedViewProps {
@@ -19,10 +21,32 @@ interface KeyboardAnimatedViewProps {
 }
 
 function IOSKeyboardAnimatedView({ children, style }: KeyboardAnimatedViewProps) {
-  const keyboard = useAnimatedKeyboard();
+  const keyboardHeight = useSharedValue(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardWillShow', (e) => {
+      // iOSのキーボードアニメーションと同じduration・easingで同期
+      keyboardHeight.value = withTiming(e.endCoordinates.height, {
+        duration: e.duration || 250,
+        easing: Easing.bezier(0.17, 0.59, 0.4, 0.99),
+      });
+    });
+
+    const hideSub = Keyboard.addListener('keyboardWillHide', (e) => {
+      keyboardHeight.value = withTiming(0, {
+        duration: e.duration || 200,
+        easing: Easing.bezier(0.17, 0.59, 0.4, 0.99),
+      });
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -keyboard.height.value }],
+    transform: [{ translateY: -keyboardHeight.value }],
   }));
 
   return (

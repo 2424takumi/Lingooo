@@ -47,7 +47,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({
-  placeholder = '知りたい言葉や文章を入力...',
+  placeholder = '好きな言語で入力...',
   onSearch,
   value: externalValue,
   onChangeText: externalOnChangeText,
