@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: '500',
     lineHeight: 28,
+    marginTop: 2,
   },
   definition: {
     flex: 1,
