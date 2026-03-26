@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   },
   definitionRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     gap: 4,
   },
   bullet: {
