@@ -32,7 +32,7 @@ function DefinitionItem({ definition, index, textColor, onTextSelected, onSelect
 
   return (
     <Animated.View style={[styles.definitionRow, animatedStyle]}>
-      <Text style={[styles.number, { color: textColor }]}>{index + 1}.</Text>
+      <Text style={[styles.bullet, { color: textColor }]}>・</Text>
       <SelectableText
         text={definition}
         style={{ ...styles.definition, color: textColor }}
@@ -72,12 +72,10 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     gap: 4,
   },
-  number: {
-    fontSize: 17,
-    fontWeight: '400',
-    opacity: 0.3,
-    minWidth: 24,
-    textAlign: 'right',
+  bullet: {
+    fontSize: 19,
+    fontWeight: '500',
+    lineHeight: 28,
   },
   definition: {
     flex: 1,

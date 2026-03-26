@@ -21,6 +21,8 @@ export function WordHint({
 }: WordHintProps) {
   const bgColor = useThemeColor({}, 'cardBackground');
   const textColor = useThemeColor({}, 'text');
+  const accentColor = useThemeColor({}, 'accent');
+  const accentBg = useThemeColor({}, 'searchBackground');
 
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(6);
@@ -44,21 +46,22 @@ export function WordHint({
 
   return (
     <Animated.View style={[styles.container, { backgroundColor: bgColor }, animatedStyle]}>
-      <View style={styles.row}>
-        <Text style={styles.icon}>💡</Text>
-        <View style={styles.textContainer}>
-          {isStreaming ? (
-            <Text style={[styles.hintText, { color: textColor }]}>{streamingText}</Text>
-          ) : (
-            <SelectableText
-              text={hint}
-              style={{ ...styles.hintText, color: textColor }}
-              onSelectionChange={onTextSelected}
-              onSelectionCleared={onSelectionCleared}
-            />
-          )}
+      <View style={styles.tagRow}>
+        <View style={[styles.tag, { backgroundColor: accentBg }]}>
+          <Text style={styles.tagIcon}>💡</Text>
+          <Text style={[styles.tagText, { color: accentColor }]}>学習のヒント</Text>
         </View>
       </View>
+      {isStreaming ? (
+        <Text style={[styles.hintText, { color: textColor }]}>{streamingText}</Text>
+      ) : (
+        <SelectableText
+          text={hint}
+          style={{ ...styles.hintText, color: textColor }}
+          onSelectionChange={onTextSelected}
+          onSelectionCleared={onSelectionCleared}
+        />
+      )}
     </Animated.View>
   );
 }
@@ -68,18 +71,25 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     gap: 10,
   },
-  icon: {
-    fontSize: 16,
-    marginTop: 3,
+  tagRow: {
+    flexDirection: 'row',
   },
-  textContainer: {
-    flex: 1,
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  tagIcon: {
+    fontSize: 13,
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   hintText: {
     fontSize: 16,
