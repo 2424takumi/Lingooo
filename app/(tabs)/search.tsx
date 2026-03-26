@@ -13,6 +13,7 @@ import { ChatSection } from '@/components/ui/chat-section';
 import { KeyboardAnimatedView } from '@/components/ui/keyboard-animated-view';
 import { ShimmerSuggestions } from '@/components/ui/shimmer';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
+import { CopyToast } from '@/components/ui/copy-toast';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
@@ -124,6 +125,9 @@ export default function SearchScreen() {
     handleCloseFolderSelectModal,
     handleCloseCreateFolderModal,
   } = useBookmarkManagement({ logPrefix: 'Search' });
+
+  const [copyToastVisible, setCopyToastVisible] = useState(false);
+  const handleCopied = () => setCopyToastVisible(true);
 
   // suggestionsが更新されたらヒント完了インデックスを更新
   useEffect(() => {
@@ -745,6 +749,7 @@ export default function SearchScreen() {
             scope="search"
             identifier={query}
             onBookmarkAdded={handleBookmarkAdded}
+            onCopied={handleCopied}
             onFollowUpQuestion={handleFollowUpQuestion}
             onEnterFollowUpMode={handleEnterFollowUpMode}
             activeFollowUpPairId={activeFollowUpPairId}
@@ -761,6 +766,12 @@ export default function SearchScreen() {
         onAddToFolder={handleOpenFolderSelect}
         onDismiss={handleToastDismiss}
         showFolderButton={isPremium}
+      />
+
+      {/* Copy Toast */}
+      <CopyToast
+        visible={copyToastVisible}
+        onDismiss={() => setCopyToastVisible(false)}
       />
 
       {/* Folder Select Modal */}

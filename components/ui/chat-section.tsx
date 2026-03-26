@@ -76,6 +76,7 @@ interface ChatSectionProps {
 
   // Callback Props - Other
   onBookmarkAdded?: (bookmarkId: string) => void;
+  onCopied?: () => void;
 
   // Tutorial Refs
   tutorialWordCardRef?: React.RefObject<View | null>;
@@ -263,6 +264,7 @@ export function ChatSection({
 
   // Callback Props - Other
   onBookmarkAdded,
+  onCopied,
 
   // Tutorial Refs
   tutorialWordCardRef,
@@ -650,6 +652,7 @@ export function ChatSection({
                   lastCardYRef.current = y;
                 }}
                 onBookmarkAdded={onBookmarkAdded}
+                onCopied={onCopied}
                 onFollowUpQuestion={onFollowUpQuestion}
                 onEnterFollowUpMode={onEnterFollowUpMode}
                 activeFollowUpPairId={activeFollowUpPairId}

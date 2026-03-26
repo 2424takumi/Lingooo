@@ -2148,6 +2148,7 @@ export default function TranslateScreen() {
             scope="translate"
             identifier={translationData?.originalText || text}
             onBookmarkAdded={handleBookmarkAdded}
+            onCopied={handleCopied}
             onFollowUpQuestion={handleFollowUpQuestion}
             onEnterFollowUpMode={handleEnterFollowUpMode}
             activeFollowUpPairId={activeFollowUpPairId}

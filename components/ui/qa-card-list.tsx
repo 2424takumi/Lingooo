@@ -10,13 +10,14 @@ interface QACardListProps {
   identifier?: string;
   onLastCardLayout?: (y: number) => void;
   onBookmarkAdded?: (bookmarkId: string) => void;
+  onCopied?: () => void;
   onFollowUpQuestion?: (pairId: string, question: string) => Promise<void>;
   onEnterFollowUpMode?: (pairId: string, question: string) => void;
   activeFollowUpPairId?: string;
   onScrollToFollowUpInput?: () => void;
 }
 
-export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout, onBookmarkAdded, onFollowUpQuestion, onEnterFollowUpMode, activeFollowUpPairId, onScrollToFollowUpInput }: QACardListProps) {
+export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout, onBookmarkAdded, onCopied, onFollowUpQuestion, onEnterFollowUpMode, activeFollowUpPairId, onScrollToFollowUpInput }: QACardListProps) {
   if (!pairs.length) {
     return null;
   }
@@ -40,6 +41,7 @@ export function QACardList({ pairs, onRetry, scope, identifier, onLastCardLayout
               scope={scope}
               identifier={identifier}
               onBookmarkAdded={onBookmarkAdded}
+              onCopied={onCopied}
               onFollowUpQuestion={onFollowUpQuestion ? (question) => onFollowUpQuestion(pair.id, question) : undefined}
               onEnterFollowUpMode={onEnterFollowUpMode}
               isFollowUpActive={activeFollowUpPairId === pair.id}

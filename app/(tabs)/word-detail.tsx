@@ -17,6 +17,7 @@ import { KeyboardAnimatedView } from '@/components/ui/keyboard-animated-view';
 import type { WordDetail } from '@/components/ui/word-detail-card';
 import { ShimmerHeader, ShimmerDefinitions, ShimmerMetrics, ShimmerExamples, ShimmerHint } from '@/components/ui/shimmer';
 import { BookmarkToast } from '@/components/ui/bookmark-toast';
+import { CopyToast } from '@/components/ui/copy-toast';
 import { FolderSelectModal } from '@/components/modals/FolderSelectModal';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { SubscriptionBottomSheet } from '@/components/ui/subscription-bottom-sheet';
@@ -107,6 +108,9 @@ export default function WordDetailScreen() {
     handleCloseFolderSelectModal,
     handleCloseCreateFolderModal,
   } = useBookmarkManagement({ logPrefix: 'WordDetail' });
+
+  const [copyToastVisible, setCopyToastVisible] = useState(false);
+  const handleCopied = () => setCopyToastVisible(true);
 
   // パラメータから単語を取得
   const word = params.word as string || '';
@@ -1269,6 +1273,7 @@ export default function WordDetailScreen() {
             scope="word"
             identifier={chatIdentifier}
             onBookmarkAdded={handleBookmarkAdded}
+            onCopied={handleCopied}
             expandedMaxHeight={chatExpandedMaxHeight}
             onFollowUpQuestion={handleFollowUpQuestion}
             onEnterFollowUpMode={handleEnterFollowUpMode}
@@ -1298,6 +1303,12 @@ export default function WordDetailScreen() {
         onAddToFolder={handleOpenFolderSelect}
         onDismiss={handleToastDismiss}
         showFolderButton={isPremium}
+      />
+
+      {/* Copy Toast */}
+      <CopyToast
+        visible={copyToastVisible}
+        onDismiss={() => setCopyToastVisible(false)}
       />
 
       {/* Folder Select Modal */}

@@ -20,6 +20,7 @@ interface QACardProps {
   identifier?: string;
   hideActions?: boolean;
   onBookmarkAdded?: (bookmarkId: string) => void;
+  onCopied?: () => void;
   onFollowUpQuestion?: (question: string) => Promise<void>;
   onEnterFollowUpMode?: (pairId: string, question: string) => void;
   isFollowUpActive?: boolean;
@@ -82,7 +83,7 @@ function CloseIcon({ size = 16, color }: { size?: number; color?: string }) {
   );
 }
 
-export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onFollowUpQuestion, onEnterFollowUpMode, isFollowUpActive = false, onScrollToFollowUpInput }: QACardProps) {
+export function QACard({ pair, onRetry, scope = 'general', identifier = '', hideActions = false, onBookmarkAdded, onCopied, onFollowUpQuestion, onEnterFollowUpMode, isFollowUpActive = false, onScrollToFollowUpInput }: QACardProps) {
   // ブックマークページ用の配色（hideActions=trueの時）
   const cardBackground = useThemeColor({}, 'qaCardBackground');
   const borderColor = useThemeColor({}, 'border');
@@ -192,10 +193,9 @@ export function QACard({ pair, onRetry, scope = 'general', identifier = '', hide
       const textToCopy = `Q: ${pair.q}\n\nA: ${pair.a}`;
       await Clipboard.setStringAsync(textToCopy);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('コピーしました', '質問と回答をクリップボードにコピーしました');
+      onCopied?.();
     } catch (error) {
       logger.error('Failed to copy:', error);
-      Alert.alert('エラー', 'コピーに失敗しました');
     }
   };
 
