@@ -21,7 +21,6 @@ export function WordHint({
 }: WordHintProps) {
   const bgColor = useThemeColor({}, 'hintBackground');
   const textColor = useThemeColor({}, 'text');
-  const tagBg = useThemeColor({}, 'hintTagBackground');
 
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(6);
@@ -45,12 +44,6 @@ export function WordHint({
 
   return (
     <Animated.View style={[styles.container, { backgroundColor: bgColor }, animatedStyle]}>
-      <View style={styles.tagRow}>
-        <View style={[styles.tag, { backgroundColor: tagBg }]}>
-          <Text style={styles.tagIcon}>💡</Text>
-          <Text style={[styles.tagText, { color: textColor }]}>メモ</Text>
-        </View>
-      </View>
       {isStreaming ? (
         <Text style={[styles.hintText, { color: textColor }]}>{streamingText}</Text>
       ) : (
@@ -71,24 +64,6 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 20,
     gap: 12,
-  },
-  tagRow: {
-    flexDirection: 'row',
-  },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
-  tagIcon: {
-    fontSize: 13,
-  },
-  tagText: {
-    fontSize: 12,
-    fontWeight: '600',
   },
   hintText: {
     fontSize: 16,
