@@ -160,9 +160,12 @@ export async function translateTextStream(
       xhr.open('POST', `${BACKEND_URL}/api/translate/stream`, true);
       xhr.setRequestHeader('Content-Type', 'application/json');
 
-      // 認証トークンを設定
+      // 認証トークンとDevice IDを設定
       if (authHeaders.Authorization) {
         xhr.setRequestHeader('Authorization', authHeaders.Authorization);
+      }
+      if (authHeaders['X-Device-ID']) {
+        xhr.setRequestHeader('X-Device-ID', authHeaders['X-Device-ID']);
       }
 
       let processedLength = 0;
@@ -468,9 +471,12 @@ export async function splitOriginalTextStreamSSE(
       xhr.open('POST', `${BACKEND_URL}/api/translate/split-original-stream`, true);
       xhr.setRequestHeader('Content-Type', 'application/json');
 
-      // 認証トークンを設定
+      // 認証トークンとDevice IDを設定
       if (authHeaders.Authorization) {
         xhr.setRequestHeader('Authorization', authHeaders.Authorization);
+      }
+      if (authHeaders['X-Device-ID']) {
+        xhr.setRequestHeader('X-Device-ID', authHeaders['X-Device-ID']);
       }
 
       let processedLength = 0;
@@ -694,9 +700,12 @@ export async function translateParagraphStream(
       xhr.open('POST', `${BACKEND_URL}/api/translate/paragraph-stream`, true);
       xhr.setRequestHeader('Content-Type', 'application/json');
 
-      // 認証トークンを設定
+      // 認証トークンとDevice IDを設定
       if (authHeaders.Authorization) {
         xhr.setRequestHeader('Authorization', authHeaders.Authorization);
+      }
+      if (authHeaders['X-Device-ID']) {
+        xhr.setRequestHeader('X-Device-ID', authHeaders['X-Device-ID']);
       }
 
       let processedLength = 0;

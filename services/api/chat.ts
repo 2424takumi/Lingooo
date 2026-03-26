@@ -162,6 +162,9 @@ export async function* sendChatMessageStream(
   xhr.open('POST', `${BACKEND_URL}/api/chat/stream`);
   xhr.setRequestHeader('Content-Type', 'application/json');
   xhr.setRequestHeader('Authorization', authHeaders.Authorization);
+  if (authHeaders['X-Device-ID']) {
+    xhr.setRequestHeader('X-Device-ID', authHeaders['X-Device-ID']);
+  }
 
   xhr.onprogress = () => {
     const newText = xhr.responseText.substring(lastProcessedIndex);
@@ -471,6 +474,9 @@ export async function* sendFollowUpQuestionStream(
   xhr.open('POST', `${BACKEND_URL}/api/chat/stream`);
   xhr.setRequestHeader('Content-Type', 'application/json');
   xhr.setRequestHeader('Authorization', authHeaders.Authorization);
+  if (authHeaders['X-Device-ID']) {
+    xhr.setRequestHeader('X-Device-ID', authHeaders['X-Device-ID']);
+  }
 
   xhr.onprogress = () => {
     const newText = xhr.responseText.substring(lastProcessedIndex);
