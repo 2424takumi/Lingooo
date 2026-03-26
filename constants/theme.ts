@@ -112,6 +112,10 @@ export const Colors = {
     segmentedBackground: '#D1D1D6',
     segmentedActiveBackground: '#FFFFFF',
 
+    // Hint card
+    hintBackground: '#F0FAF5',
+    hintTagBackground: '#E0F5EC',
+
     // Translate card
     translateOriginalText: '#111111',
     translateTranslatedText: '#111111',
@@ -227,6 +231,10 @@ export const Colors = {
     // Segmented control
     segmentedBackground: '#38383A',
     segmentedActiveBackground: '#636366',
+
+    // Hint card
+    hintBackground: '#0D2618',
+    hintTagBackground: '#143D28',
 
     // Translate card - 原文と翻訳文を区別
     translateOriginalText: '#B0B0B0',

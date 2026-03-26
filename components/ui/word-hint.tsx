@@ -19,10 +19,9 @@ export function WordHint({
   isStreaming = false,
   streamingText = '',
 }: WordHintProps) {
-  const bgColor = useThemeColor({}, 'cardBackground');
+  const bgColor = useThemeColor({}, 'hintBackground');
   const textColor = useThemeColor({}, 'text');
-  const accentColor = useThemeColor({}, 'accent');
-  const accentBg = useThemeColor({}, 'searchBackground');
+  const tagBg = useThemeColor({}, 'hintTagBackground');
 
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(6);
@@ -47,9 +46,9 @@ export function WordHint({
   return (
     <Animated.View style={[styles.container, { backgroundColor: bgColor }, animatedStyle]}>
       <View style={styles.tagRow}>
-        <View style={[styles.tag, { backgroundColor: accentBg }]}>
+        <View style={[styles.tag, { backgroundColor: tagBg }]}>
           <Text style={styles.tagIcon}>💡</Text>
-          <Text style={[styles.tagText, { color: accentColor }]}>学習のヒント</Text>
+          <Text style={[styles.tagText, { color: textColor }]}>学習のヒント</Text>
         </View>
       </View>
       {isStreaming ? (
