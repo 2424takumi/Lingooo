@@ -204,8 +204,7 @@ export async function generateSuggestionsStreamFast(
   onSuggestion?: (suggestion: { lemma: string; pos: string[]; shortSense: string[]; confidence: number; nuance?: number }) => void
 ): Promise<Array<{ lemma: string; pos: string[]; shortSense: string[]; confidence: number; nuance?: number }>> {
   // サジェスション生成は軽量タスクのためflash-liteを使用
-  // gemini-2.5-flashのthinkingがmaxOutputTokensを消費して出力が切れる問題を回避
-  const modelConfig = { ...selectModel(), model: 'gemini-2.5-flash-lite' };
+  const modelConfig = { ...selectModel(), model: 'gemini-3.1-flash-lite-preview' };
 
   // 性別が必要な言語かチェック
   const genderLanguages = ['es', 'pt', 'fr', 'de', 'it', 'ru', 'ar', 'hi'];
