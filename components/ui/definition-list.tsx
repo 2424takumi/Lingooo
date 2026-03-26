@@ -65,7 +65,7 @@ export function DefinitionList({ definitions, onTextSelected, onSelectionCleared
 
 const styles = StyleSheet.create({
   container: {
-    gap: 6,
+    gap: 2,
   },
   definitionRow: {
     flexDirection: 'row',
