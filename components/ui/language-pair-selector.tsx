@@ -1,9 +1,8 @@
 /**
- * 翻訳ページ用の言語ペア選択コンポーネント
+ * 翻訳ページ用の翻訳先言語選択ボタン
  *
- * ソース言語・ターゲット言語の両方をタップで変更可能。
- * ソース側: 全9言語（AVAILABLE_LANGUAGES）
- * ターゲット側: 学習中の言語（learningLanguages）
+ * 「英語へ翻訳 ∨」のようなボタンを表示。
+ * タップでドロップダウンから翻訳先言語を変更可能。
  */
 
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
@@ -12,9 +11,9 @@ import Svg, { Path } from 'react-native-svg';
 import { useLearningLanguages } from '@/contexts/learning-languages-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { AVAILABLE_LANGUAGES, findLanguageByCode } from '@/types/language';
-import { Shimmer } from './shimmer';
+import { LANGUAGE_NAME_MAP } from '@/constants/languages';
 
-function ChevronDownIcon({ size = 20, color = '#686868' }: { size?: number; color?: string }) {
+function ChevronDownIcon({ size = 16, color = '#686868' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -36,10 +35,6 @@ interface LanguagePairSelectorProps {
   onTargetLangChange: (langCode: string) => void;
 }
 
-function getLanguageInfo(code: string) {
-  return findLanguageByCode(code);
-}
-
 export function LanguagePairSelector({
   sourceLang,
   targetLang,
@@ -47,60 +42,54 @@ export function LanguagePairSelector({
   onSourceLangChange,
   onTargetLangChange,
 }: LanguagePairSelectorProps) {
-  const [activeDropdown, setActiveDropdown] = useState<'source' | 'target' | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const { learningLanguages } = useLearningLanguages();
-  const dropdownBackground = useThemeColor({}, 'cardBackground');
+  const dropdownBackground = useThemeColor({}, 'cardBackgroundElevated');
   const accentColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
   const secondaryColor = useThemeColor({}, 'textSecondary');
   const selectedItemBg = useThemeColor({}, 'segmentedBackground');
+  const buttonBg = useThemeColor({}, 'cardBackground');
 
-  const sourceInfo = getLanguageInfo(sourceLang);
-  const targetInfo = getLanguageInfo(targetLang);
+  // ターゲット言語のベースコード（en-US → en）
+  const baseTargetCode = targetLang.split('-')[0];
+  const targetDisplayName = LANGUAGE_NAME_MAP[baseTargetCode] || findLanguageByCode(targetLang)?.name || targetLang;
 
   const handleSelect = (langCode: string) => {
     onTargetLangChange(langCode);
-    setActiveDropdown(null);
+    setIsOpen(false);
   };
 
-  const dropdownItems = learningLanguages.map(ll => AVAILABLE_LANGUAGES.find(al => al.code === ll.code || al.id === ll.id)).filter(Boolean);
+  const dropdownItems = learningLanguages
+    .map(ll => AVAILABLE_LANGUAGES.find(al => al.code === ll.code || al.id === ll.id))
+    .filter(Boolean);
 
   return (
     <View style={styles.container}>
-      {/* Source language (display only) */}
-      {isDetectingLanguage ? (
-        <Shimmer width={90} height={22} borderRadius={4} />
-      ) : (
-        <View style={styles.langButton}>
-          <Text style={styles.flag}>{sourceInfo?.flag}</Text>
-          <Text style={[styles.langName, { color: textColor }]} numberOfLines={1}>{sourceInfo?.name}</Text>
-        </View>
-      )}
-
-      <Text style={[styles.arrow, { color: secondaryColor }]}>{'→'}</Text>
-
-      {/* Target language button */}
+      {/* 「○○語へ翻訳 ∨」ボタン */}
       <TouchableOpacity
-        style={styles.langButton}
-        onPress={() => setActiveDropdown('target')}
+        style={[styles.button, { backgroundColor: buttonBg }]}
+        onPress={() => setIsOpen(true)}
+        activeOpacity={0.7}
       >
-        <Text style={styles.flag}>{targetInfo?.flag}</Text>
-        <Text style={[styles.langName, { color: textColor }]} numberOfLines={1}>{targetInfo?.name}</Text>
-        <ChevronDownIcon size={20} color={secondaryColor} />
+        <Text style={[styles.buttonText, { color: textColor }]}>
+          {targetDisplayName}へ翻訳
+        </Text>
+        <ChevronDownIcon size={16} color={secondaryColor} />
       </TouchableOpacity>
 
       {/* Dropdown modal */}
-      {activeDropdown && (
+      {isOpen && (
         <Modal
           visible
           transparent
           animationType="none"
-          onRequestClose={() => setActiveDropdown(null)}
+          onRequestClose={() => setIsOpen(false)}
         >
           <TouchableOpacity
             style={styles.backdrop}
             activeOpacity={1}
-            onPress={() => setActiveDropdown(null)}
+            onPress={() => setIsOpen(false)}
           >
             <View style={styles.dropdownContainer}>
               <View style={[styles.dropdown, { backgroundColor: dropdownBackground }]}>
@@ -135,26 +124,21 @@ export function LanguagePairSelector({
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  button: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flex: 1,
-    justifyContent: 'flex-end',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
   },
-  langButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-  },
-  flag: {
-    fontSize: 18,
-  },
-  langName: {
-    fontSize: 14,
+  buttonText: {
+    fontSize: 15,
     fontWeight: '500',
-    maxWidth: 120,
   },
   backdrop: {
     flex: 1,
@@ -196,14 +180,6 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: 16,
     fontWeight: '500',
-  },
-  caret: {
-    fontSize: 16,
-    marginTop: 1,
-  },
-  arrow: {
-    fontSize: 20,
-    fontWeight: '300',
   },
   checkMark: {
     fontSize: 18,
